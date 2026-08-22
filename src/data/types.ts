@@ -1,7 +1,16 @@
 /** Types for the generated data in src/data/*.json.
  *
- *  These mirror pipeline/schemas. If the pipeline changes an output shape, this
- *  file must change with it and `astro check` will say so. */
+ *  These mirror pipeline/schemas.
+ *
+ *  A single `as Dataset<T>` assertion is used at the import site rather than the
+ *  double `as unknown as`: TypeScript checks a single assertion for structural
+ *  overlap, so a gross shape change does surface in `astro check`. It is still an
+ *  assertion, not validation. TypeScript cannot fully verify imported JSON against
+ *  these interfaces, because fields that are null in some rows and populated in
+ *  others widen to unions that no longer match.
+ *
+ *  Real enforcement lives in two places: the pipeline's JSON Schemas and its 870
+ *  reconciliation checks, and `assertDataset` below, which runs at build time. */
 
 export interface Provenance {
   generator: string

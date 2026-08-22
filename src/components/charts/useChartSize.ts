@@ -6,8 +6,8 @@ export interface ChartSize {
   margin: { top: number; right: number; bottom: number; left: number }
 }
 
-const WIDE: ChartSize = { width: 720, height: 380, margin: { top: 20, right: 24, bottom: 36, left: 74 } }
-const NARROW: ChartSize = { width: 360, height: 300, margin: { top: 22, right: 12, bottom: 34, left: 52 } }
+const WIDE: ChartSize = { width: 720, height: 396, margin: { top: 20, right: 24, bottom: 52, left: 74 } }
+const NARROW: ChartSize = { width: 360, height: 316, margin: { top: 22, right: 12, bottom: 50, left: 52 } }
 
 /**
  * Pick a viewBox that matches the container, rather than scaling one fixed

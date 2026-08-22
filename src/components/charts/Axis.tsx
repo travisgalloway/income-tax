@@ -37,6 +37,10 @@ export function AxisLeft({ frame, ticks, format, label, scale }: AxisProps) {
 
 export function AxisBottom({ frame, ticks, format, label, scale }: AxisProps) {
   return (
+    // The label is RENDERED, not just declared. It previously lived in a <title>
+    // inside an aria-hidden group, which meant the required `label` prop was
+    // invisible to sighted readers and unreachable by assistive tech: the axis
+    // carried no unit at all, defeating the invariant the prop exists to enforce.
     <g className="axis axis-bottom" aria-hidden="true">
       {ticks.map((t) => (
         <text
@@ -49,7 +53,14 @@ export function AxisBottom({ frame, ticks, format, label, scale }: AxisProps) {
           {format(t)}
         </text>
       ))}
-      <title>{label}</title>
+      <text
+        x={frame.innerWidth / 2}
+        y={frame.innerHeight + 34}
+        textAnchor="middle"
+        className="axis-title"
+      >
+        {label}
+      </text>
     </g>
   )
 }

@@ -86,7 +86,7 @@ export function DebtChart({ rows }: { rows: DebtYear[] }) {
         </ToggleGroup.Root>
       </div>
 
-      <Chart ariaLabel={label} width={W} height={H} margin={f}>
+      <Chart ariaLabel={label} interactive width={W} height={H} margin={f}>
         {(fr) => (
           <>
             <AxisLeft
@@ -140,7 +140,10 @@ export function DebtChart({ rows }: { rows: DebtYear[] }) {
                 r={active?.y === r.y ? 5 : 9}
                 fill={active?.y === r.y ? 'var(--ink)' : 'transparent'}
                 tabIndex={0}
-                role="button"
+                // NOT role="button": focusing a point reveals its value, it does
+                // not activate anything. Announcing it as pressable would promise
+                // an action that does not exist.
+                role="img"
                 aria-label={`Fiscal year ${r.y}: ${fmtFull(r)}${r.year_end ? '' : ', not a year-end value'}`}
                 onFocus={() => setFocus(r.y)}
                 onBlur={() => setFocus(null)}

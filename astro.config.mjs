@@ -3,10 +3,15 @@ import { defineConfig } from 'astro/config'
 import react from '@astrojs/react'
 import mdx from '@astrojs/mdx'
 
-// `base` must match the repo name or every asset 404s on GitHub Pages.
-// This is the single most common Vite/Astro-on-Pages failure; see BRIEF.md.
+// The account's user site (travisgalloway.github.io) claims the apex domain
+// travisgalloway.com, so project sites serve as paths beneath it. This repo has
+// no CNAME of its own and therefore lives at travisgalloway.com/income-tax/.
+//
+// `base` must match that path or every asset 404s, which is the single most
+// common Astro-on-Pages failure. If this repo is ever given its own subdomain,
+// `base` becomes '/' and `site` becomes that host.
 export default defineConfig({
-  site: 'https://travisgalloway.github.io',
+  site: 'https://travisgalloway.com',
   base: '/income-tax/',
   trailingSlash: 'ignore',
   integrations: [react(), mdx()],

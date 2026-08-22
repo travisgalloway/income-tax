@@ -25,6 +25,10 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
+          # pipeline/pyproject.toml requires >=3.13. Pinning here rather than
+          # relying on whatever Python ubuntu-latest happens to ship means a
+          # runner image change cannot quietly break the monthly run.
+          python-version: "3.13"
 
       - name: Install pinned dependencies
         working-directory: pipeline

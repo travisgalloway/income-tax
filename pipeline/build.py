@@ -27,17 +27,44 @@ from lib.errors import PipelineError, ValidationFailed
 ROOT = Path(__file__).resolve().parent
 FINAL_DIR = ROOT.parent / "src" / "data"
 
+# Builders that exist and must run. A module named here but missing from disk is
+# a HARD FAILURE, not a skip.
 TIERS: dict[str, list[str]] = {
     "monthly": ["cbo", "treasury", "fred", "curated_snapshots"],
-    "oneshot": ["party_splits", "bracket_history"],
+    "oneshot": ["party_splits"],
+}
+
+# Builders that are designed but not yet written. Naming them here rather than in
+# TIERS is the whole point: a planned builder must never let a tier report
+# success while silently producing nothing. `--only` on one of these exits
+# non-zero and names the issue that covers it.
+PLANNED: dict[str, dict[str, str]] = {
+    "monthly": {
+        "states": "state balance of payments and tax collections (issue #14)",
+    },
+    "oneshot": {
+        "bracket_history": "statutory bracket schedules 1913-2025 (issue #10)",
+    },
 }
 
 
 def _builders(tier: str, only: str | None) -> list[str]:
     names = TIERS[tier]
+    planned = PLANNED.get(tier, {})
     if only:
+        if only in planned:
+            sys.exit(
+                f"--only {only!r}: not implemented yet, {planned[only]}. "
+                "Refusing to report success for a builder that does not exist."
+            )
         if only not in names:
-            sys.exit(f"--only {only!r} is not in tier {tier!r}; available: {', '.join(names)}")
+            available = ", ".join(names)
+            pending = ", ".join(planned) or "none"
+            sys.exit(
+                f"--only {only!r} is not in tier {tier!r}.\n"
+                f"  implemented: {available}\n"
+                f"  planned:     {pending}"
+            )
         return [only]
     return names
 
@@ -68,16 +95,20 @@ def main() -> int:
     try:
         for name in _builders(args.tier, args.only):
             module_path = f"{args.tier}.{name}"
-            try:
-                mod = importlib.import_module(module_path)
-            except ModuleNotFoundError:
-                print(f"  .. {module_path} not implemented yet, skipping")
-                continue
+            # A builder listed in TIERS is expected to exist. Swallowing the
+            # import error here would let the tier exit 0 having produced
+            # nothing, which is the failure mode this pipeline exists to avoid.
+            mod = importlib.import_module(module_path)
             print(f"  -> {module_path}")
             produced.extend(mod.build(dry_run=False))
 
         if not produced:
             sys.exit("no builders produced output; refusing to report success")
+
+        pending = PLANNED.get(args.tier, {})
+        if pending and not args.only:
+            for name, why in pending.items():
+                print(f"  .. not built: {name} ({why})")
 
         checked = sorted({p.stem for p in staging.glob("*.json")})
         checks = validate.run(checked)

@@ -13,6 +13,16 @@ import { frame as makeFrame, MARGIN, type Margin } from './scales'
 export interface ChartProps {
   /** The finding, in a sentence. Not a description of the shape. */
   ariaLabel: string
+  /**
+   * True when the chart contains focusable data points.
+   *
+   * This changes the SVG's role, and the reason is not cosmetic: assistive tech
+   * treats the subtree of a role="img" element as presentational, so focusable
+   * children inside one are announced inconsistently or not at all. A chart with
+   * keyboard-reachable points is a group that has a label, not a single image.
+   * Static charts keep role="img" per BRIEF.md.
+   */
+  interactive?: boolean
   width?: number
   height?: number
   margin?: Margin
@@ -22,6 +32,7 @@ export interface ChartProps {
 
 export function Chart({
   ariaLabel,
+  interactive = false,
   width = 720,
   height = 380,
   margin = MARGIN,
@@ -31,7 +42,7 @@ export function Chart({
   const f = makeFrame(width, height, margin)
   return (
     <svg
-      role="img"
+      role={interactive ? 'group' : 'img'}
       aria-label={ariaLabel}
       viewBox={`0 0 ${width} ${height}`}
       preserveAspectRatio="xMidYMid meet"
