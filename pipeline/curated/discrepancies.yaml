@@ -1,0 +1,103 @@
+_comment: |
+  Curated. NEVER machine-written.
+  The resolutions from SOURCES.md, encoded so the pipeline cannot silently
+  overwrite them with whatever a source happens to say this month. Each entry
+  records the conflict, the chosen value, and WHY. Deleting an entry is an
+  editorial act and must be deliberate.
+
+resolutions:
+  foreign_share_of_debt:
+    conflict: >-
+      Al Jazeera (20 August 2026) reported foreign holders at 32% of GROSS debt
+      in 2025. That does not reconcile: foreign holdings are roughly 30% of the
+      ~$32T held by the public, which is about $9.6T, or 24% of $40T gross. The
+      32% figure appears to be a share-of-public-debt number labelled as
+      share-of-gross.
+    use:
+      share_of_public_pct: 30
+      share_of_gross_pct: 24
+    rule: Never present a share without saying which denominator it uses.
+
+  china_holdings:
+    conflict: Reported at $683B (TIC via Al Jazeera) and about $760B elsewhere. Both
+      plausible depending on vintage.
+    use:
+      amount_t: 0.683
+    rule: Carry the note that TIC is revised monthly.
+
+  federal_reserve_holdings:
+    conflict: Reported at $4.528T (Peterson Foundation) and about $4.9T elsewhere.
+    use: null
+    rule: >-
+      OMIT rather than pick. This is a deliberate absence, not missing data. If a
+      future fetcher starts supplying a Fed holdings figure, it must not be
+      charted without re-opening this decision.
+
+  gini_series:
+    conflict: >-
+      The family series (GINIALLRF) reads 0.456 for 2024. Household series run
+      0.47 to 0.49 depending on whether the source is CPS or ACS.
+    use:
+      series: GINIALLRF
+      basis: families
+    rule: >-
+      Label it "families" on the chart or a reader will correct you with the
+      household figure. The family series is used because it runs cleanly to 1947.
+
+  tax_to_gdp_scope:
+    conflict: OECD 25.6% counts federal, state and local. CBO 17.2% is federal only.
+    use:
+      oecd_pct: 25.6
+      cbo_federal_pct: 17.2
+    rule: >-
+      Both are correct. NEVER present them as a contradiction or as comparable.
+      The difference must appear in body copy, not a tooltip.
+
+  net_interest_low_point:
+    conflict: FY2015 at $223B is a recent trough, not the series low. The actual low
+      is FY2003 at $153B.
+    use:
+      trough_fy: 2015
+      series_low_fy: 2003
+    rule: Say "trough", not "low".
+
+  forty_trillion_crossing_date:
+    conflict: >-
+      SOURCES.md and press coverage date the $40T crossing to 19 August 2026. The
+      Debt to the Penny series shows the first close at or above $40T on the
+      record_date 2026-08-18 ($40.047T), with 2026-08-19 reading $40.013T.
+    use:
+      record_date: '2026-08-18'
+      reported_date: '2026-08-19'
+    rule: >-
+      Both are right and they are not in conflict. Debt to the Penny reports a
+      date's CLOSING balance on the next business day, so the balance dated
+      18 August was published on 19 August. Say "closed above $40 trillion on
+      18 August 2026, reported the following day" or cite the reported date
+      explicitly. Never present the two as competing figures, and never let the
+      pipeline silently overwrite the cited date when Treasury revises the series.
+
+  deficit_vs_debt_gap:
+    conflict: >-
+      Cumulative FY1995-FY2025 deficits are $24.15T, but debt held by the public
+      rose $26.74T over the same period.
+    use:
+      cumulative_deficits_t: 24.15
+      debt_held_by_public_rise_t: 26.74
+    rule: >-
+      The gap is borrowing to finance federal credit programs and other means of
+      financing, which do not appear in the deficit. If both numbers appear,
+      explain the gap.
+
+conventions:
+  fiscal_year_attribution: >-
+    Each fiscal year is assigned to whoever held the office in June of that
+    fiscal year, and to the Congress seated for it. FY2026 began 1 October 2025.
+    This puts FY2025 with Trump II, not Biden.
+  ten_year_scores: >-
+    Costs are as estimated at enactment, not as realised. Scores from different
+    eras are different instruments and should not be summed casually. Two 1997
+    laws predate the convention entirely.
+  mandatory_spending: >-
+    The `ma` field is GROSS. Add `or` (offsetting receipts, negative) to get the
+    net figure, so ma + or + di + ni = ot. Charts use the net figure.

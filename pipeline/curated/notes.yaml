@@ -1,0 +1,177 @@
+_comment: 'Curated editorial metadata, lifted verbatim from the hand-checked JSON files.
+
+  NEVER machine-written. Every `notes` entry documents a trap that a chart can
+
+  silently violate: mandatory is gross, the Gini is families not households, the
+
+  income-tax shares exclude payroll tax. `source` is rendered VERBATIM in the UI
+
+  per BRIEF.md rule 1 and must never be summarised to "CBO data".'
+outputs:
+  budget:
+    title: Federal outlays, revenue, deficit, party control and major legislation, FY1995-FY2025
+    source: CBO Historical Budget Data (Feb 2026); CBO Historical Economic Data (Feb 2026) for the
+      GDP price index; CBO and JCT cost estimates; CRS and chamber records for party control
+    units:
+      n_*: nominal $ trillions
+      r_*: real $ trillions, FY2025 dollars, GDP price index
+      g_*: percent of GDP
+    fields:
+      y: fiscal year
+      ma: mandatory outlays, gross
+      or: offsetting receipts (negative)
+      di: discretionary outlays
+      ni: net interest
+      re: revenues
+      de: deficit (negative) or surplus
+      ot: total outlays
+      pp: president's party
+      h: House majority party
+      s: Senate majority party
+      ctl: D/R if unified, M if split
+      t: handoff year
+      p: president
+      L: 'major laws enacted that fiscal year: n name, a public law, v ten-year score $T (positive
+        = adds to deficit), c vote character, comp PLR/PLD/XP, date, pres, cfg control at enactment'
+    notes:
+    - Mandatory is gross; add 'or' to get the net figure used in charts, so ma+or+di+ni = ot.
+    - Vote composition is exact only for PL 115-97 (TCJA). All others are classified party-line or
+      cross-party from published vote character. See SOURCES.md.
+    - FY2025 is attributed to Trump II under the June-of-fiscal-year rule.
+    - 'Series now run FY1962-FY2025. Party control is curated and covers FY1995-FY2025 only; years
+      outside that range carry control: null and must not render a control strip.'
+  debt:
+    title: Total public debt outstanding at fiscal year end, FY1995-FY2026
+    source: US Treasury, Historical Debt Outstanding and Debt to the Penny. GDP denominator from
+      CBO Historical Budget Data, Feb 2026
+    units:
+      debt: nominal $ trillions
+      gdp_share: gross debt as percent of GDP
+    notes:
+    - FY2026 value is the 19 August 2026 crossing of $40T, not a year-end close; gdp_share is null
+      because FY2026 GDP is not final.
+    - FY2016 $19.57T to $40T is a 2.04x rise in ten fiscal years. FY2005 to FY2015 was 2.29x, a faster
+      doubling from a smaller base.
+  debt_holders:
+    title: Who holds the federal debt
+    source: US Treasury Debt to the Penny (public vs intragovernmental, 7 Aug 2026); Treasury International
+      Capital (foreign holdings, 2025)
+    notes:
+    - Foreign holders are about 30% of PUBLICLY HELD debt, which is about 24% of GROSS debt. Do not
+      conflate. Al Jazeera reported 32% of gross; that figure does not reconcile.
+    - TIC data is revised monthly. China has been reported between $683B and $760B depending on vintage.
+    - Federal Reserve holdings are reported between $4.53T and $4.9T across sources; omitted rather
+      than pick one.
+  debt_maturity:
+    title: Maturity structure of marketable Treasury debt
+    source: Treasury Monthly Statement of the Public Debt; Joint Economic Committee monthly debt
+      update (Jun 2026 average maturity); Peter G Peterson Foundation for instrument shares
+    notes:
+    - The 30-year bond is the longest instrument issued, so nothing outstanding today was issued
+      before 1996.
+    - But average maturity is about 71 months, roughly six years. Roughly a third of debt matures
+      within twelve months.
+    - This is why rate rises after 2021 repriced the whole stock within a few years. It is the causal
+      link to the net interest chart.
+    - Savings bonds (Series EE and I) reach final maturity at 20-30 years and are non-marketable;
+      excluded from these figures.
+  revenue_sources:
+    title: Federal revenue by source, FY1962 onward
+    source: CBO Historical Budget Data, February 2026 vintage
+    units:
+      n_*: nominal $ trillions
+      g_*: percent of GDP
+      s_*: percent of total revenue
+    fields:
+      ii: individual income tax
+      pr: payroll taxes
+      ci: corporate income tax
+      ex: excise taxes
+      cu: customs duties
+      eg: estate and gift taxes
+      mi: miscellaneous
+      tot: total revenue
+    notes:
+    - 'Replaces the FY1995-vs-FY2025 two-point comparison with the full annual series. The endpoint
+      figures are unchanged: FY1995 $1.352T / 17.88% of GDP, FY2025 $5.235T / 17.24% of GDP.'
+    - 'Customs duties are the outlier: $19B to $195B, 0.26% to 0.64% of GDP.'
+    - This is FEDERAL revenue only. Do not compare it to the OECD 25.6% figure, which counts federal,
+      state and local. See the oecd output.
+  income_tax_by_group:
+    title: Share of federal individual income tax paid, by income group
+    source: IRS Statistics of Income, individual tables by tax rate and income percentile, tax year
+      2023. CBO Distribution of Household Income 2022 for the top 1% income share
+    notes:
+    - INDIVIDUAL INCOME TAX ONLY. Excludes payroll tax, which is where most households below the
+      top decile pay more. Any chart must say this.
+    - Refundable credits are excluded from the IRS series, which overstates the effective rate at
+      the bottom.
+    - Tax year 2023 is the latest IRS year. The 1995 comparison point was not retrieved; 2001 (33.2%)
+      is the earliest verified anchor.
+    - Concentration of tax paid tracks concentration of income. Show both columns or the chart misleads.
+  income_inequality:
+    title: Real median household income, family Gini index and top statutory marginal rate, 1995-2024
+    source: 'Census Bureau via FRED: MEHOINUSA672N (income), GINIALLRF (Gini). Statutory rate schedules'
+    units:
+      mhi: real median household income, 2024 dollars
+      gini: family Gini index, ratio
+      top: top statutory marginal individual income tax rate, percent
+    notes:
+    - Gini is for FAMILIES, not households. The household series runs higher (~0.47-0.49). Label
+      it on any chart.
+    - Top rate is statutory, not effective. 1995 39.6%, 2003 35%, 2013 39.6%, 2018 37%.
+    - Median income +28.1% over 29 years, 0.86% a year.
+  oecd:
+    title: Total tax revenue as a share of GDP, OECD comparison
+    source: OECD Revenue Statistics 2025, United States country note, 2024 preliminary data
+    notes:
+    - 'This counts ALL levels of government: federal, state and local. That is why 25.6% is higher
+      than the 17.2% federal-only figure from CBO. The two are not interchangeable and any chart
+      must say which it uses.'
+    - US peak was 28.3% in 2000; low was 22.9% in 2009.
+    - The US is the only OECD member with no value-added tax, which accounts for most of the gap.
+    - 2024 is the latest OECD year. It breaks the 1995/2025 convention used elsewhere; say so.
+  economy:
+    title: US macroeconomic series, FY1950 onward
+    source: CBO Historical Economic Data, February 2026 vintage
+    units:
+      gdp: nominal $ trillions
+      rgdp: real $ trillions, FY2025 chained
+      potential_rgdp: real $ trillions, FY2025 chained
+      output_gap: percent of potential GDP
+      unemp: percent
+      nairu: percent
+      lfpr: percent of civilian population 16+
+      cpi: index
+      core_pce: index
+      gdp_deflator: index, FY2025 = 100
+      ff: percent
+      t10: percent
+      t3m: percent
+      prod: output per hour, nonfarm business, index
+      wage_share: wages and salaries as percent of GDP
+      profit_share: corporate profits as percent of GDP
+    notes:
+    - THIS FILE CONTAINS PROJECTIONS. CBO publishes actuals and baseline projections in one series
+      running to FY2036. _meta.estimate_boundary gives the last ACTUAL fiscal year. No chart may
+      draw actual and projected values as one continuous line.
+    - Fiscal years, not calendar years. FY2025 ran October 2024 to September 2025.
+    - wage_share and profit_share are shares of GDP, not of national income, so they do not sum to
+      100 with anything. They are comparable to each other over time, not to a factor-share decomposition.
+    - The GDP deflator here is the series used to deflate every nominal dollar figure elsewhere on
+      the site, rebased so FY2025 = 100.
+  party_splits:
+    title: Counted per-party roll-call splits for 23 major deficit-moving laws, 1997-2025
+    source: 'Voteview (voteview.com/data): HSall_members.csv joined to per-congress roll-call and
+      vote files. Final-passage roll call per law curated by hand. PL 115-97 cross-checked against
+      House Clerk roll call 699.'
+    notes:
+    - These splits are COUNTED, not classified. This replaces the earlier PLR/PLD/XP classification
+      derived from published vote character, which SOURCES.md flagged as the dataset's weakest point.
+    - A null chamber means no roll call exists, almost always a voice vote. The CARES Act passed
+      the House this way. Absence of a roll call is NOT unanimity and must never be rendered as a
+      vote.
+    - Independents and third-party members are counted separately as "i", never folded into a major
+      party.
+    - The vote counted is FINAL PASSAGE. Procedural votes, cloture and motions to recommit are excluded,
+      and a bill often has several of each.

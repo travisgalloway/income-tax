@@ -1,0 +1,89 @@
+{
+ "_meta": {
+  "title": "Total tax revenue as a share of GDP, OECD comparison",
+  "source": "OECD Revenue Statistics 2025, United States country note, 2024 preliminary data",
+  "notes": [
+   "This counts ALL levels of government: federal, state and local. That is why 25.6% is higher than the 17.2% federal-only figure from CBO. The two are not interchangeable and any chart must say which it uses.",
+   "US peak was 28.3% in 2000; low was 22.9% in 2009.",
+   "The US is the only OECD member with no value-added tax, which accounts for most of the gap.",
+   "2024 is the latest OECD year. It breaks the 1995/2025 convention used elsewhere; say so."
+  ]
+ },
+ "data": {
+  "year": 2024,
+  "us_pct_gdp": 25.6,
+  "oecd_average_pct_gdp": 34.1,
+  "us_rank": 31,
+  "of_countries": 38,
+  "countries": [
+   {
+    "c": "Denmark",
+    "v": 45.2
+   },
+   {
+    "c": "Italy",
+    "v": 42.8
+   },
+   {
+    "c": "Germany",
+    "v": 38.0
+   },
+   {
+    "c": "United Kingdom",
+    "v": 34.4
+   },
+   {
+    "c": "OECD average",
+    "v": 34.1,
+    "is_average": true
+   },
+   {
+    "c": "Czechia",
+    "v": 34.0
+   },
+   {
+    "c": "Lithuania",
+    "v": 33.1
+   },
+   {
+    "c": "Switzerland",
+    "v": 27.2
+   },
+   {
+    "c": "United States",
+    "v": 25.6,
+    "is_us": true
+   },
+   {
+    "c": "Ireland",
+    "v": 21.7
+   },
+   {
+    "c": "Mexico",
+    "v": 18.3
+   }
+  ],
+  "us_history": [
+   {
+    "year": 2000,
+    "v": 28.3
+   },
+   {
+    "year": 2009,
+    "v": 22.9
+   },
+   {
+    "year": 2022,
+    "v": 27.6
+   },
+   {
+    "year": 2023,
+    "v": 25.2
+   },
+   {
+    "year": 2024,
+    "v": 25.6
+   }
+  ]
+ }
+}

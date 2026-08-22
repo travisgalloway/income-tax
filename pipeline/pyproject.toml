@@ -1,0 +1,17 @@
+[project]
+name = "income-tax-pipeline"
+version = "0.1.0"
+description = "ETL for the US economy, household tax and federal finance explorer"
+requires-python = ">=3.13"
+dependencies = [
+    "httpx>=0.28",
+    "pyyaml>=6.0",
+    "jsonschema>=4.23",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.3"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

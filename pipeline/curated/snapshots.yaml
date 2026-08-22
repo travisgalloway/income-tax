@@ -1,0 +1,153 @@
+_comment: 'Curated snapshots. NEVER machine-written.
+
+  These four datasets are NOT auto-fetchable: IRS SOI and OECD Revenue Statistics are
+
+  published as documents, and the debt holder/maturity figures are assembled from
+
+  several Treasury releases plus the discrepancy resolutions in discrepancies.yaml.
+
+  They are refreshed by hand. The pipeline stamps each with the as_of date already in
+
+  the data so a stale snapshot is visible in the UI rather than silently current.
+
+  IMPORTANT: Federal Reserve holdings are deliberately ABSENT from debt_holders.
+
+  See discrepancies.yaml -> federal_reserve_holdings. Do not add them.'
+snapshots:
+  debt_holders:
+    total_debt_t: 39.88
+    as_of: '2026-08-07'
+    split:
+    - k: public
+      label: Held by the public
+      amount_t: 32.14
+      share_pct: 80.6
+    - k: intragov
+      label: Intragovernmental holdings
+      amount_t: 7.74
+      share_pct: 19.4
+    public_split:
+    - k: domestic
+      label: Domestic holders
+      share_of_public_pct: 70
+    - k: foreign
+      label: Foreign holders
+      share_of_public_pct: 30
+    top_foreign:
+    - country: Japan
+      amount_t: 1.203
+    - country: United Kingdom
+      amount_t: 0.889
+    - country: China
+      amount_t: 0.683
+    foreign_share_history:
+    - year: 1970
+      share_of_gross_pct: 5
+    - year: 2025
+      share_of_gross_pct: 24
+  debt_maturity:
+    avg_maturity_months: 71
+    avg_maturity_as_of: 2026-06
+    longest_instrument_years: 30
+    marketable_total_t: 28.0
+    composition:
+    - k: bills
+      label: Bills
+      maturity: under 1 year
+      share_pct: 22
+      amount_t: 6.8
+    - k: notes
+      label: Notes
+      maturity: 2 to 10 years
+      amount_t: 15.9
+    - k: bonds
+      label: Bonds
+      maturity: 20 to 30 years
+      amount_t: 5.4
+    history_months:
+    - date: 2023-05
+      v: 75
+    - date: 2025-06
+      v: 72
+    - date: 2025-12
+      v: 70
+    - date: 2026-06
+      v: 71
+  income_tax_by_group:
+    tax_year: 2023
+    groups:
+    - g: Top 1%
+      income_share_pct: 20.6
+      tax_share_pct: 38.4
+      avg_rate_pct: 26.3
+    - g: Top 5%
+      tax_share_pct: 60.0
+    - g: Top 10%
+      income_share_pct: 47.6
+      tax_share_pct: 70.5
+    - g: Top 25%
+      tax_share_pct: 86.3
+    - g: Top 50%
+      income_share_pct: 87.7
+      tax_share_pct: 96.7
+    - g: Bottom 50%
+      tax_share_pct: 3.3
+      avg_rate_pct: 3.7
+    top1_tax_share_history:
+    - year: 2001
+      v: 33.2
+    - year: 2019
+      v: 38.8
+    - year: 2021
+      v: 45.8
+    - year: 2022
+      v: 40.4
+    - year: 2023
+      v: 38.4
+    cbo_top1_income_share:
+    - year: 1979
+      v: 9
+    - year: 2022
+      v: 18
+  oecd:
+    year: 2024
+    us_pct_gdp: 25.6
+    oecd_average_pct_gdp: 34.1
+    us_rank: 31
+    of_countries: 38
+    countries:
+    - c: Denmark
+      v: 45.2
+    - c: Italy
+      v: 42.8
+    - c: Germany
+      v: 38.0
+    - c: United Kingdom
+      v: 34.4
+    - c: OECD average
+      v: 34.1
+      is_average: true
+    - c: Czechia
+      v: 34.0
+    - c: Lithuania
+      v: 33.1
+    - c: Switzerland
+      v: 27.2
+    - c: United States
+      v: 25.6
+      is_us: true
+    - c: Ireland
+      v: 21.7
+    - c: Mexico
+      v: 18.3
+    us_history:
+    - year: 2000
+      v: 28.3
+    - year: 2009
+      v: 22.9
+    - year: 2022
+      v: 27.6
+    - year: 2023
+      v: 25.2
+    - year: 2024
+      v: 25.6

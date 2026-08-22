@@ -1,0 +1,83 @@
+{
+ "_meta": {
+  "title": "Federal revenue by source, FY1995 vs FY2025",
+  "source": "CBO Historical Budget Data, February 2026",
+  "units": {
+   "a": "FY1995 $ trillions",
+   "ag": "FY1995 percent of GDP",
+   "ar": "FY1995 percent of total revenue",
+   "b": "FY2025 $ trillions",
+   "bg": "FY2025 percent of GDP",
+   "br": "FY2025 percent of total revenue"
+  },
+  "notes": [
+   "Totals: FY1995 $1.352T / 17.88% of GDP. FY2025 $5.235T / 17.24% of GDP.",
+   "Customs duties are the outlier: $19B to $195B, 0.26% to 0.64% of GDP."
+  ]
+ },
+ "data": [
+  {
+   "label": "Individual income tax",
+   "a": 0.59,
+   "ag": 7.81,
+   "ar": 43.7,
+   "b": 2.656,
+   "bg": 8.75,
+   "br": 50.7
+  },
+  {
+   "label": "Payroll taxes",
+   "a": 0.484,
+   "ag": 6.41,
+   "ar": 35.8,
+   "b": 1.748,
+   "bg": 5.76,
+   "br": 33.4
+  },
+  {
+   "label": "Corporate income tax",
+   "a": 0.157,
+   "ag": 2.08,
+   "ar": 11.6,
+   "b": 0.452,
+   "bg": 1.49,
+   "br": 8.6
+  },
+  {
+   "label": "Excise taxes",
+   "a": 0.057,
+   "ag": 0.76,
+   "ar": 4.3,
+   "b": 0.106,
+   "bg": 0.35,
+   "br": 2.0
+  },
+  {
+   "label": "Customs duties",
+   "a": 0.019,
+   "ag": 0.26,
+   "ar": 1.4,
+   "b": 0.195,
+   "bg": 0.64,
+   "br": 3.7
+  },
+  {
+   "label": "Estate and gift taxes",
+   "a": 0.015,
+   "ag": 0.2,
+   "ar": 1.1,
+   "b": 0.029,
+   "bg": 0.1,
+   "br": 0.6
+  },
+  {
+   "label": "Miscellaneous",
+   "a": 0.029,
+   "ag": 0.38,
+   "ar": 2.1,
+   "b": 0.048,
+   "bg": 0.16,
+   "br": 0.9
+  }
+ ]
+}

@@ -1,0 +1,293 @@
+"""The validation gate.
+
+build.py writes NOTHING if any check here fails. These assertions encode the
+traps already documented in BRIEF.md and SOURCES.md, so that a source revision
+cannot quietly violate one.
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import Any
+
+from . import curated
+from .errors import ValidationFailed
+
+DATA_DIR = Path(__file__).resolve().parent.parent.parent / "src" / "data"
+
+
+class Checks:
+    def __init__(self) -> None:
+        self.failures: list[str] = []
+        self.passed = 0
+
+    def ok(self, condition: bool, message: str) -> None:
+        if condition:
+            self.passed += 1
+        else:
+            self.failures.append(message)
+
+    def close(self, near: float, target: float, tol: float, label: str) -> None:
+        self.ok(abs(near - target) <= tol, f"{label}: got {near:.4f}, expected {target} +/- {tol}")
+
+
+def _load(name: str) -> dict[str, Any]:
+    path = DATA_DIR / f"{name}.json"
+    if not path.exists():
+        raise ValidationFailed([f"{name}.json was not produced"])
+    return json.loads(path.read_text())
+
+
+def check_meta(c: Checks, names: list[str]) -> None:
+    for n in names:
+        doc = _load(n)
+        m = doc.get("_meta", {})
+        c.ok(bool(m.get("source")), f"{n}: _meta.source is missing or empty")
+        c.ok(bool(m.get("title")), f"{n}: _meta.title is missing")
+        c.ok("provenance" in m, f"{n}: _meta.provenance is missing")
+        c.ok(
+            "CBO data" != m.get("source"),
+            f"{n}: _meta.source was summarised; BRIEF.md rule 1 forbids this",
+        )
+
+
+def check_budget(c: Checks) -> None:
+    rows = _load("budget")["data"]
+    by = {r["y"]: r for r in rows}
+
+    for r in rows:
+        y = r["y"]
+        # SOURCES.md: mandatory is gross; ma + or + di + ni = ot.
+        c.ok(
+            abs((r["n_ma"] + r["n_or"] + r["n_di"] + r["n_ni"]) - r["n_ot"]) <= 0.002,
+            f"FY{y}: outlay components do not sum to total (gross mandatory + offsetting "
+            f"receipts + discretionary + net interest != outlays)",
+        )
+        c.ok(
+            abs((r["n_re"] - r["n_ot"]) - r["n_de"]) <= 0.002,
+            f"FY{y}: revenue - outlays != deficit",
+        )
+        c.ok(r["n_or"] <= 0, f"FY{y}: offsetting receipts should be negative, got {r['n_or']}")
+
+    span = [y for y in by if 1995 <= y <= 2025]
+    c.ok(len(span) == 31, f"expected 31 fiscal years FY1995-FY2025, got {len(span)}")
+
+    # Headline figures quoted in sections.md.
+    c.close(sum(-by[y]["n_de"] for y in span), 24.15, 0.05, "cumulative deficits FY1995-2025 $T")
+    c.close(sum(by[y]["n_ni"] for y in span), 9.4, 0.08, "net interest FY1995-2025 $T")
+    c.close(by[2025]["n_ot"], 7.01, 0.01, "FY2025 outlays $T")
+    c.close(by[2025]["n_re"], 5.235, 0.01, "FY2025 revenue $T")
+    c.close(by[1995]["n_ni"], 0.232, 0.002, "FY1995 net interest $T")
+    c.close(by[2025]["n_ni"], 0.970, 0.002, "FY2025 net interest $T")
+
+    # SOURCES.md: FY2015 is a TROUGH, FY2003 is the series low. If a revision ever
+    # makes FY2015 the true minimum, section 7's wording must change.
+    low = min(span, key=lambda y: by[y]["n_ni"])
+    c.ok(low == 2003, f"series-low net interest year is FY{low}, not FY2003; section 7 says "
+                      f"'trough' for FY2015 on the assumption FY2003 is lower")
+
+    surplus = sorted(y for y in span if by[y]["n_de"] > 0)
+    c.ok(surplus == [1998, 1999, 2000, 2001],
+         f"surplus years are {surplus}, but sections.md section 5 says 1998-2001")
+
+    # Control coverage must not silently shrink.
+    with_ctl = [r["y"] for r in rows if r.get("ctl")]
+    c.ok(min(with_ctl) == 1995 and max(with_ctl) == 2025,
+         f"party control covers FY{min(with_ctl)}-FY{max(with_ctl)}, expected FY1995-FY2025")
+
+
+def check_laws(c: Checks) -> None:
+    rows = _load("budget")["data"]
+    laws = [l for r in rows for l in r["L"]]
+    totals = curated.law_totals()
+
+    c.ok(len(laws) == 23, f"expected 23 major laws, found {len(laws)}")
+
+    scored = [l["score_t"] for l in laws if l["score_t"] is not None]
+    c.ok(len(scored) == 21, f"expected 21 scored laws (2 x 1997 predate the convention), "
+                            f"got {len(scored)}")
+    c.close(sum(scored), totals["net_scored_t"], 0.02, "net scored legislative cost $T")
+    c.close(sum(s for s in scored if s > 0), totals["gross_increases_t"], 0.02,
+            "gross legislative increases $T")
+
+    for l in laws:
+        c.ok(bool(l.get("date")), f"law {l['name']!r} has no enactment date")
+        c.ok(bool(l.get("president")), f"law {l['name']!r} has no signing president")
+
+
+def check_revenue(c: Checks) -> None:
+    rows = _load("revenue_sources")["data"]
+    parts = ["ii", "pr", "ci", "ex", "cu", "eg", "mi"]
+    for r in rows:
+        s = sum(r[f"n_{p}"] for p in parts)
+        c.ok(abs(s - r["n_tot"]) <= 0.003,
+             f"FY{r['y']}: revenue components sum to {s:.3f}, total is {r['n_tot']:.3f}")
+    by = {r["y"]: r for r in rows}
+    c.close(by[1995]["n_tot"], 1.352, 0.002, "FY1995 total revenue $T")
+    c.close(by[2025]["n_tot"], 5.235, 0.002, "FY2025 total revenue $T")
+    c.close(by[2025]["g_ii"], 8.75, 0.02, "FY2025 individual income tax, % of GDP")
+
+
+def check_economy(c: Checks) -> None:
+    doc = _load("economy")
+    rows = doc["data"]
+    boundary = doc["_meta"].get("estimate_boundary", {}).get("last_actual_fy")
+    c.ok(boundary is not None, "economy: _meta.estimate_boundary.last_actual_fy is missing; "
+                               "charts cannot separate actuals from projections without it")
+    if boundary:
+        actual = [r["y"] for r in rows if r["actual"]]
+        c.ok(max(actual) == boundary,
+             f"economy: rows flagged actual run to FY{max(actual)} but boundary says {boundary}")
+        c.ok(any(not r["actual"] for r in rows),
+             "economy: no rows flagged as projections, but CBO publishes them; "
+             "the actual/projected split may have broken")
+    # The deflator is the basis for every real-dollar figure on the site.
+    base = [r for r in rows if r["y"] == boundary]
+    c.close(base[0]["gdp_deflator"], 100.0, 0.001, "GDP deflator at base year")
+
+
+def check_debt(c: Checks) -> None:
+    doc = _load("debt")
+    rows = doc["data"]
+    by = {r["y"]: r for r in rows if r.get("year_end")}
+    c.close(by[1995]["debt"], 4.97, 0.01, "FY1995 gross debt $T")
+    c.ok(all(r["debt"] > 0 for r in rows), "debt: a non-positive value appeared")
+
+    years = sorted(by)
+    c.ok(years == list(range(years[0], years[-1] + 1)),
+         "debt: fiscal year-end series has gaps")
+
+    cur = doc["_meta"]["current"]
+    c.close(cur["held_by_public_t"] + cur["intragovernmental_t"], cur["total_t"], 0.01,
+            "debt: public + intragovernmental != total")
+    c.ok(60 <= cur["public_share_of_gross_pct"] <= 95,
+         f"debt: public share of gross is {cur['public_share_of_gross_pct']}%, outside a "
+         "plausible range; the denominator may have been swapped")
+
+    # A year-end value must never be silently replaced by a mid-year reading.
+    c.ok(all(r.get("as_of") for r in rows if not r.get("year_end")),
+         "debt: a non-year-end row has no as_of date")
+
+
+def check_income(c: Checks) -> None:
+    doc = _load("income_inequality")
+    rows = {r["y"]: r for r in doc["data"]}
+    c.ok(doc["_meta"].get("gini_basis") == "families",
+         "income_inequality: gini_basis is not 'families'; SOURCES.md requires the family "
+         "series be labelled, or readers will correct it with the household figure")
+    c.close(rows[1995]["mhi"], 65380, 1, "FY1995 real median household income")
+    c.close(rows[2024]["mhi"], 83730, 1, "2024 real median household income")
+    c.close(rows[2024]["gini"], 0.456, 0.001, "2024 family Gini")
+    c.close(rows[2024]["top"], 37.0, 0.01, "2024 top statutory marginal rate")
+    c.close(rows[1944]["top"], 94.0, 0.01, "1944 top statutory marginal rate")
+
+    # Missing must stay missing. A zero here would chart as a real observation.
+    c.ok(rows[1913]["mhi"] is None and rows[1913]["gini"] is None,
+         "income_inequality: 1913 has a value for a series that does not start until later; "
+         "absent data must be null, never zero")
+    for y, r in rows.items():
+        for k in ("mhi", "gini", "top"):
+            c.ok(r[k] is None or r[k] > 0, f"income_inequality: {k} is non-positive in {y}")
+
+
+def check_snapshots(c: Checks) -> None:
+    holders = _load("debt_holders")
+    d = holders["data"]
+    split = {s["k"]: s for s in d["split"]}
+    c.close(split["public"]["amount_t"] + split["intragov"]["amount_t"], d["total_debt_t"], 0.02,
+            "debt_holders: split does not sum to total")
+    c.close(sum(s["share_pct"] for s in d["split"]), 100.0, 0.2,
+            "debt_holders: shares do not sum to 100")
+    c.ok(sum(s["share_of_public_pct"] for s in d["public_split"]) == 100,
+         "debt_holders: public split shares do not sum to 100")
+    # SOURCES.md: omit the Fed rather than pick between $4.53T and $4.9T.
+    blob = json.dumps(d).lower()
+    c.ok("federal reserve" not in blob and "fed_holdings" not in blob,
+         "debt_holders: Federal Reserve holdings appeared; SOURCES.md requires they be "
+         "OMITTED rather than picked between conflicting figures")
+
+    oecd = _load("oecd")["data"]
+    c.ok(oecd["us_pct_gdp"] == 25.6 and oecd["oecd_average_pct_gdp"] == 34.1,
+         "oecd: headline figures moved; sections.md quotes 25.6% and 34.1%")
+    us = [x for x in oecd["countries"] if x.get("is_us")]
+    c.ok(len(us) == 1 and us[0]["v"] == oecd["us_pct_gdp"],
+         "oecd: the US row disagrees with us_pct_gdp")
+
+    grp = _load("income_tax_by_group")["data"]
+    top1 = [g for g in grp["groups"] if g["g"] == "Top 1%"][0]
+    c.close(top1["tax_share_pct"], 38.4, 0.05, "income_tax_by_group: top 1% tax share")
+    c.ok(top1["income_share_pct"] is not None,
+         "income_tax_by_group: the top 1% income share is missing. Showing the tax share "
+         "without it misleads, per the curated note.")
+
+
+def check_party_splits(c: Checks) -> None:
+    doc = _load("party_splits")
+    rows = doc["data"]
+    c.ok(len(rows) == 23, f"party_splits: expected 23 laws, got {len(rows)}")
+
+    # The one independently verified split. If this drifts, the join is wrong.
+    tcja = next((r for r in rows if r["public_law"] == "115-97"), None)
+    c.ok(tcja is not None, "party_splits: PL 115-97 is missing; the regression cannot run")
+    if tcja:
+        c.ok((tcja["house"]["r"]["yea"], tcja["house"]["r"]["nay"]) == (224, 12),
+             "party_splits: TCJA House Republicans do not reproduce 224-12")
+        c.ok((tcja["house"]["d_caucus"]["yea"], tcja["house"]["d_caucus"]["nay"]) == (0, 189),
+             "party_splits: TCJA House Democrats do not reproduce 0-189")
+        c.ok((tcja["senate"]["r"]["yea"], tcja["senate"]["r"]["nay"]) == (51, 0),
+             "party_splits: TCJA Senate Republicans do not reproduce 51-0")
+        c.ok((tcja["senate"]["d_caucus"]["yea"], tcja["senate"]["d_caucus"]["nay"]) == (0, 48),
+             "party_splits: TCJA Senate Democrats do not reproduce 0-48 on the caucus basis")
+
+    for r in rows:
+        for ch in ("house", "senate"):
+            v = r[ch]
+            if v is None:
+                # A missing chamber must say why. Silence would read as unanimity.
+                c.ok(bool(r.get("note")),
+                     f"party_splits: {r['public_law']} has no {ch} vote and no note explaining "
+                     "why. An absent roll call must never render as agreement.")
+                continue
+            c.ok(v["yea"] == v["r"]["yea"] + v["d"]["yea"] + v["i"]["yea"],
+                 f"party_splits: {r['public_law']} {ch} yea total does not match its parts")
+            c.ok(v["d_caucus"]["yea"] == v["d"]["yea"] + v["i"]["yea"],
+                 f"party_splits: {r['public_law']} {ch} caucus total is not party + independents")
+            # A 50-50 Senate vote PASSES on the Vice President's tiebreak, which is
+            # not in the roll call. JGTRRA, the IRA and the OBBBA all cleared this
+            # way, so a tie is a pass in the Senate and a failure in the House.
+            floor = v["nay"] if ch == "senate" else v["nay"] + 1
+            c.ok(v["yea"] >= floor,
+                 f"party_splits: {r['public_law']} {ch} records {v['yea']}-{v['nay']}, a failed "
+                 "vote; the curated mapping should point at final passage")
+            if ch == "senate" and v["yea"] == v["nay"]:
+                c.ok(v["yea"] == 50,
+                     f"party_splits: {r['public_law']} senate is tied at {v['yea']} but a "
+                     "tiebreak only applies at 50-50")
+
+    chars = [r["character"] for r in rows]
+    c.ok(chars.count("cross-party") == 16,
+         f"party_splits: {chars.count('cross-party')} cross-party laws, sections.md says 16")
+    c.ok(chars.count("party-line") == 7,
+         f"party_splits: {chars.count('party-line')} party-line laws, sections.md says 7")
+
+
+def run(outputs: list[str]) -> Checks:
+    c = Checks()
+    check_meta(c, outputs)
+    if "budget" in outputs:
+        check_budget(c)
+        check_laws(c)
+    if "revenue_sources" in outputs:
+        check_revenue(c)
+    if "economy" in outputs:
+        check_economy(c)
+    if "debt" in outputs:
+        check_debt(c)
+    if "income_inequality" in outputs:
+        check_income(c)
+    if "debt_holders" in outputs:
+        check_snapshots(c)
+    if "party_splits" in outputs:
+        check_party_splits(c)
+    return c

@@ -1,0 +1,394 @@
+_comment: 'Curated. NEVER machine-written. 23 major deficit-moving laws since 1995.
+
+  score_t is the ten-year cost AS ESTIMATED AT ENACTMENT, not as realised.
+
+  PL 105-33 and 105-34 predate the ten-year convention and carry score_t: null;
+
+  they must be excluded from cost totals but still carry vote splits.
+
+  verified_* on PL 115-97 is [party_yea, party_nay] for [R..., D...] and is the
+
+  regression target for the Voteview join.
+
+  rollcall gives the FINAL PASSAGE vote per chamber, selected by hand. A bill has
+
+  many roll calls (TCJA alone has five in the House) and picking by date is wrong.
+
+  A null chamber means NO ROLL CALL EXISTS, usually a voice vote. That is missing
+
+  data, never unanimity, and must not be rendered as a vote.'
+totals:
+  net_scored_t: 16.75
+  gross_increases_t: 20.73
+  cross_party_t: 9.24
+  party_line_t: 7.52
+  comment: Reconciliation targets asserted by the validation gate.
+laws:
+- fy: 1997
+  name: Balanced Budget Act of 1997
+  public_law: 105-33
+  date: '1997-08-05'
+  score_t: null
+  vote_character: Bipartisan
+  president: Clinton
+  president_party: D
+  control_at_enactment: DRR
+  control_year: M
+  legacy_comp: XP
+  rollcall:
+    congress: 105
+    house: 342
+    senate: 209
+- fy: 1997
+  name: Taxpayer Relief Act of 1997
+  public_law: 105-34
+  date: '1997-08-05'
+  score_t: null
+  vote_character: Bipartisan
+  president: Clinton
+  president_party: D
+  control_at_enactment: DRR
+  control_year: M
+  legacy_comp: XP
+  rollcall:
+    congress: 105
+    house: 346
+    senate: 211
+- fy: 2001
+  name: Economic Growth and Tax Relief Reconciliation Act
+  public_law: 107-16
+  date: '2001-06-07'
+  score_t: 1.35
+  vote_character: Bipartisan lean R
+  president: G.W. Bush
+  president_party: R
+  control_at_enactment: RRR
+  control_year: R
+  legacy_comp: XP
+  rollcall:
+    congress: 107
+    house: 148
+    senate: 170
+- fy: 2003
+  name: Jobs and Growth Tax Relief Reconciliation Act
+  public_law: 108-27
+  date: '2003-05-28'
+  score_t: 0.35
+  vote_character: Party line
+  president: G.W. Bush
+  president_party: R
+  control_at_enactment: RRR
+  control_year: R
+  legacy_comp: PLR
+  rollcall:
+    congress: 108
+    house: 224
+    senate: 196
+- fy: 2003
+  name: Medicare Modernization Act
+  public_law: 108-173
+  date: '2003-12-08'
+  score_t: 0.395
+  vote_character: Mostly R
+  president: G.W. Bush
+  president_party: R
+  control_at_enactment: RRR
+  control_year: R
+  legacy_comp: XP
+  rollcall:
+    congress: 108
+    house: 667
+    senate: 459
+- fy: 2008
+  name: Emergency Economic Stabilization Act
+  public_law: 110-343
+  date: '2008-10-03'
+  score_t: 0.7
+  vote_character: Bipartisan
+  president: G.W. Bush
+  president_party: R
+  control_at_enactment: RDD
+  control_year: M
+  legacy_comp: XP
+  rollcall:
+    congress: 110
+    house: 1856
+    senate: 655
+- fy: 2009
+  name: American Recovery and Reinvestment Act
+  public_law: 111-5
+  date: '2009-02-17'
+  score_t: 0.787
+  vote_character: Party line
+  president: Obama
+  president_party: D
+  control_at_enactment: DDD
+  control_year: D
+  legacy_comp: PLD
+  rollcall:
+    congress: 111
+    house: 69
+    senate: 64
+- fy: 2010
+  name: Affordable Care Act + Reconciliation Act
+  public_law: 111-148 / 111-152
+  date: '2010-03-23'
+  score_t: -0.143
+  vote_character: Party line
+  president: Obama
+  president_party: D
+  control_at_enactment: DDD
+  control_year: D
+  legacy_comp: PLD
+  rollcall:
+    congress: 111
+    house: 1150
+    senate: 396
+    note: Vote shown is for HR3590 (PL 111-148), the Affordable Care Act itself. The companion reconciliation
+      act (PL 111-152, HR4872) was a separate vote. The score combines both.
+- fy: 2010
+  name: Tax Relief, Unemployment Insurance Reauthorization and Job Creation Act
+  public_law: 111-312
+  date: '2010-12-17'
+  score_t: 0.858
+  vote_character: Bipartisan
+  president: Obama
+  president_party: D
+  control_at_enactment: DDD
+  control_year: D
+  legacy_comp: XP
+  rollcall:
+    congress: 111
+    house: 1630
+    senate: 673
+- fy: 2011
+  name: Budget Control Act of 2011
+  public_law: 112-25
+  date: '2011-08-02'
+  score_t: -2.1
+  vote_character: Bipartisan
+  president: Obama
+  president_party: D
+  control_at_enactment: DRD
+  control_year: M
+  legacy_comp: XP
+  rollcall:
+    congress: 112
+    house: 686
+    senate: 123
+- fy: 2012
+  name: American Taxpayer Relief Act of 2012
+  public_law: 112-240
+  date: '2013-01-02'
+  score_t: 3.9
+  vote_character: Bipartisan
+  president: Obama
+  president_party: D
+  control_at_enactment: DRD
+  control_year: M
+  legacy_comp: XP
+  rollcall:
+    congress: 112
+    house: 1602
+    senate: 486
+    note: Senate voted first, on 1 January 2013 (RC486). The House concurred the same day (RC1602). Signed
+      2 January 2013 but scored against FY2012.
+- fy: 2015
+  name: PATH Act
+  public_law: 114-113
+  date: '2015-12-18'
+  score_t: 0.68
+  vote_character: Bipartisan
+  president: Obama
+  president_party: D
+  control_at_enactment: DRR
+  control_year: M
+  legacy_comp: XP
+  rollcall:
+    congress: 114
+    house: 700
+    senate: 339
+    note: 'HR2029 carried both the PATH Act tax title and the FY2016 omnibus. The House voted them separately
+      (PATH: RC700); the Senate voted the combined package (RC339).'
+- fy: 2017
+  name: Tax Cuts and Jobs Act
+  public_law: 115-97
+  date: '2017-12-22'
+  score_t: 1.456
+  vote_character: Party line
+  president: Trump I
+  president_party: R
+  control_at_enactment: RRR
+  control_year: R
+  legacy_comp: PLR
+  rollcall:
+    congress: 115
+    house: 698
+    senate: 323
+    note: Senate RC323 (20 Dec 2017, 51-48) is FINAL passage after the conference. RC303 (2 Dec, 51-49)
+      was the initial Senate passage, on which Corker voted no; he switched to yes on final passage and
+      McCain was absent. Using RC303 reproduces R 51-1, not the House Clerk record of R 51-0.
+  verified_house:
+  - 224
+  - 12
+  - 0
+  - 189
+  verified_senate:
+  - 51
+  - 0
+  - 0
+  - 48
+  verified_source: House Clerk RC699; Ballotpedia
+- fy: 2018
+  name: Bipartisan Budget Act of 2018
+  public_law: 115-123
+  date: '2018-02-09'
+  score_t: 0.32
+  vote_character: Bipartisan
+  president: Trump I
+  president_party: R
+  control_at_enactment: RRR
+  control_year: R
+  legacy_comp: XP
+  rollcall:
+    congress: 115
+    house: 776
+    senate: 356
+- fy: 2019
+  name: Bipartisan Budget Act of 2019
+  public_law: 116-37
+  date: '2019-08-02'
+  score_t: 1.7
+  vote_character: Bipartisan
+  president: Trump I
+  president_party: R
+  control_at_enactment: RDR
+  control_year: M
+  legacy_comp: XP
+  rollcall:
+    congress: 116
+    house: 510
+    senate: 262
+- fy: 2020
+  name: CARES Act
+  public_law: 116-136
+  date: '2020-03-27'
+  score_t: 1.7
+  vote_character: Bipartisan
+  president: Trump I
+  president_party: R
+  control_at_enactment: RDR
+  control_year: M
+  legacy_comp: XP
+  rollcall:
+    congress: 116
+    house: null
+    senate: 508
+    note: House passed the CARES Act by VOICE VOTE on 27 March 2020. No roll call exists, so no per-party
+      split can be counted. This is an absence of data, not a unanimous vote, and must never render as
+      0-0 or as agreement.
+- fy: 2020
+  name: Consolidated Appropriations Act 2021
+  public_law: 116-260
+  date: '2020-12-27'
+  score_t: 0.9
+  vote_character: Bipartisan
+  president: Trump I
+  president_party: R
+  control_at_enactment: RDR
+  control_year: M
+  legacy_comp: XP
+  rollcall:
+    congress: 116
+    house: 950
+    senate: 717
+- fy: 2021
+  name: American Rescue Plan Act
+  public_law: 117-2
+  date: '2021-03-11'
+  score_t: 1.9
+  vote_character: Party line
+  president: Biden
+  president_party: D
+  control_at_enactment: DDD
+  control_year: D
+  legacy_comp: PLD
+  rollcall:
+    congress: 117
+    house: 71
+    senate: 110
+- fy: 2021
+  name: Infrastructure Investment and Jobs Act
+  public_law: 117-58
+  date: '2021-11-15'
+  score_t: 0.256
+  vote_character: Bipartisan
+  president: Biden
+  president_party: D
+  control_at_enactment: DDD
+  control_year: D
+  legacy_comp: XP
+  rollcall:
+    congress: 117
+    house: 368
+    senate: 314
+- fy: 2022
+  name: CHIPS and Science Act
+  public_law: 117-167
+  date: '2022-08-09'
+  score_t: 0.079
+  vote_character: Bipartisan
+  president: Biden
+  president_party: D
+  control_at_enactment: DDD
+  control_year: D
+  legacy_comp: XP
+  rollcall:
+    congress: 117
+    house: 851
+    senate: 799
+- fy: 2022
+  name: Inflation Reduction Act
+  public_law: 117-169
+  date: '2022-08-16'
+  score_t: -0.238
+  vote_character: Party line
+  president: Biden
+  president_party: D
+  control_at_enactment: DDD
+  control_year: D
+  legacy_comp: PLD
+  rollcall:
+    congress: 117
+    house: 867
+    senate: 853
+- fy: 2023
+  name: Fiscal Responsibility Act of 2023
+  public_law: 118-5
+  date: '2023-06-03'
+  score_t: -1.5
+  vote_character: Bipartisan
+  president: Biden
+  president_party: D
+  control_at_enactment: DRD
+  control_year: M
+  legacy_comp: XP
+  rollcall:
+    congress: 118
+    house: 242
+    senate: 146
+- fy: 2025
+  name: One Big Beautiful Bill Act
+  public_law: 119-21
+  date: '2025-07-04'
+  score_t: 3.4
+  vote_character: Party line
+  president: Trump II
+  president_party: R
+  control_at_enactment: RRR
+  control_year: R
+  legacy_comp: PLR
+  rollcall:
+    congress: 119
+    house: 189
+    senate: 372
