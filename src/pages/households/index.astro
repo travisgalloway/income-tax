@@ -1,0 +1,29 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+
+const sections = [
+  { id: 'what-a-household-earns', label: 'What a household earns' },
+  { id: 'the-spread', label: 'The spread' },
+  { id: 'a-century-of-brackets', label: 'A century of brackets' },
+  { id: 'statutory-vs-effective', label: 'Statutory is not effective' },
+  { id: 'who-pays', label: 'Who pays the income tax' },
+  { id: 'the-bill-you-do-not-see', label: 'The bill you do not see' },
+  { id: 'limits', label: 'Limits' },
+]
+---
+
+<BaseLayout
+  title="Households | US federal finance"
+  description="Household income, inequality, and what people actually pay in tax."
+  sections={sections}
+>
+  <p class="kicker">Route 2 of 3</p>
+  <h1>Households</h1>
+  <p class="standfirst">
+    What a household earns, how far the spread runs, and what the tax bill actually looks
+    like once payroll tax is counted.
+  </p>
+  {sections.map((s) => (
+    <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
+  ))}
+</BaseLayout>

@@ -1,0 +1,56 @@
+---
+/**
+ * The figure apparatus.
+ *
+ * Set the way a statistical publication sets one: a numbered head with a rule,
+ * the graphic, then Source and Note lines beneath. The apparatus is not
+ * decoration. It is how BRIEF.md's data-integrity rules become structural:
+ * rule 1 (every chart renders its source, verbatim, never summarised) and
+ * rule 2 (both axes carry units) are REQUIRED props, so a figure that omits
+ * either cannot build.
+ */
+interface Props {
+  /** The finding, in a sentence. Not a description of the shape. */
+  ariaLabel: string
+  /** Short italic title beside the figure number. */
+  title: string
+  /** _meta.source, VERBATIM. Never summarise it to "CBO data". */
+  source: string
+  /** Unit for the horizontal axis, e.g. "Fiscal year". */
+  xUnit: string
+  /** Unit for the vertical axis, e.g. "$ trillions". */
+  yUnit: string
+  /** Optional vintage or retrieval stamp, appended to the source line. */
+  vintage?: string | null
+  /** Scope or method warning. Belongs here in the apparatus, never in a tooltip. */
+  note?: string
+  id?: string
+}
+
+const { ariaLabel, title, source, xUnit, yUnit, vintage, note, id } = Astro.props
+
+/** The source string is rendered verbatim, so the vintage is appended as its
+ *  own sentence rather than run onto the end of it. */
+const sourceLine = vintage
+  ? `${source.replace(/[.\s]*$/, '')}. ${vintage}`
+  : source
+
+if (!ariaLabel?.trim()) throw new Error('Figure: ariaLabel is required and must state the finding')
+if (!title?.trim()) throw new Error('Figure: title is required')
+if (!source?.trim()) throw new Error('Figure: source is required and is rendered verbatim')
+if (!xUnit?.trim() || !yUnit?.trim()) throw new Error('Figure: both axes must name their units')
+---
+
+<figure class="figure" id={id}>
+  <div class="figure-head">
+    <span class="figure-title">{title}</span>
+  </div>
+
+  <slot />
+
+  <figcaption>
+    <span><span class="lead">Units.</span> {xUnit} against {yUnit}.</span>
+    {note && <span class="figure-caveat"><span class="lead">Note.</span> {note}</span>}
+    <span><span class="lead">Source.</span> {sourceLine}</span>
+  </figcaption>
+</figure>

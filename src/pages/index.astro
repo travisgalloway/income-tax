@@ -1,0 +1,28 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+
+const sections = [
+  { id: 'one-picture', label: 'One picture' },
+  { id: 'growth-shadow', label: 'Growth and its shadow' },
+  { id: 'who-works', label: 'Who works' },
+  { id: 'prices-rates', label: 'Prices and rates' },
+  { id: 'labor-capital', label: 'Labor and capital' },
+  { id: 'limits', label: 'Limits' },
+]
+---
+
+<BaseLayout
+  title="The economy | US federal finance"
+  description="Real growth, work, prices and the split between labor and capital, from 1950."
+  sections={sections}
+>
+  <p class="kicker">Route 1 of 3</p>
+  <h1>The economy</h1>
+  <p class="standfirst">
+    The denominators everything else on this site is measured against, and one thing they do
+    not show on their own.
+  </p>
+  {sections.map((s) => (
+    <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
+  ))}
+</BaseLayout>

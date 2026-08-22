@@ -1,0 +1,73 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import Figure from '../../components/Figure.astro'
+import { DebtChart } from '../../components/islands/DebtChart'
+import { debt, vintageOf } from '../../data'
+
+const sections = [
+  { id: 'forty-trillion', label: 'The $40 trillion' },
+  { id: 'who-holds-it', label: 'Who holds it' },
+  { id: 'how-old', label: 'How old is the debt' },
+  { id: 'whole-budget', label: 'The whole budget' },
+  { id: 'structural-gap', label: 'The structural gap' },
+  { id: 'what-congress-votes-on', label: 'What Congress votes on' },
+  { id: 'net-interest', label: 'Net interest' },
+  { id: 'the-laws', label: 'The laws' },
+  { id: 'passed-signed', label: 'Who passed it, who signed it' },
+  { id: 'where-money-comes-from', label: 'Where the money comes from' },
+  { id: 'by-state', label: 'By state' },
+  { id: 'limits', label: 'What this cannot tell you' },
+]
+---
+
+<BaseLayout
+  title="Government | US federal finance"
+  description="Federal taxation, spending, debt and the votes behind them, FY1962 to FY2025."
+  sections={sections}
+>
+  <p class="kicker">Route 3 of 3</p>
+  <h1>Government</h1>
+  <p class="standfirst">
+    What the federal government collects, what it spends, what it owes, and who voted for
+    each of it.
+  </p>
+  <section id="forty-trillion">
+    <p class="kicker"><span class="section-no">Section 1</span></p>
+    <h2>Ten years, twice the debt</h2>
+    <p class="standfirst">
+      The US crossed $40 trillion in August 2026. Ten fiscal years ago it was $19.6
+      trillion. Measured against the economy, though, the same decade moved the debt from
+      105% of GDP to 124%.
+    </p>
+    <p class="finding">
+      Debt doubled in ten fiscal years, from $19.57T at the close of FY2016 to $40T in
+      August 2026, a 2.04x rise.
+    </p>
+
+    <Figure
+      ariaLabel="Debt doubled in ten fiscal years, from $19.57 trillion at the close of FY2016 to $40 trillion in August 2026."
+      title="Total public debt outstanding at fiscal year end, 1995 to 2026"
+      source={debt._meta.source}
+      vintage={vintageOf(debt._meta)}
+      xUnit="Fiscal year"
+      yUnit="gross debt in nominal $ trillions, or percent of GDP"
+      note="The final point is a daily close, not a fiscal year-end value, and carries no share of GDP because FY2026 GDP is not final."
+    >
+      <DebtChart client:visible rows={debt.data} />
+    </Figure>
+
+    <p class="prose">
+      Doubling is not new. FY2005 to FY2015 ran $7.9 trillion to $18.2 trillion, a 2.3x
+      rise, faster than this decade. What changed is the base. That decade added $10.2
+      trillion. This one added $20.3 trillion, an average of $2.0 trillion a year.
+    </p>
+    <p class="prose">
+      CBO projected in May 2023 that the debt would reach $40 trillion in 2028. It arrived
+      about two years early.
+    </p>
+  </section>
+
+  {sections.slice(1).map((s) => (
+    <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
+  ))}
+</BaseLayout>
