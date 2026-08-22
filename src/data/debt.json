@@ -1,0 +1,235 @@
+{
+ "_meta": {
+  "title": "Total public debt outstanding at fiscal year end, FY1995-FY2026",
+  "source": "US Treasury, Historical Debt Outstanding and Debt to the Penny. GDP denominator from CBO Historical Budget Data, Feb 2026",
+  "units": {
+   "debt": "nominal $ trillions",
+   "gdp_share": "gross debt as percent of GDP"
+  },
+  "notes": [
+   "FY2026 value is the 19 August 2026 crossing of $40T, not a year-end close; gdp_share is null because FY2026 GDP is not final.",
+   "FY2016 $19.57T to $40T is a 2.04x rise in ten fiscal years. FY2005 to FY2015 was 2.29x, a faster doubling from a smaller base."
+  ],
+  "provenance": {
+   "generator": "monthly/treasury.py",
+   "git_sha": "5920f6f",
+   "generated_at": "2026-08-22T17:51:54Z",
+   "retrieved_at": "2026-08-20"
+  },
+  "coverage": {
+   "start": 1995,
+   "end": 2026,
+   "gdp_share_available_through": 2025
+  },
+  "current": {
+   "as_of": "2026-08-20",
+   "total_t": 40.033,
+   "held_by_public_t": 32.279,
+   "intragovernmental_t": 7.754,
+   "public_share_of_gross_pct": 80.6
+  },
+  "threshold_crossing": {
+   "threshold_t": 40.0,
+   "record_date": "2026-08-18",
+   "value_t": 40.047,
+   "rule": "Both are right and they are not in conflict. Debt to the Penny reports a date's CLOSING balance on the next business day, so the balance dated 18 August was published on 19 August. Say \"closed above $40 trillion on 18 August 2026, reported the following day\" or cite the reported date explicitly. Never present the two as competing figures, and never let the pipeline silently overwrite the cited date when Treasury revises the series."
+  },
+  "denominator_warning": "Never present a share without saying which denominator it uses."
+ },
+ "data": [
+  {
+   "y": 1995,
+   "debt": 4.974,
+   "gdp_share": 65.8,
+   "year_end": true
+  },
+  {
+   "y": 1996,
+   "debt": 5.225,
+   "gdp_share": 65.7,
+   "year_end": true
+  },
+  {
+   "y": 1997,
+   "debt": 5.413,
+   "gdp_share": 64.1,
+   "year_end": true
+  },
+  {
+   "y": 1998,
+   "debt": 5.526,
+   "gdp_share": 61.9,
+   "year_end": true
+  },
+  {
+   "y": 1999,
+   "debt": 5.656,
+   "gdp_share": 59.7,
+   "year_end": true
+  },
+  {
+   "y": 2000,
+   "debt": 5.674,
+   "gdp_share": 56.1,
+   "year_end": true
+  },
+  {
+   "y": 2001,
+   "debt": 5.807,
+   "gdp_share": 55.2,
+   "year_end": true
+  },
+  {
+   "y": 2002,
+   "debt": 6.228,
+   "gdp_share": 57.5,
+   "year_end": true
+  },
+  {
+   "y": 2003,
+   "debt": 6.783,
+   "gdp_share": 60.1,
+   "year_end": true
+  },
+  {
+   "y": 2004,
+   "debt": 7.379,
+   "gdp_share": 61.3,
+   "year_end": true
+  },
+  {
+   "y": 2005,
+   "debt": 7.933,
+   "gdp_share": 61.8,
+   "year_end": true
+  },
+  {
+   "y": 2006,
+   "debt": 8.507,
+   "gdp_share": 62.4,
+   "year_end": true
+  },
+  {
+   "y": 2007,
+   "debt": 9.008,
+   "gdp_share": 63.0,
+   "year_end": true
+  },
+  {
+   "y": 2008,
+   "debt": 10.025,
+   "gdp_share": 67.8,
+   "year_end": true
+  },
+  {
+   "y": 2009,
+   "debt": 11.91,
+   "gdp_share": 82.3,
+   "year_end": true
+  },
+  {
+   "y": 2010,
+   "debt": 13.562,
+   "gdp_share": 91.1,
+   "year_end": true
+  },
+  {
+   "y": 2011,
+   "debt": 14.79,
+   "gdp_share": 95.6,
+   "year_end": true
+  },
+  {
+   "y": 2012,
+   "debt": 16.066,
+   "gdp_share": 99.7,
+   "year_end": true
+  },
+  {
+   "y": 2013,
+   "debt": 16.738,
+   "gdp_share": 100.3,
+   "year_end": true
+  },
+  {
+   "y": 2014,
+   "debt": 17.824,
+   "gdp_share": 102.3,
+   "year_end": true
+  },
+  {
+   "y": 2015,
+   "debt": 18.151,
+   "gdp_share": 99.9,
+   "year_end": true
+  },
+  {
+   "y": 2016,
+   "debt": 19.573,
+   "gdp_share": 105.0,
+   "year_end": true
+  },
+  {
+   "y": 2017,
+   "debt": 20.245,
+   "gdp_share": 104.5,
+   "year_end": true
+  },
+  {
+   "y": 2018,
+   "debt": 21.516,
+   "gdp_share": 105.3,
+   "year_end": true
+  },
+  {
+   "y": 2019,
+   "debt": 22.719,
+   "gdp_share": 106.7,
+   "year_end": true
+  },
+  {
+   "y": 2020,
+   "debt": 26.945,
+   "gdp_share": 126.3,
+   "year_end": true
+  },
+  {
+   "y": 2021,
+   "debt": 28.429,
+   "gdp_share": 123.4,
+   "year_end": true
+  },
+  {
+   "y": 2022,
+   "debt": 30.929,
+   "gdp_share": 121.0,
+   "year_end": true
+  },
+  {
+   "y": 2023,
+   "debt": 33.167,
+   "gdp_share": 121.1,
+   "year_end": true
+  },
+  {
+   "y": 2024,
+   "debt": 35.465,
+   "gdp_share": 122.5,
+   "year_end": true
+  },
+  {
+   "y": 2025,
+   "debt": 37.638,
+   "gdp_share": 124.0,
+   "year_end": true
+  },
+  {
+   "y": 2026,
+   "debt": 40.047,
+   "gdp_share": null,
+   "year_end": false,
+   "as_of": "2026-08-18",
+   "note": "first close at or above $40T; not a fiscal year-end value"
+  }
+ ]
+}
