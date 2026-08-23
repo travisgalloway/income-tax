@@ -202,3 +202,27 @@ def test_every_mapped_rollcall_passed(splits):
             if v is None:
                 continue
             assert v["yea"] >= (v["nay"] if ch == "senate" else v["nay"] + 1), f"{pl} {ch}"
+
+
+# ---- issue #6: debt holders and repricing ---------------------------------
+
+def test_crossing_date_is_reconciled_not_competing():
+    """discrepancies.yaml -> forty_trillion_crossing_date: both dates are right
+    and must never be presented as competing figures."""
+    crossing = load("debt")["_meta"]["threshold_crossing"]
+    assert crossing["record_date"] == "2026-08-18"
+    assert crossing["reported_date"] == "2026-08-19"
+
+    rows = load("debt")["data"]
+    non_year_end = [r for r in rows if not r.get("year_end")]
+    assert len(non_year_end) == 1
+    assert non_year_end[0]["as_of"] == crossing["record_date"]
+
+    for path in (LEGACY / "SOURCES.md", LEGACY / "sections.md"):
+        # Collapse to one line first: prose wraps across source lines, and the
+        # rule is about the sentence, not the raw line.
+        blob = " ".join(path.read_text().split())
+        for sentence in blob.split(". "):
+            if "19 August 2026" in sentence:
+                assert "18 August 2026" in sentence, f"{path.name}: {sentence!r} names " \
+                    "19 August without 18 August in the same sentence"

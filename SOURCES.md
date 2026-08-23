@@ -26,7 +26,10 @@ this file, not an actual.
 **US Treasury, Historical Debt Outstanding and Debt to the Penny**
 `fiscaldata.treasury.gov`
 Total public debt outstanding at fiscal year end, and the daily series.
-$40 trillion crossed 19 August 2026. Debt to the Penny stood at $39.89T on
+$40 trillion first closed above the threshold on 18 August 2026 at $40.047
+trillion, and was reported the following day, 19 August 2026. Debt to the
+Penny publishes a date's closing balance on the next business day, so these
+are one event, not two figures. Debt to the Penny stood at $39.89T on
 7 August 2026 and $39.84T on 30 July.
 
 **US Treasury, Monthly Statement of the Public Debt**

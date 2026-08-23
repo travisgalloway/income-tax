@@ -48,8 +48,9 @@ outputs:
       debt: nominal $ trillions
       gdp_share: gross debt as percent of GDP
     notes:
-    - FY2026 value is the 19 August 2026 crossing of $40T, not a year-end close; gdp_share is null
-      because FY2026 GDP is not final.
+    - FY2026 value is the close of 18 August 2026, the first Debt to the Penny close at or above
+      $40T, reported the following day; not a fiscal year-end close, and gdp_share is null because
+      FY2026 GDP is not final.
     - FY2016 $19.57T to $40T is a 2.04x rise in ten fiscal years. FY2005 to FY2015 was 2.29x, a faster
       doubling from a smaller base.
   debt_holders:

@@ -169,6 +169,20 @@ def check_debt(c: Checks) -> None:
     c.ok(all(r.get("as_of") for r in rows if not r.get("year_end")),
          "debt: a non-year-end row has no as_of date")
 
+    # $40T crossing: record_date and reported_date must both be present and
+    # distinct, and the non-year-end row's as_of must equal record_date, so the
+    # note and the row can never drift apart. See discrepancies.yaml ->
+    # forty_trillion_crossing_date.
+    crossing = doc["_meta"].get("threshold_crossing")
+    if crossing:
+        c.ok(bool(crossing.get("record_date")) and bool(crossing.get("reported_date")),
+             "debt: threshold_crossing is missing record_date or reported_date")
+        c.ok(crossing.get("record_date") != crossing.get("reported_date"),
+             "debt: threshold_crossing record_date and reported_date must be distinct")
+        non_year_end = [r for r in rows if not r.get("year_end")]
+        c.ok(len(non_year_end) == 1 and non_year_end[0].get("as_of") == crossing.get("record_date"),
+             "debt: the non-year-end row's as_of does not match threshold_crossing.record_date")
+
 
 def check_income(c: Checks) -> None:
     doc = _load("income_inequality")
