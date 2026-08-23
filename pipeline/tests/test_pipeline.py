@@ -268,9 +268,10 @@ def test_public_split_is_keyed_to_its_denominator():
 
 
 def test_section_2_uses_no_party_colours():
-    src = (ISLANDS / "DebtHolders.tsx").read_text()
-    for tok in ("--dem", "--gop", "--mix"):
-        assert tok not in src, f"DebtHolders.tsx uses the partisan token {tok}"
+    for name in ("DebtHolders.tsx", "DebtMaturity.tsx"):
+        src = (ISLANDS / name).read_text()
+        for tok in ("--dem", "--gop", "--mix"):
+            assert tok not in src, f"{name} uses the partisan token {tok}"
 
 
 def test_federal_reserve_absent_from_rendered_section_2():
@@ -292,3 +293,54 @@ def test_tic_revision_note_is_carried():
     assert "683" in notes and "760" in notes and "monthly" in notes.lower()
     section2 = _rendered_section("who-holds-it")
     assert "683 billion" in section2 and "monthly" in section2.lower()
+
+
+def test_maturity_instruments_are_not_an_exhaustive_partition():
+    """EC2: 6.8 + 15.9 + 5.4 = 28.1 against a curated marketable_total_t of
+    28.0. This must stay true and must stay stated in words, or a reader could
+    mistake the three instrument families for an exhaustive partition."""
+    d = load("debt_maturity")["data"]
+    total = sum(c["amount_t"] for c in d["composition"])
+    assert abs(total - d["marketable_total_t"]) > 0.01
+    notes = " ".join(load("debt_maturity")["_meta"]["notes"]).lower()
+    assert "not an exhaustive partition" in notes or "do not sum" in notes
+
+
+def test_maturity_percentages_are_never_derived_from_amounts():
+    """EC3: bills.share_pct (22) disagrees with amount_t / marketable_total_t
+    (24.3%) on purpose. Only bills carries a curated share; DebtMaturity.tsx
+    must never compute one from amount_t / marketable_total_t."""
+    d = load("debt_maturity")["data"]
+    comp = {c["k"]: c for c in d["composition"]}
+    assert "share_pct" in comp["bills"]
+    assert "share_pct" not in comp["notes"] and "share_pct" not in comp["bonds"]
+
+    derived = round(100 * comp["bills"]["amount_t"] / d["marketable_total_t"], 1)
+    assert derived != comp["bills"]["share_pct"], \
+        "the curated bills share and the derived amount now agree; the EC3 trap may be stale"
+
+    src = (ISLANDS / "DebtMaturity.tsx").read_text()
+    assert "marketable_total_t" not in src or "amount_t /" not in src, \
+        "DebtMaturity.tsx appears to divide an amount by marketable_total_t"
+
+
+def test_maturity_history_is_not_charted():
+    """sections.md §3: 'Do not build this as a time series.' The field stays in
+    the data (deleting curated data is a separate editorial act) but no
+    component may reference it."""
+    assert "history_months" not in (ISLANDS / "DebtMaturity.tsx").read_text()
+    notes = " ".join(load("debt_maturity")["_meta"]["notes"]).lower()
+    assert "history_months" in notes and "not" in notes
+
+
+def test_curated_snapshots_expose_their_as_of():
+    """E1: a curated snapshot carries no vintage/retrieved_at, so vintageOf()
+    returns null and a figure could ship with no freshness stamp at all.
+    curatedVintage() must be used instead, and the page must call it."""
+    for name in ("debt_holders", "debt_maturity"):
+        meta = load(name)["_meta"]
+        assert meta.get("refresh", {}).get("mode") == "curated"
+
+    page = GOV_PAGE.read_text()
+    assert page.count("curatedVintage(") >= 2, \
+        "index.astro should call curatedVintage() for both debtHolders and debtMaturity"

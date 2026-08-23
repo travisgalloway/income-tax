@@ -11,7 +11,7 @@ when the code merges.
 |----|-----------|----|------|--------|-------|----------|
 | GOV-1 | The $40 trillion — debt series, ten-year doubling, nominal / % of GDP toggle | done | done | Shipped | #1 | contracts/interfaces/budget-data.md |
 | GOV-2 | Who holds it — public vs intragovernmental, domestic vs foreign | done | done | Shipped | #6 | contracts/interfaces/curated-snapshots.md, contracts/interfaces/charts.md |
-| GOV-3 | How old is the debt — maturity ladder against the 30-year ceiling | none | none | Planned | — | — |
+| GOV-3 | How old is the debt — maturity ladder against the 30-year ceiling | done | done | Shipped | #6 | contracts/interfaces/curated-snapshots.md, contracts/interfaces/charts.md |
 | GOV-4 | The whole budget — outlays stacked (mandatory net/discretionary/interest), revenue line, deficit below zero, party-control strip, unit toggle, year inspection, era bands | done | done | Shipped | #2 | contracts/interfaces/budget-data.md, contracts/interfaces/charts.md |
 | GOV-5 | The structural gap — revenue vs outlays as % of GDP | none | none | Planned | — | — |
 | GOV-6 | What Congress votes on — mandatory vs discretionary vs interest | none | none | Planned | — | — |

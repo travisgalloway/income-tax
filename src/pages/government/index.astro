@@ -3,11 +3,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro'
 import Figure from '../../components/Figure.astro'
 import { DebtChart } from '../../components/islands/DebtChart'
 import { DebtHolders } from '../../components/islands/DebtHolders'
-import { debt, debtHolders, curatedVintage, vintageOf } from '../../data'
+import { DebtMaturity } from '../../components/islands/DebtMaturity'
+import { debt, debtHolders, debtMaturity, curatedVintage, vintageOf } from '../../data'
 
 // Sections built so far. Everything else in `sections` below falls through to
 // the "Not built yet." placeholder until its own issue lands.
-const built = new Set(['forty-trillion', 'who-holds-it'])
+const built = new Set(['forty-trillion', 'who-holds-it', 'how-old'])
 
 const sections = [
   { id: 'forty-trillion', label: 'The $40 trillion' },
@@ -107,6 +108,39 @@ const sections = [
     <p class="prose">
       The intragovernmental piece is real money owed to future retirees, but it does not
       trade in bond markets and does not set interest rates.
+    </p>
+  </section>
+
+  <section id="how-old">
+    <p class="kicker"><span class="section-no">Section 3</span></p>
+    <h2>The debt is younger than you think</h2>
+    <p class="standfirst">
+      The longest security the Treasury sells is the 30-year bond, so nothing outstanding
+      today was issued before 1996. But the average is nowhere near thirty years. It is
+      about six.
+    </p>
+    <p class="finding">
+      Average maturity of marketable Treasury debt is 71 months as of June 2026. Roughly a
+      third matures within twelve months.
+    </p>
+
+    <Figure
+      ariaLabel="Chart showing US marketable Treasury debt split by instrument type, with bills under one year, notes of two to ten years and bonds of twenty to thirty years, above a scale marking the average maturity at about six years against the thirty-year maximum."
+      title="Maturity structure of marketable Treasury debt, June 2026"
+      source={debtMaturity._meta.source}
+      vintage={curatedVintage(debtMaturity._meta, debtMaturity.data.avg_maturity_as_of)}
+      xUnit="Years to maturity"
+      yUnit="amount outstanding, $ trillions"
+      note="Bills, notes and bonds are the three instrument families and their amounts do not sum exactly to the $28.0 trillion marketable total; they are not presented as an exhaustive partition. The 22% bills figure is the curated share and is not derived from the amounts beside it. Savings bonds (Series EE and I) are non-marketable and excluded throughout."
+    >
+      <DebtMaturity client:visible d={debtMaturity.data} />
+    </Figure>
+
+    <p class="prose">
+      This is why the interest line moved so fast. The government does not lock in a rate
+      for a generation. It refinances continuously, so when rates rose after 2021 the cost
+      of the entire stock repriced within a few years rather than a few decades. See
+      <a href="#net-interest">net interest</a> for what that did to the bill.
     </p>
   </section>
 

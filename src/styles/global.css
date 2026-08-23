@@ -369,7 +369,7 @@ figcaption .lead {
   font-variant-numeric: var(--num-table);
 }
 
-.holders-foreign-list, .maturity-composition-list {
+.holders-foreign-list {
   list-style: none;
   margin: 0.5rem 0 0;
   padding: 0;
