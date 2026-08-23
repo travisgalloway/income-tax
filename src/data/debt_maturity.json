@@ -1,0 +1,66 @@
+{
+ "_meta": {
+  "title": "Maturity structure of marketable Treasury debt",
+  "source": "Treasury Monthly Statement of the Public Debt; Joint Economic Committee monthly debt update (Jun 2026 average maturity); Peter G Peterson Foundation for instrument shares",
+  "notes": [
+   "The 30-year bond is the longest instrument issued, so nothing outstanding today was issued before 1996.",
+   "But average maturity is about 71 months, roughly six years. Roughly a third of debt matures within twelve months.",
+   "This is why rate rises after 2021 repriced the whole stock within a few years. It is the causal link to the net interest chart.",
+   "Savings bonds (Series EE and I) reach final maturity at 20-30 years and are non-marketable; excluded from these figures."
+  ],
+  "provenance": {
+   "generator": "monthly/curated_snapshots.py",
+   "git_sha": "5920f6f",
+   "generated_at": "2026-08-22T17:51:54Z"
+  },
+  "refresh": {
+   "mode": "curated",
+   "reason": "source publishes as a document, not a machine-readable feed"
+  }
+ },
+ "data": {
+  "avg_maturity_months": 71,
+  "avg_maturity_as_of": "2026-06",
+  "longest_instrument_years": 30,
+  "marketable_total_t": 28.0,
+  "composition": [
+   {
+    "k": "bills",
+    "label": "Bills",
+    "maturity": "under 1 year",
+    "share_pct": 22,
+    "amount_t": 6.8
+   },
+   {
+    "k": "notes",
+    "label": "Notes",
+    "maturity": "2 to 10 years",
+    "amount_t": 15.9
+   },
+   {
+    "k": "bonds",
+    "label": "Bonds",
+    "maturity": "20 to 30 years",
+    "amount_t": 5.4
+   }
+  ],
+  "history_months": [
+   {
+    "date": "2023-05",
+    "v": 75
+   },
+   {
+    "date": "2025-06",
+    "v": 72
+   },
+   {
+    "date": "2025-12",
+    "v": 70
+   },
+   {
+    "date": "2026-06",
+    "v": 71
+   }
+  ]
+ }
+}

@@ -1,0 +1,110 @@
+name: Refresh data
+
+on:
+  schedule:
+    # 06:00 UTC on the 3rd of each month. CBO publishes early-month; the 3rd
+    # gives a vintage time to land without waiting a full extra month.
+    - cron: '0 6 3 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: refresh-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          # pipeline/pyproject.toml requires >=3.13. Pinning here rather than
+          # relying on whatever Python ubuntu-latest happens to ship means a
+          # runner image change cannot quietly break the monthly run.
+          python-version: "3.13"
+
+      - name: Install pinned dependencies
+        working-directory: pipeline
+        run: uv sync --locked
+
+      # Fetch and validate BEFORE anything is written. A failure here must stop
+      # the run, not produce a PR with half-revised data.
+      - name: Build and validate
+        id: build
+        working-directory: pipeline
+        run: uv run python build.py --tier monthly --no-cache
+
+      - name: Run regression tests
+        working-directory: pipeline
+        run: uv run pytest -q
+
+      - name: Detect changes
+        id: diff
+        run: |
+          if git diff --quiet -- src/data data-report.md; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No data changes; not opening a pull request."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --stat -- src/data
+          fi
+
+      - name: Compose pull request body
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          {
+            echo "Automated monthly data refresh."
+            echo
+            echo "A source revision can move figures that are quoted verbatim in"
+            echo "\`content/sections.md\`. **Review the drift table below before merging.**"
+            echo "Do not adjust a number in the prose without re-checking it against"
+            echo "the source."
+            echo
+            cat data-report.md
+          } > /tmp/pr-body.md
+
+      - name: Open pull request
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: data/monthly-refresh
+          base: main
+          title: 'Monthly data refresh'
+          body-path: /tmp/pr-body.md
+          commit-message: 'Refresh generated data from upstream sources'
+          add-paths: |
+            src/data
+            data-report.md
+          labels: data
+          delete-branch: true
+
+      # A failed run must be visible. Silence is not success.
+      - name: Report failure
+        if: failure()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const url = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Monthly data refresh failed (${new Date().toISOString().slice(0, 10)})`,
+              labels: ['data', 'bug'],
+              body: [
+                'The scheduled data refresh failed and **no pull request was opened**.',
+                '',
+                'Most likely causes, in order:',
+                '- a source moved or renamed a series (the fetcher fails loudly by design)',
+                '- a new CBO vintage broke a reconciliation invariant',
+                '- an upstream endpoint was unreachable',
+                '',
+                `[Run log](${url})`,
+              ].join('\n'),
+            })

@@ -1,0 +1,719 @@
+{
+ "_meta": {
+  "title": "Real median household income, family Gini index and top statutory marginal rate, 1995-2024",
+  "source": "Census Bureau via FRED: MEHOINUSA672N (income), GINIALLRF (Gini). Statutory rate schedules",
+  "units": {
+   "mhi": "real median household income, 2024 dollars",
+   "gini": "family Gini index, ratio",
+   "top": "top statutory marginal individual income tax rate, percent"
+  },
+  "notes": [
+   "Gini is for FAMILIES, not households. The household series runs higher (~0.47-0.49). Label it on any chart.",
+   "Top rate is statutory, not effective. 1995 39.6%, 2003 35%, 2013 39.6%, 2018 37%.",
+   "Median income +28.1% over 29 years, 0.86% a year."
+  ],
+  "provenance": {
+   "generator": "monthly/fred.py",
+   "git_sha": "5920f6f",
+   "generated_at": "2026-08-22T17:51:54Z"
+  },
+  "coverage": {
+   "start": 1913,
+   "end": 2025,
+   "mhi": {
+    "start": 1984,
+    "end": 2024
+   },
+   "gini": {
+    "start": 1947,
+    "end": 2024
+   },
+   "top": {
+    "start": 1913,
+    "end": 2025
+   }
+  },
+  "gini_basis": "families",
+  "gini_rule": "Label it \"families\" on the chart or a reader will correct you with the household figure. The family series is used because it runs cleanly to 1947."
+ },
+ "data": [
+  {
+   "y": 1913,
+   "mhi": null,
+   "gini": null,
+   "top": 7.0
+  },
+  {
+   "y": 1914,
+   "mhi": null,
+   "gini": null,
+   "top": 7.0
+  },
+  {
+   "y": 1915,
+   "mhi": null,
+   "gini": null,
+   "top": 7.0
+  },
+  {
+   "y": 1916,
+   "mhi": null,
+   "gini": null,
+   "top": 15.0
+  },
+  {
+   "y": 1917,
+   "mhi": null,
+   "gini": null,
+   "top": 67.0
+  },
+  {
+   "y": 1918,
+   "mhi": null,
+   "gini": null,
+   "top": 77.0
+  },
+  {
+   "y": 1919,
+   "mhi": null,
+   "gini": null,
+   "top": 73.0
+  },
+  {
+   "y": 1920,
+   "mhi": null,
+   "gini": null,
+   "top": 73.0
+  },
+  {
+   "y": 1921,
+   "mhi": null,
+   "gini": null,
+   "top": 73.0
+  },
+  {
+   "y": 1922,
+   "mhi": null,
+   "gini": null,
+   "top": 58.0
+  },
+  {
+   "y": 1923,
+   "mhi": null,
+   "gini": null,
+   "top": 43.5
+  },
+  {
+   "y": 1924,
+   "mhi": null,
+   "gini": null,
+   "top": 46.0
+  },
+  {
+   "y": 1925,
+   "mhi": null,
+   "gini": null,
+   "top": 25.0
+  },
+  {
+   "y": 1926,
+   "mhi": null,
+   "gini": null,
+   "top": 25.0
+  },
+  {
+   "y": 1927,
+   "mhi": null,
+   "gini": null,
+   "top": 25.0
+  },
+  {
+   "y": 1928,
+   "mhi": null,
+   "gini": null,
+   "top": 25.0
+  },
+  {
+   "y": 1929,
+   "mhi": null,
+   "gini": null,
+   "top": 24.0
+  },
+  {
+   "y": 1930,
+   "mhi": null,
+   "gini": null,
+   "top": 25.0
+  },
+  {
+   "y": 1931,
+   "mhi": null,
+   "gini": null,
+   "top": 25.0
+  },
+  {
+   "y": 1932,
+   "mhi": null,
+   "gini": null,
+   "top": 63.0
+  },
+  {
+   "y": 1933,
+   "mhi": null,
+   "gini": null,
+   "top": 63.0
+  },
+  {
+   "y": 1934,
+   "mhi": null,
+   "gini": null,
+   "top": 63.0
+  },
+  {
+   "y": 1935,
+   "mhi": null,
+   "gini": null,
+   "top": 63.0
+  },
+  {
+   "y": 1936,
+   "mhi": null,
+   "gini": null,
+   "top": 79.0
+  },
+  {
+   "y": 1937,
+   "mhi": null,
+   "gini": null,
+   "top": 79.0
+  },
+  {
+   "y": 1938,
+   "mhi": null,
+   "gini": null,
+   "top": 79.0
+  },
+  {
+   "y": 1939,
+   "mhi": null,
+   "gini": null,
+   "top": 79.0
+  },
+  {
+   "y": 1940,
+   "mhi": null,
+   "gini": null,
+   "top": 81.1
+  },
+  {
+   "y": 1941,
+   "mhi": null,
+   "gini": null,
+   "top": 81.0
+  },
+  {
+   "y": 1942,
+   "mhi": null,
+   "gini": null,
+   "top": 88.0
+  },
+  {
+   "y": 1943,
+   "mhi": null,
+   "gini": null,
+   "top": 88.0
+  },
+  {
+   "y": 1944,
+   "mhi": null,
+   "gini": null,
+   "top": 94.0
+  },
+  {
+   "y": 1945,
+   "mhi": null,
+   "gini": null,
+   "top": 94.0
+  },
+  {
+   "y": 1946,
+   "mhi": null,
+   "gini": null,
+   "top": 86.45
+  },
+  {
+   "y": 1947,
+   "mhi": null,
+   "gini": 0.376,
+   "top": 86.45
+  },
+  {
+   "y": 1948,
+   "mhi": null,
+   "gini": 0.371,
+   "top": 82.13
+  },
+  {
+   "y": 1949,
+   "mhi": null,
+   "gini": 0.378,
+   "top": 82.13
+  },
+  {
+   "y": 1950,
+   "mhi": null,
+   "gini": 0.379,
+   "top": 84.36
+  },
+  {
+   "y": 1951,
+   "mhi": null,
+   "gini": 0.363,
+   "top": 91.0
+  },
+  {
+   "y": 1952,
+   "mhi": null,
+   "gini": 0.368,
+   "top": 92.0
+  },
+  {
+   "y": 1953,
+   "mhi": null,
+   "gini": 0.359,
+   "top": 92.0
+  },
+  {
+   "y": 1954,
+   "mhi": null,
+   "gini": 0.371,
+   "top": 91.0
+  },
+  {
+   "y": 1955,
+   "mhi": null,
+   "gini": 0.363,
+   "top": 91.0
+  },
+  {
+   "y": 1956,
+   "mhi": null,
+   "gini": 0.358,
+   "top": 91.0
+  },
+  {
+   "y": 1957,
+   "mhi": null,
+   "gini": 0.351,
+   "top": 91.0
+  },
+  {
+   "y": 1958,
+   "mhi": null,
+   "gini": 0.354,
+   "top": 91.0
+  },
+  {
+   "y": 1959,
+   "mhi": null,
+   "gini": 0.361,
+   "top": 91.0
+  },
+  {
+   "y": 1960,
+   "mhi": null,
+   "gini": 0.364,
+   "top": 91.0
+  },
+  {
+   "y": 1961,
+   "mhi": null,
+   "gini": 0.374,
+   "top": 91.0
+  },
+  {
+   "y": 1962,
+   "mhi": null,
+   "gini": 0.362,
+   "top": 91.0
+  },
+  {
+   "y": 1963,
+   "mhi": null,
+   "gini": 0.362,
+   "top": 91.0
+  },
+  {
+   "y": 1964,
+   "mhi": null,
+   "gini": 0.361,
+   "top": 77.0
+  },
+  {
+   "y": 1965,
+   "mhi": null,
+   "gini": 0.356,
+   "top": 70.0
+  },
+  {
+   "y": 1966,
+   "mhi": null,
+   "gini": 0.349,
+   "top": 70.0
+  },
+  {
+   "y": 1967,
+   "mhi": null,
+   "gini": 0.358,
+   "top": 70.0
+  },
+  {
+   "y": 1968,
+   "mhi": null,
+   "gini": 0.348,
+   "top": 75.25
+  },
+  {
+   "y": 1969,
+   "mhi": null,
+   "gini": 0.349,
+   "top": 77.0
+  },
+  {
+   "y": 1970,
+   "mhi": null,
+   "gini": 0.353,
+   "top": 71.75
+  },
+  {
+   "y": 1971,
+   "mhi": null,
+   "gini": 0.355,
+   "top": 70.0
+  },
+  {
+   "y": 1972,
+   "mhi": null,
+   "gini": 0.359,
+   "top": 70.0
+  },
+  {
+   "y": 1973,
+   "mhi": null,
+   "gini": 0.356,
+   "top": 70.0
+  },
+  {
+   "y": 1974,
+   "mhi": null,
+   "gini": 0.355,
+   "top": 70.0
+  },
+  {
+   "y": 1975,
+   "mhi": null,
+   "gini": 0.357,
+   "top": 70.0
+  },
+  {
+   "y": 1976,
+   "mhi": null,
+   "gini": 0.358,
+   "top": 70.0
+  },
+  {
+   "y": 1977,
+   "mhi": null,
+   "gini": 0.363,
+   "top": 70.0
+  },
+  {
+   "y": 1978,
+   "mhi": null,
+   "gini": 0.363,
+   "top": 70.0
+  },
+  {
+   "y": 1979,
+   "mhi": null,
+   "gini": 0.365,
+   "top": 70.0
+  },
+  {
+   "y": 1980,
+   "mhi": null,
+   "gini": 0.365,
+   "top": 70.0
+  },
+  {
+   "y": 1981,
+   "mhi": null,
+   "gini": 0.369,
+   "top": 69.125
+  },
+  {
+   "y": 1982,
+   "mhi": null,
+   "gini": 0.38,
+   "top": 50.0
+  },
+  {
+   "y": 1983,
+   "mhi": null,
+   "gini": 0.382,
+   "top": 50.0
+  },
+  {
+   "y": 1984,
+   "mhi": 60420.0,
+   "gini": 0.383,
+   "top": 50.0
+  },
+  {
+   "y": 1985,
+   "mhi": 61570.0,
+   "gini": 0.389,
+   "top": 50.0
+  },
+  {
+   "y": 1986,
+   "mhi": 63850.0,
+   "gini": 0.392,
+   "top": 50.0
+  },
+  {
+   "y": 1987,
+   "mhi": 64650.0,
+   "gini": 0.393,
+   "top": 38.5
+  },
+  {
+   "y": 1988,
+   "mhi": 65130.0,
+   "gini": 0.395,
+   "top": 28.0
+  },
+  {
+   "y": 1989,
+   "mhi": 66240.0,
+   "gini": 0.401,
+   "top": 28.0
+  },
+  {
+   "y": 1990,
+   "mhi": 65440.0,
+   "gini": 0.396,
+   "top": 28.0
+  },
+  {
+   "y": 1991,
+   "mhi": 63530.0,
+   "gini": 0.397,
+   "top": 31.0
+  },
+  {
+   "y": 1992,
+   "mhi": 63010.0,
+   "gini": 0.404,
+   "top": 31.0
+  },
+  {
+   "y": 1993,
+   "mhi": 62700.0,
+   "gini": 0.429,
+   "top": 39.6
+  },
+  {
+   "y": 1994,
+   "mhi": 63370.0,
+   "gini": 0.426,
+   "top": 39.6
+  },
+  {
+   "y": 1995,
+   "mhi": 65380.0,
+   "gini": 0.421,
+   "top": 39.6
+  },
+  {
+   "y": 1996,
+   "mhi": 66340.0,
+   "gini": 0.425,
+   "top": 39.6
+  },
+  {
+   "y": 1997,
+   "mhi": 67720.0,
+   "gini": 0.429,
+   "top": 39.6
+  },
+  {
+   "y": 1998,
+   "mhi": 70200.0,
+   "gini": 0.43,
+   "top": 39.6
+  },
+  {
+   "y": 1999,
+   "mhi": 71980.0,
+   "gini": 0.429,
+   "top": 39.6
+  },
+  {
+   "y": 2000,
+   "mhi": 71790.0,
+   "gini": 0.433,
+   "top": 39.6
+  },
+  {
+   "y": 2001,
+   "mhi": 70610.0,
+   "gini": 0.435,
+   "top": 39.1
+  },
+  {
+   "y": 2002,
+   "mhi": 70040.0,
+   "gini": 0.434,
+   "top": 38.6
+  },
+  {
+   "y": 2003,
+   "mhi": 70080.0,
+   "gini": 0.436,
+   "top": 35.0
+  },
+  {
+   "y": 2004,
+   "mhi": 69970.0,
+   "gini": 0.438,
+   "top": 35.0
+  },
+  {
+   "y": 2005,
+   "mhi": 71060.0,
+   "gini": 0.44,
+   "top": 35.0
+  },
+  {
+   "y": 2006,
+   "mhi": 71850.0,
+   "gini": 0.444,
+   "top": 35.0
+  },
+  {
+   "y": 2007,
+   "mhi": 73010.0,
+   "gini": 0.432,
+   "top": 35.0
+  },
+  {
+   "y": 2008,
+   "mhi": 70520.0,
+   "gini": 0.438,
+   "top": 35.0
+  },
+  {
+   "y": 2009,
+   "mhi": 70070.0,
+   "gini": 0.443,
+   "top": 35.0
+  },
+  {
+   "y": 2010,
+   "mhi": 68420.0,
+   "gini": 0.44,
+   "top": 35.0
+  },
+  {
+   "y": 2011,
+   "mhi": 67410.0,
+   "gini": 0.45,
+   "top": 35.0
+  },
+  {
+   "y": 2012,
+   "mhi": 67400.0,
+   "gini": 0.451,
+   "top": 35.0
+  },
+  {
+   "y": 2013,
+   "mhi": 69950.0,
+   "gini": 0.455,
+   "top": 39.6
+  },
+  {
+   "y": 2014,
+   "mhi": 69060.0,
+   "gini": 0.452,
+   "top": 39.6
+  },
+  {
+   "y": 2015,
+   "mhi": 72790.0,
+   "gini": 0.448,
+   "top": 39.6
+  },
+  {
+   "y": 2016,
+   "mhi": 75380.0,
+   "gini": 0.452,
+   "top": 39.6
+  },
+  {
+   "y": 2017,
+   "mhi": 76710.0,
+   "gini": 0.458,
+   "top": 39.6
+  },
+  {
+   "y": 2018,
+   "mhi": 77700.0,
+   "gini": 0.452,
+   "top": 37.0
+  },
+  {
+   "y": 2019,
+   "mhi": 83260.0,
+   "gini": 0.454,
+   "top": 37.0
+  },
+  {
+   "y": 2020,
+   "mhi": 81580.0,
+   "gini": 0.458,
+   "top": 37.0
+  },
+  {
+   "y": 2021,
+   "mhi": 81270.0,
+   "gini": 0.462,
+   "top": 37.0
+  },
+  {
+   "y": 2022,
+   "mhi": 79500.0,
+   "gini": 0.458,
+   "top": 37.0
+  },
+  {
+   "y": 2023,
+   "mhi": 82690.0,
+   "gini": 0.452,
+   "top": 37.0
+  },
+  {
+   "y": 2024,
+   "mhi": 83730.0,
+   "gini": 0.456,
+   "top": 37.0
+  },
+  {
+   "y": 2025,
+   "mhi": null,
+   "gini": null,
+   "top": 37.0
+  }
+ ]
+}

@@ -1,0 +1,65 @@
+{
+ "_meta": {
+  "title": "Who holds the federal debt",
+  "source": "US Treasury Debt to the Penny (public vs intragovernmental, 7 Aug 2026); Treasury International Capital (foreign holdings, 2025)",
+  "notes": [
+   "Foreign holders are about 30% of PUBLICLY HELD debt, which is about 24% of GROSS debt. Do not conflate. Al Jazeera reported 32% of gross; that figure does not reconcile.",
+   "TIC data is revised monthly. China has been reported between $683B and $760B depending on vintage.",
+   "Federal Reserve holdings are reported between $4.53T and $4.9T across sources; omitted rather than pick one."
+  ]
+ },
+ "data": {
+  "total_debt_t": 39.88,
+  "as_of": "2026-08-07",
+  "split": [
+   {
+    "k": "public",
+    "label": "Held by the public",
+    "amount_t": 32.14,
+    "share_pct": 80.6
+   },
+   {
+    "k": "intragov",
+    "label": "Intragovernmental holdings",
+    "amount_t": 7.74,
+    "share_pct": 19.4
+   }
+  ],
+  "public_split": [
+   {
+    "k": "domestic",
+    "label": "Domestic holders",
+    "share_of_public_pct": 70
+   },
+   {
+    "k": "foreign",
+    "label": "Foreign holders",
+    "share_of_public_pct": 30
+   }
+  ],
+  "top_foreign": [
+   {
+    "country": "Japan",
+    "amount_t": 1.203
+   },
+   {
+    "country": "United Kingdom",
+    "amount_t": 0.889
+   },
+   {
+    "country": "China",
+    "amount_t": 0.683
+   }
+  ],
+  "foreign_share_history": [
+   {
+    "year": 1970,
+    "share_of_gross_pct": 5
+   },
+   {
+    "year": 2025,
+    "share_of_gross_pct": 24
+   }
+  ]
+ }
+}

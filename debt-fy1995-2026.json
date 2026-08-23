@@ -1,0 +1,176 @@
+{
+ "_meta": {
+  "title": "Total public debt outstanding at fiscal year end, FY1995-FY2026",
+  "source": "US Treasury, Historical Debt Outstanding and Debt to the Penny. GDP denominator from CBO Historical Budget Data, Feb 2026",
+  "units": {
+   "debt": "nominal $ trillions",
+   "gdp_share": "gross debt as percent of GDP"
+  },
+  "notes": [
+   "FY2026 value is the 19 August 2026 crossing of $40T, not a year-end close; gdp_share is null because FY2026 GDP is not final.",
+   "FY2016 $19.57T to $40T is a 2.04x rise in ten fiscal years. FY2005 to FY2015 was 2.29x, a faster doubling from a smaller base."
+  ]
+ },
+ "data": [
+  {
+   "y": 1995,
+   "debt": 4.97,
+   "gdp_share": 65.8
+  },
+  {
+   "y": 1996,
+   "debt": 5.22,
+   "gdp_share": 65.7
+  },
+  {
+   "y": 1997,
+   "debt": 5.41,
+   "gdp_share": 64.1
+  },
+  {
+   "y": 1998,
+   "debt": 5.53,
+   "gdp_share": 61.9
+  },
+  {
+   "y": 1999,
+   "debt": 5.66,
+   "gdp_share": 59.7
+  },
+  {
+   "y": 2000,
+   "debt": 5.67,
+   "gdp_share": 56.1
+  },
+  {
+   "y": 2001,
+   "debt": 5.81,
+   "gdp_share": 55.2
+  },
+  {
+   "y": 2002,
+   "debt": 6.23,
+   "gdp_share": 57.5
+  },
+  {
+   "y": 2003,
+   "debt": 6.78,
+   "gdp_share": 60.1
+  },
+  {
+   "y": 2004,
+   "debt": 7.38,
+   "gdp_share": 61.3
+  },
+  {
+   "y": 2005,
+   "debt": 7.93,
+   "gdp_share": 61.8
+  },
+  {
+   "y": 2006,
+   "debt": 8.51,
+   "gdp_share": 62.4
+  },
+  {
+   "y": 2007,
+   "debt": 9.01,
+   "gdp_share": 62.9
+  },
+  {
+   "y": 2008,
+   "debt": 10.02,
+   "gdp_share": 67.7
+  },
+  {
+   "y": 2009,
+   "debt": 11.91,
+   "gdp_share": 82.3
+  },
+  {
+   "y": 2010,
+   "debt": 13.56,
+   "gdp_share": 91.1
+  },
+  {
+   "y": 2011,
+   "debt": 14.79,
+   "gdp_share": 95.6
+  },
+  {
+   "y": 2012,
+   "debt": 16.07,
+   "gdp_share": 99.7
+  },
+  {
+   "y": 2013,
+   "debt": 16.74,
+   "gdp_share": 100.3
+  },
+  {
+   "y": 2014,
+   "debt": 17.82,
+   "gdp_share": 102.3
+  },
+  {
+   "y": 2015,
+   "debt": 18.15,
+   "gdp_share": 99.9
+  },
+  {
+   "y": 2016,
+   "debt": 19.57,
+   "gdp_share": 105.0
+  },
+  {
+   "y": 2017,
+   "debt": 20.24,
+   "gdp_share": 104.5
+  },
+  {
+   "y": 2018,
+   "debt": 21.52,
+   "gdp_share": 105.3
+  },
+  {
+   "y": 2019,
+   "debt": 22.72,
+   "gdp_share": 106.7
+  },
+  {
+   "y": 2020,
+   "debt": 26.95,
+   "gdp_share": 126.3
+  },
+  {
+   "y": 2021,
+   "debt": 28.43,
+   "gdp_share": 123.4
+  },
+  {
+   "y": 2022,
+   "debt": 30.93,
+   "gdp_share": 121.0
+  },
+  {
+   "y": 2023,
+   "debt": 33.17,
+   "gdp_share": 121.1
+  },
+  {
+   "y": 2024,
+   "debt": 35.46,
+   "gdp_share": 122.5
+  },
+  {
+   "y": 2025,
+   "debt": 37.64,
+   "gdp_share": 124.0
+  },
+  {
+   "y": 2026,
+   "debt": 40.0,
+   "gdp_share": null
+  }
+ ]
+}

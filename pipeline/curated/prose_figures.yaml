@@ -1,0 +1,63 @@
+_comment: |
+  Curated. NEVER machine-written.
+  Every figure QUOTED IN PROSE in content/sections.md, mapped to the generated
+  field it came from. On each run the pipeline recomputes these and reports any
+  that have moved.
+
+  This exists because a CBO revision does not touch the prose. Without it, a
+  vintage change silently leaves "$223 billion" sitting in section 7 while the
+  chart beside it shows something else. Drift here is an EDITORIAL event: it is
+  reported, not auto-corrected, and it does not fail the build. The load-bearing
+  invariants that MUST fail the build live in lib/validate.py instead.
+
+  resolver grammar:
+    output   which src/data/*.json file
+    year     a single fiscal/tax year, selecting one row
+    field    field on that row
+    agg      sum | mean | min_year | count_positive, over `years: [first, last]`
+    path     dotted path into _meta or a non-tabular data blob
+    quoted   the number as it currently appears in the prose
+    tol      absolute tolerance before it is reported as drift
+
+figures:
+  - {section: 1, text: "FY2016 debt $19.57T", output: debt, year: 2016, field: debt, quoted: 19.57, tol: 0.02}
+  - {section: 1, text: "$40T crossing value", output: debt, path: _meta.threshold_crossing.value_t, quoted: 40.0, tol: 0.06}
+  - {section: 2, text: "held by the public $32.14T", output: debt_holders, path: data.split.0.amount_t, quoted: 32.14, tol: 0.02}
+  - {section: 2, text: "intragovernmental $7.74T", output: debt_holders, path: data.split.1.amount_t, quoted: 7.74, tol: 0.02}
+  - {section: 2, text: "public share 80.6%", output: debt_holders, path: data.split.0.share_pct, quoted: 80.6, tol: 0.1}
+  - {section: 3, text: "average maturity 71 months", output: debt_maturity, path: data.avg_maturity_months, quoted: 71, tol: 0.5}
+  - {section: 4, text: "FY2025 outlays $7.01T", output: budget, year: 2025, field: n_ot, quoted: 7.01, tol: 0.005}
+  - {section: 4, text: "FY2025 revenue $5.24T", output: budget, year: 2025, field: n_re, quoted: 5.24, tol: 0.006}
+  - {section: 4, text: "FY2025 deficit $1.78T", output: budget, year: 2025, field: n_de, quoted: -1.78, tol: 0.006}
+  - {section: 5, text: "revenue averaged 17.2% of GDP", output: budget, agg: mean, field: g_re, years: [1995, 2025], quoted: 17.2, tol: 0.06}
+  - {section: 5, text: "outlays averaged 21.1% of GDP", output: budget, agg: mean, field: g_ot, years: [1995, 2025], quoted: 21.1, tol: 0.06}
+  - {section: 5, text: "surplus years 1998-2001 (count = 4)", output: budget, agg: count_positive, field: n_de, years: [1995, 2025], quoted: 4, tol: 0}
+  - {section: 6, text: "mandatory 9.8% of GDP in FY1995 (NET)", output: budget, year: 1995, field: g_ma_net, quoted: 9.8, tol: 0.06}
+  - {section: 6, text: "mandatory 13.7% of GDP in FY2025 (NET)", output: budget, year: 2025, field: g_ma_net, quoted: 13.7, tol: 0.06}
+  - {section: 6, text: "discretionary 7.2% -> 6.2% of GDP", output: budget, year: 2025, field: g_di, quoted: 6.2, tol: 0.06}
+  - {section: 6, text: "real mandatory growth 189% (SEE NOTE: gross basis)", output: budget, agg: real_growth_gross_mandatory, years: [1995, 2025], quoted: 189, tol: 1.0}
+  - {section: 6, text: "real discretionary growth 79%", output: budget, agg: real_growth_disc, years: [1995, 2025], quoted: 79, tol: 1.0}
+  - {section: 7, text: "net interest FY1995 $232B", output: budget, year: 1995, field: n_ni, quoted: 0.232, tol: 0.002}
+  - {section: 7, text: "net interest FY2025 $970B", output: budget, year: 2025, field: n_ni, quoted: 0.970, tol: 0.002}
+  - {section: 7, text: "net interest total $9.4T", output: budget, agg: sum, field: n_ni, years: [1995, 2025], quoted: 9.4, tol: 0.08}
+  - {section: 7, text: "FY2015 trough $223B", output: budget, year: 2015, field: n_ni, quoted: 0.223, tol: 0.002}
+  - {section: 7, text: "FY2003 series low $153B", output: budget, year: 2003, field: n_ni, quoted: 0.153, tol: 0.002}
+  - {section: 7, text: "series-low year is 2003", output: budget, agg: min_year, field: n_ni, years: [1995, 2025], quoted: 2003, tol: 0}
+  - {section: 10, text: "individual income 7.81% -> 8.75% of GDP", output: revenue_sources, year: 2025, field: g_ii, quoted: 8.75, tol: 0.02}
+  - {section: 10, text: "payroll 6.41% -> 5.76% of GDP", output: revenue_sources, year: 2025, field: g_pr, quoted: 5.76, tol: 0.02}
+  - {section: 10, text: "corporate 2.08% -> 1.49% of GDP", output: revenue_sources, year: 2025, field: g_ci, quoted: 1.49, tol: 0.02}
+  - {section: 10, text: "customs 0.26% -> 0.64% of GDP", output: revenue_sources, year: 2025, field: g_cu, quoted: 0.64, tol: 0.02}
+  - {section: 10, text: "individual income tax = 50.7% of revenue", output: revenue_sources, year: 2025, field: s_ii, quoted: 50.7, tol: 0.15}
+  - {section: 10, text: "corporate share 11.6% -> 8.6% of revenue", output: revenue_sources, year: 2025, field: s_ci, quoted: 8.6, tol: 0.15}
+  - {section: 10, text: "OECD: US 25.6% of GDP", output: oecd, path: data.us_pct_gdp, quoted: 25.6, tol: 0.05}
+  - {section: 10, text: "OECD average 34.1%", output: oecd, path: data.oecd_average_pct_gdp, quoted: 34.1, tol: 0.05}
+  - {section: 10, text: "top 1% paid 38.4% of income tax", output: income_tax_by_group, path: data.groups.0.tax_share_pct, quoted: 38.4, tol: 0.05}
+  - {section: 10, text: "median household income 1995 $65,380", output: income_inequality, year: 1995, field: mhi, quoted: 65380, tol: 1}
+  - {section: 10, text: "median household income 2024 $83,730", output: income_inequality, year: 2024, field: mhi, quoted: 83730, tol: 1}
+  - {section: 10, text: "family Gini 1995 0.421", output: income_inequality, year: 1995, field: gini, quoted: 0.421, tol: 0.001}
+  - {section: 10, text: "family Gini 2024 0.456", output: income_inequality, year: 2024, field: gini, quoted: 0.456, tol: 0.001}
+  - {section: 10, text: "median income +28.1% over 29 years", output: income_inequality, agg: pct_growth, field: mhi, years: [1995, 2024], quoted: 28.1, tol: 0.3}
+  - {section: 8, text: "16 of 23 laws passed cross-party", output: party_splits, agg: count_cross_party, quoted: 16, tol: 0}
+  - {section: 8, text: "cross-party laws total $9.24T", output: party_splits, agg: cost_cross_party, quoted: 9.24, tol: 0.02}
+  - {section: 8, text: "party-line laws total $7.52T", output: party_splits, agg: cost_party_line, quoted: 7.52, tol: 0.02}
+  - {section: 11, text: "cumulative deficits $24.15T", output: budget, agg: sum_negated, field: n_de, years: [1995, 2025], quoted: 24.15, tol: 0.05}

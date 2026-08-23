@@ -1,0 +1,68 @@
+/* Design tokens.
+ *
+ * TYPOGRAPHY: system serifs only, set as a classic textbook. This is a
+ * deliberate departure from BRIEF.md, which specified Bricolage Grotesque and
+ * IBM Plex loaded from Google Fonts. No webfont is loaded now: the page paints
+ * with the reader's own faces on first byte.
+ *
+ * COLOUR is unchanged from BRIEF.md and remains non-negotiable. The data hues
+ * are semantic and were contrast-tuned against this ground, and the cool stone
+ * already reads as aged publication stock, so warming it would buy nothing.
+ */
+
+:root {
+  /* Surface */
+  --ground: #DDE0DB;   /* page background, a cool stone */
+  --panel: #F3F4F0;    /* chart plot areas */
+  --ink: #11161B;
+  --ink-soft: #5A6268;
+  --rule: #B4BAB3;
+
+  /* Party. ONLY for partisan data. Never for holders, maturity, OECD or macro. */
+  --dem: #1D4E89;
+  --gop: #A8322D;
+  --mix: #6E3FA3;
+
+  /* Budget categories */
+  --mand: #55606B;
+  --disc: #3E7C86;
+  --int: #C77D28;
+
+  /* Non-partisan series */
+  --domestic: #55606B;
+  --foreign: #93A8B3;
+  --public: #3E7C86;
+  --intragov: #C77D28;
+  --positive: #2E7D5B;  /* surplus, deficit reduction */
+
+  /* ---- Type ---------------------------------------------------------------
+   * Two roles, the way a statistical publication is set: a reading face for
+   * running text, and a sturdier face for tables and chart furniture, which
+   * must hold up at 10-11px and align in columns.
+   */
+
+  /* Reading face. Baskerville and Minion are the finest available and ship on
+   * macOS and Adobe installs respectively; Georgia is the universal floor. */
+  --font-text:
+    "Baskerville", "Baskerville Old Face", "Minion Pro", "Minion 3",
+    "Adobe Garamond Pro", "EB Garamond", Garamond, "Palatino Linotype", Palatino,
+    Georgia, "Times New Roman", Times, serif;
+
+  /* Data face. Georgia leads deliberately: it was drawn for screens, its
+   * numerals are unusually sturdy at small sizes, and it holds a column. */
+  --font-data:
+    Georgia, "Minion Pro", "Adobe Garamond Pro", "Baskerville",
+    "Palatino Linotype", Palatino, "Times New Roman", Times, serif;
+
+  /* Numerals. The textbook distinction: old-style figures sit inside a
+   * sentence at x-height; lining tabular figures line up in a column. */
+  --num-prose: oldstyle-nums proportional-nums;
+  --num-table: lining-nums tabular-nums;
+
+  /* Scale. A textbook measure: roughly 65 characters. */
+  --measure: 33rem;
+  --measure-wide: 46rem;
+  --gap: 1.5rem;
+  --rule-width: 1px;
+  --rule-hair: 0.5px;
+}

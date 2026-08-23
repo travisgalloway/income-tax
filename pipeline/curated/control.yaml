@@ -1,0 +1,234 @@
+_comment: 'Curated. NEVER machine-written. Party control of the presidency, House and
+
+  Senate by fiscal year, from CRS and chamber historical records.
+
+  control: D or R if unified, M if split.
+
+  ATTRIBUTION RULE: each fiscal year is assigned to whoever held the office in
+
+  JUNE of that fiscal year. FY2025 therefore belongs to Trump II, not Biden.
+
+  Coverage is FY1995-FY2025. Budget series run to FY1962; charts must show the
+
+  control strip only where control data exists, never a blank implying unknown.'
+coverage:
+  start: 1995
+  end: 2025
+years:
+- fy: 1995
+  president: Clinton
+  president_party: D
+  house: R
+  senate: R
+  control: M
+  handoff: false
+- fy: 1996
+  president: Clinton
+  president_party: D
+  house: R
+  senate: R
+  control: M
+  handoff: false
+- fy: 1997
+  president: Clinton
+  president_party: D
+  house: R
+  senate: R
+  control: M
+  handoff: false
+- fy: 1998
+  president: Clinton
+  president_party: D
+  house: R
+  senate: R
+  control: M
+  handoff: false
+- fy: 1999
+  president: Clinton
+  president_party: D
+  house: R
+  senate: R
+  control: M
+  handoff: false
+- fy: 2000
+  president: Clinton
+  president_party: D
+  house: R
+  senate: R
+  control: M
+  handoff: false
+- fy: 2001
+  president: G.W. Bush
+  president_party: R
+  house: R
+  senate: R
+  control: R
+  handoff: true
+- fy: 2002
+  president: G.W. Bush
+  president_party: R
+  house: R
+  senate: D
+  control: M
+  handoff: false
+- fy: 2003
+  president: G.W. Bush
+  president_party: R
+  house: R
+  senate: R
+  control: R
+  handoff: false
+- fy: 2004
+  president: G.W. Bush
+  president_party: R
+  house: R
+  senate: R
+  control: R
+  handoff: false
+- fy: 2005
+  president: G.W. Bush
+  president_party: R
+  house: R
+  senate: R
+  control: R
+  handoff: false
+- fy: 2006
+  president: G.W. Bush
+  president_party: R
+  house: R
+  senate: R
+  control: R
+  handoff: false
+- fy: 2007
+  president: G.W. Bush
+  president_party: R
+  house: D
+  senate: D
+  control: M
+  handoff: false
+- fy: 2008
+  president: G.W. Bush
+  president_party: R
+  house: D
+  senate: D
+  control: M
+  handoff: false
+- fy: 2009
+  president: Obama
+  president_party: D
+  house: D
+  senate: D
+  control: D
+  handoff: true
+- fy: 2010
+  president: Obama
+  president_party: D
+  house: D
+  senate: D
+  control: D
+  handoff: false
+- fy: 2011
+  president: Obama
+  president_party: D
+  house: R
+  senate: D
+  control: M
+  handoff: false
+- fy: 2012
+  president: Obama
+  president_party: D
+  house: R
+  senate: D
+  control: M
+  handoff: false
+- fy: 2013
+  president: Obama
+  president_party: D
+  house: R
+  senate: D
+  control: M
+  handoff: false
+- fy: 2014
+  president: Obama
+  president_party: D
+  house: R
+  senate: D
+  control: M
+  handoff: false
+- fy: 2015
+  president: Obama
+  president_party: D
+  house: R
+  senate: R
+  control: M
+  handoff: false
+- fy: 2016
+  president: Obama
+  president_party: D
+  house: R
+  senate: R
+  control: M
+  handoff: false
+- fy: 2017
+  president: Trump
+  president_party: R
+  house: R
+  senate: R
+  control: R
+  handoff: true
+- fy: 2018
+  president: Trump
+  president_party: R
+  house: R
+  senate: R
+  control: R
+  handoff: false
+- fy: 2019
+  president: Trump
+  president_party: R
+  house: D
+  senate: R
+  control: M
+  handoff: false
+- fy: 2020
+  president: Trump
+  president_party: R
+  house: D
+  senate: R
+  control: M
+  handoff: false
+- fy: 2021
+  president: Biden
+  president_party: D
+  house: D
+  senate: D
+  control: D
+  handoff: true
+- fy: 2022
+  president: Biden
+  president_party: D
+  house: D
+  senate: D
+  control: D
+  handoff: false
+- fy: 2023
+  president: Biden
+  president_party: D
+  house: R
+  senate: D
+  control: M
+  handoff: false
+- fy: 2024
+  president: Biden
+  president_party: D
+  house: R
+  senate: D
+  control: M
+  handoff: false
+- fy: 2025
+  president: Trump II
+  president_party: R
+  house: R
+  senate: R
+  control: R
+  handoff: true

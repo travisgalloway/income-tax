@@ -1,0 +1,1344 @@
+{
+ "_meta": {
+  "title": "Counted per-party roll-call splits for 23 major deficit-moving laws, 1997-2025",
+  "source": "Voteview (voteview.com/data): HSall_members.csv joined to per-congress roll-call and vote files. Final-passage roll call per law curated by hand. PL 115-97 cross-checked against House Clerk roll call 699.",
+  "notes": [
+   "These splits are COUNTED, not classified. This replaces the earlier PLR/PLD/XP classification derived from published vote character, which SOURCES.md flagged as the dataset's weakest point.",
+   "A null chamber means no roll call exists, almost always a voice vote. The CARES Act passed the House this way. Absence of a roll call is NOT unanimity and must never be rendered as a vote.",
+   "Independents and third-party members are counted separately as \"i\", never folded into a major party.",
+   "The vote counted is FINAL PASSAGE. Procedural votes, cloture and motions to recommit are excluded, and a bill often has several of each."
+  ],
+  "provenance": {
+   "generator": "oneshot/party_splits.py",
+   "git_sha": "5920f6f",
+   "generated_at": "2026-08-22T17:51:52Z"
+  },
+  "coverage": {
+   "laws": 23,
+   "start": "1997-08-05",
+   "end": "2025-07-04"
+  },
+  "method": "Per-party yea/nay counted from Voteview roll-call records, joined on ICPSR id to member party for the congress in question. The final-passage roll call for each law is curated by hand, not inferred by date.",
+  "cross_party_threshold": "A vote is 'cross-party' when at least 10% of the yes votes came from the minority party in AT LEAST ONE chamber, on the caucus basis. Any-chamber rather than every-chamber, because a bill can pass the House near party-line and still need a substantial minority bloc to clear the Senate. This threshold is a judgement, stated here so it can be disagreed with.",
+  "regression": "PL 115-97 reproduces the published record on the caucus basis: H R 224-12 / D 0-189, S R 51-0 / D 0-48. The Senate figure is D 0-46 plus I 0-2 by party membership.",
+  "party_vs_caucus": "`r`, `d` and `i` are PARTY MEMBERSHIP. `d_caucus` adds the independents who caucus with the Democrats, which is the convention the House Clerk, the Senate roll calls and press coverage all use. A chart must state which basis it shows; the two differ by two Senate seats through most of this period.",
+  "missing_votes": "A null chamber means NO ROLL CALL EXISTS (a voice vote). That is missing data, never unanimity."
+ },
+ "data": [
+  {
+   "public_law": "105-33",
+   "name": "Balanced Budget Act of 1997",
+   "date": "1997-08-05",
+   "congress": 105,
+   "house": {
+    "r": {
+     "yea": 193,
+     "nay": 32,
+     "other": 3
+    },
+    "d": {
+     "yea": 153,
+     "nay": 52,
+     "other": 1
+    },
+    "i": {
+     "yea": 0,
+     "nay": 1,
+     "other": 0
+    },
+    "yea": 346,
+    "nay": 85,
+    "d_caucus": {
+     "yea": 153,
+     "nay": 53,
+     "other": 1
+    },
+    "rollnumber": 342
+   },
+   "senate": {
+    "r": {
+     "yea": 43,
+     "nay": 12,
+     "other": 0
+    },
+    "d": {
+     "yea": 42,
+     "nay": 3,
+     "other": 0
+    },
+    "i": {
+     "yea": 0,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 85,
+    "nay": 15,
+    "d_caucus": {
+     "yea": 42,
+     "nay": 3,
+     "other": 0
+    },
+    "rollnumber": 209
+   },
+   "character": "cross-party",
+   "legacy_classification": "XP"
+  },
+  {
+   "public_law": "105-34",
+   "name": "Taxpayer Relief Act of 1997",
+   "date": "1997-08-05",
+   "congress": 105,
+   "house": {
+    "r": {
+     "yea": 225,
+     "nay": 1,
+     "other": 2
+    },
+    "d": {
+     "yea": 164,
+     "nay": 41,
+     "other": 1
+    },
+    "i": {
+     "yea": 0,
+     "nay": 1,
+     "other": 0
+    },
+    "yea": 389,
+    "nay": 43,
+    "d_caucus": {
+     "yea": 164,
+     "nay": 42,
+     "other": 1
+    },
+    "rollnumber": 346
+   },
+   "senate": {
+    "r": {
+     "yea": 55,
+     "nay": 0,
+     "other": 0
+    },
+    "d": {
+     "yea": 37,
+     "nay": 8,
+     "other": 0
+    },
+    "i": {
+     "yea": 0,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 92,
+    "nay": 8,
+    "d_caucus": {
+     "yea": 37,
+     "nay": 8,
+     "other": 0
+    },
+    "rollnumber": 211
+   },
+   "character": "cross-party",
+   "legacy_classification": "XP"
+  },
+  {
+   "public_law": "107-16",
+   "name": "Economic Growth and Tax Relief Reconciliation Act",
+   "date": "2001-06-07",
+   "congress": 107,
+   "house": {
+    "r": {
+     "yea": 211,
+     "nay": 0,
+     "other": 10
+    },
+    "d": {
+     "yea": 28,
+     "nay": 153,
+     "other": 29
+    },
+    "i": {
+     "yea": 1,
+     "nay": 1,
+     "other": 0
+    },
+    "yea": 240,
+    "nay": 154,
+    "d_caucus": {
+     "yea": 29,
+     "nay": 154,
+     "other": 29
+    },
+    "rollnumber": 148
+   },
+   "senate": {
+    "r": {
+     "yea": 46,
+     "nay": 2,
+     "other": 2
+    },
+    "d": {
+     "yea": 12,
+     "nay": 31,
+     "other": 7
+    },
+    "i": {
+     "yea": 0,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 58,
+    "nay": 33,
+    "d_caucus": {
+     "yea": 12,
+     "nay": 31,
+     "other": 7
+    },
+    "rollnumber": 170
+   },
+   "character": "cross-party",
+   "legacy_classification": "XP"
+  },
+  {
+   "public_law": "108-27",
+   "name": "Jobs and Growth Tax Relief Reconciliation Act",
+   "date": "2003-05-28",
+   "congress": 108,
+   "house": {
+    "r": {
+     "yea": 224,
+     "nay": 1,
+     "other": 4
+    },
+    "d": {
+     "yea": 7,
+     "nay": 198,
+     "other": 0
+    },
+    "i": {
+     "yea": 0,
+     "nay": 1,
+     "other": 0
+    },
+    "yea": 231,
+    "nay": 200,
+    "d_caucus": {
+     "yea": 7,
+     "nay": 199,
+     "other": 0
+    },
+    "rollnumber": 224
+   },
+   "senate": {
+    "r": {
+     "yea": 48,
+     "nay": 3,
+     "other": 0
+    },
+    "d": {
+     "yea": 2,
+     "nay": 46,
+     "other": 0
+    },
+    "i": {
+     "yea": 0,
+     "nay": 1,
+     "other": 0
+    },
+    "yea": 50,
+    "nay": 50,
+    "d_caucus": {
+     "yea": 2,
+     "nay": 47,
+     "other": 0
+    },
+    "rollnumber": 196
+   },
+   "character": "party-line",
+   "legacy_classification": "PLR"
+  },
+  {
+   "public_law": "108-173",
+   "name": "Medicare Modernization Act",
+   "date": "2003-12-08",
+   "congress": 108,
+   "house": {
+    "r": {
+     "yea": 204,
+     "nay": 25,
+     "other": 0
+    },
+    "d": {
+     "yea": 16,
+     "nay": 189,
+     "other": 0
+    },
+    "i": {
+     "yea": 0,
+     "nay": 1,
+     "other": 0
+    },
+    "yea": 220,
+    "nay": 215,
+    "d_caucus": {
+     "yea": 16,
+     "nay": 190,
+     "other": 0
+    },
+    "rollnumber": 667
+   },
+   "senate": {
+    "r": {
+     "yea": 42,
+     "nay": 9,
+     "other": 0
+    },
+    "d": {
+     "yea": 11,
+     "nay": 35,
+     "other": 2
+    },
+    "i": {
+     "yea": 1,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 54,
+    "nay": 44,
+    "d_caucus": {
+     "yea": 12,
+     "nay": 35,
+     "other": 2
+    },
+    "rollnumber": 459
+   },
+   "character": "cross-party",
+   "legacy_classification": "XP"
+  },
+  {
+   "public_law": "110-343",
+   "name": "Emergency Economic Stabilization Act",
+   "date": "2008-10-03",
+   "congress": 110,
+   "house": {
+    "r": {
+     "yea": 91,
+     "nay": 108,
+     "other": 0
+    },
+    "d": {
+     "yea": 172,
+     "nay": 63,
+     "other": 0
+    },
+    "i": {
+     "yea": 0,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 263,
+    "nay": 171,
+    "d_caucus": {
+     "yea": 172,
+     "nay": 63,
+     "other": 0
+    },
+    "rollnumber": 1856
+   },
+   "senate": {
+    "r": {
+     "yea": 34,
+     "nay": 15,
+     "other": 0
+    },
+    "d": {
+     "yea": 40,
+     "nay": 9,
+     "other": 1
+    },
+    "i": {
+     "yea": 0,
+     "nay": 1,
+     "other": 0
+    },
+    "yea": 74,
+    "nay": 25,
+    "d_caucus": {
+     "yea": 40,
+     "nay": 10,
+     "other": 1
+    },
+    "rollnumber": 655
+   },
+   "character": "cross-party",
+   "legacy_classification": "XP"
+  },
+  {
+   "public_law": "111-5",
+   "name": "American Recovery and Reinvestment Act",
+   "date": "2009-02-17",
+   "congress": 111,
+   "house": {
+    "r": {
+     "yea": 0,
+     "nay": 176,
+     "other": 2
+    },
+    "d": {
+     "yea": 246,
+     "nay": 7,
+     "other": 2
+    },
+    "i": {
+     "yea": 0,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 246,
+    "nay": 183,
+    "d_caucus": {
+     "yea": 246,
+     "nay": 7,
+     "other": 2
+    },
+    "rollnumber": 69
+   },
+   "senate": {
+    "r": {
+     "yea": 3,
+     "nay": 38,
+     "other": 0
+    },
+    "d": {
+     "yea": 56,
+     "nay": 0,
+     "other": 1
+    },
+    "i": {
+     "yea": 1,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 60,
+    "nay": 38,
+    "d_caucus": {
+     "yea": 57,
+     "nay": 0,
+     "other": 1
+    },
+    "rollnumber": 64
+   },
+   "character": "party-line",
+   "legacy_classification": "PLD"
+  },
+  {
+   "public_law": "111-148 / 111-152",
+   "name": "Affordable Care Act + Reconciliation Act",
+   "date": "2010-03-23",
+   "congress": 111,
+   "house": {
+    "r": {
+     "yea": 0,
+     "nay": 178,
+     "other": 0
+    },
+    "d": {
+     "yea": 219,
+     "nay": 34,
+     "other": 0
+    },
+    "i": {
+     "yea": 0,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 219,
+    "nay": 212,
+    "d_caucus": {
+     "yea": 219,
+     "nay": 34,
+     "other": 0
+    },
+    "rollnumber": 1150
+   },
+   "senate": {
+    "r": {
+     "yea": 0,
+     "nay": 39,
+     "other": 1
+    },
+    "d": {
+     "yea": 59,
+     "nay": 0,
+     "other": 0
+    },
+    "i": {
+     "yea": 1,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 60,
+    "nay": 39,
+    "d_caucus": {
+     "yea": 60,
+     "nay": 0,
+     "other": 0
+    },
+    "rollnumber": 396
+   },
+   "character": "party-line",
+   "legacy_classification": "PLD",
+   "note": "Vote shown is for HR3590 (PL 111-148), the Affordable Care Act itself. The companion reconciliation act (PL 111-152, HR4872) was a separate vote. The score combines both."
+  },
+  {
+   "public_law": "111-312",
+   "name": "Tax Relief, Unemployment Insurance Reauthorization and Job Creation Act",
+   "date": "2010-12-17",
+   "congress": 111,
+   "house": {
+    "r": {
+     "yea": 138,
+     "nay": 36,
+     "other": 5
+    },
+    "d": {
+     "yea": 139,
+     "nay": 112,
+     "other": 3
+    },
+    "i": {
+     "yea": 0,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 277,
+    "nay": 148,
+    "d_caucus": {
+     "yea": 139,
+     "nay": 112,
+     "other": 3
+    },
+    "rollnumber": 1630
+   },
+   "senate": {
+    "r": {
+     "yea": 37,
+     "nay": 5,
+     "other": 0
+    },
+    "d": {
+     "yea": 44,
+     "nay": 13,
+     "other": 0
+    },
+    "i": {
+     "yea": 0,
+     "nay": 1,
+     "other": 0
+    },
+    "yea": 81,
+    "nay": 19,
+    "d_caucus": {
+     "yea": 44,
+     "nay": 14,
+     "other": 0
+    },
+    "rollnumber": 673
+   },
+   "character": "cross-party",
+   "legacy_classification": "XP"
+  },
+  {
+   "public_law": "112-25",
+   "name": "Budget Control Act of 2011",
+   "date": "2011-08-02",
+   "congress": 112,
+   "house": {
+    "r": {
+     "yea": 174,
+     "nay": 66,
+     "other": 0
+    },
+    "d": {
+     "yea": 95,
+     "nay": 95,
+     "other": 3
+    },
+    "i": {
+     "yea": 0,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 269,
+    "nay": 161,
+    "d_caucus": {
+     "yea": 95,
+     "nay": 95,
+     "other": 3
+    },
+    "rollnumber": 686
+   },
+   "senate": {
+    "r": {
+     "yea": 28,
+     "nay": 19,
+     "other": 0
+    },
+    "d": {
+     "yea": 46,
+     "nay": 6,
+     "other": 0
+    },
+    "i": {
+     "yea": 0,
+     "nay": 1,
+     "other": 0
+    },
+    "yea": 74,
+    "nay": 26,
+    "d_caucus": {
+     "yea": 46,
+     "nay": 7,
+     "other": 0
+    },
+    "rollnumber": 123
+   },
+   "character": "cross-party",
+   "legacy_classification": "XP"
+  },
+  {
+   "public_law": "112-240",
+   "name": "American Taxpayer Relief Act of 2012",
+   "date": "2013-01-02",
+   "congress": 112,
+   "house": {
+    "r": {
+     "yea": 85,
+     "nay": 151,
+     "other": 5
+    },
+    "d": {
+     "yea": 172,
+     "nay": 16,
+     "other": 3
+    },
+    "i": {
+     "yea": 0,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 257,
+    "nay": 167,
+    "d_caucus": {
+     "yea": 172,
+     "nay": 16,
+     "other": 3
+    },
+    "rollnumber": 1602
+   },
+   "senate": {
+    "r": {
+     "yea": 40,
+     "nay": 5,
+     "other": 2
+    },
+    "d": {
+     "yea": 48,
+     "nay": 3,
+     "other": 1
+    },
+    "i": {
+     "yea": 1,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 89,
+    "nay": 8,
+    "d_caucus": {
+     "yea": 49,
+     "nay": 3,
+     "other": 1
+    },
+    "rollnumber": 486
+   },
+   "character": "cross-party",
+   "legacy_classification": "XP",
+   "note": "Senate voted first, on 1 January 2013 (RC486). The House concurred the same day (RC1602). Signed 2 January 2013 but scored against FY2012."
+  },
+  {
+   "public_law": "114-113",
+   "name": "PATH Act",
+   "date": "2015-12-18",
+   "congress": 114,
+   "house": {
+    "r": {
+     "yea": 241,
+     "nay": 3,
+     "other": 1
+    },
+    "d": {
+     "yea": 77,
+     "nay": 106,
+     "other": 5
+    },
+    "i": {
+     "yea": 0,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 318,
+    "nay": 109,
+    "d_caucus": {
+     "yea": 77,
+     "nay": 106,
+     "other": 5
+    },
+    "rollnumber": 700
+   },
+   "senate": {
+    "r": {
+     "yea": 27,
+     "nay": 26,
+     "other": 1
+    },
+    "d": {
+     "yea": 37,
+     "nay": 6,
+     "other": 1
+    },
+    "i": {
+     "yea": 1,
+     "nay": 1,
+     "other": 0
+    },
+    "yea": 65,
+    "nay": 33,
+    "d_caucus": {
+     "yea": 38,
+     "nay": 7,
+     "other": 1
+    },
+    "rollnumber": 339
+   },
+   "character": "cross-party",
+   "legacy_classification": "XP",
+   "note": "HR2029 carried both the PATH Act tax title and the FY2016 omnibus. The House voted them separately (PATH: RC700); the Senate voted the combined package (RC339)."
+  },
+  {
+   "public_law": "115-97",
+   "name": "Tax Cuts and Jobs Act",
+   "date": "2017-12-22",
+   "congress": 115,
+   "house": {
+    "r": {
+     "yea": 224,
+     "nay": 12,
+     "other": 3
+    },
+    "d": {
+     "yea": 0,
+     "nay": 189,
+     "other": 4
+    },
+    "i": {
+     "yea": 0,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 224,
+    "nay": 201,
+    "d_caucus": {
+     "yea": 0,
+     "nay": 189,
+     "other": 4
+    },
+    "rollnumber": 698
+   },
+   "senate": {
+    "r": {
+     "yea": 51,
+     "nay": 0,
+     "other": 1
+    },
+    "d": {
+     "yea": 0,
+     "nay": 46,
+     "other": 0
+    },
+    "i": {
+     "yea": 0,
+     "nay": 2,
+     "other": 0
+    },
+    "yea": 51,
+    "nay": 48,
+    "d_caucus": {
+     "yea": 0,
+     "nay": 48,
+     "other": 0
+    },
+    "rollnumber": 323
+   },
+   "character": "party-line",
+   "legacy_classification": "PLR",
+   "note": "Senate RC323 (20 Dec 2017, 51-48) is FINAL passage after the conference. RC303 (2 Dec, 51-49) was the initial Senate passage, on which Corker voted no; he switched to yes on final passage and McCain was absent. Using RC303 reproduces R 51-1, not the House Clerk record of R 51-0."
+  },
+  {
+   "public_law": "115-123",
+   "name": "Bipartisan Budget Act of 2018",
+   "date": "2018-02-09",
+   "congress": 115,
+   "house": {
+    "r": {
+     "yea": 167,
+     "nay": 67,
+     "other": 4
+    },
+    "d": {
+     "yea": 73,
+     "nay": 119,
+     "other": 1
+    },
+    "i": {
+     "yea": 0,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 240,
+    "nay": 186,
+    "d_caucus": {
+     "yea": 73,
+     "nay": 119,
+     "other": 1
+    },
+    "rollnumber": 776
+   },
+   "senate": {
+    "r": {
+     "yea": 34,
+     "nay": 16,
+     "other": 1
+    },
+    "d": {
+     "yea": 36,
+     "nay": 11,
+     "other": 0
+    },
+    "i": {
+     "yea": 1,
+     "nay": 1,
+     "other": 0
+    },
+    "yea": 71,
+    "nay": 28,
+    "d_caucus": {
+     "yea": 37,
+     "nay": 12,
+     "other": 0
+    },
+    "rollnumber": 356
+   },
+   "character": "cross-party",
+   "legacy_classification": "XP"
+  },
+  {
+   "public_law": "116-37",
+   "name": "Bipartisan Budget Act of 2019",
+   "date": "2019-08-02",
+   "congress": 116,
+   "house": {
+    "r": {
+     "yea": 65,
+     "nay": 132,
+     "other": 0
+    },
+    "d": {
+     "yea": 219,
+     "nay": 16,
+     "other": 0
+    },
+    "i": {
+     "yea": 0,
+     "nay": 1,
+     "other": 0
+    },
+    "yea": 284,
+    "nay": 149,
+    "d_caucus": {
+     "yea": 219,
+     "nay": 17,
+     "other": 0
+    },
+    "rollnumber": 510
+   },
+   "senate": {
+    "r": {
+     "yea": 29,
+     "nay": 23,
+     "other": 1
+    },
+    "d": {
+     "yea": 37,
+     "nay": 5,
+     "other": 3
+    },
+    "i": {
+     "yea": 1,
+     "nay": 0,
+     "other": 1
+    },
+    "yea": 67,
+    "nay": 28,
+    "d_caucus": {
+     "yea": 38,
+     "nay": 5,
+     "other": 4
+    },
+    "rollnumber": 262
+   },
+   "character": "cross-party",
+   "legacy_classification": "XP"
+  },
+  {
+   "public_law": "116-136",
+   "name": "CARES Act",
+   "date": "2020-03-27",
+   "congress": 116,
+   "house": null,
+   "senate": {
+    "r": {
+     "yea": 49,
+     "nay": 0,
+     "other": 4
+    },
+    "d": {
+     "yea": 45,
+     "nay": 0,
+     "other": 0
+    },
+    "i": {
+     "yea": 2,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 96,
+    "nay": 0,
+    "d_caucus": {
+     "yea": 47,
+     "nay": 0,
+     "other": 0
+    },
+    "rollnumber": 508
+   },
+   "character": "cross-party",
+   "legacy_classification": "XP",
+   "note": "House passed the CARES Act by VOICE VOTE on 27 March 2020. No roll call exists, so no per-party split can be counted. This is an absence of data, not a unanimous vote, and must never render as 0-0 or as agreement."
+  },
+  {
+   "public_law": "116-260",
+   "name": "Consolidated Appropriations Act 2021",
+   "date": "2020-12-27",
+   "congress": 116,
+   "house": {
+    "r": {
+     "yea": 128,
+     "nay": 50,
+     "other": 17
+    },
+    "d": {
+     "yea": 230,
+     "nay": 2,
+     "other": 0
+    },
+    "i": {
+     "yea": 1,
+     "nay": 1,
+     "other": 0
+    },
+    "yea": 359,
+    "nay": 53,
+    "d_caucus": {
+     "yea": 231,
+     "nay": 3,
+     "other": 0
+    },
+    "rollnumber": 950
+   },
+   "senate": {
+    "r": {
+     "yea": 44,
+     "nay": 6,
+     "other": 2
+    },
+    "d": {
+     "yea": 46,
+     "nay": 0,
+     "other": 0
+    },
+    "i": {
+     "yea": 2,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 92,
+    "nay": 6,
+    "d_caucus": {
+     "yea": 48,
+     "nay": 0,
+     "other": 0
+    },
+    "rollnumber": 717
+   },
+   "character": "cross-party",
+   "legacy_classification": "XP"
+  },
+  {
+   "public_law": "117-2",
+   "name": "American Rescue Plan Act",
+   "date": "2021-03-11",
+   "congress": 117,
+   "house": {
+    "r": {
+     "yea": 0,
+     "nay": 210,
+     "other": 1
+    },
+    "d": {
+     "yea": 220,
+     "nay": 1,
+     "other": 0
+    },
+    "i": {
+     "yea": 0,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 220,
+    "nay": 211,
+    "d_caucus": {
+     "yea": 220,
+     "nay": 1,
+     "other": 0
+    },
+    "rollnumber": 71
+   },
+   "senate": {
+    "r": {
+     "yea": 0,
+     "nay": 49,
+     "other": 1
+    },
+    "d": {
+     "yea": 48,
+     "nay": 0,
+     "other": 0
+    },
+    "i": {
+     "yea": 2,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 50,
+    "nay": 49,
+    "d_caucus": {
+     "yea": 50,
+     "nay": 0,
+     "other": 0
+    },
+    "rollnumber": 110
+   },
+   "character": "party-line",
+   "legacy_classification": "PLD"
+  },
+  {
+   "public_law": "117-58",
+   "name": "Infrastructure Investment and Jobs Act",
+   "date": "2021-11-15",
+   "congress": 117,
+   "house": {
+    "r": {
+     "yea": 13,
+     "nay": 200,
+     "other": 0
+    },
+    "d": {
+     "yea": 215,
+     "nay": 6,
+     "other": 0
+    },
+    "i": {
+     "yea": 0,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 228,
+    "nay": 206,
+    "d_caucus": {
+     "yea": 215,
+     "nay": 6,
+     "other": 0
+    },
+    "rollnumber": 368
+   },
+   "senate": {
+    "r": {
+     "yea": 19,
+     "nay": 30,
+     "other": 1
+    },
+    "d": {
+     "yea": 48,
+     "nay": 0,
+     "other": 0
+    },
+    "i": {
+     "yea": 2,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 69,
+    "nay": 30,
+    "d_caucus": {
+     "yea": 50,
+     "nay": 0,
+     "other": 0
+    },
+    "rollnumber": 314
+   },
+   "character": "cross-party",
+   "legacy_classification": "XP"
+  },
+  {
+   "public_law": "117-167",
+   "name": "CHIPS and Science Act",
+   "date": "2022-08-09",
+   "congress": 117,
+   "house": {
+    "r": {
+     "yea": 24,
+     "nay": 187,
+     "other": 0
+    },
+    "d": {
+     "yea": 219,
+     "nay": 0,
+     "other": 1
+    },
+    "i": {
+     "yea": 0,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 243,
+    "nay": 187,
+    "d_caucus": {
+     "yea": 219,
+     "nay": 0,
+     "other": 1
+    },
+    "rollnumber": 851
+   },
+   "senate": {
+    "r": {
+     "yea": 17,
+     "nay": 32,
+     "other": 1
+    },
+    "d": {
+     "yea": 46,
+     "nay": 0,
+     "other": 2
+    },
+    "i": {
+     "yea": 1,
+     "nay": 1,
+     "other": 0
+    },
+    "yea": 64,
+    "nay": 33,
+    "d_caucus": {
+     "yea": 47,
+     "nay": 1,
+     "other": 2
+    },
+    "rollnumber": 799
+   },
+   "character": "cross-party",
+   "legacy_classification": "XP"
+  },
+  {
+   "public_law": "117-169",
+   "name": "Inflation Reduction Act",
+   "date": "2022-08-16",
+   "congress": 117,
+   "house": {
+    "r": {
+     "yea": 0,
+     "nay": 207,
+     "other": 4
+    },
+    "d": {
+     "yea": 220,
+     "nay": 0,
+     "other": 0
+    },
+    "i": {
+     "yea": 0,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 220,
+    "nay": 207,
+    "d_caucus": {
+     "yea": 220,
+     "nay": 0,
+     "other": 0
+    },
+    "rollnumber": 867
+   },
+   "senate": {
+    "r": {
+     "yea": 0,
+     "nay": 50,
+     "other": 0
+    },
+    "d": {
+     "yea": 48,
+     "nay": 0,
+     "other": 0
+    },
+    "i": {
+     "yea": 2,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 50,
+    "nay": 50,
+    "d_caucus": {
+     "yea": 50,
+     "nay": 0,
+     "other": 0
+    },
+    "rollnumber": 853
+   },
+   "character": "party-line",
+   "legacy_classification": "PLD"
+  },
+  {
+   "public_law": "118-5",
+   "name": "Fiscal Responsibility Act of 2023",
+   "date": "2023-06-03",
+   "congress": 118,
+   "house": {
+    "r": {
+     "yea": 149,
+     "nay": 71,
+     "other": 2
+    },
+    "d": {
+     "yea": 165,
+     "nay": 46,
+     "other": 2
+    },
+    "i": {
+     "yea": 0,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 314,
+    "nay": 117,
+    "d_caucus": {
+     "yea": 165,
+     "nay": 46,
+     "other": 2
+    },
+    "rollnumber": 242
+   },
+   "senate": {
+    "r": {
+     "yea": 17,
+     "nay": 31,
+     "other": 1
+    },
+    "d": {
+     "yea": 44,
+     "nay": 4,
+     "other": 0
+    },
+    "i": {
+     "yea": 2,
+     "nay": 1,
+     "other": 0
+    },
+    "yea": 63,
+    "nay": 36,
+    "d_caucus": {
+     "yea": 46,
+     "nay": 5,
+     "other": 0
+    },
+    "rollnumber": 146
+   },
+   "character": "cross-party",
+   "legacy_classification": "XP"
+  },
+  {
+   "public_law": "119-21",
+   "name": "One Big Beautiful Bill Act",
+   "date": "2025-07-04",
+   "congress": 119,
+   "house": {
+    "r": {
+     "yea": 218,
+     "nay": 2,
+     "other": 0
+    },
+    "d": {
+     "yea": 0,
+     "nay": 212,
+     "other": 0
+    },
+    "i": {
+     "yea": 0,
+     "nay": 0,
+     "other": 0
+    },
+    "yea": 218,
+    "nay": 214,
+    "d_caucus": {
+     "yea": 0,
+     "nay": 212,
+     "other": 0
+    },
+    "rollnumber": 189
+   },
+   "senate": {
+    "r": {
+     "yea": 50,
+     "nay": 3,
+     "other": 0
+    },
+    "d": {
+     "yea": 0,
+     "nay": 45,
+     "other": 0
+    },
+    "i": {
+     "yea": 0,
+     "nay": 2,
+     "other": 0
+    },
+    "yea": 50,
+    "nay": 50,
+    "d_caucus": {
+     "yea": 0,
+     "nay": 47,
+     "other": 0
+    },
+    "rollnumber": 372
+   },
+   "character": "party-line",
+   "legacy_classification": "PLR"
+  }
+ ]
+}

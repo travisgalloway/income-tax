@@ -1,0 +1,87 @@
+{
+ "_meta": {
+  "title": "Share of federal individual income tax paid, by income group",
+  "source": "IRS Statistics of Income, individual tables by tax rate and income percentile, tax year 2023. CBO Distribution of Household Income 2022 for the top 1% income share",
+  "notes": [
+   "INDIVIDUAL INCOME TAX ONLY. Excludes payroll tax, which is where most households below the top decile pay more. Any chart must say this.",
+   "Refundable credits are excluded from the IRS series, which overstates the effective rate at the bottom.",
+   "Tax year 2023 is the latest IRS year. The 1995 comparison point was not retrieved; 2001 (33.2%) is the earliest verified anchor.",
+   "Concentration of tax paid tracks concentration of income. Show both columns or the chart misleads."
+  ],
+  "provenance": {
+   "generator": "monthly/curated_snapshots.py",
+   "git_sha": "5920f6f",
+   "generated_at": "2026-08-22T17:51:54Z"
+  },
+  "refresh": {
+   "mode": "curated",
+   "reason": "source publishes as a document, not a machine-readable feed"
+  }
+ },
+ "data": {
+  "tax_year": 2023,
+  "groups": [
+   {
+    "g": "Top 1%",
+    "income_share_pct": 20.6,
+    "tax_share_pct": 38.4,
+    "avg_rate_pct": 26.3
+   },
+   {
+    "g": "Top 5%",
+    "tax_share_pct": 60.0
+   },
+   {
+    "g": "Top 10%",
+    "income_share_pct": 47.6,
+    "tax_share_pct": 70.5
+   },
+   {
+    "g": "Top 25%",
+    "tax_share_pct": 86.3
+   },
+   {
+    "g": "Top 50%",
+    "income_share_pct": 87.7,
+    "tax_share_pct": 96.7
+   },
+   {
+    "g": "Bottom 50%",
+    "tax_share_pct": 3.3,
+    "avg_rate_pct": 3.7
+   }
+  ],
+  "top1_tax_share_history": [
+   {
+    "year": 2001,
+    "v": 33.2
+   },
+   {
+    "year": 2019,
+    "v": 38.8
+   },
+   {
+    "year": 2021,
+    "v": 45.8
+   },
+   {
+    "year": 2022,
+    "v": 40.4
+   },
+   {
+    "year": 2023,
+    "v": 38.4
+   }
+  ],
+  "cbo_top1_income_share": [
+   {
+    "year": 1979,
+    "v": 9
+   },
+   {
+    "year": 2022,
+    "v": 18
+   }
+  ]
+ }
+}
