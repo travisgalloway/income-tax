@@ -323,10 +323,11 @@ These are shown on one timeline without a causal claim attached: the statutory
 rate is not what anyone actually pays, and the distribution moved for many
 reasons.
 
-**Alt text (revenue):** Two stacked columns comparing US federal revenue by
-source as a share of GDP in fiscal 1995 and fiscal 2025. Both totals are close to
-17 and a half percent, but the individual income tax and customs duties grow
-while corporate, payroll and excise taxes shrink.
+**Alt text (revenue):** Stacked area chart of US federal revenue by source,
+fiscal 1962 through fiscal 2025, toggled between nominal dollars, percent of
+GDP and percent of total revenue. In the percent-of-GDP view the stack holds
+near 17 to 18 percent across the full span; within it the individual income
+tax and customs duties grow while corporate, payroll and excise taxes shrink.
 
 **Alt text (OECD):** Dot plot of total tax revenue as a share of GDP across
 selected OECD countries in 2024. The United States sits at 25.6%, below the OECD

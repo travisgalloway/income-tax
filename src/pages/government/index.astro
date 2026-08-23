@@ -2,7 +2,9 @@
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import Figure from '../../components/Figure.astro'
 import { DebtChart } from '../../components/islands/DebtChart'
-import { debt, vintageOf } from '../../data'
+import { RevenueChart } from '../../components/islands/RevenueChart'
+import { OecdChart } from '../../components/islands/OecdChart'
+import { debt, revenue, oecd, vintageOf } from '../../data'
 
 const sections = [
   { id: 'forty-trillion', label: 'The $40 trillion' },
@@ -67,7 +69,75 @@ const sections = [
     </p>
   </section>
 
-  {sections.slice(1).map((s) => (
+  {sections.slice(1, 9).map((s) => (
+    <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
+  ))}
+
+  <section id="where-money-comes-from">
+    <p class="kicker"><span class="section-no">Section 10</span></p>
+    <h2>The mix changed. The total did not.</h2>
+    <p class="standfirst">
+      Federal revenue was 17.9% of GDP in FY1995 and 17.2% in FY2025. Thirty years apart,
+      essentially the same take. What moved is who pays it and through which tax.
+    </p>
+    <p class="finding">
+      Share of GDP, FY1995 to FY2025: individual income 7.81% to 8.75%, payroll 6.41% to
+      5.76%, corporate 2.08% to 1.49%, customs 0.26% to 0.64%.
+    </p>
+
+    <Figure
+      ariaLabel="Federal revenue by source held near 17 to 18 percent of GDP from FY1995 to FY2025 while the mix shifted toward the individual income tax and customs duties."
+      title="Federal revenue by source, fiscal 1962 to fiscal 2025"
+      source={revenue._meta.source}
+      vintage={vintageOf(revenue._meta)}
+      xUnit="Fiscal year"
+      yUnit="nominal $ trillions, percent of GDP, or percent of total revenue"
+    >
+      <RevenueChart client:visible rows={revenue.data} />
+    </Figure>
+
+    <p class="prose">
+      The individual income tax now raises more than half of all federal revenue, up from
+      43.7% in 1995. The corporate share fell from 11.6% to 8.6%. Customs duties went from
+      $19 billion to $195 billion, more than a tenfold nominal rise, and are the fastest
+      growing revenue line in the federal government.
+    </p>
+
+    <p class="prose">
+      The OECD figure below counts federal, state and local tax revenue together; the
+      17.2%-of-GDP federal figure above does not include state and local collections. The
+      two are not two readings of the same thing, and this section does not present them as
+      a contradiction.
+    </p>
+
+    <Figure
+      ariaLabel="The United States collected 25.6% of GDP in tax in 2024, 31st of 38 OECD members and below the 34.1% OECD average."
+      title="Total tax revenue as a share of GDP, OECD comparison, 2024"
+      source={oecd._meta.source}
+      vintage={vintageOf(oecd._meta)}
+      xUnit="Percent of GDP"
+      yUnit="Country or OECD average"
+      note="Counts federal, state and local government together; not comparable to the federal-only revenue figure above. Shows ten selected members of 38; 2024 is preliminary."
+    >
+      <OecdChart client:visible data={oecd.data} />
+    </Figure>
+
+    <p class="prose">
+      Counting federal, state and local together, the US collected 25.6% of GDP in tax in
+      2024 against an OECD average of 34.1%, ranking 31st of 38 members. The US peaked at
+      28.3% in 2000 and bottomed at 22.9% in 2009. It is also the only OECD member with no
+      value-added tax, which accounts for most of the gap.
+    </p>
+
+    <p class="prose">
+      Two dating exceptions to the FY1995/FY2025 convention used elsewhere in this route:
+      the OECD figure above ends at 2024 preliminary data. Who pays the individual income
+      tax by income group is a tax year 2023 IRS figure; it belongs to the households route,
+      not this one.
+    </p>
+  </section>
+
+  {sections.slice(10).map((s) => (
     <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
   ))}
 </BaseLayout>
