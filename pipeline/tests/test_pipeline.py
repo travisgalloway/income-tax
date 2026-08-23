@@ -102,6 +102,33 @@ def test_absent_observations_are_null_not_zero():
     assert rows[1913]["top"] == 7.0
 
 
+def test_median_income_reproduces_the_published_figures():
+    """Households §1's finding sentence: $65,380 in 1995 to $83,730 in 2024, +28.1%."""
+    rows = {r["y"]: r for r in load("income_inequality")["data"]}
+    assert rows[1995]["mhi"] == 65380.0
+    assert rows[2024]["mhi"] == 83730.0
+    pct = (rows[2024]["mhi"] / rows[1995]["mhi"] - 1) * 100
+    assert abs(pct - 28.1) <= 0.05
+
+
+def test_1947_has_a_gini_but_no_median_income():
+    """The Gini runs back to 1947; the median income series does not start until 1984."""
+    rows = {r["y"]: r for r in load("income_inequality")["data"]}
+    assert rows[1947]["gini"] == 0.376
+    assert rows[1947]["mhi"] is None
+
+
+def test_series_start_years_match_the_declared_coverage():
+    """The start/end year each chart derives and prints must not drift from _meta.coverage."""
+    doc = load("income_inequality")
+    rows = doc["data"]
+    coverage = doc["_meta"]["coverage"]
+    for key in ("mhi", "gini"):
+        years = [r["y"] for r in rows if r[key] is not None]
+        assert min(years) == coverage[key]["start"], key
+        assert max(years) == coverage[key]["end"], key
+
+
 def test_economy_separates_actuals_from_projections():
     doc = load("economy")
     boundary = doc["_meta"]["estimate_boundary"]["last_actual_fy"]

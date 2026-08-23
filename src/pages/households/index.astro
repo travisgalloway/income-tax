@@ -1,5 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
+import Figure from '../../components/Figure.astro'
+import { MedianIncome } from '../../components/islands/MedianIncome'
+import { income, vintageOf } from '../../data'
 
 const sections = [
   { id: 'what-a-household-earns', label: 'What a household earns' },
@@ -23,7 +26,40 @@ const sections = [
     What a household earns, how far the spread runs, and what the tax bill actually looks
     like once payroll tax is counted.
   </p>
-  {sections.map((s) => (
+
+  <section id="what-a-household-earns">
+    <p class="kicker"><span class="section-no">Section 1</span></p>
+    <h2>What a household earns</h2>
+    <p class="standfirst">
+      Real median household income rose 28.1% in three decades, but the series only runs
+      back to 1984 — before that, this measure was not yet collected.
+    </p>
+    <p class="finding">
+      Real median household income was $65,380 in 1995 and $83,730 in 2024, in constant
+      2024 dollars, up 28.1%, about 0.86% a year.
+    </p>
+
+    <Figure
+      ariaLabel="Real median household income rose from $65,380 in 1995 to $83,730 in 2024, up 28.1%, in constant 2024 dollars."
+      title="Real median household income, 1984 to 2024"
+      source={income._meta.source}
+      vintage={vintageOf(income._meta)}
+      xUnit="Calendar year"
+      yUnit="constant 2024 dollars"
+      note="Constant 2024 dollars. The budget series elsewhere on this site is in FY2025 dollars — a different deflator and a different base year. The two are not directly comparable."
+    >
+      <MedianIncome client:visible rows={income.data} />
+    </Figure>
+
+    <p class="prose">
+      The series begins in 1984 because that is where the Census/FRED constant-dollar
+      measure of household income begins. The years before it are not flat — they are
+      unobserved by this particular measure. The family Gini index, in the next section,
+      does run back to 1947.
+    </p>
+  </section>
+
+  {sections.slice(1).map((s) => (
     <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
   ))}
 </BaseLayout>
