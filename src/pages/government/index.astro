@@ -2,7 +2,12 @@
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import Figure from '../../components/Figure.astro'
 import { DebtChart } from '../../components/islands/DebtChart'
-import { debt, vintageOf } from '../../data'
+import { DebtHolders } from '../../components/islands/DebtHolders'
+import { debt, debtHolders, curatedVintage, vintageOf } from '../../data'
+
+// Sections built so far. Everything else in `sections` below falls through to
+// the "Not built yet." placeholder until its own issue lands.
+const built = new Set(['forty-trillion', 'who-holds-it'])
 
 const sections = [
   { id: 'forty-trillion', label: 'The $40 trillion' },
@@ -67,7 +72,45 @@ const sections = [
     </p>
   </section>
 
-  {sections.slice(1).map((s) => (
+  <section id="who-holds-it">
+    <p class="kicker"><span class="section-no">Section 2</span></p>
+    <h2>Most of it is owed to us</h2>
+    <p class="standfirst">
+      About 80% is held by the public: investors, pension funds, banks, the Federal Reserve
+      and foreign governments. The other 20% the government owes itself, mostly the Social
+      Security and Medicare trust funds.
+    </p>
+    <p class="finding">
+      $32.14T held by the public (80.6%), $7.74T intragovernmental (19.4%), as of 7 August
+      2026.
+    </p>
+
+    <Figure
+      ariaLabel="$32.14 trillion of the federal debt is held by the public and $7.74 trillion is held intragovernmentally by federal trust funds; about 30% of the publicly held part, 24% of gross, is held abroad."
+      title="Who holds the federal debt, 7 August 2026"
+      source={debtHolders._meta.source}
+      vintage={curatedVintage(debtHolders._meta, debtHolders.data.as_of)}
+      xUnit="Share of gross debt, and share of publicly held debt"
+      yUnit="holder category"
+      note="Foreign holders are about 30% of publicly held debt, which is about 24% of gross debt; the two are not interchangeable. Treasury International Capital is revised monthly and China has been reported between $683 billion and $760 billion depending on vintage."
+    >
+      <DebtHolders client:visible d={debtHolders.data} />
+    </Figure>
+
+    <p class="prose">
+      Of the publicly held part, roughly 70% is domestic. The biggest foreign holders are
+      Japan at about $1.20 trillion, the UK at $889 billion and China at $683 billion.
+      Foreign holders were 5% of the debt in 1970 and are now close to a quarter of it. That
+      is not a solvency problem by itself, but a growing share of interest payments leaves
+      the country.
+    </p>
+    <p class="prose">
+      The intragovernmental piece is real money owed to future retirees, but it does not
+      trade in bond markets and does not set interest rates.
+    </p>
+  </section>
+
+  {sections.filter((s) => !built.has(s.id)).map((s) => (
     <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
   ))}
 </BaseLayout>

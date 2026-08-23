@@ -221,6 +221,33 @@ def check_snapshots(c: Checks) -> None:
          "debt_holders: Federal Reserve holdings appeared; SOURCES.md requires they be "
          "OMITTED rather than picked between conflicting figures")
 
+    # discrepancies.yaml -> foreign_share_of_debt: a foreign share is never
+    # presented without naming which debt it is a share OF. The field name
+    # itself (share_of_public_pct, not share_pct) makes the denominator
+    # explicit, so a renderer cannot flatten it to a bare percentage.
+    c.ok(all("share_of_public_pct" in s and "share_pct" not in s for s in d["public_split"]),
+         "debt_holders: public_split must use share_of_public_pct, never a bare share_pct")
+    c.ok(all("share_of_gross_pct" in h for h in d["foreign_share_history"]),
+         "debt_holders: foreign_share_history must name share_of_gross_pct on every point")
+    latest_foreign = next((h for h in d["foreign_share_history"] if h["year"] == 2025), None)
+    c.ok(latest_foreign is not None and latest_foreign["share_of_gross_pct"] == 24,
+         "debt_holders: no 2025 foreign_share_history point at 24% of gross debt")
+
+    maturity = _load("debt_maturity")["data"]
+    comp = {row["k"]: row for row in maturity["composition"]}
+    total_amt = sum(row["amount_t"] for row in maturity["composition"])
+    # EC2: bills/notes/bonds are NOT an exhaustive partition of the marketable
+    # total, and must never be presented as one.
+    c.ok(abs(total_amt - maturity["marketable_total_t"]) > 0.01,
+         "debt_maturity: composition now sums to the marketable total; if this is no "
+         "longer true the 'not an exhaustive partition' note and test are stale")
+    # EC3: bills.share_pct (curated) disagrees with amount_t / total on purpose;
+    # only bills carries a curated share, and it must never be silently derived
+    # for notes or bonds from amount_t / marketable_total_t.
+    c.ok("share_pct" in comp["bills"] and "share_pct" not in comp["notes"]
+         and "share_pct" not in comp["bonds"],
+         "debt_maturity: share_pct must be present on bills only")
+
     oecd = _load("oecd")["data"]
     c.ok(oecd["us_pct_gdp"] == 25.6 and oecd["oecd_average_pct_gdp"] == 34.1,
          "oecd: headline figures moved; sections.md quotes 25.6% and 34.1%")

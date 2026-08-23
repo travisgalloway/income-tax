@@ -226,3 +226,69 @@ def test_crossing_date_is_reconciled_not_competing():
             if "19 August 2026" in sentence:
                 assert "18 August 2026" in sentence, f"{path.name}: {sentence!r} names " \
                     "19 August without 18 August in the same sentence"
+
+
+ISLANDS = LEGACY / "src" / "components" / "islands"
+GOV_PAGE = LEGACY / "src" / "pages" / "government" / "index.astro"
+
+
+def _rendered_section(section_id: str) -> str:
+    """The literal source of one hardcoded <section id="..."> block in
+    index.astro, from its opening tag to its first closing </section>."""
+    page = GOV_PAGE.read_text()
+    start = page.index(f'id="{section_id}"')
+    end = page.index("</section>", start)
+    return page[start:end]
+
+
+def test_foreign_share_always_carries_its_denominator():
+    """discrepancies.yaml -> foreign_share_of_debt: 30% of publicly held debt
+    and 24% of gross debt are different quantities and must never read as one."""
+    resolution = curated.discrepancies()["foreign_share_of_debt"]["use"]
+    assert resolution["share_of_public_pct"] == 30
+    assert resolution["share_of_gross_pct"] == 24
+
+    notes = " ".join(load("debt_holders")["_meta"]["notes"]).lower()
+    assert "publicly held" in notes and "gross" in notes
+
+    src = (ISLANDS / "DebtHolders.tsx").read_text()
+    fn_start = src.index("const foreignShare")
+    fn_end = src.index("\n\n", fn_start)
+    outside = src[:fn_start] + src[fn_end:]
+    assert "30%" not in outside and "24%" not in outside, \
+        "DebtHolders.tsx: a bare 30%/24% literal exists outside the foreignShare formatter"
+
+
+def test_public_split_is_keyed_to_its_denominator():
+    """Every public_split entry uses share_of_public_pct; none carries a bare
+    share_pct a renderer could mistake for a share of gross debt."""
+    for s in load("debt_holders")["data"]["public_split"]:
+        assert "share_of_public_pct" in s
+        assert "share_pct" not in s
+
+
+def test_section_2_uses_no_party_colours():
+    src = (ISLANDS / "DebtHolders.tsx").read_text()
+    for tok in ("--dem", "--gop", "--mix"):
+        assert tok not in src, f"DebtHolders.tsx uses the partisan token {tok}"
+
+
+def test_federal_reserve_absent_from_rendered_section_2():
+    """Scoped like test_federal_reserve_holdings_stay_omitted: the string is a
+    legitimate, sections.md-verbatim trap in the §2 STANDFIRST, but must not
+    reach the data, the island, or the rest of the rendered section."""
+    assert "federal reserve" not in json.dumps(load("debt_holders")["data"]).lower()
+    assert "federal reserve" not in (ISLANDS / "DebtHolders.tsx").read_text().lower()
+
+    section2 = _rendered_section("who-holds-it").lower()
+    assert section2.count("federal reserve") == 1, \
+        "section 2 should name the Federal Reserve exactly once, in its standfirst"
+    standfirst_end = section2.index("</p>", section2.index("standfirst"))
+    assert "federal reserve" in section2[:standfirst_end]
+
+
+def test_tic_revision_note_is_carried():
+    notes = " ".join(load("debt_holders")["_meta"]["notes"])
+    assert "683" in notes and "760" in notes and "monthly" in notes.lower()
+    section2 = _rendered_section("who-holds-it")
+    assert "683 billion" in section2 and "monthly" in section2.lower()
