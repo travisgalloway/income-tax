@@ -15,8 +15,6 @@
 import { laws, splitByLaw } from '../../data'
 import type { PartySplit } from '../../data/types'
 
-export type Basis = 'net' | 'gross'
-
 export interface Bucket {
   /** 'cross-party' | 'party-line-r' | 'party-line-d' | a president name. */
   key: string
@@ -53,10 +51,10 @@ function countedYeas(split: PartySplit): { r: number; d: number } {
   return { r, d }
 }
 
-/** The counted coalition key for one law. Reads ONLY `character` and the
- *  yea counts in `party_splits.json` — never `legacy_classification`,
- *  `legacy_comp` or `vote_character`, all of which are the classified
- *  (not counted) predecessor this replaces. */
+/** The counted coalition key for one law. Reads ONLY `character` and the yea
+ *  counts in `party_splits.json` — never any field carrying a hand-classified
+ *  (not counted) vote character. See docs/contracts/interfaces/attribution.md
+ *  for which fields those are and why they are excluded. */
 function coalitionKey(split: PartySplit): 'cross-party' | 'party-line-r' | 'party-line-d' {
   if (split.character === 'cross-party') return 'cross-party'
   if (split.character === 'no recorded vote') {
