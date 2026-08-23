@@ -138,6 +138,28 @@ export interface ChamberVote {
   rollnumber: number
 }
 
+/** One row of the OECD total-tax-revenue comparison. `is_us` and `is_average`
+ *  are mutually exclusive flags: at most one row of each per dataset. Absent
+ *  on every other country row — never `false`. */
+export interface OecdCountry {
+  c: string
+  v: number
+  is_us?: boolean
+  is_average?: boolean
+}
+
+export interface OecdComparison {
+  year: number
+  us_pct_gdp: number
+  oecd_average_pct_gdp: number
+  us_rank: number
+  of_countries: number
+  /** A SELECTION of `of_countries` members, not the full membership. Any
+   *  chart built from this must say so. */
+  countries: OecdCountry[]
+  us_history: { year: number; v: number }[]
+}
+
 export interface PartySplit {
   public_law: string | null
   name: string
