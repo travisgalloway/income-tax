@@ -169,7 +169,8 @@ appropriation. It is also the only one smaller today, relative to GDP, than in
 **Finding:** Share of GDP, FY1995 to FY2025: mandatory 9.8% to 13.7%,
 discretionary 7.2% to 6.2%, net interest 3.1% to 3.2%.
 
-**Body:** In real terms mandatory spending grew 189% over this span and
+**Body:** In real terms mandatory spending — net of offsetting receipts, the
+basis used throughout this section — grew 194% over this span and
 discretionary grew 79%. Mandatory runs on permanent law and net interest is set
 by past borrowing; neither requires an annual vote.
 
