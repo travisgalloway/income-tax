@@ -14,3 +14,11 @@ time. Appended to, never rewritten. None of these have been acted on.
   number formatters inline rather than using `UnitToggle` and `charts/format.ts`. Section 4 uses
   the shared ones; §1 could be moved onto them. Found while working on #2. Severity: duplication,
   non-blocking.
+- [2026-08-23] `src/components/Figure.astro:38` requires and validates `ariaLabel` at build time but
+  never renders it anywhere in the DOM -- the accessible text a screen reader actually gets comes
+  from the slotted chart's own internal `Chart` `ariaLabel` (per-unit-view, describing the shape),
+  not from `Figure`'s prop (the finding). The prop is effectively a build-time lint only. Found
+  while wiring §§5-7 into `government/index.astro` (#5) and reasoning about which of the two
+  `ariaLabel`s each section's Figure/Chart pair should carry. Severity: accessibility/API clarity,
+  non-blocking -- the actual announced text is correct in every shipped section, just not via the
+  prop whose docstring implies it should be.
