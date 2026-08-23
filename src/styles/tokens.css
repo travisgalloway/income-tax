@@ -35,6 +35,18 @@
   --intragov: #C77D28;
   --positive: #2E7D5B;  /* surplus, deficit reduction */
 
+  /* Revenue by source (§10). Non-partisan, and deliberately NOT --positive:
+   * a tax line growing or shrinking is not a surplus/deficit judgement. Largest
+   * band first, adjacent bands vary in lightness as well as hue so the stack
+   * survives greyscale even with a direct label on only the top few bands. */
+  --rev-ii: #3E7C86;  /* individual income tax */
+  --rev-pr: #C77D28;  /* payroll taxes */
+  --rev-ci: #55606B;  /* corporate income tax */
+  --rev-ex: #93A8B3;  /* excise taxes */
+  --rev-cu: #263038;  /* customs duties: darker slate, the fastest-growing line */
+  --rev-eg: #A8895A;  /* estate and gift taxes */
+  --rev-mi: #B7BDB0;  /* miscellaneous */
+
   /* ---- Type ---------------------------------------------------------------
    * Two roles, the way a statistical publication is set: a reading face for
    * running text, and a sturdier face for tables and chart furniture, which

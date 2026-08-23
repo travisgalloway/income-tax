@@ -324,6 +324,39 @@ figcaption .lead {
   color: var(--ink-soft);
 }
 
+/* ---- Revenue by source (§10): direct band labels and the OECD dot plot ---
+ * Colour is never the only channel (BRIEF.md). A direct label on the plot
+ * itself, next to a table row and a shared readout, is how that holds.
+ */
+.legend-label {
+  font-family: var(--font-data);
+  font-size: 11px;
+  fill: var(--ink);
+  font-variant-numeric: var(--num-table);
+}
+
+.dotplot-label {
+  font-family: var(--font-data);
+  font-size: 11.5px;
+  fill: var(--ink-soft);
+}
+.dotplot-label-us { fill: var(--ink); font-weight: 700; }
+
+.dotplot-value {
+  font-family: var(--font-data);
+  font-size: 11px;
+  fill: var(--ink-soft);
+  font-variant-numeric: var(--num-table);
+}
+.dotplot-value-us { fill: var(--ink); font-weight: 700; }
+
+.dotplot-average-label {
+  font-family: var(--font-data);
+  font-size: 10.5px;
+  font-style: italic;
+  fill: var(--ink-soft);
+}
+
 .readout {
   font-family: var(--font-data);
   font-size: 0.8125rem;
