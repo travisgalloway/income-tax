@@ -20,4 +20,10 @@ when the code merges.
 | GOV-9 | Who passed it, who signed it — attribution toggle | none | none | Planned | — | — |
 | GOV-10 | Where the money comes from — revenue by source, brackets, OECD | none | none | Planned | — | — |
 | GOV-11 | By state | none | none | Planned | — | — |
-| GOV-12 | What this cannot tell you — caveats in full | none | none | Planned | — | — |
+| GOV-12 | What this cannot tell you — five limits in full, no disclosure wrapper, plus the concentration and deficit-vs-debt items | done | n/a (prose) | Shipped | #8 | contracts/interfaces/content-sources.md |
+
+## Reference pages
+
+| ID | Capability | UI | Data | Status | Issue | Contract |
+|----|-----------|----|------|--------|-------|----------|
+| REF-1 | /sources renders SOURCES.md in full, including known discrepancies | done | done | Shipped | #8 | contracts/interfaces/content-sources.md |

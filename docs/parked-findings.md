@@ -14,3 +14,17 @@ time. Appended to, never rewritten. None of these have been acted on.
   number formatters inline rather than using `UnitToggle` and `charts/format.ts`. Section 4 uses
   the shared ones; §1 could be moved onto them. Found while working on #2. Severity: duplication,
   non-blocking.
+- [2026-08-23] `sections.md` §8 "Required disclosure" still instructs section 8 to state that vote
+  composition is classified for 22 of 23 laws, which is now false (see `party_splits.json` and the
+  rewritten `SOURCES.md` "vote composition limitation" section). If section 8's copy ships with
+  that instruction, it will contradict §12. Owned by issue #3 / PR #17. Found while working on #8.
+  Severity: cross-section contradiction risk, non-blocking here (parked to the owning issue).
+- [2026-08-23] `BRIEF.md` data-integrity rule 6 says the same thing as the `sections.md` §8 note
+  above. The brief is treated as the immutable input to this build and is not edited by this issue.
+  Found while working on #8. Severity: documentation, non-blocking.
+- [2026-08-23] `pipeline/curated/notes.yaml` → `outputs.budget.notes[1]` still reads "Vote
+  composition is exact only for PL 115-97 (TCJA). All others are classified party-line or
+  cross-party from published vote character." This flows into `src/data/budget.json`
+  `_meta.notes[1]` and is rendered nowhere on the site today, but it is stale for the same reason
+  as `sections.md` §8. Editing it requires regenerating `budget.json`, which belongs with #3's
+  work. Found while working on #8. Severity: stale metadata, non-blocking.

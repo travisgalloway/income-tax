@@ -11,3 +11,10 @@ component-level and interaction coverage is manual and named explicitly rather t
 |----|--------------------|-----------|--------|------|
 | GOV-1 | — | `npx astro check`, `npm run build` | ad hoc | no automated coverage of `DebtChart.tsx` interactions |
 | GOV-4 | `test_outlay_components_sum_to_total_in_every_unit_family`, `test_party_control_is_null_outside_fy1995_2025`, `test_net_mandatory_is_positive_in_every_year`, `test_every_unit_family_covers_the_full_span`, `test_surplus_years_are_positive_deficit_values` | `npx astro check`, `npm run build` | M1–M12 in `.claude/plans/issue-2.md` (unit-sum spot check, control strip absent pre-1995, keyboard inspection parity, GDP-view clipping, no-JS render, 390px width, greyscale) | no automated JS coverage of `BudgetChart.tsx` — the stacking, strip and inspector logic are proved only by the pytest data invariants above plus the manual checks; no JS test runner exists in this repo to close that gap |
+| GOV-12 | `test_crisis_years_are_a_third_of_all_borrowing`, `test_deficit_debt_gap_matches_the_curated_resolution`, `test_limits_section_quotes_the_curated_deficit_debt_gap`, `test_limits_section_does_not_call_the_votes_classified`, `test_exactly_one_chamber_vote_is_absent` | `npx astro check`, `npm run build` | M1–M5 in `.claude/plans/issue-8.md` (no-JS render, 390px width, tab order, greyscale, screen reader) — not executed in this environment, no browser tooling available | no JS runner, but §12 ships no JS so this is a non-gap |
+
+## Reference pages
+
+| ID | Pipeline (pytest) | Build-time | Manual | Gaps |
+|----|--------------------|-----------|--------|------|
+| REF-1 | `test_sources_doc_describes_counted_splits` | the `if (!entry) throw` guard in `src/pages/sources.astro`, plus a `grep` on `dist/sources/index.html` | M2 (390px width, table scroll containment) in `.claude/plans/issue-8.md` — not executed in this environment, no browser tooling available | none |

@@ -374,9 +374,18 @@ revised its energy credit costs sharply upward. The 2012 fiscal cliff deal score
 as +$3.9 trillion against current law and as deficit-reducing against current
 policy: the same bill.
 
-**4. Party splits are classified, not counted.** Exact per-party tallies come
-from roll-call records. Only PL 115-97 is verified here. The other twenty-two
-laws are classed as party-line or cross-party from published vote character.
+**4. The votes are counted, and four things still limit them.** All 23 laws
+carry per-party yea and nay counts taken from Voteview roll-call records, not a
+party-line or cross-party label read off the published character of the vote.
+Four limits remain. The final-passage roll call for each law was chosen by
+hand, because a bill carries many roll calls and picking one by date returns
+the wrong vote. The House never took a roll call on the CARES Act, which passed
+by voice on 27 March 2020, so one chamber of one law has no split at all; that
+is an absence of data, not agreement. The threshold for calling a vote
+cross-party, at least 10% of the yes votes coming from the minority party in at
+least one chamber, is a judgement and can be argued with. And party membership
+and caucus membership differ by two Senate seats through most of this period,
+so a tally on one basis will not match a tally on the other.
 
 **5. Units change the story.** Nominal dollars make everything recent look
 unprecedented, because prices roughly doubled over this span. Share of GDP scales
