@@ -14,3 +14,19 @@ time. Appended to, never rewritten. None of these have been acted on.
   number formatters inline rather than using `UnitToggle` and `charts/format.ts`. Section 4 uses
   the shared ones; §1 could be moved onto them. Found while working on #2. Severity: duplication,
   non-blocking.
+- [2026-08-23] `pipeline/curated/laws.yaml:24` hand-curates `party_line_t: 7.52` (naive
+  `$5.21T + $2.31T`), but the underlying integer-thousandths sum is `5.206 + 2.306 = 7.512`,
+  which rounds to `$7.51T`. `sections.md` §8 already moved to 7.51, and `pipeline/lib/validate.py`
+  does not currently gate `party_line_t` or `cross_party_t` at all (only `net_scored_t` and
+  `gross_increases_t`, `validate.py:110-111`), so this is not a failing check today — just a
+  curated value one cent off from what integer arithmetic gives. Found while working on #4, which
+  owns the §9 attribution split and deliberately does the summation in integers rather than
+  reading this field. Not fixed here: §8 (issue #3) owns `laws.yaml`'s totals. Severity: data
+  precision, non-blocking.
+- [2026-08-23] `src/components/attribution/aggregate.ts` and `src/components/laws/derive.ts`
+  (issue #3, `feat/3-law-explorer-counted-votes`) both independently join `laws` to
+  `splitByLaw`/`party_splits.json` on `public_law` and derive a per-law coalition or party
+  assignment. If both branches merge, the duplicated join-and-classify logic is a candidate for
+  consolidation into a single shared helper. Deliberately not pre-empted on this branch (run
+  policy: no component or module is shared between #3 and #4). Severity: duplication,
+  non-blocking.

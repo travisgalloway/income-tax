@@ -355,3 +355,39 @@ figcaption .lead {
     scroll-behavior: auto !important;
   }
 }
+
+/* §9 attribution */
+
+.attrib-tabs { display: flex; gap: 1.4rem; margin-bottom: 0.7rem; }
+.attrib-tab {
+  font-family: var(--font-data);
+  font-size: 0.875rem;
+  background: transparent;
+  border: 0;
+  border-bottom: var(--rule-width) solid transparent;
+  padding: 0 0 0.3rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.attrib-tab:hover { color: var(--ink); }
+.attrib-tab[data-state='active'] {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+.attrib-panel[hidden] { display: none; }
+.attrib-panel[data-state='inactive'] { display: none; }
+.attrib-row-label {
+  font-family: var(--font-data);
+  font-size: 11.5px;
+  fill: var(--ink);
+  font-variant-numeric: var(--num-table);
+}
+.attrib-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.1rem;
+  margin: 0.4rem 0 0.6rem;
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+}
