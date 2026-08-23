@@ -4,6 +4,8 @@ import Figure from '../../components/Figure.astro'
 import { DebtChart } from '../../components/islands/DebtChart'
 import { debt, vintageOf } from '../../data'
 
+const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
+
 const sections = [
   { id: 'forty-trillion', label: 'The $40 trillion' },
   { id: 'who-holds-it', label: 'Who holds it' },
@@ -67,7 +69,87 @@ const sections = [
     </p>
   </section>
 
-  {sections.slice(1).map((s) => (
+  {sections.slice(1).filter((s) => s.id !== 'limits').map((s) => (
     <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
   ))}
+
+  <section id="limits">
+    <p class="kicker"><span class="section-no">Section 12</span></p>
+    <h2>Five things this data cannot tell you</h2>
+    <p class="standfirst">
+      These limits are load bearing, not decorative. Read them before arguing with anyone
+      about the charts above.
+    </p>
+
+    <ol class="limits">
+      <li>
+        <h3>Control is not cause.</h3>
+        <p class="prose">
+          Most of the budget runs on permanent law that nobody re-votes on, and a fiscal
+          year's spending is largely set by bills passed before that year began. Every chart
+          here records who was in office, not who caused what.
+        </p>
+      </li>
+      <li>
+        <h3>The fiscal year is not the calendar year.</h3>
+        <p class="prose">
+          FY2025 began in October 2024. A president sworn in that January inherits a year
+          already a quarter old. Years are assigned to whoever held the office in June of that
+          fiscal year, which puts FY2025 with Trump II.
+        </p>
+      </li>
+      <li>
+        <h3>Scores are forecasts, not outcomes.</h3>
+        <p class="prose">
+          Ten-year cost estimates were made at enactment under assumptions that often did not
+          hold. The ACA was scored as deficit-reducing. The IRA was scored at $238 billion of
+          savings and CBO later revised its energy credit costs sharply upward. The 2012 fiscal
+          cliff deal scores as +$3.9 trillion against current law and as deficit-reducing
+          against current policy: the same bill.
+        </p>
+      </li>
+      <li>
+        <h3>The votes are counted, and four things still limit them.</h3>
+        <p class="prose">
+          All 23 laws carry per-party yea and nay counts taken from Voteview roll-call records,
+          not a party-line or cross-party label read off the published character of the vote.
+          Four limits remain. The final-passage roll call for each law was chosen by hand,
+          because a bill carries many roll calls and picking one by date returns the wrong vote.
+          The House never took a roll call on the CARES Act, which passed by voice on 27 March
+          2020, so one chamber of one law has no split at all; that is an absence of data, not
+          agreement. The threshold for calling a vote cross-party, at least 10% of the yes votes
+          coming from the minority party in at least one chamber, is a judgement and can be
+          argued with. And party membership and caucus membership differ by two Senate seats
+          through most of this period, so a tally on one basis will not match a tally on the
+          other.
+        </p>
+      </li>
+      <li>
+        <h3>Units change the story.</h3>
+        <p class="prose">
+          Nominal dollars make everything recent look unprecedented, because prices roughly
+          doubled over this span. Share of GDP scales to the economy carrying the burden. Every
+          dollar chart on this site can be flipped between them, and readers should. <a
+          href="#forty-trillion">The debt series in section 1</a> is the plainest case: flip it,
+          and the same decade reads as a doubling in nominal dollars and as 105% of GDP to 124%.
+        </p>
+      </li>
+    </ol>
+
+    <h3>Two more worth knowing</h3>
+    <p class="prose num">
+      Four years out of thirty-one, FY2008 to FY2009 and FY2020 to FY2021, produced $7.78
+      trillion of borrowing, 32% of the total, against an average of $0.61 trillion in every
+      other year.
+    </p>
+    <p class="prose num">
+      Cumulative deficits over the period were $24.15 trillion while debt held by the public
+      rose $26.74 trillion. The gap is borrowing to finance federal credit programs and other
+      means of financing, which do not appear in the deficit.
+    </p>
+    <p class="prose">
+      All sources are listed in full, with vintages and known discrepancies, at
+      <a href={sourcesHref}>Sources</a>.
+    </p>
+  </section>
 </BaseLayout>

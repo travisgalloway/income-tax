@@ -355,3 +355,29 @@ figcaption .lead {
     scroll-behavior: auto !important;
   }
 }
+
+/* ---- Limits (§12) -------------------------------------------------------
+ * A numbered list of caveats, set as running text rather than as a list of
+ * bullets: BRIEF.md makes this section load-bearing, and bullets read as an
+ * appendix. The marker is the only ornament, and nothing here is collapsible.
+ */
+
+.limits { list-style: none; counter-reset: limit; margin: 0 0 1.6rem; padding: 0; }
+.limits > li {
+  counter-increment: limit;
+  max-width: var(--measure);
+  margin: 0 0 1.5rem;
+  padding-top: 0.6rem;
+  border-top: var(--rule-hair) solid var(--rule);
+}
+.limits > li > h3 { display: inline; margin: 0; }
+.limits > li > h3::before {
+  content: counter(limit) '. ';
+  font-style: normal;
+  font-variant-numeric: var(--num-table);
+}
+/* The heading runs into its paragraph, textbook-style, so the caveat reads as
+   one sentence rather than as a headed block. */
+.limits > li > h3 + .prose { display: inline; text-indent: 0; }
+.reference-doc { max-width: var(--measure-wide); }
+.reference-doc table { border-collapse: collapse; font-variant-numeric: var(--num-table); }
