@@ -1,10 +1,15 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro'
+import { getEntry, render } from 'astro:content'
+
+const entry = await getEntry('reference', 'sources')
+if (!entry) throw new Error('SOURCES.md did not load. /sources renders it in full; refusing to build a stub.')
+const { Content } = await render(entry)
 ---
 
 <BaseLayout title="Sources | US federal finance" description="Every source, with vintage and known discrepancies.">
   <p class="kicker">Reference</p>
-  <h1>Sources</h1>
-  <p class="standfirst">Every figure traces to one of these. Vintages matter.</p>
-  <section id="sources"><p class="num">Not built yet.</p></section>
+  <section id="reference" class="reference-doc">
+    <Content />
+  </section>
 </BaseLayout>
