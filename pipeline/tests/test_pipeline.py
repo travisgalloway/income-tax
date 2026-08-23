@@ -144,6 +144,17 @@ def test_section5_surplus_band_is_exactly_fy1998_2001(budget):
     assert surplus == [1998, 1999, 2000, 2001]
 
 
+def test_section6_mandatory_growth_is_quoted_on_the_net_basis(budget):
+    """sections.md section 6 quotes mandatory growth net of offsetting
+    receipts (194%). Also assert gross is materially different, so the two
+    bases can never be silently swapped back."""
+    a, b = budget[1995], budget[2025]
+    net = 100 * ((b["r_ma"] + b["r_or"]) / (a["r_ma"] + a["r_or"]) - 1)
+    gross = 100 * (b["r_ma"] / a["r_ma"] - 1)
+    assert abs(net - 194) <= 1.0, f"net growth {net:.2f}"
+    assert abs(net - gross) > 3, "net and gross bases have converged; re-check which one sections.md quotes"
+
+
 # ---- failure behaviour ---------------------------------------------------
 
 def test_unreachable_source_raises_rather_than_returning_empty():

@@ -66,8 +66,8 @@ re-implement a second breakpoint.
 
 ## Section-island shape
 
-Every built section island (`DebtChart.tsx`, `BudgetChart.tsx`, `StructuralGap.tsx`) follows the
-same skeleton:
+Every built section island (`DebtChart.tsx`, `BudgetChart.tsx`, `StructuralGap.tsx`,
+`VotedAndNot.tsx`) follows the same skeleton:
 
 1. `useChartSize()` for sizing, `useState` for the active unit/view and the focused/hovered datum.
 2. A `useMemo` deriving the per-row values for the active unit.

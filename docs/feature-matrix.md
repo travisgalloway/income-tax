@@ -14,7 +14,7 @@ when the code merges.
 | GOV-3 | How old is the debt — maturity ladder against the 30-year ceiling | none | none | Planned | — | — |
 | GOV-4 | The whole budget — outlays stacked (mandatory net/discretionary/interest), revenue line, deficit below zero, party-control strip, unit toggle, year inspection, era bands | done | done | Shipped | #2 | contracts/interfaces/budget-data.md, contracts/interfaces/charts.md |
 | GOV-5 | The structural gap — revenue vs outlays, nominal / real / % of GDP toggle, sign-and-position surplus band | done | done | Shipped | #5 | contracts/interfaces/budget-data.md, contracts/interfaces/charts.md |
-| GOV-6 | What Congress votes on — mandatory vs discretionary vs interest | none | none | Planned | — | — |
+| GOV-6 | What Congress votes on — mandatory (net) vs discretionary vs net interest, nominal / real / % of GDP toggle, FY2015 trajectory marker | done | done | Shipped | #5 | contracts/interfaces/budget-data.md, contracts/interfaces/charts.md |
 | GOV-7 | Net interest — the fastest-growing line | none | none | Planned | — | — |
 | GOV-8 | The laws — sortable/filterable explorer, cost, vote, enactment date | none | none | Planned | — | — |
 | GOV-9 | Who passed it, who signed it — attribution toggle | none | none | Planned | — | — |
