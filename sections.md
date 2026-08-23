@@ -211,8 +211,6 @@ billion by 2025.
 
 **Source line:** CBO Historical Budget Data, February 2026. Nominal dollars.
 
-**Cross-link:** Section 3 explains why this curve is so steep. Link them.
-
 ---
 
 ## 8 / The laws

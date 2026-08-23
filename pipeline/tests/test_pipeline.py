@@ -155,6 +155,23 @@ def test_section6_mandatory_growth_is_quoted_on_the_net_basis(budget):
     assert abs(net - gross) > 3, "net and gross bases have converged; re-check which one sections.md quotes"
 
 
+def test_section7_net_interest_share_of_deficits_is_39_percent(budget):
+    """sections.md section 7: $9.4T in net interest is 39% of all deficits
+    across the same 31 years."""
+    span = [budget[y] for y in range(1995, 2026)]
+    total_ni = sum(r["n_ni"] for r in span)
+    total_deficits = sum(-r["n_de"] for r in span)
+    share = 100 * total_ni / total_deficits
+    assert abs(share - 39) <= 1.0, f"net interest is {share:.1f}% of deficits"
+
+
+def test_section7_series_low_is_not_the_fy2015_trough(budget):
+    """FY2003 must be strictly lower than FY2015 in both nominal and real
+    dollars, or section 7's "trough, not the series low" wording is wrong."""
+    assert budget[2003]["n_ni"] < budget[2015]["n_ni"]
+    assert budget[2003]["r_ni"] < budget[2015]["r_ni"]
+
+
 # ---- failure behaviour ---------------------------------------------------
 
 def test_unreachable_source_raises_rather_than_returning_empty():
