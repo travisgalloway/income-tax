@@ -14,3 +14,12 @@ time. Appended to, never rewritten. None of these have been acted on.
   number formatters inline rather than using `UnitToggle` and `charts/format.ts`. Section 4 uses
   the shared ones; §1 could be moved onto them. Found while working on #2. Severity: duplication,
   non-blocking.
+- [2026-08-23] `src/components/charts/scales.ts` `niceExtent()` only clamps the low end to 0 when
+  padding pushes it *above* 0 (`if (lo > 0) lo = 0`); when the unpadded minimum is small relative
+  to the series' span (e.g. `RevenueChart`'s nominal view, FY1962 `n_tot` $0.0997T against a
+  FY2025 max of $5.2346T), the 8% pad pushes `lo` slightly *below* zero and it is left there,
+  giving a y-domain like `[-0.31, 5.65]` for a series that is never negative. Purely cosmetic — a
+  sliver of empty axis below zero — and does not affect any GOV-10 criterion (the `gdp` and `share`
+  views, which carry the section's actual claims, are unaffected: `gdp`'s min/max ratio is close
+  enough that the same clamp fires as intended). Found while working on #7. Severity: chart
+  polish, non-blocking.

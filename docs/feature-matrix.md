@@ -18,6 +18,6 @@ when the code merges.
 | GOV-7 | Net interest — the fastest-growing line | none | none | Planned | — | — |
 | GOV-8 | The laws — sortable/filterable explorer, cost, vote, enactment date | none | none | Planned | — | — |
 | GOV-9 | Who passed it, who signed it — attribution toggle | none | none | Planned | — | — |
-| GOV-10 | Where the money comes from — revenue by source, brackets, OECD | none | none | Planned | — | — |
+| GOV-10 | Where the money comes from — revenue by source (nominal/%GDP/%share toggle), OECD comparison | done | done | Shipped | #7 | contracts/interfaces/revenue-data.md, contracts/interfaces/charts.md |
 | GOV-11 | By state | none | none | Planned | — | — |
 | GOV-12 | What this cannot tell you — caveats in full | none | none | Planned | — | — |
