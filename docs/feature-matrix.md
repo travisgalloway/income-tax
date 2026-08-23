@@ -27,7 +27,7 @@ when the code merges.
 | ID | Capability | UI | Data | Status | Issue | Contract |
 |----|-----------|----|------|--------|-------|----------|
 | HH-1 | What a household earns — real median household income, 1984-2024, constant 2024 dollars, brushable year range | done | done | Shipped | #9 | contracts/interfaces/income-inequality-data.md, contracts/interfaces/charts.md |
-| HH-2 | The spread — family Gini index 1947-2024 and CBO top 1% income share (two published points), shared brushable year range | none | none | Planned | — | — |
+| HH-2 | The spread — family Gini index 1947-2024 and CBO top 1% income share (two published points), shared brushable year range | done | done | Shipped | #9 | contracts/interfaces/income-inequality-data.md, contracts/interfaces/charts.md |
 | HH-3 | A century of brackets — statutory bracket history | none | none | Planned | — | — |
 | HH-4 | Statutory is not effective — statutory vs effective rate | none | none | Planned | — | — |
 | HH-5 | Who pays the income tax — share of AGI vs share of tax paid by group | none | none | Planned | — | — |

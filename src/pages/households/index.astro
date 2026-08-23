@@ -2,7 +2,8 @@
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import Figure from '../../components/Figure.astro'
 import { MedianIncome } from '../../components/islands/MedianIncome'
-import { income, vintageOf } from '../../data'
+import { HouseholdSpread } from '../../components/islands/HouseholdSpread'
+import { income, incomeGroups, cboTop1IncomeShare, vintageOf } from '../../data'
 
 const sections = [
   { id: 'what-a-household-earns', label: 'What a household earns' },
@@ -59,7 +60,38 @@ const sections = [
     </p>
   </section>
 
-  {sections.slice(1).map((s) => (
+  <section id="the-spread">
+    <p class="kicker"><span class="section-no">Section 2</span></p>
+    <h2>The spread</h2>
+    <p class="standfirst">
+      The family Gini index has climbed for decades. CBO's longer, separately-published
+      series has the top 1% share of income before transfers and taxes doubling since 1979.
+    </p>
+    <p class="finding">
+      The family Gini index went from 0.421 in 1995 to 0.456 in 2024. CBO's longer series
+      has the top 1% share of income before transfers and taxes going from 9% in 1979 to
+      18% in 2022.
+    </p>
+
+    <Figure
+      ariaLabel="The family Gini index rose from 0.421 in 1995 to 0.456 in 2024, and CBO's top 1% share of income before transfers and taxes rose from 9% in 1979 to 18% in 2022."
+      title="Family Gini index, 1947 to 2024, and the CBO top 1% income share"
+      source={`Family Gini index: ${income._meta.source} Top 1% share: ${incomeGroups._meta.source}`}
+      vintage={vintageOf(income._meta)}
+      xUnit="Calendar year"
+      yUnit="family Gini index, ratio 0 to 1, and percent of income before transfers and taxes"
+      note="The Gini is for families, not households; household series run about 0.47 to 0.49. The top 1% figure is two published points, not an annual series, and measures income before transfers and taxes — a different measure from the tax-share figures elsewhere on this route. The top 1% series is a curated snapshot, refreshed by hand."
+    >
+      <HouseholdSpread client:visible rows={income.data} top1={cboTop1IncomeShare} />
+    </Figure>
+
+    <p class="prose">
+      These are shown on one timeline without a causal claim attached: the distribution
+      moved for many reasons, and nothing here connects it to any particular policy.
+    </p>
+  </section>
+
+  {sections.slice(2).map((s) => (
     <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
   ))}
 </BaseLayout>

@@ -129,6 +129,20 @@ def test_series_start_years_match_the_declared_coverage():
         assert max(years) == coverage[key]["end"], key
 
 
+def test_family_gini_reproduces_the_published_figures():
+    """Households §2's finding sentence: 0.421 in 1995 to 0.456 in 2024."""
+    rows = {r["y"]: r for r in load("income_inequality")["data"]}
+    assert rows[1995]["gini"] == 0.421
+    assert rows[2024]["gini"] == 0.456
+
+
+def test_cbo_top1_share_is_two_published_points_not_a_series():
+    """9% in 1979, 18% in 2022 -- exactly these two points, nothing in between."""
+    data = load("income_tax_by_group")["data"]
+    points = [(p["year"], p["v"]) for p in data["cbo_top1_income_share"]]
+    assert points == [(1979, 9), (2022, 18)]
+
+
 def test_economy_separates_actuals_from_projections():
     doc = load("economy")
     boundary = doc["_meta"]["estimate_boundary"]["last_actual_fy"]
