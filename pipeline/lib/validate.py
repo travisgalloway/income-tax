@@ -120,9 +120,24 @@ def check_revenue(c: Checks) -> None:
     rows = _load("revenue_sources")["data"]
     parts = ["ii", "pr", "ci", "ex", "cu", "eg", "mi"]
     for r in rows:
-        s = sum(r[f"n_{p}"] for p in parts)
-        c.ok(abs(s - r["n_tot"]) <= 0.003,
-             f"FY{r['y']}: revenue components sum to {s:.3f}, total is {r['n_tot']:.3f}")
+        s_n = sum(r[f"n_{p}"] for p in parts)
+        c.ok(abs(s_n - r["n_tot"]) <= 0.003,
+             f"FY{r['y']}: revenue components sum to {s_n:.3f}, total is {r['n_tot']:.3f}")
+
+        # GOV-10 (#7): the g_ and s_ families carry the same sum-to-total
+        # invariant as n_. Left unchecked before this issue.
+        s_g = sum(r[f"g_{p}"] for p in parts)
+        c.ok(abs(s_g - r["g_tot"]) <= 0.01,
+             f"FY{r['y']}: % of GDP components sum to {s_g:.3f}, total is {r['g_tot']:.3f}")
+
+        s_s = sum(r[f"s_{p}"] for p in parts)
+        c.ok(abs(s_s - 100.0) <= 0.05,
+             f"FY{r['y']}: % of total revenue components sum to {s_s:.3f}, expected 100.0")
+
+        # Miscellaneous must never silently drop to zero or disappear.
+        c.ok(r["n_mi"] > 0 and r["g_mi"] > 0,
+             f"FY{r['y']}: miscellaneous revenue is not positive (n_mi={r['n_mi']}, "
+             f"g_mi={r['g_mi']}); it must never be silently dropped")
     by = {r["y"]: r for r in rows}
     c.close(by[1995]["n_tot"], 1.352, 0.002, "FY1995 total revenue $T")
     c.close(by[2025]["n_tot"], 5.235, 0.002, "FY2025 total revenue $T")
@@ -213,6 +228,16 @@ def check_snapshots(c: Checks) -> None:
     us = [x for x in oecd["countries"] if x.get("is_us")]
     c.ok(len(us) == 1 and us[0]["v"] == oecd["us_pct_gdp"],
          "oecd: the US row disagrees with us_pct_gdp")
+
+    # GOV-10 (#7): the average must be flagged exactly once (a chart must be
+    # able to pull it out of the country rows), and the country list must be
+    # provably a selection, never the full membership rendered as if it were.
+    avg = [x for x in oecd["countries"] if x.get("is_average")]
+    c.ok(len(avg) == 1 and avg[0]["v"] == oecd["oecd_average_pct_gdp"],
+         "oecd: the average row disagrees with oecd_average_pct_gdp")
+    c.ok(len(oecd["countries"]) < oecd["of_countries"],
+         f"oecd: countries list has {len(oecd['countries'])} rows, of_countries is "
+         f"{oecd['of_countries']}; the plot is a selection and must be labelled as one")
 
     grp = _load("income_tax_by_group")["data"]
     top1 = [g for g in grp["groups"] if g["g"] == "Top 1%"][0]
