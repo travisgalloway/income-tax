@@ -230,6 +230,18 @@ figcaption .lead {
   font-variant-numeric: var(--num-table);
 }
 
+/* Direct end-of-line series names (sections 5, 6): a line's colour is never
+ * the only way to tell it apart from its neighbours. */
+.series-label {
+  font-style: italic;
+}
+
+/* The section 5 surplus/deficit fill sits behind the lines and data points;
+ * it must never intercept a hover or a Tab stop meant for them. */
+.gap-band {
+  pointer-events: none;
+}
+
 /* ---- Controls -----------------------------------------------------------
  * Quiet by design. The apparatus is the signature; the controls stay out of
  * its way.

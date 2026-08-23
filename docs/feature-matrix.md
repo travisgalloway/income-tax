@@ -13,7 +13,7 @@ when the code merges.
 | GOV-2 | Who holds it — public vs intragovernmental, domestic vs foreign | none | none | Planned | — | — |
 | GOV-3 | How old is the debt — maturity ladder against the 30-year ceiling | none | none | Planned | — | — |
 | GOV-4 | The whole budget — outlays stacked (mandatory net/discretionary/interest), revenue line, deficit below zero, party-control strip, unit toggle, year inspection, era bands | done | done | Shipped | #2 | contracts/interfaces/budget-data.md, contracts/interfaces/charts.md |
-| GOV-5 | The structural gap — revenue vs outlays as % of GDP | none | none | Planned | — | — |
+| GOV-5 | The structural gap — revenue vs outlays, nominal / real / % of GDP toggle, sign-and-position surplus band | done | done | Shipped | #5 | contracts/interfaces/budget-data.md, contracts/interfaces/charts.md |
 | GOV-6 | What Congress votes on — mandatory vs discretionary vs interest | none | none | Planned | — | — |
 | GOV-7 | Net interest — the fastest-growing line | none | none | Planned | — | — |
 | GOV-8 | The laws — sortable/filterable explorer, cost, vote, enactment date | none | none | Planned | — | — |

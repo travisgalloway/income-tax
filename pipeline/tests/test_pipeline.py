@@ -124,6 +124,26 @@ def test_net_interest_series_low_is_fy2003(budget):
     assert min(span, key=span.get) == 2003
 
 
+# ---- sections 5-7 (issue #5) ----------------------------------------------
+
+def test_section5_revenue_and_outlay_means_hold(budget):
+    """sections.md section 5: revenue averaged 17.2% of GDP, outlays 21.1%."""
+    span = [budget[y] for y in range(1995, 2026)]
+    re_mean = sum(r["g_re"] for r in span) / len(span)
+    ot_mean = sum(r["g_ot"] for r in span) / len(span)
+    assert abs(re_mean - 17.2) <= 0.06, f"revenue mean {re_mean:.2f}"
+    assert abs(ot_mean - 21.1) <= 0.06, f"outlays mean {ot_mean:.2f}"
+
+
+def test_section5_surplus_band_is_exactly_fy1998_2001(budget):
+    """The surplus band section 5 shades must be the SET {1998..2001}, not
+    merely a count of four -- and it must not depend on which unit is shown,
+    so this checks the sign of the nominal deficit only."""
+    span = range(1995, 2026)
+    surplus = sorted(y for y in span if budget[y]["n_de"] > 0)
+    assert surplus == [1998, 1999, 2000, 2001]
+
+
 # ---- failure behaviour ---------------------------------------------------
 
 def test_unreachable_source_raises_rather_than_returning_empty():
