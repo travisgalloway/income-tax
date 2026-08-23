@@ -138,6 +138,22 @@ export interface ChamberVote {
   rollnumber: number
 }
 
+/** One published observation of the CBO top 1% income share. Two of these
+ *  exist in total (1979, 2022) — see `IncomeGroupsTop1` below. Never a
+ *  continuous annual series. */
+export interface Top1IncomeSharePoint {
+  year: number
+  v: number
+}
+
+/** Narrow shape covering only the field this branch reads from
+ *  `income_tax_by_group.json`. The dataset also carries `tax_year`, `groups`
+ *  and `top1_tax_share_history`, which issue #11 will type in full; typing
+ *  only this field here keeps that widening additive rather than a rewrite. */
+export interface IncomeGroupsTop1 {
+  cbo_top1_income_share: Top1IncomeSharePoint[]
+}
+
 export interface PartySplit {
   public_law: string | null
   name: string

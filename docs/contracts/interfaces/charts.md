@@ -78,3 +78,40 @@ Every built section island (`DebtChart.tsx`, `BudgetChart.tsx`) follows the same
    readout) built from the **same formatting function** the `aria-label` uses, so hover and
    keyboard focus can never announce different text.
 5. A `<TableView>` mirroring the chart's active unit and columns.
+
+## `YearRange` (`src/components/islands/YearRange.tsx`)
+
+The shared brushable year-range timeline used by the Households route (`MedianIncome.tsx`,
+`HouseholdSpread.tsx`). Two-thumb Radix `Slider.Root` standing in for a year-range brush, since the
+site's charts do not otherwise carry a zoom/brush interaction.
+
+Props: `min`, `max`, `value: [number, number]`, `onChange`, `label` (the slider's accessible name,
+e.g. `"Years shown"`), `id` (namespaces the `aria-labelledby` wiring — more than one instance can
+live on a single page).
+
+- `minStepsBetweenThumbs={4}`: a range narrower than five years is not a readable chart, so Radix
+  makes that range unreachable rather than a consumer needing to validate it.
+- Each thumb carries its own `aria-label` (`"First year shown"` / `"Last year shown"`) and an
+  explicit `aria-valuetext={String(year)}`, so the value announces as a year rather than a grouped
+  number (`aria-valuetext` overrides the default `aria-valuenow` announcement).
+- A sibling `<p aria-live="polite" className="readout">` reads `Showing {lo} to {hi}.` — built from
+  the same `value` prop the caller's charts filter by (`clampToRange` in `charts/series.ts`), so the
+  announcement can never disagree with what is drawn.
+- **Mount-gated**: `useState` + `useEffect(() => setReady(true), [])`, `if (!ready) return null`.
+  Without JS the control is absent from the HTML entirely — never present-and-dead — and the charts
+  it would otherwise drive render complete at their default full range.
+- The domain's own endpoints are also printed as plain text beneath the track, so the slider's full
+  range is legible without touching it.
+
+Pairs with `charts/series.ts`:
+
+```ts
+export function seriesSpan<T extends { y: number }>(rows: T[], key: keyof T): [number, number]
+export function clampToRange<T extends { y: number }>(rows: T[], range: [number, number]): T[]
+```
+
+`seriesSpan` derives a chart's own default range and slider domain from the data (never a hardcoded
+constant, so a future data revision that changes a series' start year fails a test rather than
+silently mislabelling); it throws on an all-null series rather than falling back to `[0, 1]`, which
+would chart an empty series as though it were real. `clampToRange` filters a row array to the
+currently-selected `[lo, hi]`.

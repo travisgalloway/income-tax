@@ -14,3 +14,11 @@ time. Appended to, never rewritten. None of these have been acted on.
   number formatters inline rather than using `UnitToggle` and `charts/format.ts`. Section 4 uses
   the shared ones; §1 could be moved onto them. Found while working on #2. Severity: duplication,
   non-blocking.
+- [2026-08-23] `.claude/plans/issue-9.md`'s illustrative snippet for `cboTop1IncomeShare` in
+  `src/data/index.ts` reads `(incomeGroups.data as IncomeGroupsTop1).cbo_top1_income_share`, a
+  single assertion. `Record<string, unknown>` and `IncomeGroupsTop1` do not structurally overlap
+  enough for TypeScript to allow that single cast (`ts(2352)`); `npx astro check` fails on it.
+  Implemented as `as unknown as IncomeGroupsTop1` instead, which is the double-assertion idiom the
+  file's own doc comment says it avoids at the dataset level, but is required at this narrower
+  field-level access. Found while executing #9. Severity: plan/tooling mismatch, non-blocking
+  (criterion 16, `npx astro check` clean, still holds with the double cast).

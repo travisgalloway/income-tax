@@ -14,7 +14,8 @@ import oecdJson from './oecd.json'
 import groupsJson from './income_tax_by_group.json'
 
 import type {
-  BudgetYear, Dataset, DebtYear, EconomyYear, IncomeYear, Meta, PartySplit, RevenueYear,
+  BudgetYear, Dataset, DebtYear, EconomyYear, IncomeGroupsTop1, IncomeYear, Meta, PartySplit,
+  RevenueYear,
 } from './types'
 
 export const budget = budgetJson as Dataset<BudgetYear[]>
@@ -67,3 +68,18 @@ export const laws = budget.data.flatMap((y) => y.L)
 
 /** Party split keyed by public law, for joining to the law list. */
 export const splitByLaw = new Map(partySplits.data.map((s) => [s.public_law, s]))
+
+/** _meta.gini_basis, surfaced rather than hardcoded. SOURCES.md: the family
+ *  series reads 0.456 for 2024; household series run 0.47-0.49. */
+export const giniBasis = income._meta.gini_basis as string
+
+/** The CBO series is TWO PUBLISHED POINTS, not an annual series. `incomeGroups`
+ *  itself stays `Dataset<Record<string, unknown>>` above — widening it to a
+ *  full typed interface is issue #11's job.
+ *
+ *  `Record<string, unknown>` and `IncomeGroupsTop1` do not structurally
+ *  overlap enough for TypeScript to allow a single assertion here (unlike the
+ *  dataset-level `as Dataset<T>` this file otherwise uses everywhere else), so
+ *  this one access goes through `unknown` — see docs/parked-findings.md. */
+export const cboTop1IncomeShare =
+  (incomeGroups.data as unknown as IncomeGroupsTop1).cbo_top1_income_share
