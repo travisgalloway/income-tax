@@ -2,7 +2,14 @@
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import Figure from '../../components/Figure.astro'
 import { DebtChart } from '../../components/islands/DebtChart'
-import { debt, vintageOf } from '../../data'
+import { StructuralGap } from '../../components/islands/StructuralGap'
+import { VotedAndNot } from '../../components/islands/VotedAndNot'
+import { NetInterest } from '../../components/islands/NetInterest'
+import { budget, debt, vintageOf } from '../../data'
+
+// Sections built so far. Everything else still falls through to the
+// "Not built yet." placeholder below.
+const built = new Set(['forty-trillion', 'structural-gap', 'what-congress-votes-on', 'net-interest'])
 
 const sections = [
   { id: 'forty-trillion', label: 'The $40 trillion' },
@@ -67,7 +74,108 @@ const sections = [
     </p>
   </section>
 
-  {sections.slice(1).map((s) => (
+  <section id="structural-gap">
+    <p class="kicker"><span class="section-no">Section 5</span></p>
+    <h2>Revenue barely moves. Spending does.</h2>
+    <p class="standfirst">
+      Revenue has sat in a narrow band for three decades. Outlays have not. The distance
+      between the two lines is the deficit, in every single year.
+    </p>
+    <p class="finding">
+      Revenue averaged 17.2% of GDP across the 31 years. Outlays averaged 21.1%. A
+      four-point gap, every year.
+    </p>
+
+    <Figure
+      ariaLabel="Revenue averaged 17.2% of GDP against outlays at 21.1% across FY1995-FY2025, a four-point gap that closed only in FY1998-FY2001."
+      title="Federal revenue and outlays by fiscal year, FY1995 to FY2025"
+      source={budget._meta.source}
+      vintage={vintageOf(budget._meta)}
+      xUnit="Fiscal year"
+      yUnit="revenue and outlays in nominal $ trillions, real $ trillions FY2025, or percent of GDP"
+    >
+      <StructuralGap client:visible rows={budget.data} />
+    </Figure>
+
+    <p class="prose">
+      That gap shows up in years with no recession and no major tax bill, which is what
+      makes it structural rather than circumstantial. The only four years it closed were
+      1998 to 2001.
+    </p>
+  </section>
+
+  <section id="what-congress-votes-on">
+    <p class="kicker"><span class="section-no">Section 6</span></p>
+    <h2>The part they vote on is the part that shrank</h2>
+    <p class="standfirst">
+      Discretionary spending is the only category set by an annual appropriation. It is
+      also the only one smaller today, relative to GDP, than in 1995.
+    </p>
+    <p class="finding">
+      Share of GDP, FY1995 to FY2025: mandatory 9.8% to 13.7%, discretionary 7.2% to
+      6.2%, net interest 3.1% to 3.2%.
+    </p>
+
+    <Figure
+      ariaLabel="Share of GDP from FY1995 to FY2025: mandatory rose from 9.8% to 13.7%, discretionary fell from 7.2% to 6.2%, and net interest moved from 3.1% to 3.2%, dipping to 1.2% in FY2015 before nearly tripling."
+      title="Mandatory, discretionary and net interest spending by fiscal year, FY1995 to FY2025"
+      source={budget._meta.source}
+      vintage={vintageOf(budget._meta)}
+      xUnit="Fiscal year"
+      yUnit="mandatory, discretionary and net interest spending in nominal $ trillions, real $ trillions FY2025, or percent of GDP"
+      note="Mandatory is net of offsetting receipts, the basis used throughout this section."
+    >
+      <VotedAndNot client:visible rows={budget.data} />
+    </Figure>
+
+    <p class="prose">
+      In real terms mandatory spending — net of offsetting receipts, the basis used
+      throughout this section — grew 194% over this span and discretionary grew 79%.
+      Mandatory runs on permanent law and net interest is set by past borrowing; neither
+      requires an annual vote.
+    </p>
+    <p class="prose">
+      Net interest looks flat endpoint to endpoint, 3.1% to 3.2%. It is not. It fell to
+      1.2% of GDP by 2015 and has nearly tripled since. The endpoints hide the
+      trajectory.
+    </p>
+  </section>
+
+  <section id="net-interest">
+    <p class="kicker"><span class="section-no">Section 7</span></p>
+    <h2>Nobody appropriates the interest</h2>
+    <p class="standfirst">
+      Net interest is the compounding cost of every prior year's borrowing. It passed $1
+      trillion in FY2025 and now exceeds defence spending.
+    </p>
+    <p class="finding">
+      $232 billion in FY1995, $970 billion in FY2025. Across the 31 years, $9.4
+      trillion, which is 39% of all deficits.
+    </p>
+
+    <Figure
+      ariaLabel="Net interest rose from $232 billion in FY1995 to $970 billion in FY2025, totaling $9.4 trillion across the 31 years, 39% of all deficits."
+      title="Net interest payments by fiscal year, FY1995 to FY2025"
+      source={budget._meta.source}
+      vintage={vintageOf(budget._meta)}
+      xUnit="Fiscal year"
+      yUnit="net interest in nominal $ trillions, or real $ trillions FY2025"
+    >
+      <NetInterest client:visible rows={budget.data} />
+    </Figure>
+
+    <p class="prose">
+      Thirty-nine cents of every borrowed dollar went to servicing the borrowing that
+      came before it. There is no vote on this, no appropriation, no debate.
+    </p>
+    <p class="prose">
+      The FY2015 figure of $223 billion is a recent trough, not the series low. The
+      actual low is FY2003 at $153 billion. See <a href="#how-old">how old the debt is</a>
+      for why this curve is so steep.
+    </p>
+  </section>
+
+  {sections.filter((s) => !built.has(s.id)).map((s) => (
     <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
   ))}
 </BaseLayout>
