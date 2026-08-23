@@ -2,7 +2,8 @@
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import Figure from '../../components/Figure.astro'
 import { DebtChart } from '../../components/islands/DebtChart'
-import { debt, vintageOf } from '../../data'
+import { LawExplorer } from '../../components/islands/LawExplorer'
+import { budget, debt, laws, partySplits, vintageOf } from '../../data'
 
 const sections = [
   { id: 'forty-trillion', label: 'The $40 trillion' },
@@ -67,7 +68,53 @@ const sections = [
     </p>
   </section>
 
-  {sections.slice(1).map((s) => (
+  <section id="the-laws">
+    <p class="kicker"><span class="section-no">Section 8</span></p>
+    <h2>The bill arrives long after the vote</h2>
+    <p class="standfirst">
+      Twenty-three major deficit-moving laws since 1995, with what each was scored to cost, who
+      voted for it, and when it was signed.
+    </p>
+    <p class="finding">
+      Sixteen of the twenty-three passed with cross-party majorities. Cross-party laws total
+      +$9.24T against +$7.51T for all seven party-line laws combined.
+    </p>
+
+    <Figure
+      ariaLabel="Sixteen of the twenty-three major deficit-moving laws since 1995 passed with cross-party majorities, totalling $9.24 trillion against $7.51 trillion for the seven party-line laws."
+      title="Major deficit-moving laws, 1997 to 2025, against the annual deficit"
+      source={`${budget._meta.source} Vote splits: ${partySplits._meta.source}`}
+      vintage={vintageOf(budget._meta)}
+      xUnit="Fiscal year"
+      yUnit="deficit or surplus as percent of GDP; ten-year score in $ trillions at enactment"
+      note="The chart window is FY1995 to FY2025; the underlying deficit series runs from FY1962. Each law's marker sits at its date's position within its enactment fiscal year, not on the year's tick. The two 1997 laws (Balanced Budget Act, Taxpayer Relief Act) predate the ten-year scoring convention and carry no score, so they are excluded from the cost totals. The CARES Act's House vote was a voice vote with no roll call. Three Senate votes (JGTRRA, the Inflation Reduction Act, and the One Big Beautiful Bill Act) tied 50-50 and passed on the Vice President's tiebreak, which does not appear in a roll call."
+    >
+      <LawExplorer
+        client:load
+        years={budget.data}
+        laws={laws}
+        splits={partySplits.data}
+        threshold={partySplits._meta.cross_party_threshold as string}
+      />
+    </Figure>
+
+    <p class="prose">
+      A law is voted on once. Its cost runs for a decade or longer, under whoever happens to be in
+      office later. The 2001 tax cuts were signed under unified Republican control, extended by a
+      Democratic president in 2010, and made permanent in 2013 under a divided Congress. The 2017
+      Tax Cuts and Jobs Act passed on a party-line vote, and most of its ten-year cost falls in
+      FY2019 to FY2027, spanning a Democratic House and a Democratic president. The CARES Act
+      passed with cross-party votes under a Republican president, a Democratic House and a
+      Republican Senate.
+    </p>
+    <p class="prose">
+      Scored laws net to $16.75 trillion against $24.15 trillion of deficits actually recorded over
+      the same span. The gap is mandatory growth, demographics, revenue drift, recessions and
+      compounding interest, none of which involves a roll call.
+    </p>
+  </section>
+
+  {sections.slice(1).filter((s) => s.id !== 'the-laws').map((s) => (
     <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
   ))}
 </BaseLayout>
