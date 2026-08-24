@@ -285,6 +285,14 @@ figcaption .lead {
 }
 .tableview-trigger:hover { color: var(--ink); border-bottom-color: var(--ink); }
 
+/* Scripting-off label swap: no `open` state variable to read, so the two
+ * labels are both in the markup and CSS shows exactly one. */
+.tableview > summary { list-style: none; cursor: pointer; }
+.tableview > summary::-webkit-details-marker { display: none; }
+.tableview .tv-close { display: none; }
+.tableview[open] .tv-open { display: none; }
+.tableview[open] .tv-close { display: inline; }
+
 .tableview-scroll { overflow-x: auto; margin-top: 0.9rem; }
 .tableview table {
   border-collapse: collapse;
