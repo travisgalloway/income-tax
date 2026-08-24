@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "states_balance",
+  "type": "object",
+  "required": ["_meta", "data"],
+  "properties": {
+    "_meta": { "type": "object", "required": ["source", "provenance", "coverage"] },
+    "data": {
+      "type": "object",
+      "required": ["fy_give", "fy_get", "national", "color_domain", "summary", "jurisdictions"],
+      "properties": {
+        "fy_give": { "type": "integer" },
+        "fy_get": { "type": "integer" },
+        "national": {
+          "type": "object",
+          "required": ["give_b", "get_b", "population"],
+          "properties": {
+            "give_b": { "type": "number" },
+            "get_b": { "type": "number" },
+            "population": { "type": "integer" }
+          }
+        },
+        "color_domain": {
+          "type": "object",
+          "required": ["basis", "min", "max", "mid", "excludes"],
+          "properties": {
+            "basis": { "type": "string" },
+            "min": { "type": "number" },
+            "max": { "type": "number" },
+            "mid": { "type": "number" },
+            "excludes": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "summary": {
+          "type": "object",
+          "required": ["n_get_more", "n_give_more", "n_with_both"],
+          "properties": {
+            "n_get_more": { "type": "integer" },
+            "n_give_more": { "type": "integer" },
+            "n_with_both": { "type": "integer" }
+          }
+        },
+        "jurisdictions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "code", "name", "is_state", "in_grid", "give_b", "get_b", "pop",
+              "give_pc", "get_pc", "balance_b", "balance_pc", "ratio"
+            ],
+            "properties": {
+              "code": { "type": "string", "minLength": 2, "maxLength": 2 },
+              "name": { "type": "string" },
+              "is_state": { "type": "boolean" },
+              "in_grid": { "type": "boolean" },
+              "give_b": { "type": ["number", "null"] },
+              "get_b": { "type": ["number", "null"] },
+              "pop": { "type": ["integer", "null"] },
+              "give_pc": { "type": ["number", "null"] },
+              "get_pc": { "type": ["number", "null"] },
+              "balance_b": { "type": ["number", "null"] },
+              "balance_pc": { "type": ["number", "null"] },
+              "ratio": { "type": ["number", "null"], "exclusiveMinimum": 0 }
+            }
+          }
+        }
+      }
+    }
+  }
+}

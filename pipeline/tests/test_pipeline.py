@@ -202,3 +202,98 @@ def test_every_mapped_rollcall_passed(splits):
             if v is None:
                 continue
             assert v["yea"] >= (v["nay"] if ch == "senate" else v["nay"] + 1), f"{pl} {ch}"
+
+
+# ---- by state -------------------------------------------------------------
+
+@pytest.fixture(scope="module")
+def balance() -> dict:
+    return load("states_balance")["data"]
+
+
+@pytest.fixture(scope="module")
+def tax_mix() -> dict:
+    return load("states_tax_mix")["data"]
+
+
+def test_states_balance_has_51_in_grid_jurisdictions(balance):
+    """The tile-grid cartogram draws the 50 states plus DC, nothing else."""
+    in_grid = [j for j in balance["jurisdictions"] if j["in_grid"]]
+    assert len(in_grid) == 51
+
+
+def test_states_dc_is_flagged_and_excluded_from_the_colour_domain(balance):
+    """DC is not a state, is an extreme outlier by construction, and must not
+    flatten the 50-state colour range."""
+    dc = next(j for j in balance["jurisdictions"] if j["code"] == "DC")
+    assert dc["in_grid"] is True
+    assert "DC" in balance["color_domain"]["excludes"]
+    assert balance["color_domain"]["min"] < 0 < balance["color_domain"]["max"]
+
+
+def test_states_territories_have_get_but_not_give(balance):
+    """USASpending covers PR/GU/VI/MP/AS; IRS Table 5 does not. The asymmetry
+    must be recorded as null, never dropped or zero-filled."""
+    territories = [j for j in balance["jurisdictions"] if not j["in_grid"]]
+    assert territories, "no territory rows: coverage was silently dropped"
+    for j in territories:
+        assert j["give_b"] is None
+        assert j["get_b"] is not None
+
+
+def test_states_no_derived_field_is_silently_zero(balance):
+    """Missing is missing; a genuine zero this small is implausible for any of
+    these series, so a 0 here means a null slipped through the join as a zero."""
+    for j in balance["jurisdictions"]:
+        for k in ("give_b", "get_b", "balance_pc", "ratio"):
+            assert j[k] is None or j[k] != 0, (j["code"], k)
+
+
+def test_states_give_and_get_are_the_same_fiscal_year(balance):
+    """Give (IRS) and get (USASpending) are deliberately fetched for the same
+    FY window; this is a join invariant, not a coincidence."""
+    assert balance["fy_give"] == balance["fy_get"]
+
+
+def test_states_jurisdiction_give_sums_within_national_total(balance):
+    """A join that silently dropped a state would undercount here by more than
+    the International/Undistributed/overseas remainder."""
+    total = sum(j["give_b"] for j in balance["jurisdictions"] if j["give_b"] is not None)
+    national = balance["national"]["give_b"]
+    assert total <= national + 1e-6
+    assert abs(total - national) / national <= 0.02
+
+
+def test_states_ratio_is_null_or_positive(balance):
+    for j in balance["jurisdictions"]:
+        assert j["ratio"] is None or j["ratio"] > 0, j["code"]
+
+
+def test_states_tax_mix_shares_are_percentages_or_null(tax_mix):
+    for j in tax_mix["jurisdictions"]:
+        for k, v in j["shares"].items():
+            assert v is None or 0 <= v <= 100, (j["code"], k, v)
+
+
+def test_states_tax_mix_not_levied_is_distinct_from_missing(tax_mix):
+    """A Census 'X' means the state does not levy that tax, which is a FACT and
+    must never collapse into the same rendering as a genuinely missing figure."""
+    alaska = next(j for j in tax_mix["jurisdictions"] if j["code"] == "AK")
+    assert "income_ind" in alaska["not_levied"]
+    assert "sales_general" in alaska["not_levied"]
+    assert alaska["shares"]["income_ind"] is None
+    for j in tax_mix["jurisdictions"]:
+        for k, v in j["shares"].items():
+            if v is None:
+                assert k in j["not_levied"] or j.get("partial"), (j["code"], k)
+
+
+def test_no_party_colour_token_in_the_state_section_source():
+    """BRIEF.md: no party colours in non-partisan data. Checked here as well as
+    structurally in the frontend, so a regression fails in two places."""
+    src = ROOT.parent / "src"
+    for f in ("components/islands/StateGiveGet.tsx", "components/islands/StateTaxMix.tsx",
+              "components/charts/stateGrid.ts"):
+        text = (src / f).read_text()
+        for token in ("--dem", "--gop", "--mix"):
+            assert token not in text, f"{f} references partisan token {token}"
