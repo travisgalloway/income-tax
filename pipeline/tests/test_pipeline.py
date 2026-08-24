@@ -182,6 +182,54 @@ def test_net_interest_series_low_is_fy2003(budget):
     assert min(span, key=span.get) == 2003
 
 
+# ---- sections 5-7 (issue #5) ----------------------------------------------
+
+def test_section5_revenue_and_outlay_means_hold(budget):
+    """sections.md section 5: revenue averaged 17.2% of GDP, outlays 21.1%."""
+    span = [budget[y] for y in range(1995, 2026)]
+    re_mean = sum(r["g_re"] for r in span) / len(span)
+    ot_mean = sum(r["g_ot"] for r in span) / len(span)
+    assert abs(re_mean - 17.2) <= 0.06, f"revenue mean {re_mean:.2f}"
+    assert abs(ot_mean - 21.1) <= 0.06, f"outlays mean {ot_mean:.2f}"
+
+
+def test_section5_surplus_band_is_exactly_fy1998_2001(budget):
+    """The surplus band section 5 shades must be the SET {1998..2001}, not
+    merely a count of four -- and it must not depend on which unit is shown,
+    so this checks the sign of the nominal deficit only."""
+    span = range(1995, 2026)
+    surplus = sorted(y for y in span if budget[y]["n_de"] > 0)
+    assert surplus == [1998, 1999, 2000, 2001]
+
+
+def test_section6_mandatory_growth_is_quoted_on_the_net_basis(budget):
+    """sections.md section 6 quotes mandatory growth net of offsetting
+    receipts (194%). Also assert gross is materially different, so the two
+    bases can never be silently swapped back."""
+    a, b = budget[1995], budget[2025]
+    net = 100 * ((b["r_ma"] + b["r_or"]) / (a["r_ma"] + a["r_or"]) - 1)
+    gross = 100 * (b["r_ma"] / a["r_ma"] - 1)
+    assert abs(net - 194) <= 1.0, f"net growth {net:.2f}"
+    assert abs(net - gross) > 3, "net and gross bases have converged; re-check which one sections.md quotes"
+
+
+def test_section7_net_interest_share_of_deficits_is_39_percent(budget):
+    """sections.md section 7: $9.4T in net interest is 39% of all deficits
+    across the same 31 years."""
+    span = [budget[y] for y in range(1995, 2026)]
+    total_ni = sum(r["n_ni"] for r in span)
+    total_deficits = sum(-r["n_de"] for r in span)
+    share = 100 * total_ni / total_deficits
+    assert abs(share - 39) <= 1.0, f"net interest is {share:.1f}% of deficits"
+
+
+def test_section7_series_low_is_not_the_fy2015_trough(budget):
+    """FY2003 must be strictly lower than FY2015 in both nominal and real
+    dollars, or section 7's "trough, not the series low" wording is wrong."""
+    assert budget[2003]["n_ni"] < budget[2015]["n_ni"]
+    assert budget[2003]["r_ni"] < budget[2015]["r_ni"]
+
+
 # ---- failure behaviour ---------------------------------------------------
 
 def test_unreachable_source_raises_rather_than_returning_empty():
