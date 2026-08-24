@@ -150,3 +150,40 @@ export interface PartySplit {
   legacy_classification: string
   note?: string
 }
+
+/** One published observation of the CBO top 1% income share. Two of these
+ *  exist in total (1979, 2022) — see `IncomeGroups` below. Never a
+ *  continuous annual series. */
+export interface Top1IncomeSharePoint {
+  year: number
+  v: number
+}
+
+/** One percentile group of tax units, IRS Statistics of Income.
+ *
+ *  The groups are NESTED — "Top 1%" is inside "Top 5%" — so they never
+ *  partition a whole. They must not be summed, and must not be drawn as one
+ *  bar divided into parts.
+ *
+ *  `income_share_pct` and `avg_rate_pct` are ABSENT, not zero, where the IRS
+ *  does not publish them. Income share is absent for Top 5%, Top 25% and
+ *  Bottom 50%; average rate is absent for every group but Top 1% and Bottom
+ *  50%. Rendering an absent cell as 0 is a factual error, not a display
+ *  choice. */
+export interface IncomeTaxGroup {
+  g: string
+  income_share_pct?: number
+  tax_share_pct: number
+  avg_rate_pct?: number
+}
+
+/** `income_tax_by_group.json`. INDIVIDUAL INCOME TAX ONLY: it excludes payroll
+ *  tax, which is the larger bill outside the top decile, and it excludes
+ *  refundable credits, which overstates the effective rate at the bottom. */
+export interface IncomeGroups {
+  tax_year: number
+  groups: IncomeTaxGroup[]
+  /** Five scattered published years, not an annual series. */
+  top1_tax_share_history: Top1IncomeSharePoint[]
+  cbo_top1_income_share: Top1IncomeSharePoint[]
+}
