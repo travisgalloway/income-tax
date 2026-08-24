@@ -124,7 +124,7 @@ them across two panels lets each be read on its own scale and hides how small th
 deficit is next to the budget that produces it. Here the deficit bar is the
 distance between the revenue line and the top of the stack.
 
-**Alt text:** Federal outlays from fiscal 1995 to 2025 stacked into mandatory,
+**Alt text:** Federal outlays from fiscal 1962 to 2025 stacked into mandatory,
 discretionary and net interest as a share of GDP, with a revenue line across them
 and the deficit drawn below zero. A three-row strip along the top shows which
 party held the presidency, House and Senate each year. Shaded bands mark the
