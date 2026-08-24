@@ -69,3 +69,9 @@ figures:
   - {section: E2, text: "output per hour index 1984 base", output: economy, year: 1984, field: prod, quoted: 52.772, tol: 0.005}
   - {section: E2, text: "output per hour +116.5% 1984-2024", output: economy, agg: pct_growth, field: prod, years: [1984, 2024], quoted: 116.5, tol: 0.3}
   - {section: E2, text: "real median household income +38.6% 1984-2024", output: income_inequality, agg: pct_growth, field: mhi, years: [1984, 2024], quoted: 38.6, tol: 0.3}
+  - {section: E3, text: "unemployment FY2025 4.175%", output: economy, year: 2025, field: unemp, quoted: 4.175, tol: 0.01}
+  - {section: E3, text: "noncyclical rate FY2025 4.408%", output: economy, year: 2025, field: nairu, quoted: 4.408, tol: 0.01}
+  - {section: E3, text: "unemployment peak FY1983 10.1%", output: economy, year: 1983, field: unemp, quoted: 10.133, tol: 0.01}
+  - {section: E3, text: "unemployment FY2020 7.3%, fiscal year average", output: economy, year: 2020, field: unemp, quoted: 7.308, tol: 0.01}
+  - {section: E3, text: "participation peak FY2000 67.115%", output: economy, year: 2000, field: lfpr, quoted: 67.115, tol: 0.01}
+  - {section: E3, text: "participation FY2025 62.444%", output: economy, year: 2025, field: lfpr, quoted: 62.444, tol: 0.01}

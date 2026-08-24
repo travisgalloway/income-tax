@@ -232,3 +232,25 @@ def test_output_per_hour_and_median_income_share_1984_to_2024():
     for y in range(1984, 2025):
         assert mhi[y] is not None, f"{y}: mhi is null inside the claimed window"
         assert economy_rows[y]["prod"] is not None, f"FY{y}: prod is null inside the claimed window"
+
+
+def test_unemployment_peak_over_actuals_is_fy1983():
+    """Section 3 calls FY1983 the highest fiscal year, and FY2020 lower than it."""
+    rows = {r["y"]: r["unemp"] for r in load("economy")["data"] if r["actual"]}
+    assert max(rows, key=rows.get) == 1983
+    assert rows[2020] < rows[1983]
+
+
+def test_participation_peak_over_actuals_is_fy2000():
+    """Section 3 quotes FY2000 as the participation peak and the 4.7 point gap to FY2025."""
+    rows = {r["y"]: r["lfpr"] for r in load("economy")["data"] if r["actual"]}
+    assert max(rows, key=rows.get) == 2000
+    assert abs((rows[2000] - rows[2025]) - 4.671) <= 0.01
+
+
+def test_fy2020_unemployment_is_a_fiscal_year_average_not_a_monthly_peak():
+    """Section 3 says the spring 2020 monthly spike is not in this file: no row in
+    economy.json exceeds the FY1983 value."""
+    rows = {r["y"]: r["unemp"] for r in load("economy")["data"] if r["actual"]}
+    assert max(rows.values()) == rows[1983]
+    assert rows[2020] < rows[1983]

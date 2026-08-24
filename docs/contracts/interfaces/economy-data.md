@@ -70,6 +70,12 @@ demand relative to the economy's capacity. Unlike `unemp`, it is not observed; C
 time. Any chart pairing `unemp` and `nairu` must say so in body copy (Section 3 does), because
 otherwise the two lines read as two observations of the same kind of thing.
 
+`WhoWorks.tsx` (`src/components/islands/`) is the current consumer: `unemp` and `nairu` share a
+zero-based top panel because both are percentages of the labour force, while `lfpr` (percent of
+the civilian population 16+) gets its own panel with a non-zero-based, padded axis rather than a
+second y-axis on the same chart — see the two-panel convention in
+`docs/contracts/interfaces/charts.md`.
+
 ## Cross-checking the budget route (`gdp`)
 
 `economy.gdp` (nominal $ trillions) is the same GDP CBO uses as the denominator for every `g_`
