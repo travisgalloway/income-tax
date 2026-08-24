@@ -87,3 +87,5 @@ figures:
   - {section: E5, text: "wage share FY2020 44.0% of GDP, a denominator artefact", output: economy, year: 2020, field: wage_share, quoted: 43.981, tol: 0.01}
   - {section: E5, text: "profit share FY2020 11.3% of GDP", output: economy, year: 2020, field: profit_share, quoted: 11.27, tol: 0.01}
   - {section: E5, text: "profit share FY2021 12.7% of GDP", output: economy, year: 2021, field: profit_share, quoted: 12.674, tol: 0.01}
+  - {section: E6, text: "route coverage starts FY1950", output: economy, path: _meta.coverage.start, quoted: 1950, tol: 0}
+  - {section: E6, text: "route coverage ends FY2036", output: economy, path: _meta.coverage.end, quoted: 2036, tol: 0}

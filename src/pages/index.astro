@@ -136,7 +136,43 @@ const sections = [
     </p>
   </section>
 
-  {sections.slice(5).map((s) => (
-    <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
-  ))}
+  <section id="limits">
+    <p class="kicker"><span class="section-no">Section 6</span></p>
+    <h2>Limits</h2>
+    <p class="standfirst">
+      This route runs fiscal 1950 to fiscal 2036 and answers what happened to output, prices,
+      rates and the wage/profit split at the level of the whole economy. It does not answer who
+      received any of it.
+    </p>
+
+    <p class="prose">
+      <strong>Fiscal-year basis.</strong> Every series on this route is a fiscal year, not a
+      calendar year. Fiscal 2025 ran October 2024 to September 2025. A monthly peak or trough
+      inside a fiscal year does not appear here as a point; only the fiscal-year average or
+      year-end value does.
+    </p>
+    <p class="prose">
+      <strong>The projection boundary.</strong> This route's data covers fiscal 1950 to fiscal
+      2036. CBO publishes actuals and a baseline projection in one series running to FY2036;
+      everything after fiscal 2025 is that baseline projection, not an observation, drawn as a
+      separate dashed branch past a labelled boundary rule on every chart.
+    </p>
+    <p class="prose">
+      <strong>National aggregates say nothing about distribution.</strong> Every series on this
+      route — GDP, prices, rates, the wage and profit shares — is one number for the whole
+      economy. None of them says who received it, which households gained or lost, or how any
+      of it was distributed.
+    </p>
+    <p class="prose">
+      <strong>The wage/profit comparison is not a factor-share decomposition.</strong> Wages and
+      salaries and corporate profits in section 5 are both shares of GDP, not of national income,
+      so they do not sum to 100 with anything and are not a complete accounting of who gets paid
+      out of what the economy produces.
+    </p>
+    <p class="prose">
+      The <a href="/households/">households route</a> picks up from here: what a household
+      actually earns, how far the spread between households runs, and what is actually paid in
+      tax once payroll tax is counted.
+    </p>
+  </section>
 </BaseLayout>

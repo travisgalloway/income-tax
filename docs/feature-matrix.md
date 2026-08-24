@@ -31,4 +31,4 @@ when the code merges.
 | ECO-3 | Who works — unemployment vs. the noncyclical rate, and labour force participation | done | done | Shipped | #12 | contracts/interfaces/economy-data.md, contracts/interfaces/charts.md |
 | ECO-4 | Prices and rates — CPI-U and core PCE inflation (derived YoY), fed funds, 3-month bill, 10-year note | done | done | Shipped | #13 | contracts/interfaces/economy-data.md, contracts/interfaces/charts.md |
 | ECO-5 | Labor and capital — wages and salaries against corporate profits, both % of GDP | done | done | Shipped | #13 | contracts/interfaces/economy-data.md, contracts/interfaces/charts.md |
-| ECO-6 | Limits — what this route cannot tell you | none | none | Planned | — | — |
+| ECO-6 | Limits — what this route cannot tell you, hand-off to /households | done | done | Shipped | #13 | contracts/interfaces/economy-data.md |
