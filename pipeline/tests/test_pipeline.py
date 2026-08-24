@@ -220,3 +220,15 @@ def test_nominal_gdp_fy1995_matches_the_budget_route_denominator(budget):
     implied = 100 * budget[1995]["n_ot"] / budget[1995]["g_ot"]
     assert abs(economy_gdp - 7.56) <= 0.005
     assert abs(economy_gdp - implied) <= 0.02
+
+
+def test_output_per_hour_and_median_income_share_1984_to_2024():
+    """Section 2's shared window is stated, not silently truncated: mhi is null at
+    1983 and 2025, non-null across 1984-2024, and prod is non-null on every actual
+    row in that window."""
+    economy_rows = {r["y"]: r for r in load("economy")["data"] if r["actual"]}
+    mhi = {r["y"]: r["mhi"] for r in load("income_inequality")["data"]}
+    assert mhi[1983] is None and mhi[2025] is None
+    for y in range(1984, 2025):
+        assert mhi[y] is not None, f"{y}: mhi is null inside the claimed window"
+        assert economy_rows[y]["prod"] is not None, f"FY{y}: prod is null inside the claimed window"

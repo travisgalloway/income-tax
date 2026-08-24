@@ -2,7 +2,8 @@
 import BaseLayout from '../layouts/BaseLayout.astro'
 import Figure from '../components/Figure.astro'
 import { RealGdpLogScale } from '../components/islands/RealGdpLogScale'
-import { economy, vintageOf } from '../data'
+import { GrowthAndShadow } from '../components/islands/GrowthAndShadow'
+import { economy, income, vintageOf } from '../data'
 
 const sections = [
   { id: 'one-picture', label: 'One picture' },
@@ -69,7 +70,51 @@ const sections = [
     </p>
   </section>
 
-  {sections.slice(1).map((s) => (
+  <section id="growth-shadow">
+    <p class="kicker"><span class="section-no">Section 2</span></p>
+    <h2>Output per hour, and what a household got</h2>
+    <p class="standfirst">
+      Between 1984 and 2024, output per hour in the nonfarm business sector rose 116.5%. Real
+      median household income rose 38.6%. Both are indexed to 1984 = 100.
+    </p>
+    <p class="finding">
+      Indexed to 1984 = 100, output per hour reached 216.5 by 2024 and real median household
+      income reached 138.6.
+    </p>
+
+    <Figure
+      ariaLabel="Indexed to 1984 = 100, output per hour reached 216.5 by 2024 while real median household income reached 138.6, the two lines separating over the period."
+      title="Output per hour and real median household income, 1984 to 2024, indexed"
+      source={`Output per hour: ${economy._meta.source}. Median household income: ${income._meta.source}`}
+      vintage={vintageOf(economy._meta)}
+      xUnit="Year (fiscal for output per hour, calendar for median household income)"
+      yUnit="index, 1984 = 100"
+      note="Two sources on two calendars. Output per hour is CBO, fiscal years; real median household income is Census via FRED, calendar years in 2024 dollars. The two use different price indexes and different units of observation, so the vertical gap between the indexed lines is not itself a measurable quantity."
+    >
+      <GrowthAndShadow client:visible economyRows={economy.data} incomeRows={income.data} />
+    </Figure>
+
+    <p class="prose">
+      The two lines are not directly commensurable and the gap between them is not a quantity of
+      anything. Output per hour is real nonfarm business output divided by hours worked, published
+      by CBO on a fiscal year basis. Real median household income is a Census Bureau household
+      survey median, published on a calendar year basis in 2024 dollars. They come from different
+      sources, are deflated by different price indexes, and count different units of observation:
+      one is per hour worked, the other is per household.
+    </p>
+    <p class="prose">
+      The shared window is 1984 to 2024. Median household income does not start until 1984 and
+      does not yet run past 2024, so the chart is drawn over that window rather than over the full
+      1950 to 2025 span of the output per hour series. The table below carries the full span, with
+      no data marked where the Census series does not reach.
+    </p>
+    <p class="prose">
+      This chart shows that the two series diverged. It does not show why, and nothing here
+      identifies a cause.
+    </p>
+  </section>
+
+  {sections.slice(2).map((s) => (
     <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
   ))}
 </BaseLayout>

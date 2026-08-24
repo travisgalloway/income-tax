@@ -66,3 +66,6 @@ figures:
   - {section: E1, text: "real GDP grew 895% FY1950-FY2025", output: economy, agg: pct_growth, field: rgdp, years: [1950, 2025], quoted: 895.3, tol: 1.0}
   - {section: E1, text: "last actual fiscal year FY2025", output: economy, path: _meta.estimate_boundary.last_actual_fy, quoted: 2025, tol: 0}
   - {section: E1, text: "nominal GDP FY1995 $7.56T, budget-route cross-check", output: economy, year: 1995, field: gdp, quoted: 7.56, tol: 0.005}
+  - {section: E2, text: "output per hour index 1984 base", output: economy, year: 1984, field: prod, quoted: 52.772, tol: 0.005}
+  - {section: E2, text: "output per hour +116.5% 1984-2024", output: economy, agg: pct_growth, field: prod, years: [1984, 2024], quoted: 116.5, tol: 0.3}
+  - {section: E2, text: "real median household income +38.6% 1984-2024", output: income_inequality, agg: pct_growth, field: mhi, years: [1984, 2024], quoted: 38.6, tol: 0.3}

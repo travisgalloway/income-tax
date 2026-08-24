@@ -37,6 +37,11 @@ underlying base actually is; the safest default is always to re-index to the win
 
 ## The `income_inequality.json` join (Section 2)
 
+`src/components/islands/GrowthAndShadow.tsx` is the current consumer of this join, and computes
+the shared window itself (about six lines, inline) rather than importing a helper — see the
+Economy-route conflict register in `.claude/plans/issue-12.md` for why `charts/series.ts` is not
+created here.
+
 Section 2 draws `economy.prod` against `income_inequality.mhi`. Two different files, on two
 different calendars, joined on year number only:
 
