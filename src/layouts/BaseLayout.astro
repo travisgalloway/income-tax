@@ -32,6 +32,22 @@ const current = Astro.url.pathname.replace(/\/$/, '')
     <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`} />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <noscript>
+      <style>
+        /* useChartSize returns the WIDE preset (720x396) before the first
+         * client measurement, so with scripting off the wide viewBox is never
+         * swapped for the narrow one and chart text is scaled down with the
+         * plot — an 11px axis label lands around 5.4px at a 390px viewport.
+         * Sized in viewBox units to land back near 10-11px rendered. This
+         * mitigates legibility; it does not fix the underlying geometry — see
+         * docs/contracts/accessibility.md, "Known limitation". */
+        @media (max-width: 34.9rem) {
+          .axis-label { font-size: 20px; }
+          .axis-title { font-size: 19px; }
+          .annotation { font-size: 21px; }
+        }
+      </style>
+    </noscript>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
