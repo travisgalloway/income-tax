@@ -30,7 +30,7 @@ FINAL_DIR = ROOT.parent / "src" / "data"
 # Builders that exist and must run. A module named here but missing from disk is
 # a HARD FAILURE, not a skip.
 TIERS: dict[str, list[str]] = {
-    "monthly": ["cbo", "treasury", "fred", "curated_snapshots"],
+    "monthly": ["cbo", "treasury", "fred", "curated_snapshots", "states"],
     "oneshot": ["party_splits"],
 }
 
@@ -39,9 +39,7 @@ TIERS: dict[str, list[str]] = {
 # success while silently producing nothing. `--only` on one of these exits
 # non-zero and names the issue that covers it.
 PLANNED: dict[str, dict[str, str]] = {
-    "monthly": {
-        "states": "state balance of payments and tax collections (issue #14)",
-    },
+    "monthly": {},
     "oneshot": {
         "bracket_history": "statutory bracket schedules 1913-2025 (issue #10)",
     },
