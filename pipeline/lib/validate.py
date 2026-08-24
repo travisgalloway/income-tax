@@ -127,6 +127,8 @@ def check_revenue(c: Checks) -> None:
     c.close(by[1995]["n_tot"], 1.352, 0.002, "FY1995 total revenue $T")
     c.close(by[2025]["n_tot"], 5.235, 0.002, "FY2025 total revenue $T")
     c.close(by[2025]["g_ii"], 8.75, 0.02, "FY2025 individual income tax, % of GDP")
+    c.close(by[2025]["g_pr"], 5.76, 0.02, "FY2025 payroll tax, % of GDP")
+    c.close(by[2025]["s_pr"], 33.4, 0.15, "FY2025 payroll tax, % of total revenue")
 
 
 def check_economy(c: Checks) -> None:
@@ -220,6 +222,30 @@ def check_snapshots(c: Checks) -> None:
     c.ok(top1["income_share_pct"] is not None,
          "income_tax_by_group: the top 1% income share is missing. Showing the tax share "
          "without it misleads, per the curated note.")
+
+    c.ok(grp["tax_year"] == 2023,
+         f"income_tax_by_group: tax year moved to {grp['tax_year']}; sections 5-7 state 2023")
+
+    by_g = {g["g"]: g for g in grp["groups"]}
+    # NESTED, not a partition: each wider group must contain the narrower one.
+    ladder = ["Top 1%", "Top 5%", "Top 10%", "Top 25%", "Top 50%"]
+    for narrow, wide in zip(ladder, ladder[1:]):
+        c.ok(by_g[narrow]["tax_share_pct"] <= by_g[wide]["tax_share_pct"],
+             f"income_tax_by_group: {narrow} tax share exceeds {wide}; the groups are "
+             f"nested, and a chart that stacked them would double-count")
+
+    # Partial BY DESIGN. If the IRS series gains these, the chart must be revisited
+    # rather than silently filling cells the prose says are unpublished.
+    for g in ("Top 5%", "Top 25%", "Bottom 50%"):
+        c.ok(by_g[g].get("income_share_pct") is None,
+             f"income_tax_by_group: {g} gained an income share; section 5 renders it as "
+             f"unpublished and its note says so")
+
+    hist = grp["top1_tax_share_history"]
+    years = [p["year"] for p in hist]
+    c.ok(max(b - a for a, b in zip(years, years[1:])) > 1,
+         "income_tax_by_group: top1_tax_share_history became annual; section 5 draws it as "
+         "discrete published years and must be revisited if it is now a continuous series")
 
 
 def check_party_splits(c: Checks) -> None:

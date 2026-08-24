@@ -61,3 +61,10 @@ figures:
   - {section: 8, text: "cross-party laws total $9.24T", output: party_splits, agg: cost_cross_party, quoted: 9.24, tol: 0.02}
   - {section: 8, text: "party-line laws total $7.52T", output: party_splits, agg: cost_party_line, quoted: 7.52, tol: 0.02}
   - {section: 11, text: "cumulative deficits $24.15T", output: budget, agg: sum_negated, field: n_de, years: [1995, 2025], quoted: 24.15, tol: 0.05}
+  - {section: 10, text: "top 1% earned 20.6% of AGI", output: income_tax_by_group, path: data.groups.0.income_share_pct, quoted: 20.6, tol: 0.05}
+  - {section: 10, text: "top 1% average rate 26.3%", output: income_tax_by_group, path: data.groups.0.avg_rate_pct, quoted: 26.3, tol: 0.05}
+  - {section: 10, text: "top 10% earned 47.6% of AGI", output: income_tax_by_group, path: data.groups.2.income_share_pct, quoted: 47.6, tol: 0.05}
+  - {section: 10, text: "top 10% paid 70.5% of income tax", output: income_tax_by_group, path: data.groups.2.tax_share_pct, quoted: 70.5, tol: 0.05}
+  - {section: 10, text: "bottom half paid 3.3% of income tax", output: income_tax_by_group, path: data.groups.5.tax_share_pct, quoted: 3.3, tol: 0.05}
+  - {section: 10, text: "bottom half average rate 3.7%", output: income_tax_by_group, path: data.groups.5.avg_rate_pct, quoted: 3.7, tol: 0.05}
+  - {section: 10, text: "payroll = 33.4% of federal revenue FY2025", output: revenue_sources, year: 2025, field: s_pr, quoted: 33.4, tol: 0.15}
