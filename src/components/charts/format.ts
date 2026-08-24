@@ -50,3 +50,24 @@ export function value(v: number | null, unit: Unit): string {
 export function fiscalYear(y: number): string {
   return `FY${y}`
 }
+
+/** Compact axis-tick text for a dollar series with no unit family (no
+ *  nominal/real/GDP toggle): `60000 -> "$60k"`. */
+export function dollarsCompact(v: number): string {
+  return `$${Math.round(v / 1000)}k`
+}
+
+/** A unitless ratio (e.g. the Gini index) to three decimal places: `0.456 ->
+ *  "0.456"`. The unit itself is not "index points" — it is that there is no
+ *  unit, which is why the axis title (`AxisLeft`'s required `label`) is the
+ *  only place the 0-to-1 range gets stated, not this formatter. */
+export function indexValue(v: number): string {
+  return v.toFixed(3)
+}
+
+/** A calendar year, printed as-is. Deliberately not `fiscalYear`: the
+ *  Households route reads Census/FRED and CBO series, which publish on the
+ *  calendar year, and must never carry an `FY` prefix. */
+export function calendarYear(y: number): string {
+  return `${y}`
+}

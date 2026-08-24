@@ -14,6 +14,39 @@ time. Appended to, never rewritten. None of these have been acted on.
   number formatters inline rather than using `UnitToggle` and `charts/format.ts`. Section 4 uses
   the shared ones; §1 could be moved onto them. Found while working on #2. Severity: duplication,
   non-blocking.
+- [2026-08-23] `.claude/plans/issue-9.md`'s illustrative snippet for `cboTop1IncomeShare` in
+  `src/data/index.ts` reads `(incomeGroups.data as IncomeGroupsTop1).cbo_top1_income_share`, a
+  single assertion. `Record<string, unknown>` and `IncomeGroupsTop1` do not structurally overlap
+  enough for TypeScript to allow that single cast (`ts(2352)`); `npx astro check` fails on it.
+  Implemented as `as unknown as IncomeGroupsTop1` instead, which is the double-assertion idiom the
+  file's own doc comment says it avoids at the dataset level, but is required at this narrower
+  field-level access. Found while executing #9. Severity: plan/tooling mismatch, non-blocking
+  (criterion 16, `npx astro check` clean, still holds with the double cast).
+- [2026-08-23] `.claude/plans/issue-9.md`'s §2 template literal `` `Family ${giniBasis} Gini
+  index, ratio 0 to 1` `` renders "Family families Gini index, ratio 0 to 1" once
+  `_meta.gini_basis` ("families") is interpolated -- a wording bug in the plan, present in every
+  location it specifies the same pattern (axis title, readout example). Implemented instead as
+  `${giniLabelWord} Gini index` where `giniLabelWord` is `giniBasis` capitalised
+  ("Families Gini index"), applied consistently in the panel sub-title, axis title, readout,
+  aria-labels and table column header in `HouseholdSpread.tsx`, so the word is still read from
+  `_meta.gini_basis` (never hardcoded) everywhere criterion 3 requires it, without the doubled
+  noun. Found while executing #9. Severity: plan wording bug, non-blocking (criterion 3 holds
+  under the corrected wording; `grep -c 'families'` on the built page is unaffected).
+- [2026-08-23] `.claude/plans/issue-9.md` verification 5 and criterion 11 require
+  `grep -c 'Fiscal year\|FY20' dist/households/index.html` = 0, but criterion 10 requires the same
+  page to state the deflator warning verbatim, which necessarily contains the substring "FY2025"
+  (`"...FY2025 dollars — a different deflator..."`). The two checks are mutually exclusive as
+  literally written. Verified the only match for `FY[0-9]{4}|Fiscal year` anywhere in the built
+  page is that one required deflator sentence — no axis, tick, readout, aria-label or table column
+  on the Households route uses a fiscal-year label, which is criterion 11's actual substance.
+  Reported this as satisfied-on-substance rather than claiming the literal `grep -c` command
+  passes. Found while executing #9. Severity: plan self-contradiction, non-blocking.
+- [2026-08-23] Minor process deviation from `.claude/plans/issue-9.md`'s commit split: the HH-2
+  row was added to `docs/test-plan.md` in the same edit as the HH-1 row (commit 3, "§1"), one
+  commit earlier than the plan's commit 4 ("§2"). `docs/feature-matrix.md`'s HH-2 status still
+  moves from `Planned` to `Shipped` in commit 4 alongside `HouseholdSpread.tsx`, so the substance
+  of criterion 19 (docs land with their code) holds; only the test-plan row's exact commit differs.
+  Found while executing #9. Severity: process, non-blocking.
 - [2026-08-23] `src/components/charts/scales.ts` `niceExtent()` only clamps the low end to 0 when
   padding pushes it *above* 0 (`if (lo > 0) lo = 0`); when the unpadded minimum is small relative
   to the series' span (e.g. `RevenueChart`'s nominal view, FY1962 `n_tot` $0.0997T against a
