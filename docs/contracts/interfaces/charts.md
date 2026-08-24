@@ -79,7 +79,8 @@ exclusive options.
 ## Section-island shape
 
 Every built section island (`DebtChart.tsx`, `BudgetChart.tsx`, `StructuralGap.tsx`,
-`VotedAndNot.tsx`, `NetInterest.tsx`, `LawExplorer.tsx`, `DebtHolders.tsx`, `DebtMaturity.tsx`)
+`VotedAndNot.tsx`, `NetInterest.tsx`, `LawExplorer.tsx`, `DebtHolders.tsx`, `DebtMaturity.tsx`,
+`RevenueChart.tsx`, `OecdChart.tsx`)
 follows the same skeleton:
 
 1. `useChartSize()` for sizing, `useState` for the active unit/view and the focused/hovered datum.

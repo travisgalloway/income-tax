@@ -310,6 +310,64 @@ def test_every_mapped_rollcall_passed(splits):
             assert v["yea"] >= (v["nay"] if ch == "senate" else v["nay"] + 1), f"{pl} {ch}"
 
 
+# ---- GOV-10 (#7): revenue by source and the OECD comparison --------------
+
+REVENUE_PARTS = ["ii", "pr", "ci", "ex", "cu", "eg", "mi"]
+
+
+def test_revenue_components_sum_in_the_gdp_and_share_families():
+    """test_revenue_components_sum_to_total above covers n_ only; the g_ and
+    s_ families carry the same invariant and were previously unchecked."""
+    for r in load("revenue_sources")["data"]:
+        got_g = sum(r[f"g_{p}"] for p in REVENUE_PARTS)
+        assert abs(got_g - r["g_tot"]) <= 0.01, f"FY{r['y']} g_: {got_g:.3f} vs {r['g_tot']:.3f}"
+
+        got_s = sum(r[f"s_{p}"] for p in REVENUE_PARTS)
+        assert abs(got_s - 100.0) <= 0.05, f"FY{r['y']} s_: sums to {got_s:.3f}"
+
+
+def test_miscellaneous_revenue_is_never_zero():
+    for r in load("revenue_sources")["data"]:
+        assert r["n_mi"] > 0, f"FY{r['y']}: n_mi is not positive"
+        assert r["g_mi"] > 0, f"FY{r['y']}: g_mi is not positive"
+
+
+def test_revenue_series_is_contiguous_and_has_no_null_fields():
+    rows = load("revenue_sources")["data"]
+    years = sorted(r["y"] for r in rows)
+    assert years == list(range(1962, 2026)), "revenue_sources: expected FY1962-FY2025, contiguous"
+    assert len(rows) == 64
+    for r in rows:
+        for k, v in r.items():
+            assert v is not None, f"FY{r['y']}: {k} is null"
+
+
+def test_customs_is_the_fastest_growing_revenue_line():
+    """The section's callout: customs grew faster, as a share of GDP, than
+    every other revenue component from FY1995 to FY2025."""
+    by = {r["y"]: r for r in load("revenue_sources")["data"]}
+    ratios = {p: by[2025][f"g_{p}"] / by[1995][f"g_{p}"] for p in REVENUE_PARTS}
+    assert max(ratios, key=ratios.get) == "cu", ratios
+
+
+def test_oecd_average_is_flagged_and_the_country_list_is_a_selection():
+    oecd = load("oecd")["data"]
+    avg = [c for c in oecd["countries"] if c.get("is_average")]
+    us = [c for c in oecd["countries"] if c.get("is_us")]
+    assert len(avg) == 1 and avg[0]["v"] == oecd["oecd_average_pct_gdp"]
+    assert len(us) == 1 and us[0]["v"] == oecd["us_pct_gdp"]
+    assert len(oecd["countries"]) < oecd["of_countries"], "the country list must be a selection"
+
+
+def test_oecd_and_federal_revenue_are_marked_as_different_scopes():
+    """BRIEF.md rule 3: the OECD 25.6% counts federal+state+local; CBO's
+    17.2% is federal only. Both _meta.notes must keep saying so, or a chart
+    could silently start treating them as comparable."""
+    oecd_notes = " ".join(load("oecd")["_meta"]["notes"]).lower()
+    revenue_notes = " ".join(load("revenue_sources")["_meta"]["notes"]).lower()
+    assert "state and local" in oecd_notes
+    assert "federal" in oecd_notes
+    assert "federal" in revenue_notes and "oecd" in revenue_notes
 # ---- issue #6: debt holders and repricing ---------------------------------
 
 def test_crossing_date_is_reconciled_not_competing():

@@ -15,7 +15,7 @@ import groupsJson from './income_tax_by_group.json'
 
 import type {
   BudgetYear, Dataset, DebtHolders, DebtMaturity, DebtYear, EconomyYear, IncomeYear, Meta,
-  PartySplit, RevenueYear,
+  OecdComparison, PartySplit, RevenueYear,
 } from './types'
 
 export const budget = budgetJson as Dataset<BudgetYear[]>
@@ -26,7 +26,7 @@ export const revenue = revenueJson as Dataset<RevenueYear[]>
 export const partySplits = splitsJson as Dataset<PartySplit[]>
 export const debtHolders = holdersJson as Dataset<DebtHolders>
 export const debtMaturity = maturityJson as Dataset<DebtMaturity>
-export const oecd = oecdJson as Dataset<Record<string, unknown>>
+export const oecd = oecdJson as Dataset<OecdComparison>
 export const incomeGroups = groupsJson as Dataset<Record<string, unknown>>
 
 /**

@@ -18,6 +18,6 @@ when the code merges.
 | GOV-7 | Net interest — nominal/real bars by fiscal year, FY2015 trough and FY2003 series low marked, cross-linked to debt maturity | done | done | Shipped | #5 | contracts/interfaces/budget-data.md, contracts/interfaces/charts.md |
 | GOV-8 | The laws — sortable/filterable explorer, cost, vote, enactment date | done | done | Shipped | #3 | contracts/interfaces/law-data.md, contracts/interfaces/charts.md, contracts/interfaces/budget-data.md |
 | GOV-9 | Who passed it, who signed it — the same $16.75T by voting coalition and by signing president, Radix Tabs | done | done | Shipped | #4 | contracts/interfaces/attribution.md, contracts/interfaces/budget-data.md |
-| GOV-10 | Where the money comes from — revenue by source, brackets, OECD | none | none | Planned | — | — |
+| GOV-10 | Where the money comes from — revenue by source (nominal/%GDP/%share toggle), OECD comparison | done | done | Shipped | #7 | contracts/interfaces/revenue-data.md, contracts/interfaces/charts.md |
 | GOV-11 | By state | none | none | Planned | — | — |
 | GOV-12 | What this cannot tell you — caveats in full | none | none | Planned | — | — |
