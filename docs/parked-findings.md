@@ -14,6 +14,173 @@ time. Appended to, never rewritten. None of these have been acted on.
   number formatters inline rather than using `UnitToggle` and `charts/format.ts`. Section 4 uses
   the shared ones; §1 could be moved onto them. Found while working on #2. Severity: duplication,
   non-blocking.
+- [2026-08-23] Issue #10's plan specified `min_bytes=200_000` for the Tax Foundation
+  `income-tax-rates.csv` fetch in `pipeline/oneshot/bracket_history.py`. The live file is ~194,945
+  bytes, so the literal plan value made every fetch fail as "truncated". Deviated to `min_bytes=150_000`
+  (still comfortably below the live size, still catches real truncation). This is a criterion-
+  blocking plan defect, not a discretionary finding, so it was fixed rather than parked; noted here
+  per feature-closure record-keeping. Severity: plan defect, resolved, non-blocking.
+- [2026-08-23] Issue #10's plan specified requiring exactly 12 monthly CPIAUCNS observations per
+  year with no exception. The October 2025 CPI-U was never collected (2025 government shutdown;
+  BLS stated it cannot retroactively gather it — the first gap in this series since 1921), so 2025
+  permanently has only 11 monthly observations in FRED's `CPIAUCNS`. `bracket_history.py` carries a
+  narrow, dated exception (`EXPECTED_MONTHS = {2025: 11}`) rather than requiring an observation
+  that will never exist; every other year still requires exactly 12. Criterion-blocking, fixed
+  rather than parked. Severity: plan defect (real-world data gap the plan predates), resolved,
+  non-blocking.
+- [2026-08-23] The fetched Tax Foundation `income-tax-rates.csv` carries one corrupt row: 1985,
+  single filer, a duplicate zero-rate bracket with an open-ended top (`incomeGreaterThan=0`,
+  `incomeNotGreaterThan=` empty) alongside the real 0%-to-$2,390 "zero bracket amount" row (the
+  1977-1986 standard-deduction-equivalent). Left as fetched, this collides with the ladder's real
+  50% top bracket and breaks the "exactly one open-ended top bracket per status-year" invariant
+  the whole build depends on. `bracket_history.py`'s `_drop_phantom_zero_row` detects and drops
+  exactly this one known corrupt row and raises `SourceUnavailable` on any other unfamiliar
+  duplicate `incomeGreaterThan` it encounters, rather than guessing. Criterion-blocking (no other
+  year/status combination in 1913-2019 has a duplicate floor), fixed rather than parked. Severity:
+  upstream data defect, resolved, non-blocking.
+- [2026-08-23] Issue #10's plan lists `BracketHistory.tsx`'s `TableView` columns as Year / Top
+  statutory rate / Schedule ladder top / Brackets / threshold (nominal) / threshold (constant) /
+  Adjustment -- no mfj/mfs/hoh columns -- but its manual check M3 says "`no data`, never `0`, in
+  the mfj/mfs/hoh table columns for years before 1949/1952", which presumes columns the column
+  list does not include. Left the table matching the literal column list (kept narrow, matches the
+  issue's stated three things: bracket count, thresholds, top rate) rather than expanding scope to
+  reconcile M3; the underlying null-vs-zero invariant is still fully covered by
+  `test_filing_statuses_are_not_projected_backwards` and `test_bracket_history_absent_values_are_null_not_zero`
+  at the data layer. M3 itself is unexecuted here (no browser tooling). Severity: plan
+  inconsistency, non-blocking (M3 was already unexecuted for an unrelated reason).
+- [2026-08-23] `.claude/plans/issue-9.md`'s illustrative snippet for `cboTop1IncomeShare` in
+  `src/data/index.ts` reads `(incomeGroups.data as IncomeGroupsTop1).cbo_top1_income_share`, a
+  single assertion. `Record<string, unknown>` and `IncomeGroupsTop1` do not structurally overlap
+  enough for TypeScript to allow that single cast (`ts(2352)`); `npx astro check` fails on it.
+  Implemented as `as unknown as IncomeGroupsTop1` instead, which is the double-assertion idiom the
+  file's own doc comment says it avoids at the dataset level, but is required at this narrower
+  field-level access. Found while executing #9. Severity: plan/tooling mismatch, non-blocking
+  (criterion 16, `npx astro check` clean, still holds with the double cast).
+- [2026-08-23] `.claude/plans/issue-9.md`'s §2 template literal `` `Family ${giniBasis} Gini
+  index, ratio 0 to 1` `` renders "Family families Gini index, ratio 0 to 1" once
+  `_meta.gini_basis` ("families") is interpolated -- a wording bug in the plan, present in every
+  location it specifies the same pattern (axis title, readout example). Implemented instead as
+  `${giniLabelWord} Gini index` where `giniLabelWord` is `giniBasis` capitalised
+  ("Families Gini index"), applied consistently in the panel sub-title, axis title, readout,
+  aria-labels and table column header in `HouseholdSpread.tsx`, so the word is still read from
+  `_meta.gini_basis` (never hardcoded) everywhere criterion 3 requires it, without the doubled
+  noun. Found while executing #9. Severity: plan wording bug, non-blocking (criterion 3 holds
+  under the corrected wording; `grep -c 'families'` on the built page is unaffected).
+- [2026-08-23] `.claude/plans/issue-9.md` verification 5 and criterion 11 require
+  `grep -c 'Fiscal year\|FY20' dist/households/index.html` = 0, but criterion 10 requires the same
+  page to state the deflator warning verbatim, which necessarily contains the substring "FY2025"
+  (`"...FY2025 dollars — a different deflator..."`). The two checks are mutually exclusive as
+  literally written. Verified the only match for `FY[0-9]{4}|Fiscal year` anywhere in the built
+  page is that one required deflator sentence — no axis, tick, readout, aria-label or table column
+  on the Households route uses a fiscal-year label, which is criterion 11's actual substance.
+  Reported this as satisfied-on-substance rather than claiming the literal `grep -c` command
+  passes. Found while executing #9. Severity: plan self-contradiction, non-blocking.
+- [2026-08-23] Minor process deviation from `.claude/plans/issue-9.md`'s commit split: the HH-2
+  row was added to `docs/test-plan.md` in the same edit as the HH-1 row (commit 3, "§1"), one
+  commit earlier than the plan's commit 4 ("§2"). `docs/feature-matrix.md`'s HH-2 status still
+  moves from `Planned` to `Shipped` in commit 4 alongside `HouseholdSpread.tsx`, so the substance
+  of criterion 19 (docs land with their code) holds; only the test-plan row's exact commit differs.
+  Found while executing #9. Severity: process, non-blocking.
+- [2026-08-23] `src/components/charts/scales.ts` `niceExtent()` only clamps the low end to 0 when
+  padding pushes it *above* 0 (`if (lo > 0) lo = 0`); when the unpadded minimum is small relative
+  to the series' span (e.g. `RevenueChart`'s nominal view, FY1962 `n_tot` $0.0997T against a
+  FY2025 max of $5.2346T), the 8% pad pushes `lo` slightly *below* zero and it is left there,
+  giving a y-domain like `[-0.31, 5.65]` for a series that is never negative. Purely cosmetic — a
+  sliver of empty axis below zero — and does not affect any GOV-10 criterion (the `gdp` and `share`
+  views, which carry the section's actual claims, are unaffected: `gdp`'s min/max ratio is close
+  enough that the same clamp fires as intended). Found while working on #7. Severity: chart
+  polish, non-blocking.
+- [2026-08-23] `pipeline/curated/prose_figures.yaml` registers `debt_holders.data.split.0.share_pct`
+  (public 80.6%) but not `.split.1.share_pct` (intragovernmental 19.4%), even though both are
+  quoted in `sections.md` §2's finding ("...$7.74T intragovernmental (19.4%)..."). A future
+  revision to the intragov share could drift silently against that sentence. Found while working
+  on #6, out of scope (the issue's registration list named specific new §2/§3 figures and this one
+  predates it). Severity: prose-drift coverage gap, non-blocking.
+- [2026-08-23] Issue #6's plan draft for the §2 `Figure` `note` prop included a sentence restating
+  the Federal Reserve omission ("Federal Reserve holdings are deliberately omitted: ..."). That
+  sentence was dropped from the shipped note because it would have produced a second "Federal
+  Reserve" occurrence in `dist/government/index.html`, contradicting the issue's own DoD item 2 and
+  verification V6 (exactly one occurrence, in the §2 standfirst only). The TIC range and the
+  foreign-share denominator sentences were kept. Found while implementing #6. Severity: plan/
+  verification inconsistency, resolved in favour of the verification criterion, non-blocking.
+- [2026-08-23] `dist/government/index.html`'s `TableView` "View as table" content
+  (`.tableview-content`) is empty in the static SSR output for every figure on the page, including
+  the pre-existing `DebtChart.tsx` table: Radix `Collapsible.Content` does not render its children
+  while `open` is false server-side. This means no static grep of the built HTML (e.g. for `no
+  data` cells or column units) can verify table contents; it can only be checked with a real
+  browser after the disclosure is opened client-side. Found while verifying #6 (GOV-2). Severity:
+  test-coverage limitation shared by every figure on the site, non-blocking, no browser tooling
+  available in this environment to open a follow-up investigation.
+- [2026-08-23] `src/components/Figure.astro:38` requires and validates `ariaLabel` at build time but
+  never renders it anywhere in the DOM -- the accessible text a screen reader actually gets comes
+  from the slotted chart's own internal `Chart` `ariaLabel` (per-unit-view, describing the shape),
+  not from `Figure`'s prop (the finding). The prop is effectively a build-time lint only. Found
+  while wiring §§5-7 into `government/index.astro` (#5) and reasoning about which of the two
+  `ariaLabel`s each section's Figure/Chart pair should carry. Severity: accessibility/API clarity,
+  non-blocking -- the actual announced text is correct in every shipped section, just not via the
+  prop whose docstring implies it should be.
+- [2026-08-23] `sections.md:377` §11 item 4 ("Party splits are classified, not counted") and
+  `BRIEF.md:179-182` rule 6 both still assert the classification that #3's counted `party_splits.json`
+  replaced. §11 is an unbuilt placeholder so no reader can reach the stale claim today, but the
+  `BRIEF.md` line will steer future work wrong. Found while working on #3. Belongs to the §11 issue.
+  Severity: correctness of the repo's own norms, non-blocking.
+- [2026-08-23] `pipeline/curated/laws.yaml` `totals.party_line_t: 7.52` rounds the true sum `7.512`
+  up; #3's UI and `sections.md` §8 now read `7.51`. Not consumed by `validate.py:check_laws` (only
+  `net_scored_t`/`gross_increases_t` are), and the existing `test_cross_party_and_party_line_totals`
+  pytest tolerance is ±0.02, so nothing fails — but §9 (unbuilt) quotes the same total split three
+  ways (`5.21 + 2.31`) and should reconcile all four numbers at once when it's built. Found while
+  working on #3. Severity: stale curated constant, non-blocking.
+- [2026-08-23] `src/pages/government/index.astro` §1 (`DebtChart`) mounts with `client:visible`, so
+  its SVG does not exist at all with JavaScript disabled — against the shared per-section done
+  contract's "renders with JS disabled" criterion. §8 (`LawExplorer`) uses `client:load` instead,
+  which server-renders the chart markup and only loses interactivity without JS. Found while working
+  on #3. Severity: accessibility/robustness, affects a shipped section (§1, issue #1).
+- [2026-08-23] `pipeline/curated/laws.yaml:24` hand-curates `party_line_t: 7.52` (naive
+  `$5.21T + $2.31T`), but the underlying integer-thousandths sum is `5.206 + 2.306 = 7.512`,
+  which rounds to `$7.51T`. `sections.md` §8 already moved to 7.51, and `pipeline/lib/validate.py`
+  does not currently gate `party_line_t` or `cross_party_t` at all (only `net_scored_t` and
+  `gross_increases_t`, `validate.py:110-111`), so this is not a failing check today — just a
+  curated value one cent off from what integer arithmetic gives. Found while working on #4, which
+  owns the §9 attribution split and deliberately does the summation in integers rather than
+  reading this field. Not fixed here: §8 (issue #3) owns `laws.yaml`'s totals. Severity: data
+  precision, non-blocking.
+- [2026-08-23] `src/components/attribution/aggregate.ts` and `src/components/laws/derive.ts`
+  (issue #3, `feat/3-law-explorer-counted-votes`) both independently join `laws` to
+  `splitByLaw`/`party_splits.json` on `public_law` and derive a per-law coalition or party
+  assignment. If both branches merge, the duplicated join-and-classify logic is a candidate for
+  consolidation into a single shared helper. Deliberately not pre-empted on this branch (run
+  policy: no component or module is shared between #3 and #4). Severity: duplication,
+  non-blocking. Tracked as issue #33.
+- [2026-08-23] `sections.md` §8 "Required disclosure" still instructs section 8 to state that vote
+  composition is classified for 22 of 23 laws, which is now false (see `party_splits.json` and the
+  rewritten `SOURCES.md` "vote composition limitation" section). If section 8's copy ships with
+  that instruction, it will contradict §12. Owned by issue #3 / PR #17. Found while working on #8.
+  Severity: cross-section contradiction risk, non-blocking here (parked to the owning issue).
+- [2026-08-23] `BRIEF.md` data-integrity rule 6 says the same thing as the `sections.md` §8 note
+  above. The brief is treated as the immutable input to this build and is not edited by this issue.
+  Found while working on #8. Severity: documentation, non-blocking.
+- [2026-08-23] `pipeline/curated/notes.yaml` → `outputs.budget.notes[1]` still reads "Vote
+  composition is exact only for PL 115-97 (TCJA). All others are classified party-line or
+  cross-party from published vote character." This flows into `src/data/budget.json`
+  `_meta.notes[1]` and is rendered nowhere on the site today, but it is stale for the same reason
+  as `sections.md` §8. Editing it requires regenerating `budget.json`, which belongs with #3's
+  work. Found while working on #8. Severity: stale metadata, non-blocking.
+- [2026-08-23] `.claude/plans/issue-11.md`'s "static render, JavaScript disabled" verification
+  block uses `grep -c` against `dist/households/index.html` expecting counts like `<svg` `>= 3`.
+  Astro's static build emits the page as a single line, so `grep -c` (which counts matching
+  *lines*, not occurrences) returns 1 regardless of how many times the pattern actually appears.
+  Verified the real occurrence counts with `grep -o '<pattern>' | wc -l` instead: 3 `<svg>`, 3
+  `Source.`, 4 `Not built yet`, 3 `no data` — all matching the plan's intended thresholds. Found
+  while working on #11. Severity: verification-command defect in the plan file, not a product
+  bug; every plan with a "static render" grep block against built HTML should use `grep -o | wc
+  -l` instead of `grep -c`. Non-blocking.
+- [2026-08-23] `.claude/plans/issue-11.md`'s "Files to create / modify / delete" list does not
+  name `data-report.md`, but `uv run python build.py --tier monthly --dry-run` (required by the
+  plan's own Verification section) regenerates it as a side effect of the new
+  `prose_figures.yaml` entries, and it is a tracked file (committed as part of #1's scaffold). Left
+  it updated rather than reverted, since a stale count ("41 of 41" instead of "48 of 48") would
+  misrepresent the pipeline's actual state. Found while working on #11. Severity: plan file-list
+  omission, non-blocking.
 - [2026-08-23] `.claude/plans/issue-12.md` V-21 and V-22 specify `grep -c 'View as table'
   dist/index.html` and `grep -c 'aria-live="polite"' dist/index.html` (expecting exactly 3 and
   `>= 3`). `astro build` emits `dist/index.html` as a single line with no line terminators

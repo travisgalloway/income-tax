@@ -25,7 +25,13 @@ figures:
   - {section: 2, text: "held by the public $32.14T", output: debt_holders, path: data.split.0.amount_t, quoted: 32.14, tol: 0.02}
   - {section: 2, text: "intragovernmental $7.74T", output: debt_holders, path: data.split.1.amount_t, quoted: 7.74, tol: 0.02}
   - {section: 2, text: "public share 80.6%", output: debt_holders, path: data.split.0.share_pct, quoted: 80.6, tol: 0.1}
+  - {section: 2, text: "foreign share of publicly held debt 30%", output: debt_holders, path: data.public_split.1.share_of_public_pct, quoted: 30, tol: 0}
+  - {section: 2, text: "foreign share of gross debt (2025) 24%", output: debt_holders, path: data.foreign_share_history.1.share_of_gross_pct, quoted: 24, tol: 0}
+  - {section: 2, text: "Japan holds $1.20T", output: debt_holders, path: data.top_foreign.0.amount_t, quoted: 1.203, tol: 0.01}
+  - {section: 2, text: "UK holds $889B", output: debt_holders, path: data.top_foreign.1.amount_t, quoted: 0.889, tol: 0.01}
+  - {section: 2, text: "China holds $683B", output: debt_holders, path: data.top_foreign.2.amount_t, quoted: 0.683, tol: 0.01}
   - {section: 3, text: "average maturity 71 months", output: debt_maturity, path: data.avg_maturity_months, quoted: 71, tol: 0.5}
+  - {section: 3, text: "longest instrument 30 years", output: debt_maturity, path: data.longest_instrument_years, quoted: 30, tol: 0}
   - {section: 4, text: "FY2025 outlays $7.01T", output: budget, year: 2025, field: n_ot, quoted: 7.01, tol: 0.005}
   - {section: 4, text: "FY2025 revenue $5.24T", output: budget, year: 2025, field: n_re, quoted: 5.24, tol: 0.006}
   - {section: 4, text: "FY2025 deficit $1.78T", output: budget, year: 2025, field: n_de, quoted: -1.78, tol: 0.006}
@@ -35,7 +41,7 @@ figures:
   - {section: 6, text: "mandatory 9.8% of GDP in FY1995 (NET)", output: budget, year: 1995, field: g_ma_net, quoted: 9.8, tol: 0.06}
   - {section: 6, text: "mandatory 13.7% of GDP in FY2025 (NET)", output: budget, year: 2025, field: g_ma_net, quoted: 13.7, tol: 0.06}
   - {section: 6, text: "discretionary 7.2% -> 6.2% of GDP", output: budget, year: 2025, field: g_di, quoted: 6.2, tol: 0.06}
-  - {section: 6, text: "real mandatory growth 189% (SEE NOTE: gross basis)", output: budget, agg: real_growth_gross_mandatory, years: [1995, 2025], quoted: 189, tol: 1.0}
+  - {section: 6, text: "real mandatory growth 194% (NET of offsetting receipts)", output: budget, agg: pct_growth, field: r_ma_net, years: [1995, 2025], quoted: 194, tol: 1.0}
   - {section: 6, text: "real discretionary growth 79%", output: budget, agg: real_growth_disc, years: [1995, 2025], quoted: 79, tol: 1.0}
   - {section: 7, text: "net interest FY1995 $232B", output: budget, year: 1995, field: n_ni, quoted: 0.232, tol: 0.002}
   - {section: 7, text: "net interest FY2025 $970B", output: budget, year: 2025, field: n_ni, quoted: 0.970, tol: 0.002}
@@ -61,6 +67,30 @@ figures:
   - {section: 8, text: "cross-party laws total $9.24T", output: party_splits, agg: cost_cross_party, quoted: 9.24, tol: 0.02}
   - {section: 8, text: "party-line laws total $7.52T", output: party_splits, agg: cost_party_line, quoted: 7.52, tol: 0.02}
   - {section: 11, text: "cumulative deficits $24.15T", output: budget, agg: sum_negated, field: n_de, years: [1995, 2025], quoted: 24.15, tol: 0.05}
+  - {section: 10, text: "top 1% earned 20.6% of AGI", output: income_tax_by_group, path: data.groups.0.income_share_pct, quoted: 20.6, tol: 0.05}
+  - {section: 10, text: "top 1% average rate 26.3%", output: income_tax_by_group, path: data.groups.0.avg_rate_pct, quoted: 26.3, tol: 0.05}
+  - {section: 10, text: "top 10% earned 47.6% of AGI", output: income_tax_by_group, path: data.groups.2.income_share_pct, quoted: 47.6, tol: 0.05}
+  - {section: 10, text: "top 10% paid 70.5% of income tax", output: income_tax_by_group, path: data.groups.2.tax_share_pct, quoted: 70.5, tol: 0.05}
+  - {section: 10, text: "bottom half paid 3.3% of income tax", output: income_tax_by_group, path: data.groups.5.tax_share_pct, quoted: 3.3, tol: 0.05}
+  - {section: 10, text: "bottom half average rate 3.7%", output: income_tax_by_group, path: data.groups.5.avg_rate_pct, quoted: 3.7, tol: 0.05}
+  - {section: 10, text: "payroll = 33.4% of federal revenue FY2025", output: revenue_sources, year: 2025, field: s_pr, quoted: 33.4, tol: 0.15}
+  - {section: 3, text: "1913 top statutory rate 7%", output: bracket_history, year: 1913, field: top, quoted: 7.0, tol: 0.01}
+  - {section: 3, text: "1944 top statutory rate 94%", output: bracket_history, year: 1944, field: top, quoted: 94.0, tol: 0.01}
+  - {section: 3, text: "1965 top statutory rate 70%", output: bracket_history, year: 1965, field: top, quoted: 70.0, tol: 0.01}
+  - {section: 3, text: "1988 top statutory rate 28%", output: bracket_history, year: 1988, field: top, quoted: 28.0, tol: 0.01}
+  - {section: 3, text: "1993 top statutory rate 39.6%", output: bracket_history, year: 1993, field: top, quoted: 39.6, tol: 0.01}
+  - {section: 3, text: "2018 top statutory rate 37%", output: bracket_history, year: 2018, field: top, quoted: 37.0, tol: 0.01}
+  - {section: 3, text: "1981 blended part-year top rate 69.125%", output: bracket_history, year: 1981, field: top, quoted: 69.125, tol: 0.001}
+  - {section: 3, text: "1988 bracket count is the series minimum, 2 brackets", output: bracket_history, path: _meta.bracket_count.min, quoted: 2, tol: 0}
+  - {section: 3, text: "1918 bracket count is the series maximum, 56 brackets", output: bracket_history, path: _meta.bracket_count.max, quoted: 56, tol: 0}
+  - {section: 4, text: "1979 top statutory rate 70%", output: bracket_history, year: 1979, field: top, quoted: 70.0, tol: 0.01}
+  - {section: 4, text: "2022 top statutory rate 37%", output: bracket_history, year: 2022, field: top, quoted: 37.0, tol: 0.01}
+  - {section: 4, text: "1979 top 1% average federal tax rate, includes payroll tax, 35.1%", output: cbo_effective_rates, path: data.rows.0.v.top1, quoted: 35.1, tol: 0.05}
+  - {section: 4, text: "2022 top 1% average federal tax rate, includes payroll tax, 31.5%", output: cbo_effective_rates, path: data.rows.4.v.top1, quoted: 31.5, tol: 0.05}
+  - {section: 4, text: "2019 lowest-quintile average federal tax rate fell to 0.6%", output: cbo_effective_rates, path: data.rows.3.v.lowest, quoted: 0.6, tol: 0.05}
+  - {section: 11, text: "crisis-year borrowing $7.78T (FY2008-09, FY2020-21)", output: budget, agg: sum_negated, field: n_de, years: [1995, 2025], only_years: [2008, 2009, 2020, 2021], quoted: 7.78, tol: 0.02}
+  - {section: 11, text: "crisis years are 32% of all borrowing", output: budget, agg: share_negated_pct, field: n_de, years: [1995, 2025], only_years: [2008, 2009, 2020, 2021], quoted: 32, tol: 0.6}
+  - {section: 11, text: "every other year averaged $0.61T of borrowing", output: budget, agg: mean_negated, field: n_de, years: [1995, 2025], exclude_years: [2008, 2009, 2020, 2021], quoted: 0.61, tol: 0.01}
   - {section: E1, text: "real GDP FY1950 $2.383T", output: economy, year: 1950, field: rgdp, quoted: 2.383, tol: 0.002}
   - {section: E1, text: "real GDP FY2025 $23.718T", output: economy, year: 2025, field: rgdp, quoted: 23.718, tol: 0.002}
   - {section: E1, text: "real GDP grew 895% FY1950-FY2025", output: economy, agg: pct_growth, field: rgdp, years: [1950, 2025], quoted: 895.3, tol: 1.0}
