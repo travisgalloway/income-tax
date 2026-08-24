@@ -1,5 +1,8 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro'
+import Figure from '../components/Figure.astro'
+import { RealGdpLogScale } from '../components/islands/RealGdpLogScale'
+import { economy, vintageOf } from '../data'
 
 const sections = [
   { id: 'one-picture', label: 'One picture' },
@@ -22,7 +25,51 @@ const sections = [
     The denominators everything else on this site is measured against, and one thing they do
     not show on their own.
   </p>
-  {sections.map((s) => (
+  <section id="one-picture">
+    <p class="kicker"><span class="section-no">Section 1</span></p>
+    <h2>Seventy-five years, ten times the output</h2>
+    <p class="standfirst">
+      Real GDP was $2.38 trillion in fiscal 1950 and $23.72 trillion in fiscal 2025, both in
+      FY2025 chained dollars. That is 9.95 times as much output, an average of 3.1% a year over
+      75 years.
+    </p>
+    <p class="finding">
+      Real GDP grew 895% between FY1950 and FY2025, from $2.383T to $23.718T in FY2025 chained
+      dollars.
+    </p>
+
+    <Figure
+      ariaLabel="Real GDP grew 895% between fiscal 1950 and fiscal 2025, from $2.38 trillion to $23.72 trillion in FY2025 chained dollars, tracing a near-straight line on a log scale with visible bends at the 2008 to 2009 recession and in fiscal 2020."
+      title="Real GDP, fiscal 1950 to 2036, log scale"
+      source={economy._meta.source}
+      vintage={vintageOf(economy._meta)}
+      xUnit="Fiscal year"
+      yUnit="real GDP in $ trillions, FY2025 chained, on a base-10 log scale"
+      note="The series continues to FY2036 as a CBO baseline projection. Projected years are drawn as a separate dashed line beyond the marked FY2025 boundary and are not actuals."
+    >
+      <RealGdpLogScale
+        client:visible
+        rows={economy.data}
+        lastActualFy={economy._meta.estimate_boundary!.last_actual_fy}
+      />
+    </Figure>
+
+    <p class="prose">
+      The vertical axis is a base-10 log scale. Equal distances up the axis are equal percentage
+      changes, not equal dollar amounts, so a constant growth rate draws as a straight line. On a
+      linear axis the last twenty years would tower over the first fifty and every earlier
+      deviation would flatten into the baseline. Here the 2008 to 2009 recession and the fiscal
+      2020 dip read as bends in a line whose slope is otherwise close to constant.
+    </p>
+    <p class="prose">
+      Fiscal years, not calendar years. FY2025 ran October 2024 to September 2025. The CBO file
+      runs to FY2036, and everything after FY2025 is a baseline projection, drawn as a dashed
+      line beyond the marked boundary. Nominal GDP in FY1995 was $7.56 trillion, the same
+      denominator the government route divides by.
+    </p>
+  </section>
+
+  {sections.slice(1).map((s) => (
     <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
   ))}
 </BaseLayout>

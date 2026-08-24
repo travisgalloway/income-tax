@@ -202,3 +202,21 @@ def test_every_mapped_rollcall_passed(splits):
             if v is None:
                 continue
             assert v["yea"] >= (v["nay"] if ch == "senate" else v["nay"] + 1), f"{pl} {ch}"
+
+
+# ---- economy route --------------------------------------------------------
+
+def test_real_gdp_is_positive_in_every_fiscal_year():
+    """Section 1 uses a log axis. A zero or negative rgdp makes the scale undefined."""
+    rows = load("economy")["data"]
+    for r in rows:
+        assert r["rgdp"] is not None and r["rgdp"] > 0, f"FY{r['y']}: rgdp={r['rgdp']}"
+
+
+def test_nominal_gdp_fy1995_matches_the_budget_route_denominator(budget):
+    """The issue's cross-check: economy gdp FY1995 == 7.56, and budget.json's implied
+    denominator 100 * n_ot / g_ot agrees within 0.02."""
+    economy_gdp = {r["y"]: r["gdp"] for r in load("economy")["data"]}[1995]
+    implied = 100 * budget[1995]["n_ot"] / budget[1995]["g_ot"]
+    assert abs(economy_gdp - 7.56) <= 0.005
+    assert abs(economy_gdp - implied) <= 0.02

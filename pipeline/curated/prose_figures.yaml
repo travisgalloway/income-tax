@@ -61,3 +61,8 @@ figures:
   - {section: 8, text: "cross-party laws total $9.24T", output: party_splits, agg: cost_cross_party, quoted: 9.24, tol: 0.02}
   - {section: 8, text: "party-line laws total $7.52T", output: party_splits, agg: cost_party_line, quoted: 7.52, tol: 0.02}
   - {section: 11, text: "cumulative deficits $24.15T", output: budget, agg: sum_negated, field: n_de, years: [1995, 2025], quoted: 24.15, tol: 0.05}
+  - {section: E1, text: "real GDP FY1950 $2.383T", output: economy, year: 1950, field: rgdp, quoted: 2.383, tol: 0.002}
+  - {section: E1, text: "real GDP FY2025 $23.718T", output: economy, year: 2025, field: rgdp, quoted: 23.718, tol: 0.002}
+  - {section: E1, text: "real GDP grew 895% FY1950-FY2025", output: economy, agg: pct_growth, field: rgdp, years: [1950, 2025], quoted: 895.3, tol: 1.0}
+  - {section: E1, text: "last actual fiscal year FY2025", output: economy, path: _meta.estimate_boundary.last_actual_fy, quoted: 2025, tol: 0}
+  - {section: E1, text: "nominal GDP FY1995 $7.56T, budget-route cross-check", output: economy, year: 1995, field: gdp, quoted: 7.56, tol: 0.005}
