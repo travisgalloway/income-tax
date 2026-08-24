@@ -2,9 +2,12 @@
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import Figure from '../../components/Figure.astro'
 import { DebtChart } from '../../components/islands/DebtChart'
+import { AttributionSplit } from '../../components/islands/AttributionSplit'
 import { LawExplorer } from '../../components/islands/LawExplorer'
 import { BudgetChart } from '../../components/islands/BudgetChart'
 import { budget, debt, laws, partySplits, vintageOf } from '../../data'
+
+const HAND_WRITTEN = new Set(['forty-trillion', 'whole-budget', 'the-laws', 'passed-signed'])
 
 const sections = [
   { id: 'forty-trillion', label: 'The $40 trillion' },
@@ -146,7 +149,45 @@ const sections = [
     </p>
   </section>
 
-  {sections.slice(1).filter((s) => s.id !== 'the-laws' && s.id !== 'whole-budget').map((s) => (
+  <section id="passed-signed">
+    <p class="kicker"><span class="section-no">Section 9</span></p>
+    <h2>The same $16.75 trillion, two ways</h2>
+    <p class="standfirst">
+      Every major law scored since 1995 nets to $16.75 trillion in ten-year costs. Sorted by
+      the coalition that voted for it, and by the president who signed it. Both total the same
+      number.
+    </p>
+    <p class="finding">
+      By coalition: cross-party +$9.24T (16 laws), party-line Republican +$5.21T (3),
+      party-line Democratic +$2.31T (4). By signing president: Trump I +$6.08T (5), Obama
+      +$3.98T (6), Trump II +$3.40T (1), G.W. Bush +$2.79T (4), Biden +$0.50T (5).
+    </p>
+
+    <Figure
+      ariaLabel="Two summary columns, each totalling $16.75 trillion in net ten-year legislative costs. The left column breaks the total down by the voting coalition that passed each law; the right column by the president who signed it."
+      title="Net ten-year legislative cost by voting coalition and by signing president, laws enacted 1995 to 2025"
+      source={budget._meta.source}
+      vintage={vintageOf(budget._meta)}
+      xUnit="$ trillions, ten-year score at enactment"
+      yUnit="voting coalition, or signing president"
+      note="Clinton's two 1997 laws are excluded: both predate the ten-year scoring convention and carry no comparable figure. The cross-party coalition passed 16 laws; 14 carry a score, and both counts are shown. Bars and totals are net figures, increases less reductions; gross increases alone total $20.73 trillion."
+    >
+      <AttributionSplit client:visible />
+    </Figure>
+
+    <p class="prose">
+      These are net figures, increases less reductions. Gross increases alone come to $20.73
+      trillion, and on that basis Obama reads $6.22T rather than $3.98T because he also signed
+      $2.24 trillion of scored deficit reduction. If you show both, label both.
+    </p>
+    <p class="prose">
+      A president signs what Congress sends. Coloring by control credits or blames one party
+      for laws the other party largely voted for: the 2018 and 2019 budget acts passed under
+      unified Republican control but cleared the Senate 71-28 and 67-28.
+    </p>
+  </section>
+
+  {sections.filter((s) => !HAND_WRITTEN.has(s.id)).map((s) => (
     <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
   ))}
 </BaseLayout>

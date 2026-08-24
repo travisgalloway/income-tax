@@ -17,7 +17,7 @@ when the code merges.
 | GOV-6 | What Congress votes on — mandatory vs discretionary vs interest | none | none | Planned | — | — |
 | GOV-7 | Net interest — the fastest-growing line | none | none | Planned | — | — |
 | GOV-8 | The laws — sortable/filterable explorer, cost, vote, enactment date | done | done | Shipped | #3 | contracts/interfaces/law-data.md, contracts/interfaces/charts.md, contracts/interfaces/budget-data.md |
-| GOV-9 | Who passed it, who signed it — attribution toggle | none | none | Planned | — | — |
+| GOV-9 | Who passed it, who signed it — the same $16.75T by voting coalition and by signing president, Radix Tabs | done | done | Shipped | #4 | contracts/interfaces/attribution.md, contracts/interfaces/budget-data.md |
 | GOV-10 | Where the money comes from — revenue by source, brackets, OECD | none | none | Planned | — | — |
 | GOV-11 | By state | none | none | Planned | — | — |
 | GOV-12 | What this cannot tell you — caveats in full | none | none | Planned | — | — |
