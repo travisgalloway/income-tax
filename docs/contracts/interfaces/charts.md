@@ -80,7 +80,8 @@ exclusive options.
 
 Every built section island (`DebtChart.tsx`, `BudgetChart.tsx`, `StructuralGap.tsx`,
 `VotedAndNot.tsx`, `NetInterest.tsx`, `LawExplorer.tsx`, `DebtHolders.tsx`, `DebtMaturity.tsx`,
-`RevenueChart.tsx`, `OecdChart.tsx`, `MedianIncome.tsx`, `HouseholdSpread.tsx`)
+`RevenueChart.tsx`, `OecdChart.tsx`, `MedianIncome.tsx`, `HouseholdSpread.tsx`, `WhoPays.tsx`,
+`Top1TaxShare.tsx`, `PayrollBill.tsx`)
 follows the same skeleton:
 
 1. `useChartSize()` for sizing, `useState` for the active unit/view and the focused/hovered datum.

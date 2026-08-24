@@ -30,9 +30,9 @@ when the code merges.
 | HH-2 | The spread — family Gini index 1947-2024 and CBO top 1% income share (two published points), shared brushable year range | done | done | Shipped | #9 | contracts/interfaces/income-inequality-data.md, contracts/interfaces/charts.md |
 | HH-3 | A century of brackets — bracket count, thresholds in constant 2024 dollars, top statutory rate vs the schedule ladder top, 1913-2025 | done | done | Shipped | #10 | contracts/interfaces/bracket-history-data.md |
 | HH-4 | Statutory is not effective — CBO average federal tax rate anchor points (includes payroll tax) against the top statutory rate | done | done | Shipped | #10 | contracts/interfaces/bracket-history-data.md |
-| HH-5 | Who pays the income tax — share of AGI vs share of tax paid by group | none | none | Planned | — | — |
-| HH-6 | The bill you do not see — payroll tax | none | none | Planned | — | — |
-| HH-7 | Limits — caveats in full | none | none | Planned | — | — |
+| HH-5 | Who pays the income tax — AGI share paired with tax share by percentile group, and the five-year top-1% tax-share history | done | done | Shipped | #11 | contracts/interfaces/income-tax-by-group-data.md, contracts/interfaces/charts.md |
+| HH-6 | The bill you do not see — payroll tax as a share of GDP and of total revenue, FY1962-FY2025 | done | done | Shipped | #11 | contracts/interfaces/charts.md |
+| HH-7 | Limits — income-tax-only scope, families-not-households Gini basis, statutory-vs-effective, tax-unit basis | done | n/a | Shipped | #11 | — |
 
 ## Reference pages
 

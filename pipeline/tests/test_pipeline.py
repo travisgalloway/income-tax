@@ -351,6 +351,41 @@ def test_every_mapped_rollcall_passed(splits):
             assert v["yea"] >= (v["nay"] if ch == "senate" else v["nay"] + 1), f"{pl} {ch}"
 
 
+# ---- income_tax_by_group --------------------------------------------------
+
+def test_top1_income_share_is_present_and_paired():
+    """This is the pytest guarding validate.py's criterion-1 check, which
+    previously had none. Showing the tax share without the income share beside
+    it misleads about who "pays the most" versus who "earns the most"."""
+    top1 = next(g for g in load("income_tax_by_group")["data"]["groups"] if g["g"] == "Top 1%")
+    assert top1["income_share_pct"] == 20.6
+    assert top1["tax_share_pct"] == 38.4
+
+
+def test_percentile_groups_are_nested_not_a_partition():
+    """Top 1% sits inside Top 5%, inside Top 10%, and so on. The six groups'
+    tax shares sum well past 100, so they cannot be stacked or summed."""
+    groups = load("income_tax_by_group")["data"]["groups"]
+    by_g = {g["g"]: g for g in groups}
+    ladder = ["Top 1%", "Top 5%", "Top 10%", "Top 25%", "Top 50%"]
+    for narrow, wide in zip(ladder, ladder[1:]):
+        assert by_g[narrow]["tax_share_pct"] <= by_g[wide]["tax_share_pct"], (narrow, wide)
+    assert sum(g["tax_share_pct"] for g in groups) > 100
+
+
+def test_unpublished_group_cells_are_absent_not_zero():
+    """Top 5%, Top 25% and Bottom 50% have no income_share_pct key at all.
+    A zero here would chart as a real, published observation."""
+    groups = load("income_tax_by_group")["data"]["groups"]
+    by_g = {g["g"]: g for g in groups}
+    for g in ("Top 5%", "Top 25%", "Bottom 50%"):
+        assert "income_share_pct" not in by_g[g]
+    for g in groups:
+        assert g.get("income_share_pct") != 0
+        assert g.get("tax_share_pct") != 0
+        assert g.get("avg_rate_pct") != 0
+
+
 # ---- CBO effective rates (issue #10, Households §4) ----------------------
 
 def test_cbo_effective_rates_are_anchor_points_not_a_series():

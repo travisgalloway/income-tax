@@ -141,19 +141,11 @@ export interface ChamberVote {
 }
 
 /** One published observation of the CBO top 1% income share. Two of these
- *  exist in total (1979, 2022) — see `IncomeGroupsTop1` below. Never a
+ *  exist in total (1979, 2022) — see `IncomeGroups` below. Never a
  *  continuous annual series. */
 export interface Top1IncomeSharePoint {
   year: number
   v: number
-}
-
-/** Narrow shape covering only the field this branch reads from
- *  `income_tax_by_group.json`. The dataset also carries `tax_year`, `groups`
- *  and `top1_tax_share_history`, which issue #11 will type in full; typing
- *  only this field here keeps that widening additive rather than a rewrite. */
-export interface IncomeGroupsTop1 {
-  cbo_top1_income_share: Top1IncomeSharePoint[]
 }
 
 /** One row of the OECD total-tax-revenue comparison. `is_us` and `is_average`
@@ -264,4 +256,33 @@ export interface DebtMaturity {
   composition: { k: string; label: string; maturity: string; share_pct?: number; amount_t: number }[]
   /** NOT rendered. sections.md §3: "Do not build this as a time series." */
   history_months: { date: string; v: number }[]
+}
+
+/** One percentile group of tax units, IRS Statistics of Income.
+ *
+ *  The groups are NESTED — "Top 1%" is inside "Top 5%" — so they never
+ *  partition a whole. They must not be summed, and must not be drawn as one
+ *  bar divided into parts.
+ *
+ *  `income_share_pct` and `avg_rate_pct` are ABSENT, not zero, where the IRS
+ *  does not publish them. Income share is absent for Top 5%, Top 25% and
+ *  Bottom 50%; average rate is absent for every group but Top 1% and Bottom
+ *  50%. Rendering an absent cell as 0 is a factual error, not a display
+ *  choice. */
+export interface IncomeTaxGroup {
+  g: string
+  income_share_pct?: number
+  tax_share_pct: number
+  avg_rate_pct?: number
+}
+
+/** `income_tax_by_group.json`. INDIVIDUAL INCOME TAX ONLY: it excludes payroll
+ *  tax, which is the larger bill outside the top decile, and it excludes
+ *  refundable credits, which overstates the effective rate at the bottom. */
+export interface IncomeGroups {
+  tax_year: number
+  groups: IncomeTaxGroup[]
+  /** Five scattered published years, not an annual series. */
+  top1_tax_share_history: Top1IncomeSharePoint[]
+  cbo_top1_income_share: Top1IncomeSharePoint[]
 }

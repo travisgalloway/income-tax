@@ -17,7 +17,7 @@ import cboEffectiveRatesJson from './cbo_effective_rates.json'
 
 import type {
   BracketYear, BudgetYear, CboEffectiveRates, Dataset, DebtHolders, DebtMaturity, DebtYear,
-  EconomyYear, IncomeGroupsTop1, IncomeYear, Meta, OecdComparison, PartySplit, RevenueYear,
+  EconomyYear, IncomeGroups, IncomeYear, Meta, OecdComparison, PartySplit, RevenueYear,
 } from './types'
 
 export const budget = budgetJson as Dataset<BudgetYear[]>
@@ -29,7 +29,7 @@ export const partySplits = splitsJson as Dataset<PartySplit[]>
 export const debtHolders = holdersJson as Dataset<DebtHolders>
 export const debtMaturity = maturityJson as Dataset<DebtMaturity>
 export const oecd = oecdJson as Dataset<OecdComparison>
-export const incomeGroups = groupsJson as Dataset<Record<string, unknown>>
+export const incomeGroups = groupsJson as Dataset<IncomeGroups>
 export const bracketHistory = bracketHistoryJson as Dataset<BracketYear[]>
 // astro check rejects a single `as Dataset<CboEffectiveRates>` assertion here for
 // insufficient structural overlap with the raw JSON's inferred type, the same
@@ -113,12 +113,6 @@ export const splitByLaw = new Map(partySplits.data.map((s) => [s.public_law, s])
 export const giniBasis = income._meta.gini_basis as string
 
 /** The CBO series is TWO PUBLISHED POINTS, not an annual series. `incomeGroups`
- *  itself stays `Dataset<Record<string, unknown>>` above — widening it to a
- *  full typed interface is issue #11's job.
- *
- *  `Record<string, unknown>` and `IncomeGroupsTop1` do not structurally
- *  overlap enough for TypeScript to allow a single assertion here (unlike the
- *  dataset-level `as Dataset<T>` this file otherwise uses everywhere else), so
- *  this one access goes through `unknown` — see docs/parked-findings.md. */
-export const cboTop1IncomeShare =
-  (incomeGroups.data as unknown as IncomeGroupsTop1).cbo_top1_income_share
+ *  is fully typed as `IncomeGroups` above (issue #11), so this field reads
+ *  straight off `.data` — no narrowing cast needed. */
+export const cboTop1IncomeShare = incomeGroups.data.cbo_top1_income_share

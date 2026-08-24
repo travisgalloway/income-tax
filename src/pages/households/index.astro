@@ -5,18 +5,13 @@ import { MedianIncome } from '../../components/islands/MedianIncome'
 import { HouseholdSpread } from '../../components/islands/HouseholdSpread'
 import { BracketHistory } from '../../components/islands/BracketHistory'
 import { StatutoryVsEffective } from '../../components/islands/StatutoryVsEffective'
+import { WhoPays } from '../../components/islands/WhoPays'
+import { Top1TaxShare } from '../../components/islands/Top1TaxShare'
+import { PayrollBill } from '../../components/islands/PayrollBill'
 import {
-  income, incomeGroups, cboTop1IncomeShare, bracketHistory, cboEffectiveRatesData, vintageOf,
+  income, incomeGroups, cboTop1IncomeShare, bracketHistory, cboEffectiveRatesData, revenue,
+  vintageOf,
 } from '../../data'
-
-// Sections built so far. Everything else still falls through to the
-// "Not built yet." placeholder below.
-const HAND_WRITTEN = new Set([
-  'what-a-household-earns',
-  'the-spread',
-  'a-century-of-brackets',
-  'statutory-vs-effective',
-])
 
 const sections = [
   { id: 'what-a-household-earns', label: 'What a household earns' },
@@ -185,7 +180,102 @@ const cbo = cboEffectiveRatesData()
     </p>
   </section>
 
-  {sections.filter((s) => !HAND_WRITTEN.has(s.id)).map((s) => (
-    <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
-  ))}
+  <section id="who-pays">
+    <p class="kicker"><span class="section-no">Section 5</span></p>
+    <h2>Who pays the income tax</h2>
+    <p class="standfirst">
+      In tax year 2023 the top 1% earned 20.6% of adjusted gross income and paid 38.4% of
+      federal individual income tax.
+      This is the individual income tax only.
+      Outside the top decile, payroll tax is the larger bill.
+    </p>
+    <p class="finding">
+      Top 1%: 20.6% of AGI, 38.4% of the tax, a 26.3% average rate. Top 10%: 47.6% and
+      70.5%. The bottom half paid 3.3% of the tax at a 3.7% average rate.
+    </p>
+
+    <Figure
+      ariaLabel="The top 1% earned 20.6% of adjusted gross income and paid 38.4% of federal individual income tax in tax year 2023. The bottom half paid 3.3% of the tax. AGI share is not published for the Top 5%, Top 25% and Bottom 50% groups."
+      title="Share of AGI and share of federal individual income tax paid, by income percentile group, tax year 2023"
+      source={incomeGroups._meta.source}
+      vintage={vintageOf(incomeGroups._meta)}
+      xUnit="Percent"
+      yUnit="Percentile group of tax units"
+      note="This chart counts the federal individual income tax only, and excludes refundable credits, which overstates the effective rate at the bottom. The six groups are nested — Top 1% sits inside Top 5%, inside Top 10%, and so on — so they overlap and do not sum to 100, which is why nothing here is stacked."
+    >
+      <WhoPays client:visible rows={incomeGroups.data.groups} />
+    </Figure>
+
+    <Figure
+      ariaLabel="Share of federal individual income tax paid by the top 1% in the five published tax years: 33.2% in 2001, 38.8% in 2019, 45.8% in 2021, 40.4% in 2022 and 38.4% in 2023."
+      title="Share of federal individual income tax paid by the top 1%, published years only"
+      source={incomeGroups._meta.source}
+      vintage={vintageOf(incomeGroups._meta)}
+      xUnit="Tax year"
+      yUnit="Percent of income tax paid"
+      note="Five published years, not an annual series. The 2001-to-2019 span is unobserved by this series."
+    >
+      <Top1TaxShare client:visible rows={incomeGroups.data.top1_tax_share_history} />
+    </Figure>
+
+    <p class="prose">
+      Concentration of tax paid tracks concentration of income, and the tax-share column alone misleads about who pays the most versus who earns the most.
+      CBO's longer series has the top 1% share of income before transfers and taxes going from 9% in 1979 to 18% in 2022, shown in <a href="#the-spread">the spread</a> above.
+    </p>
+    <p class="prose">
+      Refundable credits are excluded from the IRS series, which overstates the effective rate at the bottom.
+      Tax year 2023 is the latest IRS year, and it breaks this site's FY1995 to FY2025 convention.
+    </p>
+  </section>
+
+  <section id="the-bill-you-do-not-see">
+    <p class="kicker"><span class="section-no">Section 6</span></p>
+    <h2>The bill you do not see</h2>
+    <p class="standfirst">
+      Payroll tax raised 5.76% of GDP and 33.4% of all federal revenue in FY2025, and for
+      every household outside the top decile it is the larger of the two bills. The chart
+      in Section 5 counts none of it.
+    </p>
+    <p class="finding">
+      FY2025: payroll tax 5.76% of GDP and 33.4% of total federal revenue, against
+      individual income tax at 8.75% of GDP and 50.7% of revenue.
+    </p>
+
+    <Figure
+      ariaLabel="Payroll tax and individual income tax, each as a share of GDP and as a share of total federal revenue, fiscal 1962 to fiscal 2025. In FY2025 payroll tax was 5.76% of GDP and 33.4% of all federal revenue."
+      title="Payroll tax and individual income tax, share of GDP and share of total revenue, FY1962-FY2025"
+      source={revenue._meta.source}
+      vintage={vintageOf(revenue._meta)}
+      xUnit="Fiscal year"
+      yUnit="Percent of GDP, or percent of total federal revenue"
+      note="This figure is on fiscal years, while sections 1 through 5 are on calendar and tax years — FY2025 began in October 2024. Payroll tax funds Social Security and Medicare and is capped above a wage threshold, so its incidence is not the income tax's. Section 4's chart of CBO average federal tax rates does include payroll tax; this chart shows its scale as a share of federal revenue, which Section 4 does not."
+    >
+      <PayrollBill client:visible rows={revenue.data} />
+    </Figure>
+  </section>
+
+  <section id="limits">
+    <p class="kicker"><span class="section-no">Section 7</span></p>
+    <h2>Limits</h2>
+    <p class="standfirst">
+      These limits are load bearing, not decorative. Read them before drawing conclusions
+      from the charts above.
+    </p>
+
+    <p class="prose">
+      <strong>1. Income tax only.</strong> Section 5 counts the federal individual income tax only. Section 6 shows the payroll bill it omits; excise, corporate, and state and local taxes are outside this route entirely.
+    </p>
+    <p class="prose">
+      <strong>2. The Gini index here is for families, not households.</strong> The household series runs higher, about 0.47 to 0.49. The family series is used because it runs cleanly back to 1947.
+    </p>
+    <p class="prose">
+      <strong>3. Statutory is not effective.</strong> A top marginal rate applies only to the slice of income above its threshold. Deductions, credits and separately-taxed capital gains all sit between the statutory rate and what anyone pays.
+    </p>
+    <p class="prose">
+      <strong>4. Distributional data is by tax unit, not by person or by household</strong> — and not consistently across sources. The IRS counts returns filed, CBO counts households, and Census counts families. A married couple filing jointly is one tax unit, one household and one family, but a household of unrelated adults is several tax units. The shares on this route cannot be added across those sources.
+    </p>
+    <p class="prose">
+      <strong>5. The dates break the site's convention.</strong> The Government route runs FY1995 to FY2025. This route reads IRS tax year 2023, Census/FRED calendar 2024 and CBO calendar 2022, because those are the latest each publishes. Refundable credits are excluded from the IRS series, which overstates the effective rate at the bottom.
+    </p>
+  </section>
 </BaseLayout>

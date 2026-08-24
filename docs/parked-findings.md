@@ -165,3 +165,19 @@ time. Appended to, never rewritten. None of these have been acted on.
   `_meta.notes[1]` and is rendered nowhere on the site today, but it is stale for the same reason
   as `sections.md` §8. Editing it requires regenerating `budget.json`, which belongs with #3's
   work. Found while working on #8. Severity: stale metadata, non-blocking.
+- [2026-08-23] `.claude/plans/issue-11.md`'s "static render, JavaScript disabled" verification
+  block uses `grep -c` against `dist/households/index.html` expecting counts like `<svg` `>= 3`.
+  Astro's static build emits the page as a single line, so `grep -c` (which counts matching
+  *lines*, not occurrences) returns 1 regardless of how many times the pattern actually appears.
+  Verified the real occurrence counts with `grep -o '<pattern>' | wc -l` instead: 3 `<svg>`, 3
+  `Source.`, 4 `Not built yet`, 3 `no data` — all matching the plan's intended thresholds. Found
+  while working on #11. Severity: verification-command defect in the plan file, not a product
+  bug; every plan with a "static render" grep block against built HTML should use `grep -o | wc
+  -l` instead of `grep -c`. Non-blocking.
+- [2026-08-23] `.claude/plans/issue-11.md`'s "Files to create / modify / delete" list does not
+  name `data-report.md`, but `uv run python build.py --tier monthly --dry-run` (required by the
+  plan's own Verification section) regenerates it as a side effect of the new
+  `prose_figures.yaml` entries, and it is a tracked file (committed as part of #1's scaffold). Left
+  it updated rather than reverted, since a stale count ("41 of 41" instead of "48 of 48") would
+  misrepresent the pipeline's actual state. Found while working on #11. Severity: plan file-list
+  omission, non-blocking.
