@@ -150,3 +150,57 @@ export interface PartySplit {
   legacy_classification: string
   note?: string
 }
+
+/** One jurisdiction's give/get row. `is_state` is true ONLY for the 50 actual
+ *  states — DC is false, deliberately, because it is excluded from the
+ *  colour-scale domain. `in_grid` is the 51 the tile cartogram draws (the 50
+ *  states plus DC); territories are in the data but not on the grid. Every
+ *  derived field (`*_pc`, `balance_*`, `ratio`) is null when either side is
+ *  missing — see docs/contracts/interfaces/state-data.md. */
+export interface StateJurisdiction {
+  code: string
+  name: string
+  is_state: boolean
+  in_grid: boolean
+  give_b: number | null
+  get_b: number | null
+  pop: number | null
+  give_pc: number | null
+  get_pc: number | null
+  balance_b: number | null
+  balance_pc: number | null
+  ratio: number | null
+}
+
+export interface StatesBalance {
+  fy_give: number
+  fy_get: number
+  national: { give_b: number; get_b: number; population: number }
+  color_domain: { basis: string; min: number; max: number; mid: number; excludes: string[] }
+  summary: { n_get_more: number; n_give_more: number; n_with_both: number }
+  jurisdictions: StateJurisdiction[]
+}
+
+export interface TaxMixCategory {
+  k: string
+  label: string
+  item: string
+}
+
+/** `shares[k] === null` alone means "not reported"; `shares[k] === null` PLUS
+ *  `k` present in `not_levied` means the state does not levy that tax at all.
+ *  The two must never render the same way. */
+export interface TaxMixJurisdiction {
+  code: string
+  name: string
+  total_b: number | null
+  shares: Record<string, number | null>
+  not_levied: string[]
+  partial?: boolean
+}
+
+export interface StatesTaxMix {
+  fy: number
+  categories: TaxMixCategory[]
+  jurisdictions: TaxMixJurisdiction[]
+}

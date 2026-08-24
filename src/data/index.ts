@@ -12,9 +12,12 @@ import holdersJson from './debt_holders.json'
 import maturityJson from './debt_maturity.json'
 import oecdJson from './oecd.json'
 import groupsJson from './income_tax_by_group.json'
+import statesBalanceJson from './states_balance.json'
+import statesTaxMixJson from './states_tax_mix.json'
 
 import type {
   BudgetYear, Dataset, DebtYear, EconomyYear, IncomeYear, Meta, PartySplit, RevenueYear,
+  StatesBalance, StatesTaxMix,
 } from './types'
 
 export const budget = budgetJson as Dataset<BudgetYear[]>
@@ -27,6 +30,8 @@ export const debtHolders = holdersJson as Dataset<Record<string, unknown>>
 export const debtMaturity = maturityJson as Dataset<Record<string, unknown>>
 export const oecd = oecdJson as Dataset<Record<string, unknown>>
 export const incomeGroups = groupsJson as Dataset<Record<string, unknown>>
+export const statesBalance = statesBalanceJson as Dataset<StatesBalance>
+export const statesTaxMix = statesTaxMixJson as Dataset<StatesTaxMix>
 
 /**
  * Build-time guard on the one invariant the whole site depends on.
@@ -47,7 +52,7 @@ function assertDataset(name: string, d: { _meta?: { source?: string } }): void {
 
 for (const [name, d] of Object.entries({
   budget, debt, economy, income, revenue, partySplits,
-  debtHolders, debtMaturity, oecd, incomeGroups,
+  debtHolders, debtMaturity, oecd, incomeGroups, statesBalance, statesTaxMix,
 })) {
   assertDataset(name, d)
 }
