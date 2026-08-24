@@ -47,3 +47,87 @@ time. Appended to, never rewritten. None of these have been acted on.
   moves from `Planned` to `Shipped` in commit 4 alongside `HouseholdSpread.tsx`, so the substance
   of criterion 19 (docs land with their code) holds; only the test-plan row's exact commit differs.
   Found while executing #9. Severity: process, non-blocking.
+- [2026-08-23] `src/components/charts/scales.ts` `niceExtent()` only clamps the low end to 0 when
+  padding pushes it *above* 0 (`if (lo > 0) lo = 0`); when the unpadded minimum is small relative
+  to the series' span (e.g. `RevenueChart`'s nominal view, FY1962 `n_tot` $0.0997T against a
+  FY2025 max of $5.2346T), the 8% pad pushes `lo` slightly *below* zero and it is left there,
+  giving a y-domain like `[-0.31, 5.65]` for a series that is never negative. Purely cosmetic — a
+  sliver of empty axis below zero — and does not affect any GOV-10 criterion (the `gdp` and `share`
+  views, which carry the section's actual claims, are unaffected: `gdp`'s min/max ratio is close
+  enough that the same clamp fires as intended). Found while working on #7. Severity: chart
+  polish, non-blocking.
+- [2026-08-23] `pipeline/curated/prose_figures.yaml` registers `debt_holders.data.split.0.share_pct`
+  (public 80.6%) but not `.split.1.share_pct` (intragovernmental 19.4%), even though both are
+  quoted in `sections.md` §2's finding ("...$7.74T intragovernmental (19.4%)..."). A future
+  revision to the intragov share could drift silently against that sentence. Found while working
+  on #6, out of scope (the issue's registration list named specific new §2/§3 figures and this one
+  predates it). Severity: prose-drift coverage gap, non-blocking.
+- [2026-08-23] Issue #6's plan draft for the §2 `Figure` `note` prop included a sentence restating
+  the Federal Reserve omission ("Federal Reserve holdings are deliberately omitted: ..."). That
+  sentence was dropped from the shipped note because it would have produced a second "Federal
+  Reserve" occurrence in `dist/government/index.html`, contradicting the issue's own DoD item 2 and
+  verification V6 (exactly one occurrence, in the §2 standfirst only). The TIC range and the
+  foreign-share denominator sentences were kept. Found while implementing #6. Severity: plan/
+  verification inconsistency, resolved in favour of the verification criterion, non-blocking.
+- [2026-08-23] `dist/government/index.html`'s `TableView` "View as table" content
+  (`.tableview-content`) is empty in the static SSR output for every figure on the page, including
+  the pre-existing `DebtChart.tsx` table: Radix `Collapsible.Content` does not render its children
+  while `open` is false server-side. This means no static grep of the built HTML (e.g. for `no
+  data` cells or column units) can verify table contents; it can only be checked with a real
+  browser after the disclosure is opened client-side. Found while verifying #6 (GOV-2). Severity:
+  test-coverage limitation shared by every figure on the site, non-blocking, no browser tooling
+  available in this environment to open a follow-up investigation.
+- [2026-08-23] `src/components/Figure.astro:38` requires and validates `ariaLabel` at build time but
+  never renders it anywhere in the DOM -- the accessible text a screen reader actually gets comes
+  from the slotted chart's own internal `Chart` `ariaLabel` (per-unit-view, describing the shape),
+  not from `Figure`'s prop (the finding). The prop is effectively a build-time lint only. Found
+  while wiring §§5-7 into `government/index.astro` (#5) and reasoning about which of the two
+  `ariaLabel`s each section's Figure/Chart pair should carry. Severity: accessibility/API clarity,
+  non-blocking -- the actual announced text is correct in every shipped section, just not via the
+  prop whose docstring implies it should be.
+- [2026-08-23] `sections.md:377` §11 item 4 ("Party splits are classified, not counted") and
+  `BRIEF.md:179-182` rule 6 both still assert the classification that #3's counted `party_splits.json`
+  replaced. §11 is an unbuilt placeholder so no reader can reach the stale claim today, but the
+  `BRIEF.md` line will steer future work wrong. Found while working on #3. Belongs to the §11 issue.
+  Severity: correctness of the repo's own norms, non-blocking.
+- [2026-08-23] `pipeline/curated/laws.yaml` `totals.party_line_t: 7.52` rounds the true sum `7.512`
+  up; #3's UI and `sections.md` §8 now read `7.51`. Not consumed by `validate.py:check_laws` (only
+  `net_scored_t`/`gross_increases_t` are), and the existing `test_cross_party_and_party_line_totals`
+  pytest tolerance is ±0.02, so nothing fails — but §9 (unbuilt) quotes the same total split three
+  ways (`5.21 + 2.31`) and should reconcile all four numbers at once when it's built. Found while
+  working on #3. Severity: stale curated constant, non-blocking.
+- [2026-08-23] `src/pages/government/index.astro` §1 (`DebtChart`) mounts with `client:visible`, so
+  its SVG does not exist at all with JavaScript disabled — against the shared per-section done
+  contract's "renders with JS disabled" criterion. §8 (`LawExplorer`) uses `client:load` instead,
+  which server-renders the chart markup and only loses interactivity without JS. Found while working
+  on #3. Severity: accessibility/robustness, affects a shipped section (§1, issue #1).
+- [2026-08-23] `pipeline/curated/laws.yaml:24` hand-curates `party_line_t: 7.52` (naive
+  `$5.21T + $2.31T`), but the underlying integer-thousandths sum is `5.206 + 2.306 = 7.512`,
+  which rounds to `$7.51T`. `sections.md` §8 already moved to 7.51, and `pipeline/lib/validate.py`
+  does not currently gate `party_line_t` or `cross_party_t` at all (only `net_scored_t` and
+  `gross_increases_t`, `validate.py:110-111`), so this is not a failing check today — just a
+  curated value one cent off from what integer arithmetic gives. Found while working on #4, which
+  owns the §9 attribution split and deliberately does the summation in integers rather than
+  reading this field. Not fixed here: §8 (issue #3) owns `laws.yaml`'s totals. Severity: data
+  precision, non-blocking.
+- [2026-08-23] `src/components/attribution/aggregate.ts` and `src/components/laws/derive.ts`
+  (issue #3, `feat/3-law-explorer-counted-votes`) both independently join `laws` to
+  `splitByLaw`/`party_splits.json` on `public_law` and derive a per-law coalition or party
+  assignment. If both branches merge, the duplicated join-and-classify logic is a candidate for
+  consolidation into a single shared helper. Deliberately not pre-empted on this branch (run
+  policy: no component or module is shared between #3 and #4). Severity: duplication,
+  non-blocking. Tracked as issue #33.
+- [2026-08-23] `sections.md` §8 "Required disclosure" still instructs section 8 to state that vote
+  composition is classified for 22 of 23 laws, which is now false (see `party_splits.json` and the
+  rewritten `SOURCES.md` "vote composition limitation" section). If section 8's copy ships with
+  that instruction, it will contradict §12. Owned by issue #3 / PR #17. Found while working on #8.
+  Severity: cross-section contradiction risk, non-blocking here (parked to the owning issue).
+- [2026-08-23] `BRIEF.md` data-integrity rule 6 says the same thing as the `sections.md` §8 note
+  above. The brief is treated as the immutable input to this build and is not edited by this issue.
+  Found while working on #8. Severity: documentation, non-blocking.
+- [2026-08-23] `pipeline/curated/notes.yaml` → `outputs.budget.notes[1]` still reads "Vote
+  composition is exact only for PL 115-97 (TCJA). All others are classified party-line or
+  cross-party from published vote character." This flows into `src/data/budget.json`
+  `_meta.notes[1]` and is rendered nowhere on the site today, but it is stale for the same reason
+  as `sections.md` §8. Editing it requires regenerating `budget.json`, which belongs with #3's
+  work. Found while working on #8. Severity: stale metadata, non-blocking.

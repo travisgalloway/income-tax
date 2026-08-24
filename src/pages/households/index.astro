@@ -5,6 +5,13 @@ import { MedianIncome } from '../../components/islands/MedianIncome'
 import { HouseholdSpread } from '../../components/islands/HouseholdSpread'
 import { income, incomeGroups, cboTop1IncomeShare, vintageOf } from '../../data'
 
+// Sections built so far. Everything else still falls through to the
+// "Not built yet." placeholder below.
+const HAND_WRITTEN = new Set([
+  'what-a-household-earns',
+  'the-spread',
+])
+
 const sections = [
   { id: 'what-a-household-earns', label: 'What a household earns' },
   { id: 'the-spread', label: 'The spread' },
@@ -91,7 +98,7 @@ const sections = [
     </p>
   </section>
 
-  {sections.slice(2).map((s) => (
+  {sections.filter((s) => !HAND_WRITTEN.has(s.id)).map((s) => (
     <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
   ))}
 </BaseLayout>

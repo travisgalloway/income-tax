@@ -64,9 +64,24 @@ below it. Returns `WIDE` before the first client measurement so SSR and desktop 
 should read its own `narrow` flag from the returned size (`width < 500` or similar), not
 re-implement a second breakpoint.
 
+## `Select` (`src/components/islands/Select.tsx`)
+
+The Radix `Select` wrapper for filter controls, the multi-option analogue of `UnitToggle`'s
+two/three-option `ToggleGroup`. Props: `{ id, label, value, options: {value,label}[], onChange }`.
+The visible `<span class="controls-label" id={id}>` is wired to the trigger via `aria-labelledby`,
+not a `<label>` element — Radix's trigger renders a `<button>`, not a form control, so a `<label>`
+would target nothing. `position="popper"` keeps the listbox beside the trigger rather than over it.
+Fully keyboard operable: Tab to the trigger, Enter/Space/Down to open, arrows to move, Enter to
+choose. Introduced for `LawExplorer.tsx`'s three filters (vote character, signing president,
+control at enactment); reuse it for any later section needing more than a couple of mutually
+exclusive options.
+
 ## Section-island shape
 
-Every built section island (`DebtChart.tsx`, `BudgetChart.tsx`) follows the same skeleton:
+Every built section island (`DebtChart.tsx`, `BudgetChart.tsx`, `StructuralGap.tsx`,
+`VotedAndNot.tsx`, `NetInterest.tsx`, `LawExplorer.tsx`, `DebtHolders.tsx`, `DebtMaturity.tsx`,
+`RevenueChart.tsx`, `OecdChart.tsx`, `MedianIncome.tsx`, `HouseholdSpread.tsx`)
+follows the same skeleton:
 
 1. `useChartSize()` for sizing, `useState` for the active unit/view and the focused/hovered datum.
 2. A `useMemo` deriving the per-row values for the active unit.
@@ -78,6 +93,12 @@ Every built section island (`DebtChart.tsx`, `BudgetChart.tsx`) follows the same
    readout) built from the **same formatting function** the `aria-label` uses, so hover and
    keyboard focus can never announce different text.
 5. A `<TableView>` mirroring the chart's active unit and columns.
+
+`LawExplorer.tsx` extends this skeleton with a second focusable set beyond the chart's own
+per-fiscal-year data points: each table row's law-name `<button aria-pressed>` (real button
+semantics, since selecting a law is an action, unlike hovering a datum) also drives the same
+`readout`/`aria-label` text via `lawReadout`, so a law selected from the table and a fiscal year
+focused on the chart share one live region rather than two independent ones.
 
 ## `YearRange` (`src/components/islands/YearRange.tsx`)
 
