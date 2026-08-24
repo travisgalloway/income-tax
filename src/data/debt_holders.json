@@ -9,8 +9,8 @@
   ],
   "provenance": {
    "generator": "monthly/curated_snapshots.py",
-   "git_sha": "5920f6f",
-   "generated_at": "2026-08-22T17:51:54Z"
+   "git_sha": "5751121",
+   "generated_at": "2026-08-23T22:29:21Z"
   },
   "refresh": {
    "mode": "curated",

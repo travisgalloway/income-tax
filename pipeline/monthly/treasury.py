@@ -119,10 +119,12 @@ def build(dry_run: bool = False) -> list[str]:
                 {
                     "threshold_t": THRESHOLD_T,
                     "record_date": crossing[0],
-                    "value_t": round(crossing[1], 3),
                     # Debt to the Penny publishes a date's CLOSING balance on the
                     # next business day, which is why press coverage dates the
-                    # crossing one day later. See discrepancies.yaml.
+                    # crossing one day later. Both dates are carried so the UI
+                    # never has to hardcode the reported date. See discrepancies.yaml.
+                    "reported_date": curated.discrepancies()["forty_trillion_crossing_date"]["use"]["reported_date"],
+                    "value_t": round(crossing[1], 3),
                     "rule": curated.discrepancies()["forty_trillion_crossing_date"]["rule"],
                 }
                 if crossing else None

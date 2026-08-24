@@ -230,6 +230,18 @@ figcaption .lead {
   font-variant-numeric: var(--num-table);
 }
 
+/* Direct end-of-line series names (sections 5, 6): a line's colour is never
+ * the only way to tell it apart from its neighbours. */
+.series-label {
+  font-style: italic;
+}
+
+/* The section 5 surplus/deficit fill sits behind the lines and data points;
+ * it must never intercept a hover or a Tab stop meant for them. */
+.gap-band {
+  pointer-events: none;
+}
+
 /* ---- Controls -----------------------------------------------------------
  * Quiet by design. The apparatus is the signature; the controls stay out of
  * its way.
@@ -324,6 +336,39 @@ figcaption .lead {
   color: var(--ink-soft);
 }
 
+/* ---- Revenue by source (§10): direct band labels and the OECD dot plot ---
+ * Colour is never the only channel (BRIEF.md). A direct label on the plot
+ * itself, next to a table row and a shared readout, is how that holds.
+ */
+.legend-label {
+  font-family: var(--font-data);
+  font-size: 11px;
+  fill: var(--ink);
+  font-variant-numeric: var(--num-table);
+}
+
+.dotplot-label {
+  font-family: var(--font-data);
+  font-size: 11.5px;
+  fill: var(--ink-soft);
+}
+.dotplot-label-us { fill: var(--ink); font-weight: 700; }
+
+.dotplot-value {
+  font-family: var(--font-data);
+  font-size: 11px;
+  fill: var(--ink-soft);
+  font-variant-numeric: var(--num-table);
+}
+.dotplot-value-us { fill: var(--ink); font-weight: 700; }
+
+.dotplot-average-label {
+  font-family: var(--font-data);
+  font-size: 10.5px;
+  font-style: italic;
+  fill: var(--ink-soft);
+}
+
 .readout {
   font-family: var(--font-data);
   font-size: 0.8125rem;
@@ -331,6 +376,211 @@ figcaption .lead {
   color: var(--ink-soft);
   margin: 0.55rem 0 0;
   min-height: 1.3em;
+}
+
+/* ---- Select (Radix), for the law explorer's filter bar -------------------
+ * A trigger styled like the unit-toggle's baseline rule, not a boxed <select>,
+ * so it reads as part of the same control language as the toggle groups. */
+
+.select-field { display: inline-flex; flex-direction: column; gap: 0.3rem; }
+
+.select-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  background: transparent;
+  border: 0;
+  border-bottom: var(--rule-width) solid var(--rule);
+  padding: 0.15rem 0 0.25rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+.select-trigger:hover { border-bottom-color: var(--ink); }
+.select-icon { color: var(--ink-soft); font-size: 0.7em; }
+
+.select-content {
+  background: var(--panel);
+  border: var(--rule-width) solid var(--ink);
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  z-index: 20;
+}
+.select-viewport { padding: 0.25rem 0; }
+.select-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.35rem 0.9rem 0.35rem 0.6rem;
+  cursor: pointer;
+  outline: none;
+}
+.select-item[data-highlighted] { background: var(--ground); }
+.select-indicator { color: var(--ink-soft); }
+
+/* ---- Law explorer filter bar and totals ----------------------------------- */
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 1.75rem;
+  margin-top: 1.1rem;
+}
+
+.clear-filters {
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  background: transparent;
+  border: 0;
+  border-bottom: var(--rule-width) solid var(--rule);
+  padding: 0.15rem 0 0.25rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+  align-self: end;
+}
+.clear-filters:hover { color: var(--ink); border-bottom-color: var(--ink); }
+
+.totals-line {
+  font-family: var(--font-data);
+  font-size: 0.875rem;
+  font-variant-numeric: var(--num-table);
+  margin: 0.9rem 0 0;
+}
+
+.empty-state {
+  margin: 1.4rem 0;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+/* ---- Law table -------------------------------------------------------------
+ * Set like .tableview (statistical table, lining tabular figures, hairline
+ * rules), but left-aligned throughout: most columns here are names and
+ * labels, not a single value column. */
+
+.law-table-scroll { overflow-x: auto; margin-top: 1rem; }
+.law-table {
+  border-collapse: collapse;
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  font-variant-numeric: var(--num-table);
+  width: 100%;
+}
+.law-table caption {
+  text-align: left;
+  font-family: var(--font-text);
+  font-style: italic;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+  padding-bottom: 0.5rem;
+}
+.law-table th, .law-table td {
+  text-align: left;
+  padding: 0.35rem 0.75rem;
+  vertical-align: top;
+  border: 0;
+}
+.law-table thead th {
+  vertical-align: bottom;
+  font-weight: 400;
+  border-bottom: var(--rule-width) solid var(--ink);
+  padding-bottom: 0.3rem;
+  white-space: nowrap;
+}
+.law-table tbody tr { border-bottom: var(--rule-hair) solid var(--rule); }
+.law-table tbody tr:last-child { border-bottom: var(--rule-width) solid var(--ink); }
+.law-table .unit {
+  display: block;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+  font-weight: 400;
+  white-space: normal;
+}
+.law-table .vote-cell { white-space: nowrap; }
+
+.law-name-button, .sort-button {
+  font-family: inherit;
+  font-size: inherit;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.law-name-button:hover { text-decoration: underline; }
+.law-name-button[aria-pressed='true'] {
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-color: var(--mix);
+  text-decoration-thickness: 2px;
+}
+
+.sort-button { display: block; }
+.sort-button:hover .unit { color: var(--ink); }
+th[aria-sort='ascending'] .sort-button,
+th[aria-sort='descending'] .sort-button { color: var(--ink); }
+th[aria-sort='ascending'] .unit::after { content: ' ▲'; }
+th[aria-sort='descending'] .unit::after { content: ' ▼'; }
+
+.character-swatch {
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: 50%;
+  margin-left: 0.4em;
+  vertical-align: middle;
+}
+.character-swatch.swatch-dem { background: var(--dem); }
+.character-swatch.swatch-gop { background: var(--gop); }
+.character-swatch.swatch-mix { background: var(--mix); }
+
+.footnote {
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+  margin-top: 0.6rem;
+}
+.footnote + .footnote { margin-top: 0.3rem; }
+
+/* ---- Year inspection panel ------------------------------------------------
+ * The definition-list companion to `.readout`, for a section whose focused
+ * datum carries more than one value (a breakdown, a control configuration,
+ * enacted laws) rather than a single number.
+ */
+.inspector {
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  font-variant-numeric: var(--num-table);
+  color: var(--ink);
+  margin: 0.55rem 0 0;
+  min-height: 1.3em;
+  display: grid;
+  gap: 0.2rem 1rem;
+}
+.inspector > div { display: flex; flex-wrap: wrap; gap: 0.4em; }
+.inspector dt {
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+  flex: 0 0 auto;
+}
+.inspector dd { margin: 0; }
+
+/* ---- Control strip --------------------------------------------------------
+ * The presidency/House/Senate band above a budget chart's plot area. Row
+ * labels and the coverage caption reuse .axis-label / .axis-title; only the
+ * in-cell D/R glyph needs its own rule.
+ */
+.control-strip-glyph {
+  font-family: var(--font-data);
+  font-size: 8px;
+  font-weight: 700;
+  fill: var(--panel);
 }
 
 /* ---- Focus and motion ---------------------------------------------------- */
@@ -482,4 +732,168 @@ figcaption .lead {
 .tax-mix-select-item[data-highlighted] {
   background: var(--rule);
   outline: none;
+}
+
+/* ---- Section 2/3 furniture: debt holders bars, debt maturity scale --------
+ * Both islands draw their own bars/bands rather than reusing Chart's line/area
+ * primitives, so their in-SVG text and scale furniture get their own rules.
+ * `.datum` (above) already supplies focus styling for the interactive shapes.
+ */
+
+.holders-label, .maturity-label {
+  font-family: var(--font-data);
+  font-size: 11px;
+  fill: var(--ink);
+  font-variant-numeric: var(--num-table);
+}
+
+.holders-foreign-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  font-variant-numeric: var(--num-table);
+  color: var(--ink-soft);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1.2rem;
+}
+
+.maturity-marker-label {
+  font-family: var(--font-data);
+  font-size: 10.5px;
+  fill: var(--ink-soft);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+}
+
+/* §9 attribution */
+
+.attrib-tabs { display: flex; gap: 1.4rem; margin-bottom: 0.7rem; }
+.attrib-tab {
+  font-family: var(--font-data);
+  font-size: 0.875rem;
+  background: transparent;
+  border: 0;
+  border-bottom: var(--rule-width) solid transparent;
+  padding: 0 0 0.3rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.attrib-tab:hover { color: var(--ink); }
+.attrib-tab[data-state='active'] {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+.attrib-panel[hidden] { display: none; }
+.attrib-panel[data-state='inactive'] { display: none; }
+.attrib-row-label {
+  font-family: var(--font-data);
+  font-size: 11.5px;
+  fill: var(--ink);
+  font-variant-numeric: var(--num-table);
+}
+.attrib-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.1rem;
+  margin: 0.4rem 0 0.6rem;
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+}
+
+/* ---- Limits (§12) -------------------------------------------------------
+ * A numbered list of caveats, set as running text rather than as a list of
+ * bullets: BRIEF.md makes this section load-bearing, and bullets read as an
+ * appendix. The marker is the only ornament, and nothing here is collapsible.
+ */
+
+.limits { list-style: none; counter-reset: limit; margin: 0 0 1.6rem; padding: 0; }
+.limits > li {
+  counter-increment: limit;
+  max-width: var(--measure);
+  margin: 0 0 1.5rem;
+  padding-top: 0.6rem;
+  border-top: var(--rule-hair) solid var(--rule);
+}
+.limits > li > h3 { display: inline; margin: 0; }
+.limits > li > h3::before {
+  content: counter(limit) '. ';
+  font-style: normal;
+  font-variant-numeric: var(--num-table);
+}
+/* The heading runs into its paragraph, textbook-style, so the caveat reads as
+   one sentence rather than as a headed block. */
+.limits > li > h3 + .prose { display: inline; text-indent: 0; }
+.reference-doc { max-width: var(--measure-wide); }
+.reference-doc table { border-collapse: collapse; font-variant-numeric: var(--num-table); }
+
+/* ---- Households route: brushable year range and multi-panel figures -----
+ * The shared timeline (`YearRange.tsx`) and the sub-heads/empty-state used by
+ * a figure that stacks more than one panel in one SVG (`HouseholdSpread.tsx`,
+ * `BracketHistory`'s three stacked panels). `.panel-title` is quieter than
+ * `.figure-title`: it labels a part, not the whole figure.
+ */
+
+.year-range { margin: 0.4rem 0 1.15rem; max-width: var(--measure-wide); }
+.year-range-label {
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  font-size: 0.9375rem;
+  margin: 0 0 0.65rem;
+}
+.year-range-slider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 20px;
+  touch-action: none;
+  user-select: none;
+}
+.year-range-track {
+  position: relative;
+  flex-grow: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--rule);
+}
+.year-range-range { position: absolute; height: 100%; border-radius: 2px; background: var(--ink); }
+.year-range-thumb {
+  display: block;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 1.5px solid var(--ink);
+  cursor: pointer;
+}
+.year-range-thumb:hover { background: var(--ink); }
+.year-range-thumb:focus-visible { outline: 1.5px solid var(--ink); outline-offset: 3px; }
+.year-range-endpoints {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  font-variant-numeric: var(--num-table);
+  color: var(--ink-soft);
+  margin-top: 0.35rem;
+}
+.year-range-readout { margin-top: 0.3rem; }
+
+.panel-title {
+  font-family: var(--font-data);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.07em;
+  font-size: 10.5px;
+  fill: var(--ink-soft);
+}
+.panel-empty {
+  font-family: var(--font-data);
+  font-size: 12px;
+  fill: var(--ink-soft);
+  font-style: italic;
 }

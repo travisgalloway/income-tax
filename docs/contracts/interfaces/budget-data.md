@@ -39,6 +39,13 @@ never inverts once the fields are combined correctly.
 Proved by `test_outlay_components_sum_to_total_in_every_unit_family` and
 `test_net_mandatory_is_positive_in_every_year` in `pipeline/tests/test_pipeline.py`.
 
+**Prose-quoting rule.** `sections.md` §6 quotes mandatory-spending growth, and that figure must be
+on the **net** basis, named as such in the sentence — every other number in §6 (the 9.8%→13.7% GDP
+share, the chart's three lines) is already net, and quoting the gross figure instead would
+contradict them. The pipeline's prose resolver (`pipeline/lib/report.py`) exposes this basis as two
+derived fields not stored on the row itself: `g_ma_net` (`g_ma + g_or`) and `r_ma_net`
+(`r_ma + r_or`). `g_ma`/`r_ma` alone are gross and must not be quoted in prose anywhere in §6.
+
 ## Deficit / surplus sign (`de`)
 
 `de = re - ot`. Negative is a deficit, positive is a surplus. Surplus years in the current series:

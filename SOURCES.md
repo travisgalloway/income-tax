@@ -26,7 +26,10 @@ this file, not an actual.
 **US Treasury, Historical Debt Outstanding and Debt to the Penny**
 `fiscaldata.treasury.gov`
 Total public debt outstanding at fiscal year end, and the daily series.
-$40 trillion crossed 19 August 2026. Debt to the Penny stood at $39.89T on
+$40 trillion first closed above the threshold on 18 August 2026 at $40.047
+trillion, and was reported the following day, 19 August 2026. Debt to the
+Penny publishes a date's closing balance on the next business day, so these
+are one event, not two figures. Debt to the Penny stood at $39.89T on
 7 August 2026 and $39.84T on 30 July.
 
 **US Treasury, Monthly Statement of the Public Debt**
@@ -99,26 +102,26 @@ deficit. **If both numbers appear, explain the gap.**
 
 ---
 
-## The vote composition limitation
+## The counted vote splits, and what they still cannot tell you
 
-This is the single weakest point in the dataset and the site must be upfront
-about it.
+This was the dataset's weakest point and is no longer. Each of the 23 laws
+carries per-party yea and nay counts taken from Voteview roll-call records
+(`voteview.com/data`, `HSall_members.csv` joined to the per-congress roll-call
+and vote files) by `pipeline/oneshot/party_splits.py`. PL 115-97 reproduces the
+published House Clerk record on the caucus basis: House R 224–12, D 0–189;
+Senate R 51–0, D 0–48.
 
-Each of the 23 laws carries a `comp` field: `PLR` party-line Republican, `PLD`
-party-line Democratic, `XP` cross-party. For **one** law, PL 115-97 (the Tax Cuts
-and Jobs Act), the per-party split is verified from the House Clerk roll call
-(House: R 224–12, D 0–189; Senate: R 51–0, D 0–48). For the other 22, the
-classification is derived from the published vote character, not from counting
-roll-call votes.
-
-Exact per-party tallies for all 23 are available from Voteview
-(`voteview.com/data`, `HSall_votes.csv` joined to `HSall_rollcalls.csv` and
-`HSall_members.csv`). A script that does this join is in the parent folder as
-`fetch_party_splits.py`. If someone runs it, replace the classifications with
-counted splits and delete this caveat.
-
-Until then: the site says "classified from published vote character" wherever
-composition appears, and section 12 states it as a limitation.
+Four limits remain, and section 11 states all four. The final-passage roll call
+for each law was curated by hand, because a bill carries many roll calls and
+selecting one by date returns the wrong vote. The House passed the CARES Act by
+voice on 27 March 2020, so no roll call exists and one chamber of one law has no
+split; **render that as missing data, never as unanimity and never as 0–0.** A
+vote is called cross-party when at least 10% of the yes votes came from the
+minority party in at least one chamber, which is a judgement and is stated so it
+can be disagreed with. `r`, `d` and `i` are party membership; `d_caucus` adds the
+independents who caucus with the Democrats, the basis the chamber records and
+press coverage use, and the two differ by two Senate seats through most of this
+period. **A chart must say which basis it shows.**
 
 ---
 
