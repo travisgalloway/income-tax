@@ -12,12 +12,15 @@ import holdersJson from './debt_holders.json'
 import maturityJson from './debt_maturity.json'
 import oecdJson from './oecd.json'
 import groupsJson from './income_tax_by_group.json'
+import statesBalanceJson from './states_balance.json'
+import statesTaxMixJson from './states_tax_mix.json'
 import bracketHistoryJson from './bracket_history.json'
 import cboEffectiveRatesJson from './cbo_effective_rates.json'
 
 import type {
   BracketYear, BudgetYear, CboEffectiveRates, Dataset, DebtHolders, DebtMaturity, DebtYear,
   EconomyYear, IncomeGroups, IncomeYear, Meta, OecdComparison, PartySplit, RevenueYear,
+  StatesBalance, StatesTaxMix,
 } from './types'
 
 export const budget = budgetJson as Dataset<BudgetYear[]>
@@ -30,6 +33,8 @@ export const debtHolders = holdersJson as Dataset<DebtHolders>
 export const debtMaturity = maturityJson as Dataset<DebtMaturity>
 export const oecd = oecdJson as Dataset<OecdComparison>
 export const incomeGroups = groupsJson as Dataset<IncomeGroups>
+export const statesBalance = statesBalanceJson as Dataset<StatesBalance>
+export const statesTaxMix = statesTaxMixJson as Dataset<StatesTaxMix>
 export const bracketHistory = bracketHistoryJson as Dataset<BracketYear[]>
 // astro check rejects a single `as Dataset<CboEffectiveRates>` assertion here for
 // insufficient structural overlap with the raw JSON's inferred type, the same
@@ -62,7 +67,8 @@ function assertDataset(name: string, d: { _meta?: { source?: string } }): void {
 
 for (const [name, d] of Object.entries({
   budget, debt, economy, income, revenue, partySplits,
-  debtHolders, debtMaturity, oecd, incomeGroups, bracketHistory, cboEffectiveRates,
+  debtHolders, debtMaturity, oecd, incomeGroups, statesBalance, statesTaxMix,
+  bracketHistory, cboEffectiveRates,
 })) {
   assertDataset(name, d)
 }

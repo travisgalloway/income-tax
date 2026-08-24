@@ -231,3 +231,56 @@ outputs:
       party.
     - The vote counted is FINAL PASSAGE. Procedural votes, cloture and motions to recommit are excluded,
       and a bill often has several of each.
+  states_balance:
+    title: What each state gives the federal government and gets back, by IRS gross collections
+      against USASpending award spending
+    source: IRS Statistics of Income, SOI Data Book Table 5, Gross Collections by Type of Tax and
+      State (vintage discovered per run); USASpending.gov spending_by_geography, place of performance
+      basis, same fiscal year window as the IRS vintage
+    units:
+      give_b: federal tax gross collections, $ billions
+      get_b: federal award spending, $ billions
+      pop: population (from USASpending)
+      give_pc: give_b per person, $
+      get_pc: get_b per person, $ (USASpending's own per_capita figure)
+      balance_b: get_b minus give_b, $ billions
+      balance_pc: get_pc minus give_pc, $ per person
+      ratio: get_b / give_b
+    fields:
+      code: two-letter postal code
+      is_state: true ONLY for the 50 actual states; false for DC (excluded from the colour-scale
+        domain) and for territories
+      in_grid: whether the jurisdiction is drawn on the tile-grid cartogram (states + DC only)
+    notes:
+    - THIS IS NOT A BALANCE OF PAYMENTS. Give is gross collections classified by the filer's
+      address (IRS Table 5's own note); get is award spending classified by place of PERFORMANCE,
+      not the recipient's residence. A border employer's withholding can be booked to a
+      neighbouring state; a military base or federal retiree's former duty station pulls spending
+      away from where the money is actually used. State this in body copy, never a tooltip.
+    - Award spending EXCLUDES most direct benefit payments (Social Security, Medicare, SNAP), so
+      the "get" side understates what a state actually receives. Gross collections include
+      penalties and interest and exclude excise taxes collected by Customs and the Alcohol and
+      Tobacco Tax and Trade Bureau.
+    - DC is not a state, is an extreme outlier by construction (federal employment concentration),
+      and is excluded from the colour-scale domain so it does not flatten the 50-state range. It
+      is still drawn and still in the table.
+    - Territories (PR, GU, VI, MP, AS) appear in USASpending but not in IRS Table 5's state
+      breakdown; give_b is null for them, not zero. They are not drawn on the tile grid.
+    - The Rockefeller Institute publishes an actual state balance-of-payments study; its series
+      ends FY2022 and it is cited, never ingested (no machine-readable feed exists).
+  states_tax_mix:
+    title: State tax collections by category, as a share of each state's own total
+    source: US Census Bureau, Annual Survey of State Government Tax Collections (STC), detailed
+      table, transposed (vintage discovered per run)
+    units:
+      total_b: total state tax collections, $ billions
+      shares: percent of that state's own total tax collections
+    notes:
+    - A category value of 'X' in the source means the state does NOT LEVY that tax (e.g. Alaska
+      has no general sales tax). This is a fact, distinct from a genuinely missing figure, and is
+      recorded in each jurisdiction's `not_levied` list rather than rendered as `0` or `no data`.
+    - The source's US-total column excludes Washington DC regardless of whether DC has its own
+      jurisdiction column; `_meta.coverage.stc_includes_dc` records which is actually true for the
+      fetched vintage rather than assuming it.
+    - The `other` category is derived as the state's total minus the four named categories, not a
+      Census item code on its own.

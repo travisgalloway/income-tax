@@ -101,6 +101,47 @@ semantics, since selecting a law is an action, unlike hovering a datum) also dri
 `readout`/`aria-label` text via `lawReadout`, so a law selected from the table and a fiscal year
 focused on the chart share one live region rather than two independent ones.
 
+## Government §11 additions
+
+Two new primitives for the by-state section (issue #14), neither a variant of an existing one:
+
+### The tile-grid cartogram (`src/components/charts/stateGrid.ts`, `StateGiveGet.tsx`)
+
+Not a geographic choropleth: this repo carries `d3-scale`/`d3-shape` but no projection library
+(`topojson-client` + `us-atlas`), and a real map's geographic area is not population anyway — it
+would make Wyoming shout and Rhode Island vanish. `stateGrid.ts` exports `TILES` (a `{row, col}`
+per postal code, 51 entries — the 50 states plus DC, no territory), `GRID_COLS`/`GRID_ROWS` (11×8),
+and `divergingFill(v, bound)`, a pure amber↔stone↔teal interpolation with **no party-colour token
+referenced anywhere in the module**. `Chart.tsx` is deliberately not reused here: it paints an x/y
+plot area and margin frame for a cartesian chart, which a tile grid has no use for. The SVG uses a
+fixed `viewBox="0 0 440 320"` (not `useChartSize`) because a tile grid has no meaningful "narrow"
+relayout the way an axis chart does; `preserveAspectRatio="xMidYMid meet"` plus `width="100%"` makes
+it container-responsive without one.
+
+Each tile is `role="img"` with its own `aria-label` (never `role="button"` — focusing a tile reveals
+a value, it does not activate anything), and the outer `<svg>` is `role="group"` per the same rule
+`Chart.tsx` documents: a subtree with focusable children must not be `role="img"`.
+
+### The sortable table (`StateGiveGet.tsx`)
+
+`TableView` is not used for the by-state map's non-visual equivalent, because `TableView`'s
+Collapsible starts closed and Radix does not render `Collapsible.Content` into the DOM while
+closed — confirmed by building the site and finding no `<table>` tag in `dist/*.html` for any
+existing `TableView` usage. A collapsed-by-default table can never be the map's required
+keyboard-reachable equivalent, and a JS-disabled reader could never open it at all. The by-state
+section instead renders a **plain, always-visible** `<table className="sortable-table">`, with
+`<th scope="col">` sort buttons (`.sort-button`) toggling `aria-sort` and click-to-resort — reusing
+`.tableview-scroll` for the horizontal-scroll wrapper, since that concern is identical. `TableView`
+itself is still reused as-is for the tax-mix figure (`StateTaxMix.tsx`), which needs no sort and
+whose collapsed-by-default behaviour is acceptable there because it is a supplementary detail
+table, not the chart's only non-visual path.
+
+`StatesTaxMix`'s `not_levied` vs `null`-alone distinction (`docs/contracts/interfaces/state-data.md`)
+renders as `"none levied"` vs `"no data"` — the same two words a reader needs to tell "this state
+doesn't have this tax" from "we don't have this figure" apart, and the page's closing `<p
+class="prose">` states the `"none levied"` convention in body copy so it does not depend on a
+reader opening the (collapsed-by-default) table to learn it.
+
 ## `YearRange` (`src/components/islands/YearRange.tsx`)
 
 The shared brushable year-range timeline used by the Households route (`MedianIncome.tsx`,

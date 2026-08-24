@@ -30,7 +30,7 @@ when the code merges.
 | GOV-8 | The laws — sortable/filterable explorer, cost, vote, enactment date | done | done | Shipped | #3 | contracts/interfaces/law-data.md, contracts/interfaces/charts.md, contracts/interfaces/budget-data.md |
 | GOV-9 | Who passed it, who signed it — the same $16.75T by voting coalition and by signing president, Radix Tabs | done | done | Shipped | #4 | contracts/interfaces/attribution.md, contracts/interfaces/budget-data.md |
 | GOV-10 | Where the money comes from — revenue by source (nominal/%GDP/%share toggle), OECD comparison | done | done | Shipped | #7 | contracts/interfaces/revenue-data.md, contracts/interfaces/charts.md |
-| GOV-11 | By state | none | none | Planned | — | — |
+| GOV-11 | By state, and which states give more than they get — IRS gross collections vs USASpending award spending, tile-grid cartogram, sortable table, state tax mix | done | done | Shipped | #14 | contracts/interfaces/state-data.md, contracts/interfaces/charts.md |
 | GOV-12 | What this cannot tell you — five limits in full, no disclosure wrapper, plus the concentration and deficit-vs-debt items | done | n/a (prose) | Shipped | #8 | contracts/interfaces/content-sources.md |
 
 ## Households route (`src/pages/households/index.astro`)

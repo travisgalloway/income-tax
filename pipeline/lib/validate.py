@@ -11,10 +11,13 @@ import json
 from pathlib import Path
 from typing import Any
 
+import jsonschema
+
 from . import curated
 from .errors import ValidationFailed
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent / "src" / "data"
+SCHEMA_DIR = Path(__file__).resolve().parent.parent / "schemas"
 
 
 class Checks:
@@ -50,6 +53,21 @@ def check_meta(c: Checks, names: list[str]) -> None:
             "CBO data" != m.get("source"),
             f"{n}: _meta.source was summarised; BRIEF.md rule 1 forbids this",
         )
+
+
+def check_schema(c: Checks, names: list[str]) -> None:
+    """Generic, opt-in JSON Schema check: an output is validated iff
+    `schemas/<name>.schema.json` exists. Nothing retrofits the nine outputs
+    that predate this gate; a new output opts in by adding its schema file."""
+    for n in names:
+        path = SCHEMA_DIR / f"{n}.schema.json"
+        if not path.exists():
+            continue
+        try:
+            jsonschema.validate(_load(n), json.loads(path.read_text()))
+            c.ok(True, f"{n}: schema ok")
+        except jsonschema.ValidationError as exc:
+            c.ok(False, f"{n}: schema violation at {list(exc.absolute_path)}: {exc.message}")
 
 
 def check_budget(c: Checks) -> None:
@@ -438,9 +456,56 @@ def check_party_splits(c: Checks) -> None:
          f"party_splits: {chars.count('party-line')} party-line laws, sections.md says 7")
 
 
+def check_states(c: Checks) -> None:
+    d = _load("states_balance")["data"]
+    jurs = d["jurisdictions"]
+
+    in_grid = [j for j in jurs if j["in_grid"]]
+    c.ok(len(in_grid) == 51, f"states: expected 51 in_grid jurisdictions, got {len(in_grid)}")
+
+    dc = next((j for j in jurs if j["code"] == "DC"), None)
+    c.ok(dc is not None, "states: DC is missing")
+    if dc:
+        c.ok(dc.get("is_state") is False, "states: DC.is_state should be False; DC is not a state")
+        c.ok("DC" in d["color_domain"]["excludes"],
+             "states: DC is not recorded in color_domain.excludes")
+
+    territories = [j for j in jurs if not j["in_grid"]]
+    c.ok(bool(territories), "states: no territory rows found; coverage was silently dropped")
+    for j in territories:
+        c.ok(j["give_b"] is None, f"states: territory {j['code']} has a give_b; should be null")
+        c.ok(j["get_b"] is not None, f"states: territory {j['code']} has no get_b")
+
+    for j in jurs:
+        for k in ("give_b", "get_b", "balance_pc", "ratio"):
+            c.ok(j[k] is None or j[k] != 0, f"states: {j['code']}.{k} is exactly 0; absence must be null")
+
+    total_give = sum(j["give_b"] for j in jurs if j["give_b"] is not None)
+    nat_give = d["national"]["give_b"]
+    c.ok(total_give <= nat_give + 1e-6,
+         f"states: sum of jurisdiction give_b ({total_give}) exceeds the national total ({nat_give})")
+    c.close(total_give, nat_give, nat_give * 0.02, "states: sum of jurisdiction give_b vs national")
+
+    for j in jurs:
+        c.ok(j["ratio"] is None or j["ratio"] > 0,
+             f"states: {j['code']}.ratio is non-positive: {j['ratio']}")
+
+    c.ok(d["fy_give"] == d["fy_get"],
+         f"states: fy_give {d['fy_give']} != fy_get {d['fy_get']}; give and get must be the same FY")
+
+    mix = _load("states_tax_mix")["data"]
+    for j in mix["jurisdictions"]:
+        for k, v in j["shares"].items():
+            c.ok(v is None or 0 <= v <= 100, f"states_tax_mix: {j['code']}.{k} share {v} out of [0,100]")
+            if v is None:
+                c.ok(k in j.get("not_levied", []) or j.get("partial"),
+                     f"states_tax_mix: {j['code']}.{k} is null but not in not_levied and not partial")
+
+
 def run(outputs: list[str]) -> Checks:
     c = Checks()
     check_meta(c, outputs)
+    check_schema(c, outputs)
     if "budget" in outputs:
         check_budget(c)
         check_laws(c)
@@ -456,6 +521,8 @@ def run(outputs: list[str]) -> Checks:
         check_snapshots(c)
     if "party_splits" in outputs:
         check_party_splits(c)
+    if "states_balance" in outputs:
+        check_states(c)
     if "cbo_effective_rates" in outputs:
         check_cbo_effective_rates(c)
     if "bracket_history" in outputs:

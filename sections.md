@@ -359,7 +359,50 @@ IRS data at tax year 2023.
 
 ---
 
-## 11 / What this cannot tell you
+## 11 / By state, and which states give more than they get
+
+**Heading:** By state, and which states give more than they get
+
+**Standfirst:** Every state pays federal tax and every state receives federal spending. Comparing
+the two by state is not the balance-of-payments question it sounds like.
+
+**Finding:** In FY2025, 28 states and DC received more in federal award spending, per person, than
+the IRS collected from them in gross federal tax; 23 paid more than they received.
+
+**What this is not.** This is not a balance of payments. The Rockefeller Institute's study of that
+name is the authoritative version, and its series ends at FY2022. What is drawn here is federal tax
+collected in a state against federal award spending performed in it, both for FY2025, and the two
+are not opposite sides of one ledger.
+
+**Where the money is counted is not where it lands.** The IRS classifies collections by the
+filer's address, so a corporation's tax is booked to its principal office and withholding is booked
+to the employer's location, which for a border employer may sit in a different state from the
+people it withholds from. Federal spending is counted where the work is performed, which sends
+money to the state hosting a military base rather than the state its personnel came from, and to a
+federal retiree's former duty station rather than where they now live. Medicaid dollars are
+recorded against the state that passes them through to providers.
+
+**Neither side is complete.** Award spending excludes most direct benefit payments, so the "get"
+side is smaller than what a state actually receives; gross collections include penalties and
+interest and exclude excise taxes collected by Customs and the Alcohol and Tobacco Tax and Trade
+Bureau. Read the ordering, not the arithmetic.
+
+**Coverage.** Territories (Puerto Rico, Guam, the US Virgin Islands, the Northern Mariana Islands
+and American Samoa) appear in the award-spending figures but have no state-level breakdown in IRS
+Table 5, so they carry a give figure of "no data," never zero. Washington DC is drawn and counted
+but excluded from the colour scale as an outlier by construction. The companion state tax-mix
+figure records a category a state does not levy ("none levied") separately from one that is simply
+unreported ("no data").
+
+**Source lines:** IRS Statistics of Income, SOI Data Book Table 5 (vintage discovered per run,
+FY2025 at time of writing). USASpending.gov `spending_by_geography` (place of performance, FY2025).
+US Census Bureau, Annual Survey of State Government Tax Collections (vintage discovered per run,
+FY2025 at time of writing). Rockefeller Institute of Government balance-of-payments series (cited,
+FY2022, not ingested).
+
+---
+
+## 12 / What this cannot tell you
 
 **Heading:** Five things this data cannot tell you
 

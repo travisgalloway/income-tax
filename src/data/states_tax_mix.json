@@ -1,0 +1,769 @@
+{
+ "_meta": {
+  "title": "State tax collections by category, as a share of each state's own total",
+  "source": "US Census Bureau, Annual Survey of State Government Tax Collections (STC), detailed table, transposed (vintage discovered per run)",
+  "units": {
+   "total_b": "total state tax collections, $ billions",
+   "shares": "percent of that state's own total tax collections"
+  },
+  "notes": [
+   "A category value of 'X' in the source means the state does NOT LEVY that tax (e.g. Alaska has no general sales tax). This is a fact, distinct from a genuinely missing figure, and is recorded in each jurisdiction's `not_levied` list rather than rendered as `0` or `no data`.",
+   "The source's US-total column excludes Washington DC regardless of whether DC has its own jurisdiction column; `_meta.coverage.stc_includes_dc` records which is actually true for the fetched vintage rather than assuming it.",
+   "The `other` category is derived as the state's total minus the four named categories, not a Census item code on its own."
+  ],
+  "provenance": {
+   "generator": "monthly/states.py",
+   "git_sha": "725a9fe",
+   "generated_at": "2026-08-24T02:49:30Z",
+   "vintage": "FY2025",
+   "retrieved_at": "2026-08-24T02:19:24Z"
+  },
+  "coverage": {
+   "stc_includes_dc": true,
+   "note": "US total column in the source excludes DC regardless of whether DC has its own column"
+  }
+ },
+ "data": {
+  "fy": 2025,
+  "categories": [
+   {
+    "k": "income_ind",
+    "label": "Individual income tax",
+    "item": "T40"
+   },
+   {
+    "k": "income_corp",
+    "label": "Corporate income tax",
+    "item": "T41"
+   },
+   {
+    "k": "sales_general",
+    "label": "General sales tax",
+    "item": "T09"
+   },
+   {
+    "k": "property",
+    "label": "Property tax",
+    "item": "T01"
+   },
+   {
+    "k": "other",
+    "label": "All other taxes",
+    "item": "derived"
+   }
+  ],
+  "jurisdictions": [
+   {
+    "code": "AK",
+    "name": "Alaska",
+    "total_b": 1.687,
+    "shares": {
+     "income_ind": null,
+     "income_corp": 21.66,
+     "sales_general": null,
+     "property": 7.93,
+     "other": 70.41
+    },
+    "not_levied": [
+     "income_ind",
+     "sales_general"
+    ]
+   },
+   {
+    "code": "AL",
+    "name": "Alabama",
+    "total_b": 17.673,
+    "shares": {
+     "income_ind": 32.82,
+     "income_corp": 12.02,
+     "sales_general": 27.25,
+     "property": 3.7,
+     "other": 24.22
+    },
+    "not_levied": []
+   },
+   {
+    "code": "AR",
+    "name": "Arkansas",
+    "total_b": 12.56,
+    "shares": {
+     "income_ind": 21.78,
+     "income_corp": 5.13,
+     "sales_general": 40.9,
+     "property": 12.92,
+     "other": 19.27
+    },
+    "not_levied": []
+   },
+   {
+    "code": "AZ",
+    "name": "Arizona",
+    "total_b": 26.636,
+    "shares": {
+     "income_ind": 20.61,
+     "income_corp": 6.57,
+     "sales_general": 50.71,
+     "property": 5.37,
+     "other": 16.73
+    },
+    "not_levied": []
+   },
+   {
+    "code": "CA",
+    "name": "California",
+    "total_b": 275.041,
+    "shares": {
+     "income_ind": 46.79,
+     "income_corp": 14.33,
+     "sales_general": 19.45,
+     "property": 1.34,
+     "other": 18.09
+    },
+    "not_levied": []
+   },
+   {
+    "code": "CO",
+    "name": "Colorado",
+    "total_b": 20.261,
+    "shares": {
+     "income_ind": 43.51,
+     "income_corp": 11.62,
+     "sales_general": 23.2,
+     "property": null,
+     "other": 21.67
+    },
+    "not_levied": [
+     "property"
+    ]
+   },
+   {
+    "code": "CT",
+    "name": "Connecticut",
+    "total_b": 24.754,
+    "shares": {
+     "income_ind": 45.32,
+     "income_corp": 14.14,
+     "sales_general": 25.3,
+     "property": null,
+     "other": 15.23
+    },
+    "not_levied": [
+     "property"
+    ]
+   },
+   {
+    "code": "DC",
+    "name": "District of Columbia",
+    "total_b": 11.261,
+    "shares": {
+     "income_ind": 32.01,
+     "income_corp": 10.97,
+     "sales_general": 18.55,
+     "property": 26.45,
+     "other": 12.02
+    },
+    "not_levied": []
+   },
+   {
+    "code": "DE",
+    "name": "Delaware",
+    "total_b": 6.95,
+    "shares": {
+     "income_ind": 39.64,
+     "income_corp": 8.31,
+     "sales_general": null,
+     "property": null,
+     "other": 52.06
+    },
+    "not_levied": [
+     "sales_general",
+     "property"
+    ]
+   },
+   {
+    "code": "FL",
+    "name": "Florida",
+    "total_b": 63.551,
+    "shares": {
+     "income_ind": null,
+     "income_corp": 9.16,
+     "sales_general": 62.93,
+     "property": null,
+     "other": 27.91
+    },
+    "not_levied": [
+     "income_ind",
+     "property"
+    ]
+   },
+   {
+    "code": "GA",
+    "name": "Georgia",
+    "total_b": 34.359,
+    "shares": {
+     "income_ind": 47.26,
+     "income_corp": 9.48,
+     "sales_general": 27.17,
+     "property": 2.57,
+     "other": 13.53
+    },
+    "not_levied": []
+   },
+   {
+    "code": "HI",
+    "name": "Hawaii",
+    "total_b": 11.036,
+    "shares": {
+     "income_ind": 29.79,
+     "income_corp": 3.72,
+     "sales_general": 44.92,
+     "property": null,
+     "other": 21.57
+    },
+    "not_levied": [
+     "property"
+    ]
+   },
+   {
+    "code": "IA",
+    "name": "Iowa",
+    "total_b": 12.121,
+    "shares": {
+     "income_ind": 31.44,
+     "income_corp": 6.41,
+     "sales_general": 38.56,
+     "property": 0.01,
+     "other": 23.58
+    },
+    "not_levied": []
+   },
+   {
+    "code": "ID",
+    "name": "Idaho",
+    "total_b": 8.881,
+    "shares": {
+     "income_ind": 34.93,
+     "income_corp": 11.34,
+     "sales_general": 36.08,
+     "property": null,
+     "other": 17.65
+    },
+    "not_levied": [
+     "property"
+    ]
+   },
+   {
+    "code": "IL",
+    "name": "Illinois",
+    "total_b": 71.309,
+    "shares": {
+     "income_ind": 35.64,
+     "income_corp": 17.41,
+     "sales_general": 22.87,
+     "property": 0.09,
+     "other": 23.99
+    },
+    "not_levied": []
+   },
+   {
+    "code": "IN",
+    "name": "Indiana",
+    "total_b": 27.422,
+    "shares": {
+     "income_ind": 31.68,
+     "income_corp": 3.26,
+     "sales_general": 40.93,
+     "property": 0.06,
+     "other": 24.07
+    },
+    "not_levied": []
+   },
+   {
+    "code": "KS",
+    "name": "Kansas",
+    "total_b": 13.119,
+    "shares": {
+     "income_ind": 35.64,
+     "income_corp": 10.39,
+     "sales_general": 32.62,
+     "property": 7.11,
+     "other": 14.24
+    },
+    "not_levied": []
+   },
+   {
+    "code": "KY",
+    "name": "Kentucky",
+    "total_b": 17.337,
+    "shares": {
+     "income_ind": 27.74,
+     "income_corp": 13.52,
+     "sales_general": 33.58,
+     "property": 4.84,
+     "other": 20.32
+    },
+    "not_levied": []
+   },
+   {
+    "code": "LA",
+    "name": "Louisiana",
+    "total_b": 16.38,
+    "shares": {
+     "income_ind": 29.03,
+     "income_corp": 5.38,
+     "sales_general": 33.5,
+     "property": 1.19,
+     "other": 30.89
+    },
+    "not_levied": []
+   },
+   {
+    "code": "MA",
+    "name": "Massachusetts",
+    "total_b": 46.173,
+    "shares": {
+     "income_ind": 53.03,
+     "income_corp": 13.77,
+     "sales_general": 21.05,
+     "property": 0.04,
+     "other": 12.11
+    },
+    "not_levied": []
+   },
+   {
+    "code": "MD",
+    "name": "Maryland",
+    "total_b": 32.921,
+    "shares": {
+     "income_ind": 35.55,
+     "income_corp": 14.84,
+     "sales_general": 21.51,
+     "property": 3.19,
+     "other": 24.91
+    },
+    "not_levied": []
+   },
+   {
+    "code": "ME",
+    "name": "Maine",
+    "total_b": 6.917,
+    "shares": {
+     "income_ind": 39.46,
+     "income_corp": 5.93,
+     "sales_general": 34.28,
+     "property": 0.71,
+     "other": 19.62
+    },
+    "not_levied": []
+   },
+   {
+    "code": "MI",
+    "name": "Michigan",
+    "total_b": 40.806,
+    "shares": {
+     "income_ind": 30.68,
+     "income_corp": 7.51,
+     "sales_general": 32.28,
+     "property": 7.72,
+     "other": 21.81
+    },
+    "not_levied": []
+   },
+   {
+    "code": "MN",
+    "name": "Minnesota",
+    "total_b": 36.89,
+    "shares": {
+     "income_ind": 37.84,
+     "income_corp": 16.07,
+     "sales_general": 23.35,
+     "property": 2.02,
+     "other": 20.71
+    },
+    "not_levied": []
+   },
+   {
+    "code": "MO",
+    "name": "Missouri",
+    "total_b": 18.005,
+    "shares": {
+     "income_ind": 43.23,
+     "income_corp": 8.81,
+     "sales_general": 29.72,
+     "property": 0.26,
+     "other": 17.98
+    },
+    "not_levied": []
+   },
+   {
+    "code": "MS",
+    "name": "Mississippi",
+    "total_b": 10.951,
+    "shares": {
+     "income_ind": 21.65,
+     "income_corp": 4.6,
+     "sales_general": 49.41,
+     "property": 0.28,
+     "other": 24.06
+    },
+    "not_levied": []
+   },
+   {
+    "code": "MT",
+    "name": "Montana",
+    "total_b": 4.837,
+    "shares": {
+     "income_ind": 47.69,
+     "income_corp": 6.65,
+     "sales_general": null,
+     "property": 9.49,
+     "other": 36.17
+    },
+    "not_levied": [
+     "sales_general"
+    ]
+   },
+   {
+    "code": "NC",
+    "name": "North Carolina",
+    "total_b": 40.626,
+    "shares": {
+     "income_ind": 42.07,
+     "income_corp": 3.88,
+     "sales_general": 30.93,
+     "property": null,
+     "other": 23.12
+    },
+    "not_levied": [
+     "property"
+    ]
+   },
+   {
+    "code": "ND",
+    "name": "North Dakota",
+    "total_b": 5.517,
+    "shares": {
+     "income_ind": 7.71,
+     "income_corp": 6.09,
+     "sales_general": 25.01,
+     "property": 0.11,
+     "other": 61.08
+    },
+    "not_levied": []
+   },
+   {
+    "code": "NE",
+    "name": "Nebraska",
+    "total_b": 7.294,
+    "shares": {
+     "income_ind": 29.89,
+     "income_corp": 14.74,
+     "sales_general": 41.87,
+     "property": 0.0,
+     "other": 13.5
+    },
+    "not_levied": []
+   },
+   {
+    "code": "NH",
+    "name": "New Hampshire",
+    "total_b": 3.372,
+    "shares": {
+     "income_ind": 2.7,
+     "income_corp": 32.94,
+     "sales_general": null,
+     "property": 12.27,
+     "other": 52.09
+    },
+    "not_levied": [
+     "sales_general"
+    ]
+   },
+   {
+    "code": "NJ",
+    "name": "New Jersey",
+    "total_b": 54.065,
+    "shares": {
+     "income_ind": 38.86,
+     "income_corp": 15.61,
+     "sales_general": 27.44,
+     "property": 0.01,
+     "other": 18.09
+    },
+    "not_levied": []
+   },
+   {
+    "code": "NM",
+    "name": "New Mexico",
+    "total_b": 14.938,
+    "shares": {
+     "income_ind": 16.86,
+     "income_corp": 5.23,
+     "sales_general": 30.35,
+     "property": 0.84,
+     "other": 46.72
+    },
+    "not_levied": []
+   },
+   {
+    "code": "NV",
+    "name": "Nevada",
+    "total_b": 14.52,
+    "shares": {
+     "income_ind": null,
+     "income_corp": null,
+     "sales_general": 52.45,
+     "property": 13.79,
+     "other": 33.77
+    },
+    "not_levied": [
+     "income_ind",
+     "income_corp"
+    ]
+   },
+   {
+    "code": "NY",
+    "name": "New York",
+    "total_b": 131.284,
+    "shares": {
+     "income_ind": 46.62,
+     "income_corp": 20.41,
+     "sales_general": 15.54,
+     "property": null,
+     "other": 17.44
+    },
+    "not_levied": [
+     "property"
+    ]
+   },
+   {
+    "code": "OH",
+    "name": "Ohio",
+    "total_b": 38.844,
+    "shares": {
+     "income_ind": 28.27,
+     "income_corp": 0.0,
+     "sales_general": 42.55,
+     "property": null,
+     "other": 29.18
+    },
+    "not_levied": [
+     "property"
+    ]
+   },
+   {
+    "code": "OK",
+    "name": "Oklahoma",
+    "total_b": 13.044,
+    "shares": {
+     "income_ind": 37.47,
+     "income_corp": 4.9,
+     "sales_general": 26.86,
+     "property": null,
+     "other": 30.77
+    },
+    "not_levied": [
+     "property"
+    ]
+   },
+   {
+    "code": "OR",
+    "name": "Oregon",
+    "total_b": 20.522,
+    "shares": {
+     "income_ind": 63.7,
+     "income_corp": 7.35,
+     "sales_general": 6.9,
+     "property": 0.11,
+     "other": 21.94
+    },
+    "not_levied": []
+   },
+   {
+    "code": "PA",
+    "name": "Pennsylvania",
+    "total_b": 56.546,
+    "shares": {
+     "income_ind": 31.6,
+     "income_corp": 7.86,
+     "sales_general": 28.52,
+     "property": 0.08,
+     "other": 31.94
+    },
+    "not_levied": []
+   },
+   {
+    "code": "RI",
+    "name": "Rhode Island",
+    "total_b": 5.471,
+    "shares": {
+     "income_ind": 33.42,
+     "income_corp": 9.71,
+     "sales_general": 30.63,
+     "property": 0.09,
+     "other": 26.14
+    },
+    "not_levied": []
+   },
+   {
+    "code": "SC",
+    "name": "South Carolina",
+    "total_b": 19.243,
+    "shares": {
+     "income_ind": 35.1,
+     "income_corp": 7.47,
+     "sales_general": 35.15,
+     "property": 0.57,
+     "other": 21.72
+    },
+    "not_levied": []
+   },
+   {
+    "code": "SD",
+    "name": "South Dakota",
+    "total_b": 2.687,
+    "shares": {
+     "income_ind": null,
+     "income_corp": 2.23,
+     "sales_general": 61.56,
+     "property": null,
+     "other": 36.21
+    },
+    "not_levied": [
+     "income_ind",
+     "property"
+    ]
+   },
+   {
+    "code": "TN",
+    "name": "Tennessee",
+    "total_b": 25.574,
+    "shares": {
+     "income_ind": 0.01,
+     "income_corp": 10.11,
+     "sales_general": 57.48,
+     "property": null,
+     "other": 32.39
+    },
+    "not_levied": [
+     "property"
+    ]
+   },
+   {
+    "code": "TX",
+    "name": "Texas",
+    "total_b": 89.944,
+    "shares": {
+     "income_ind": null,
+     "income_corp": null,
+     "sales_general": 62.82,
+     "property": null,
+     "other": 37.18
+    },
+    "not_levied": [
+     "income_ind",
+     "income_corp",
+     "property"
+    ]
+   },
+   {
+    "code": "UT",
+    "name": "Utah",
+    "total_b": 14.133,
+    "shares": {
+     "income_ind": 42.84,
+     "income_corp": 11.06,
+     "sales_general": 33.73,
+     "property": null,
+     "other": 12.37
+    },
+    "not_levied": [
+     "property"
+    ]
+   },
+   {
+    "code": "VA",
+    "name": "Virginia",
+    "total_b": 40.256,
+    "shares": {
+     "income_ind": 47.26,
+     "income_corp": 11.06,
+     "sales_general": 18.81,
+     "property": 0.14,
+     "other": 22.73
+    },
+    "not_levied": []
+   },
+   {
+    "code": "VT",
+    "name": "Vermont",
+    "total_b": 5.206,
+    "shares": {
+     "income_ind": 26.87,
+     "income_corp": 5.49,
+     "sales_general": 11.87,
+     "property": 28.66,
+     "other": 27.1
+    },
+    "not_levied": []
+   },
+   {
+    "code": "WA",
+    "name": "Washington",
+    "total_b": 39.362,
+    "shares": {
+     "income_ind": 1.39,
+     "income_corp": null,
+     "sales_general": 59.4,
+     "property": 11.98,
+     "other": 27.24
+    },
+    "not_levied": [
+     "income_corp"
+    ]
+   },
+   {
+    "code": "WI",
+    "name": "Wisconsin",
+    "total_b": 25.299,
+    "shares": {
+     "income_ind": 40.39,
+     "income_corp": 10.76,
+     "sales_general": 30.96,
+     "property": 0.28,
+     "other": 17.62
+    },
+    "not_levied": []
+   },
+   {
+    "code": "WV",
+    "name": "West Virginia",
+    "total_b": 6.951,
+    "shares": {
+     "income_ind": 31.02,
+     "income_corp": 5.41,
+     "sales_general": 27.15,
+     "property": 0.15,
+     "other": 36.27
+    },
+    "not_levied": []
+   },
+   {
+    "code": "WY",
+    "name": "Wyoming",
+    "total_b": 2.569,
+    "shares": {
+     "income_ind": null,
+     "income_corp": null,
+     "sales_general": 38.66,
+     "property": 15.26,
+     "other": 46.08
+    },
+    "not_levied": [
+     "income_ind",
+     "income_corp"
+    ]
+   }
+  ]
+ }
+}

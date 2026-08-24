@@ -213,3 +213,49 @@ time. Appended to, never rewritten. None of these have been acted on.
   issue, and a re-fetch that would bump the CBO vintage and churn `economy.json` for reasons
   unrelated to §§4-6. Found while working on #13. Severity: scope gap against the issue's edge-case
   list, parked rather than acted on; not blocking any Definition-of-done criterion for #13.
+- [2026-08-23] `pipeline/schemas/` is now filled for `states_balance` and `states_tax_mix` only.
+  The other nine outputs still have no JSON Schema; `lib/validate.py`'s `check_schema` is
+  deliberately generic and opt-in (validates iff `schemas/<name>.schema.json` exists) rather than
+  a mandate retrofitted onto them. Found while working on #14. Severity: coverage gap, non-blocking,
+  candidate for a dedicated follow-up issue.
+- [2026-08-23] `src/pages/sources.astro` does not list the IRS SOI Table 5 or Census STC (Annual
+  Survey of State Government Tax Collections) sources; both are documented in `SOURCES.md` and
+  rendered verbatim in each `<Figure>`'s Source line instead. Once #22 replaces `sources.astro`
+  with a reference content collection, port these two entries into it. Found while working on #14.
+  Severity: cross-reference completeness, non-blocking.
+- [2026-08-23] `sections.md` §12 ("what this cannot tell you", owned by #22) is a natural home for
+  a sixth limit: place of payment (IRS filer address / USASpending place of performance) is not
+  place of burden or benefit. §11's own body copy states this trap in full already, so nothing is
+  lost if #22 never adds it, but it would strengthen that section's list. Found while working on
+  #14; #22's branch was not edited. Severity: cross-section completeness, non-blocking.
+- [2026-08-23] `pipeline/lib/fetch.py` now carries three near-parallel request functions (`fetch`,
+  `fetch_bytes`, `post_json`) that duplicate the same cache/retry/failure-discipline boilerplate
+  three times rather than sharing one core. Worth collapsing once a fourth request shape appears.
+  Found while working on #14. Severity: duplication, non-blocking.
+- [2026-08-23] `TableView` (`src/components/islands/TableView.tsx`) wraps its table in a Radix
+  `Collapsible` that starts closed, and Radix does not render `Collapsible.Content` into the DOM
+  while closed — confirmed by building the site and finding no `<table>` tag anywhere in
+  `dist/*.html` for the two existing `TableView` call sites (§1, §4). This means every table behind
+  a "View as table" disclosure on the site today is **completely unreachable with JavaScript
+  disabled**, not merely visually collapsed — a JS-disabled reader can never open it. This predates
+  #14 (present in §1 and §4 already) and is out of scope to fix here: #14 works around it for its
+  own required non-visual equivalent by rendering the by-state sortable table as plain
+  always-visible markup instead of through `TableView` (see
+  `docs/contracts/interfaces/charts.md` "Government §11 additions"), and keeps `TableView` only for
+  the supplementary tax-mix detail table. Found while working on #14. Severity: accessibility,
+  site-wide, non-blocking for #14 but worth its own issue (candidate fix: `forceMount` on
+  `Collapsible.Content` with a CSS-only collapse instead of the Radix-driven DOM removal).
+- [2026-08-23] **Plan deviation, issue #14.** `.claude/plans/issue-14.md` was written assuming the
+  Census STC (state tax mix) source's discoverable vintage was FY2024, and its Definition-of-done
+  criterion 3 verification literally greps `dist/government/index.html` for the string `FY2024`.
+  `lib/sources.latest_census_stc()` performs genuine discovery (mandatory per the plan's own stated
+  principle: "a hardcoded path would silently serve a stale vintage"), and as actually run today it
+  resolves to **FY2025** — the FY2025 transposed workbook is live and correctly formed at
+  `https://www2.census.gov/programs-surveys/stc/tables/2025/`, which the original planning probe
+  did not check (it fetched the FY2024 URL directly rather than confirming FY2025 was newest and
+  populated). Serving a knowingly stale FY2024 vintage to make a literal grep pass would be the
+  exact failure this pipeline's discovery-over-hardcoding architecture exists to prevent, so the
+  page instead states the true FY2025 vintage for give, get and the tax mix alike, and `FY2024`
+  does not appear in `dist/government/index.html`. All other Definition-of-done criteria pass
+  unmodified with real fetched data (`states_receiving more than they pay` reconciles at 28 of 51,
+  not the plan's placeholder of 0). Reported in the exec return message for this issue.

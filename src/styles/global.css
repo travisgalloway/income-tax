@@ -606,6 +606,134 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   }
 }
 
+/* ---- By state -------------------------------------------------------------
+ * The tile-grid cartogram (§11) and its sortable table equivalent. New class
+ * names only; nothing here modifies an existing selector.
+ */
+
+.state-grid { width: 100%; height: auto; display: block; }
+.state-tile { cursor: pointer; }
+.state-tile:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.state-tile-code {
+  font-family: var(--font-data);
+  font-size: 10px;
+  font-variant-numeric: var(--num-table);
+  fill: var(--ink);
+  pointer-events: none;
+}
+.state-tile-mark {
+  font-family: var(--font-data);
+  font-size: 10px;
+  fill: var(--ink);
+  pointer-events: none;
+}
+
+.state-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  margin-top: 0.7rem;
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  color: var(--ink-soft);
+}
+.state-legend-swatch {
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.85rem;
+  border: 1px solid var(--rule);
+}
+
+.basis-toggle { display: inline-flex; align-items: baseline; gap: 0.9rem; }
+.basis-toggle-item {
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-bottom: var(--rule-width) solid transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.basis-toggle-item:hover { color: var(--ink); }
+.basis-toggle-item[data-state='on'] {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+.sortable-table {
+  border-collapse: collapse;
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  font-variant-numeric: var(--num-table);
+  width: 100%;
+}
+.sortable-table caption {
+  text-align: left;
+  font-family: var(--font-text);
+  font-style: italic;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+  padding-bottom: 0.5rem;
+}
+.sortable-table th, .sortable-table td {
+  text-align: right;
+  padding: 0.24rem 0.75rem;
+  white-space: nowrap;
+  border: 0;
+}
+.sortable-table thead th {
+  vertical-align: bottom;
+  font-weight: 400;
+  border-bottom: var(--rule-width) solid var(--ink);
+  padding-bottom: 0.3rem;
+}
+.sortable-table tbody tr { border-bottom: var(--rule-hair) solid var(--rule); }
+.sortable-table tbody tr:last-child { border-bottom: var(--rule-width) solid var(--ink); }
+.sortable-table th[scope='row'] { text-align: left; font-weight: 400; }
+
+.sort-button {
+  font: inherit;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+}
+.sort-button:hover { color: var(--ink); }
+
+.readout-state { min-height: 2.4em; }
+
+.tax-mix-bar { width: 100%; height: auto; display: block; }
+
+.tax-mix-select {
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  background: transparent;
+  border: 0;
+  border-bottom: var(--rule-width) solid var(--rule);
+  padding: 0 0 0.1rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+.tax-mix-select-content {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  max-height: 20rem;
+  overflow-y: auto;
+}
+.tax-mix-select-item {
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+}
+.tax-mix-select-item[data-highlighted] {
+  background: var(--rule);
+  outline: none;
+}
+
 /* ---- Section 2/3 furniture: debt holders bars, debt maturity scale --------
  * Both islands draw their own bars/bands rather than reusing Chart's line/area
  * primitives, so their in-SVG text and scale furniture get their own rules.

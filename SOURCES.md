@@ -125,6 +125,51 @@ period. **A chart must say which basis it shows.**
 
 ---
 
+## State give-and-get
+
+Government §11 compares what each state pays the federal government against what it gets back.
+Four sources were probed; two were fetched, one was rejected outright, and one is cited but never
+ingested.
+
+**IRS Statistics of Income, SOI Data Book Table 5, Gross Collections by Type of Tax and State**
+`irs.gov/pub/irs-soi/` (basename discovered per run; FY2025 fetched as `25db-1-05-co.xlsx`, 61,340
+bytes). Gross federal tax collections by state, classified by the filer's address. **This is
+"give."** The workbook's own note: classification by state can misattribute a corporation's tax to
+its principal office and a border employer's withholding to the wrong side of a state line.
+
+**USASpending.gov, `POST /api/v2/search/spending_by_geography/`** Keyless, no API key required.
+Queried for the same fiscal-year window the IRS vintage covers (FY2025: 2024-10-01 to 2025-09-30),
+returning 57 rows: the 50 states, DC, Puerto Rico, Guam, the US Virgin Islands, the Northern
+Mariana Islands, American Samoa, and one row with an empty `shape_code` (unattributed award
+spending, recorded in `_meta.coverage.unattributed_get_b` rather than dropped). **This is "get,"**
+classified by **place of performance**, and it supplies the population denominator used for every
+per-capita figure on both sides.
+
+**US Census Bureau, Annual Survey of State Government Tax Collections (STC)**
+`www2.census.gov/programs-surveys/stc/tables/{year}/FY{year}-STC-Detailed-Table-Transposed.xlsx`,
+vintage discovered per run (resolved to FY2025 at time of writing). States are columns, tax items
+are rows keyed by Census item code; a cell of `X` means the state does not levy that tax at all
+(Alaska has no general sales tax), a fact recorded distinctly from a genuinely missing figure.
+Used for the state tax-mix figure.
+
+**Census API (`api.census.gov`)** — **Rejected.** Every endpoint tried, including keyless
+`timeseries/govs` and `2023/acs/acs1`, redirected to `data/missing_key.html`. No API secret is
+introduced into this pipeline's CI.
+
+**Rockefeller Institute of Government, state balance-of-payments studies** — **Cited, never
+ingested.** This is the authoritative balance-of-payments comparison and the honest name for what
+a reader might expect §11 to be; its published series ends at FY2022 with no machine-readable feed.
+Hand-transcribing a 50-state table from a PDF is exactly the fabrication risk this pipeline's
+fetch-and-validate gate exists to prevent, so it is cited in body copy and never treated as data.
+
+**The IRS and USASpending figures are deliberately FY-matched** (the USASpending fetch window is
+derived from the discovered IRS fiscal year, never the other way independently), so give and get
+compare the same twelve months by construction. The Census tax-mix vintage is discovered
+separately and is not guaranteed to land on the same fiscal year as give and get in every future
+run — read `_meta.provenance.vintage` on the actual published output rather than assuming.
+
+---
+
 ## Attribution conventions used throughout
 
 **Fiscal year assignment.** Each fiscal year is assigned to whoever held the
