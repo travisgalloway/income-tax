@@ -704,7 +704,9 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 
 /* ---- Households route: brushable year range and multi-panel figures -----
  * The shared timeline (`YearRange.tsx`) and the sub-heads/empty-state used by
- * a figure that stacks more than one panel in one SVG (`HouseholdSpread.tsx`).
+ * a figure that stacks more than one panel in one SVG (`HouseholdSpread.tsx`,
+ * `BracketHistory`'s three stacked panels). `.panel-title` is quieter than
+ * `.figure-title`: it labels a part, not the whole figure.
  */
 
 .year-range { margin: 0.4rem 0 1.15rem; max-width: var(--measure-wide); }

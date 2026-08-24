@@ -12,7 +12,7 @@ from __future__ import annotations
 from lib import curated, emit
 
 GEN = "monthly/curated_snapshots.py"
-OUTPUTS = ["debt_holders", "debt_maturity", "income_tax_by_group", "oecd"]
+OUTPUTS = ["debt_holders", "debt_maturity", "income_tax_by_group", "oecd", "cbo_effective_rates"]
 
 
 def build(dry_run: bool = False) -> list[str]:

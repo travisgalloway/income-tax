@@ -71,3 +71,9 @@ export function indexValue(v: number): string {
 export function calendarYear(y: number): string {
   return `${y}`
 }
+
+/** A rate already expressed in percent (not a 0-1 fraction), for statutory
+ *  and effective tax rate figures. */
+export function percentRate(v: number, digits = 1): string {
+  return `${v.toFixed(digits)}%`
+}

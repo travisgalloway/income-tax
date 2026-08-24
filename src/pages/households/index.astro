@@ -3,13 +3,19 @@ import BaseLayout from '../../layouts/BaseLayout.astro'
 import Figure from '../../components/Figure.astro'
 import { MedianIncome } from '../../components/islands/MedianIncome'
 import { HouseholdSpread } from '../../components/islands/HouseholdSpread'
-import { income, incomeGroups, cboTop1IncomeShare, vintageOf } from '../../data'
+import { BracketHistory } from '../../components/islands/BracketHistory'
+import { StatutoryVsEffective } from '../../components/islands/StatutoryVsEffective'
+import {
+  income, incomeGroups, cboTop1IncomeShare, bracketHistory, cboEffectiveRatesData, vintageOf,
+} from '../../data'
 
 // Sections built so far. Everything else still falls through to the
 // "Not built yet." placeholder below.
 const HAND_WRITTEN = new Set([
   'what-a-household-earns',
   'the-spread',
+  'a-century-of-brackets',
+  'statutory-vs-effective',
 ])
 
 const sections = [
@@ -21,6 +27,8 @@ const sections = [
   { id: 'the-bill-you-do-not-see', label: 'The bill you do not see' },
   { id: 'limits', label: 'Limits' },
 ]
+
+const cbo = cboEffectiveRatesData()
 ---
 
 <BaseLayout
@@ -95,6 +103,85 @@ const sections = [
     <p class="prose">
       These are shown on one timeline without a causal claim attached: the distribution
       moved for many reasons, and nothing here connects it to any particular policy.
+    </p>
+  </section>
+
+  <section id="a-century-of-brackets">
+    <p class="kicker"><span class="section-no">Section 3</span></p>
+    <h2>A century of brackets</h2>
+    <p class="standfirst">
+      The federal income tax has run 2 brackets (1988) to 56 (1918) since 1913, and the
+      income level where the top bracket begins has moved by a factor of about 25 once
+      inflation is stripped out.
+    </p>
+    <p class="finding">
+      The 1913 top bracket started at $500,000, about $16 million in 2024 dollars. The 2025
+      top bracket starts at $626,350 nominal, about $610,000 in 2024 dollars -- roughly a
+      96% real decline in where the top rate begins.
+    </p>
+
+    <Figure
+      ariaLabel="The top US income tax bracket has run from 2 brackets in 1988 to 56 in 1918. The top statutory rate has ranged from 7% at the outset to a wartime peak of 94% in 1944, while the income threshold where the top bracket begins has fallen from about $16 million in 1913 to about $600,000 in 2025, both in constant 2024 dollars."
+      title="Bracket count, top-bracket threshold and top statutory rate, 1913-2025"
+      source={bracketHistory._meta.source}
+      vintage={vintageOf(bracketHistory._meta)}
+      xUnit="Tax year"
+      yUnit="top rate in percent, bracket count, and top-bracket threshold in nominal and constant 2024 dollars"
+      note="Twelve years show a published top rate that differs from the raw bracket-schedule ladder top -- 1923, 1929, 1940, 1946-1950, 1968-1970 and 1981 -- because a credit, surtax or part-year rate change moved the effective figure. Both numbers are shown; see the table for the documented reason each year."
+    >
+      <BracketHistory client:visible rows={bracketHistory.data} />
+    </Figure>
+
+    <p class="prose">
+      Two things move independently here. The bracket COUNT is a policy choice: Congress ran
+      56 brackets in 1918 to fund the First World War and cut back to just two, 15% and 28%,
+      in the 1986 reform. The threshold is a different story -- it is set in nominal dollars
+      and, unless deliberately re-indexed, inflation erodes it every year it is left alone.
+      1913's top bracket applied only to income that would be about $16 million today; almost
+      nobody was ever going to pay the top rate. Today's threshold, in real terms, is a
+      fraction of that.
+    </p>
+    <p class="prose">
+      Ordinary income only: capital gains have been taxed at separate, usually lower, rates
+      for most of this period, and the alternative minimum tax, exemption phase-outs and the
+      3.8% net investment income tax since 2013 are not in this line either. Surtaxes ARE
+      folded into the published top rate for 1940 and 1968-1970, which is why those years read
+      higher than the plain schedule ladder.
+    </p>
+  </section>
+
+  <section id="statutory-vs-effective">
+    <p class="kicker"><span class="section-no">Section 4</span></p>
+    <h2>Statutory is not effective</h2>
+    <p class="standfirst">
+      Nobody pays the top rate on their whole income. The top bracket only taxes the slice of
+      income above its threshold, and CBO's own measure of what people actually pay -- the
+      average federal tax rate -- has moved far less than the statutory rate above it.
+    </p>
+    <p class="finding">
+      The top statutory rate fell from 70% in 1979 to 37% in 2022. Over the same span, the
+      average federal tax rate the top 1% actually paid, payroll tax included, moved from
+      35.1% to 31.5% -- a much smaller change than the statutory line alone would suggest.
+    </p>
+
+    <Figure
+      ariaLabel="The top statutory income tax rate ran from 70% in 1979 to 37% in 2022, while the average federal tax rate actually paid by the top 1 percent, which includes payroll tax, moved far less, from 35.1% to 31.5%. Nobody pays the top statutory rate on their whole income."
+      title="Top statutory rate against CBO average federal tax rates by income group, 1979-2022"
+      source={`${bracketHistory._meta.source}. CBO, The Distribution of Household Income, 2022 (January 2026), Supplemental Data Table 9, Average Federal Tax Rates by Income Group, 1979 to 2022.`}
+      xUnit="Tax / calendar year"
+      yUnit="percent"
+      note="CBO's average federal tax rate includes payroll tax, corporate income tax and excise tax, not individual income tax alone -- it INCLUDES PAYROLL TAX, so it is not comparable to the income-tax-only shares in section 5. The CBO points are published anchor years (1979, 2000, 2007, 2019, 2022), not an annual series, and are never drawn as a connected line."
+    >
+      <StatutoryVsEffective client:visible statutory={bracketHistory.data} cbo={cbo} />
+    </Figure>
+
+    <p class="prose">
+      The gap between the two lines is the whole point of this section. Nobody pays the top
+      rate on their whole income: it applies only above a threshold, deductions and credits
+      reduce it further, and until 2013 income above that threshold could often be recharacterised
+      as capital gains taxed at a separate, lower rate. The lowest quintile's average federal
+      tax rate fell furthest of all, to 0.6% by 2019, as refundable credits expanded; it was
+      9.3% in 1979.
     </p>
   </section>
 

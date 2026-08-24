@@ -14,6 +14,40 @@ time. Appended to, never rewritten. None of these have been acted on.
   number formatters inline rather than using `UnitToggle` and `charts/format.ts`. Section 4 uses
   the shared ones; §1 could be moved onto them. Found while working on #2. Severity: duplication,
   non-blocking.
+- [2026-08-23] Issue #10's plan specified `min_bytes=200_000` for the Tax Foundation
+  `income-tax-rates.csv` fetch in `pipeline/oneshot/bracket_history.py`. The live file is ~194,945
+  bytes, so the literal plan value made every fetch fail as "truncated". Deviated to `min_bytes=150_000`
+  (still comfortably below the live size, still catches real truncation). This is a criterion-
+  blocking plan defect, not a discretionary finding, so it was fixed rather than parked; noted here
+  per feature-closure record-keeping. Severity: plan defect, resolved, non-blocking.
+- [2026-08-23] Issue #10's plan specified requiring exactly 12 monthly CPIAUCNS observations per
+  year with no exception. The October 2025 CPI-U was never collected (2025 government shutdown;
+  BLS stated it cannot retroactively gather it — the first gap in this series since 1921), so 2025
+  permanently has only 11 monthly observations in FRED's `CPIAUCNS`. `bracket_history.py` carries a
+  narrow, dated exception (`EXPECTED_MONTHS = {2025: 11}`) rather than requiring an observation
+  that will never exist; every other year still requires exactly 12. Criterion-blocking, fixed
+  rather than parked. Severity: plan defect (real-world data gap the plan predates), resolved,
+  non-blocking.
+- [2026-08-23] The fetched Tax Foundation `income-tax-rates.csv` carries one corrupt row: 1985,
+  single filer, a duplicate zero-rate bracket with an open-ended top (`incomeGreaterThan=0`,
+  `incomeNotGreaterThan=` empty) alongside the real 0%-to-$2,390 "zero bracket amount" row (the
+  1977-1986 standard-deduction-equivalent). Left as fetched, this collides with the ladder's real
+  50% top bracket and breaks the "exactly one open-ended top bracket per status-year" invariant
+  the whole build depends on. `bracket_history.py`'s `_drop_phantom_zero_row` detects and drops
+  exactly this one known corrupt row and raises `SourceUnavailable` on any other unfamiliar
+  duplicate `incomeGreaterThan` it encounters, rather than guessing. Criterion-blocking (no other
+  year/status combination in 1913-2019 has a duplicate floor), fixed rather than parked. Severity:
+  upstream data defect, resolved, non-blocking.
+- [2026-08-23] Issue #10's plan lists `BracketHistory.tsx`'s `TableView` columns as Year / Top
+  statutory rate / Schedule ladder top / Brackets / threshold (nominal) / threshold (constant) /
+  Adjustment -- no mfj/mfs/hoh columns -- but its manual check M3 says "`no data`, never `0`, in
+  the mfj/mfs/hoh table columns for years before 1949/1952", which presumes columns the column
+  list does not include. Left the table matching the literal column list (kept narrow, matches the
+  issue's stated three things: bracket count, thresholds, top rate) rather than expanding scope to
+  reconcile M3; the underlying null-vs-zero invariant is still fully covered by
+  `test_filing_statuses_are_not_projected_backwards` and `test_bracket_history_absent_values_are_null_not_zero`
+  at the data layer. M3 itself is unexecuted here (no browser tooling). Severity: plan
+  inconsistency, non-blocking (M3 was already unexecuted for an unrelated reason).
 - [2026-08-23] `.claude/plans/issue-9.md`'s illustrative snippet for `cboTop1IncomeShare` in
   `src/data/index.ts` reads `(incomeGroups.data as IncomeGroupsTop1).cbo_top1_income_share`, a
   single assertion. `Record<string, unknown>` and `IncomeGroupsTop1` do not structurally overlap

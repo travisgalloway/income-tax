@@ -12,10 +12,12 @@ import holdersJson from './debt_holders.json'
 import maturityJson from './debt_maturity.json'
 import oecdJson from './oecd.json'
 import groupsJson from './income_tax_by_group.json'
+import bracketHistoryJson from './bracket_history.json'
+import cboEffectiveRatesJson from './cbo_effective_rates.json'
 
 import type {
-  BudgetYear, Dataset, DebtHolders, DebtMaturity, DebtYear, EconomyYear, IncomeGroupsTop1,
-  IncomeYear, Meta, OecdComparison, PartySplit, RevenueYear,
+  BracketYear, BudgetYear, CboEffectiveRates, Dataset, DebtHolders, DebtMaturity, DebtYear,
+  EconomyYear, IncomeGroupsTop1, IncomeYear, Meta, OecdComparison, PartySplit, RevenueYear,
 } from './types'
 
 export const budget = budgetJson as Dataset<BudgetYear[]>
@@ -28,6 +30,18 @@ export const debtHolders = holdersJson as Dataset<DebtHolders>
 export const debtMaturity = maturityJson as Dataset<DebtMaturity>
 export const oecd = oecdJson as Dataset<OecdComparison>
 export const incomeGroups = groupsJson as Dataset<Record<string, unknown>>
+export const bracketHistory = bracketHistoryJson as Dataset<BracketYear[]>
+// astro check rejects a single `as Dataset<CboEffectiveRates>` assertion here for
+// insufficient structural overlap with the raw JSON's inferred type, the same
+// situation issue #9 hit for its own non-tabular snapshots. Narrow through
+// `unknown` once here rather than reaching for `as unknown as` at every call site.
+export const cboEffectiveRates = cboEffectiveRatesJson as unknown as Dataset<Record<string, unknown>>
+
+/** Narrowing accessor for `cboEffectiveRates.data`, typed through `unknown` per
+ *  the comment above. */
+export function cboEffectiveRatesData(): CboEffectiveRates {
+  return cboEffectiveRates.data as unknown as CboEffectiveRates
+}
 
 /**
  * Build-time guard on the one invariant the whole site depends on.
@@ -48,7 +62,7 @@ function assertDataset(name: string, d: { _meta?: { source?: string } }): void {
 
 for (const [name, d] of Object.entries({
   budget, debt, economy, income, revenue, partySplits,
-  debtHolders, debtMaturity, oecd, incomeGroups,
+  debtHolders, debtMaturity, oecd, incomeGroups, bracketHistory, cboEffectiveRates,
 })) {
   assertDataset(name, d)
 }
