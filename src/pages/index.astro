@@ -1,5 +1,8 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro'
+import Figure from '../components/Figure.astro'
+import { PricesAndRates } from '../components/islands/PricesAndRates'
+import { economy, vintageOf } from '../data'
 
 const sections = [
   { id: 'one-picture', label: 'One picture' },
@@ -22,7 +25,68 @@ const sections = [
     The denominators everything else on this site is measured against, and one thing they do
     not show on their own.
   </p>
-  {sections.map((s) => (
+  {sections.slice(0, 3).map((s) => (
+    <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
+  ))}
+
+  <section id="prices-rates">
+    <p class="kicker"><span class="section-no">Section 4</span></p>
+    <h2>Prices and rates</h2>
+    <p class="standfirst">
+      CPI-U inflation was 2.7% and the fed funds rate 4.4% in fiscal 2025, both well below the
+      fiscal 1980 and 1981 peaks of 13.6% and 16.9%, and both near zero for years between 2009
+      and 2021.
+    </p>
+    <p class="finding">
+      CPI-U inflation peaked at 13.6% in fiscal 1980 and the fed funds rate at 16.9% in fiscal
+      1981; both fell to near zero between 2009 and 2021 before rising again, with CPI-U
+      inflation at 2.7% and the fed funds rate at 4.4% in fiscal 2025.
+    </p>
+
+    <Figure
+      ariaLabel="CPI-U inflation peaked at 13.6% in fiscal 1980 and the fed funds rate at 16.9% in fiscal 1981; both fell to near zero between 2009 and 2021 before rising again, with CPI-U inflation at 2.7% and the fed funds rate at 4.4% in fiscal 2025."
+      title="Inflation and interest rates, fiscal 1950 to 2036"
+      source={economy._meta.source}
+      vintage={vintageOf(economy._meta)}
+      xUnit="Fiscal year"
+      yUnit="percent change in the price index from the previous fiscal year (CPI-U and core PCE) and percent per year (the fed funds rate, the 3-month bill and the 10-year note)"
+      note="CPI-U and core PCE are published as index levels. The inflation panel plots the year-over-year percent change in each index, not the index itself. CPI-U inflation is derivable from fiscal 1951 and core PCE inflation from fiscal 1961, one year after each index itself starts, because the first index year has no prior year to compare against. The fed funds rate starts fiscal 1955, the 3-month bill fiscal 1950, and the 10-year note fiscal 1954. The series continue to FY2036 as a CBO baseline projection, drawn as a separate dashed branch past the marked FY2025 boundary."
+    >
+      <PricesAndRates
+        client:visible
+        rows={economy.data}
+        lastActualFy={economy._meta.estimate_boundary!.last_actual_fy}
+      />
+    </Figure>
+
+    <p class="prose">
+      CPI-U and core PCE are published by CBO as index levels, not rates. Both panels above
+      derive the year-over-year percent change from the index instead: CPI-U inflation is
+      derivable from fiscal 1951, one year after the CPI-U index itself starts (fiscal 1950),
+      because the first index year has no prior year to compare against; core PCE inflation is
+      derivable from fiscal 1961, for the same reason, since the core PCE index itself starts
+      fiscal 1960. CPI-U inflation was negative in fiscal 1955 and again in fiscal 2009, when it
+      fell to -0.3%, rose to 7.9% in fiscal 2022, and was 2.7% in fiscal 2025. Core PCE inflation
+      peaked at 9.2% in fiscal 1981, was 5.3% in fiscal 2022, and 2.8% in fiscal 2025.
+    </p>
+    <p class="prose">
+      The rates panel holds the fed funds rate (from fiscal 1955), the 3-month bill (from fiscal
+      1950) and the 10-year note (from fiscal 1954) on one zero-anchored axis, because all three
+      are positive throughout. The fed funds rate peaked at 16.9% in fiscal 1981 and fell to
+      0.08% in fiscal 2021, before rising to 4.4% in fiscal 2025. The 3-month bill fell to 0.03%
+      in fiscal 2015 and was 4.2% in fiscal 2025. The 10-year note peaked at 13.9% in fiscal
+      1982, fell to 1.1% in fiscal 2020, and was 4.3% in fiscal 2025. Each near-zero value sits
+      on the same axis as the fiscal 1981 peak, not compressed onto a separate scale, and each
+      series draws a gap, never a zero, before its own documented start year.
+    </p>
+    <p class="prose">
+      Rates are the mechanism that reprices the debt. The government route shows what that
+      costs, in <a href="/government/#net-interest">net interest</a>, and how fast it feeds
+      through, in <a href="/government/#how-old">how old the debt is</a>.
+    </p>
+  </section>
+
+  {sections.slice(4).map((s) => (
     <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
   ))}
 </BaseLayout>

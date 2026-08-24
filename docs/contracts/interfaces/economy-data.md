@@ -94,3 +94,19 @@ outside a spot-checked year.
   label naming which series it belongs to.
 - `income._meta.provenance` carries neither `vintage` nor `retrieved_at`, so `vintageOf(income._meta)`
   returns `null`. Section 2's `Figure` uses `vintageOf(economy._meta)` only, for that reason.
+
+## `cpi` and `core_pce` are index levels, not rates (Section 4)
+
+`_meta.units.cpi` and `_meta.units.core_pce` both say `"index"`. Neither is a percent, and neither
+may be labelled "inflation" directly: `PricesAndRates.tsx` derives the year-over-year percent
+change once (`100 * (cur - prev) / prev`) and charts, tables and axis titles all name that
+transform. Coverage: `cpi` is non-null from FY1950 (so the derived rate is derivable from FY1951,
+one year later, since the first index year has no predecessor); `core_pce` is non-null from FY1960
+(derived rate from FY1961). `ff` is non-null from FY1955, `t3m` from FY1950, `t10` from FY1954 —
+these three are already percentages and are charted at their native level, not derived.
+
+No rate in this file goes negative: the minima are `ff` FY2021 `0.083` and `t3m` FY2015 `0.028`,
+both near-zero fiscal-year values on the same zero-anchored axis as the `ff` FY1981 peak of
+`16.945`. What *is* negative is the derived inflation series — CPI-U year-over-year is negative in
+FY1955 and again `-0.301%` in FY2009 — so the inflation panel's domain admits negative values and
+carries a `ZeroLine`, while the rates panel stays zero-anchored throughout.

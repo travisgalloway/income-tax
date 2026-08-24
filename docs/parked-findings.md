@@ -14,3 +14,25 @@ time. Appended to, never rewritten. None of these have been acted on.
   number formatters inline rather than using `UnitToggle` and `charts/format.ts`. Section 4 uses
   the shared ones; §1 could be moved onto them. Found while working on #2. Severity: duplication,
   non-blocking.
+- [2026-08-23] `src/components/charts/scales.ts:43–51` `niceExtent` pads a value range outward by a
+  fixed fraction of its span, then re-anchors the padded low end to `0` only if that padded value
+  is still positive; it never pulls a padded-negative low end back to zero. For a series whose
+  minimum sits very close to zero while its maximum is far away (the fed funds/3-month bill/
+  10-year note panel in §4: min `0.028`, max `16.945`), the 8% pad of the ~16.9-point span
+  overshoots past zero, producing a small negative low end (~`-1.33`) on what should be a
+  zero-anchored axis. Worked around locally in `PricesAndRates.tsx` by pinning the low end to `0`
+  explicitly and using only `niceExtent`'s padded high end, rather than fixing the shared helper
+  (which other charts on `main` and on sibling branches already call and whose behaviour those
+  charts may depend on). Found while working on #13. Severity: a shared-helper edge case that
+  produced a plan/DoD-vs-code inconsistency for this one panel; non-blocking elsewhere so far, but
+  worth a fix in `scales.ts` itself (e.g. re-check the *original*, unpadded low/high before
+  deciding whether to anchor) so future callers don't have to route around it individually.
+- [2026-08-23] `pipeline/monthly/cbo.py:47–50` `ECON_MAP` does not emit `chained_cpiu` (CBO,
+  non-null from FY2002) or `core_cpiu` (non-null from FY1958) into `src/data/economy.json`, even
+  though both exist in the CBO source (`pipeline/.cache`). Issue #13's edge-case list names both.
+  Built §4 from the five series the issue's *Scope* section actually names instead (CPI-U, core
+  PCE, fed funds, 3-month bill, 10-year note), all of which are shipped. Emitting the other two
+  needs a pipeline change (`ECON_MAP`, `_meta.units`, a schema update) on a `pipeline`-labelled
+  issue, and a re-fetch that would bump the CBO vintage and churn `economy.json` for reasons
+  unrelated to §§4-6. Found while working on #13. Severity: scope gap against the issue's edge-case
+  list, parked rather than acted on; not blocking any Definition-of-done criterion for #13.

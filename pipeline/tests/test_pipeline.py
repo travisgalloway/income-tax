@@ -202,3 +202,35 @@ def test_every_mapped_rollcall_passed(splits):
             if v is None:
                 continue
             assert v["yea"] >= (v["nay"] if ch == "senate" else v["nay"] + 1), f"{pl} {ch}"
+
+
+# ---- economy route ----
+
+def test_rate_series_start_at_their_documented_first_year():
+    """§4 states each series' own start. A back-fill or a zero-fill would break this."""
+    rows = {r["y"]: r for r in load("economy")["data"]}
+    for field, first in (("t3m", 1950), ("t10", 1954), ("ff", 1955),
+                         ("cpi", 1950), ("core_pce", 1960)):
+        assert rows[first][field] is not None, f"{field} is null at its documented start FY{first}"
+        for y in range(1950, first):
+            assert rows[y][field] is None, f"{field} is non-null at FY{y}, before FY{first}"
+
+
+def test_no_rate_series_is_negative_and_the_minima_are_near_zero():
+    """§4's axis holds the FY1981 peak and the near-zero years on one zero-anchored scale."""
+    rows = {r["y"]: r for r in load("economy")["data"] if r["actual"]}
+    for field in ("ff", "t3m", "t10"):
+        vals = {y: r[field] for y, r in rows.items() if r[field] is not None}
+        assert min(vals.values()) > 0, f"{field} goes negative; the zero-anchored axis is wrong"
+    assert abs(rows[1981]["ff"] - 16.945) <= 0.01
+    assert abs(rows[2021]["ff"] - 0.083) <= 0.005
+    assert abs(rows[2015]["t3m"] - 0.028) <= 0.005
+
+
+def test_cpi_inflation_is_negative_in_fy1955_and_fy2009():
+    """§4 draws a ZeroLine because the derived inflation series crosses zero."""
+    rows = {r["y"]: r["cpi"] for r in load("economy")["data"]}
+    def yoy(y):
+        return 100 * (rows[y] - rows[y - 1]) / rows[y - 1]
+    assert yoy(1955) < 0 and yoy(2009) < 0
+    assert abs(yoy(1980) - 13.556) <= 0.01
