@@ -741,3 +741,66 @@ def test_attribution_every_law_joins_to_a_counted_split(splits):
     for l in _all_laws():
         assert l["public_law"] in splits, l["public_law"]
         assert splits[l["public_law"]]["character"] != "no recorded vote"
+
+
+# ---- section 11/12 limits -------------------------------------------------
+
+def test_crisis_years_are_a_third_of_all_borrowing(budget):
+    """sections.md section 11 concentration item: FY2008-09 and FY2020-21 against
+    the other 27 years of the FY1995-FY2025 span."""
+    crisis = [2008, 2009, 2020, 2021]
+    span = [y for y in range(1995, 2026) if y in budget]
+    crisis_total = -sum(budget[y]["n_de"] for y in crisis)
+    whole_total = -sum(budget[y]["n_de"] for y in span)
+    other = [y for y in span if y not in crisis]
+    other_avg = -sum(budget[y]["n_de"] for y in other) / len(other)
+
+    assert abs(crisis_total - 7.78) <= 0.02
+    assert abs(100 * crisis_total / whole_total - 32) <= 0.6
+    assert abs(other_avg - 0.61) <= 0.01
+
+
+def test_deficit_debt_gap_matches_the_curated_resolution(budget):
+    """discrepancies.yaml locks the $24.15T/$26.74T gap; the deficit side must
+    still agree with what the pipeline actually recomputes."""
+    gap = curated.discrepancies()["deficit_vs_debt_gap"]["use"]
+    assert gap["cumulative_deficits_t"] == 24.15
+    assert gap["debt_held_by_public_rise_t"] == 26.74
+
+    span = [y for y in range(1995, 2026) if y in budget]
+    recomputed = -sum(budget[y]["n_de"] for y in span)
+    assert abs(recomputed - gap["cumulative_deficits_t"]) <= 0.05
+
+
+def test_limits_section_quotes_the_curated_deficit_debt_gap():
+    """$26.74T has no output field to resolve against, so it is locked here
+    instead of in prose_figures.yaml."""
+    html = (LEGACY / "src" / "pages" / "government" / "index.astro").read_text()
+    assert "$24.15 trillion" in html
+    assert "$26.74 trillion" in html
+
+
+def test_limits_section_does_not_call_the_votes_classified():
+    """Limit 4 must describe the counted splits, not the retired classification."""
+    src = (LEGACY / "src" / "pages" / "government" / "index.astro").read_text()
+    limits = src[src.index('id="limits"'):]
+    assert "classif" not in limits.lower()
+
+
+def test_sources_doc_describes_counted_splits():
+    """SOURCES.md's 'vote composition limitation' section must match the shipped
+    reality: counted, not classified, with all four remaining limits named."""
+    doc = (LEGACY / "SOURCES.md").read_text()
+    assert "classified from published vote character" not in doc
+    assert "Voteview" in doc
+    assert "final-passage" in doc
+    assert "voice" in doc.lower() and "27 March 2020" in doc
+    assert "10%" in doc
+    assert "caucus" in doc.lower()
+
+
+def test_exactly_one_chamber_vote_is_absent(splits):
+    """Guards limit 4's CARES Act clause against a future Voteview vintage
+    quietly acquiring a roll call that today does not exist."""
+    absent = [(pl, ch) for pl, r in splits.items() for ch in ("house", "senate") if r[ch] is None]
+    assert absent == [("116-136", "house")]
