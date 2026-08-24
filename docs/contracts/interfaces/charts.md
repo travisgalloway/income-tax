@@ -11,7 +11,7 @@ figcaption. Four props are **required and throw at build time** if omitted or em
 
 | Prop | Contract |
 |---|---|
-| `ariaLabel` | The finding, as a sentence — not a description of the chart's shape. |
+| `ariaLabel` | The finding, as a sentence — not a description of the chart's shape. Rendered as the `<figure>`'s own `aria-label`, so the figure carries an accessible name distinct from "figure"; the inner `<svg>` carries the same sentence as its own label. |
 | `title` | Short italic title beside the figure number. |
 | `source` | `_meta.source`, **verbatim**. Never a summary. |
 | `xUnit` / `yUnit` | Unit label for each axis. No bare-number axis is permitted. |
@@ -36,9 +36,13 @@ band) is legible by position, not only by which side of a colour boundary it fal
 
 ## `TableView` (`src/components/islands/TableView.tsx`)
 
-The "View as table" disclosure every figure carries. Each `Column` requires a `unit` — there is no
-unitless column. Cell values are read as `row[key] ?? 'no data'`, so a consumer that wants "no
-data" instead of "0" for a genuinely absent value must pass `null`, not `0` or `''`.
+The "View as table" disclosure every figure carries. A native `<details>`/`<summary>` element, not
+a Radix `Collapsible` — the table, its `<caption>`, and its `th scope="col"`/`scope="row"` cells are
+present in the server-rendered HTML whether or not scripting runs, and the open/close label swaps
+via `.tableview[open] .tv-open`/`.tv-close` CSS rather than component state. Each `Column` requires
+a `unit` — there is no unitless column. Cell values are read as `row[key] ?? 'no data'`, so a
+consumer that wants "no data" instead of "0" for a genuinely absent value must pass `null`, not `0`
+or `''`.
 
 ## `UnitToggle` (`src/components/islands/UnitToggle.tsx`) + `charts/format.ts`
 

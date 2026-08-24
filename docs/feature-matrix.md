@@ -21,3 +21,10 @@ when the code merges.
 | GOV-10 | Where the money comes from — revenue by source, brackets, OECD | none | none | Planned | — | — |
 | GOV-11 | By state | none | none | Planned | — | — |
 | GOV-12 | What this cannot tell you — caveats in full | none | none | Planned | — | — |
+
+## Cross-cutting
+
+| ID | Capability | UI | Data | Status | Issue | Contract |
+|----|-----------|----|------|--------|-------|----------|
+| A11Y-1 | Shared-layer accessibility: no-JS data tables, named figure/nav landmarks, focusable skip target, SVG focus ring, JS-off chart legibility, token contrast enforcement, static conformance suite | done | n/a | Shipped | #15 | contracts/accessibility.md |
+| A11Y-2 | Keyboard and assistive-technology sweep across all three routes and `/sources` — blocked on #16–#28 (the sections it would sweep do not exist on `main` yet) and on browser/AT tooling this repo's exec environment does not have | none | n/a | Planned | #15 | contracts/accessibility.md |

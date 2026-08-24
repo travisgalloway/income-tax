@@ -14,3 +14,18 @@ time. Appended to, never rewritten. None of these have been acted on.
   number formatters inline rather than using `UnitToggle` and `charts/format.ts`. Section 4 uses
   the shared ones; §1 could be moved onto them. Found while working on #2. Severity: duplication,
   non-blocking.
+- [2026-08-23] `docs/test-plan.md`'s `GOV-11` row does not exist in this branch's base (introduced
+  by PR #14/#28) and is out of scope for #15 to invent. When #28 lands, its `GOV-11` manual column
+  should name, among its items: "Tab-focusable data points + live-region parity (one live region
+  per chart, not per data point)" and "colour never carries meaning alone — every colour-coded
+  category also appears as a table column (state names/postal codes)". Found while working on #15.
+  Severity: test-plan completeness, non-blocking; belongs to the PR that owns the row.
+- [2026-08-23] `@radix-ui/react-collapsible` has no remaining consumer after #15 replaced
+  `TableView`'s Radix `Collapsible` with a native `<details>`/`<summary>`. Left in `package.json`
+  because removing a dependency changes the lockfile, and thirteen other open PRs (#16–#28) branch
+  from a `main` that still has it. Found while working on #15. Severity: dead dependency,
+  non-blocking; remove once those PRs have merged.
+- [2026-08-23] `src/components/islands/DebtChart.tsx` inlines its own number formatters instead of
+  `charts/format.ts` (same finding as the `UnitToggle` one above, restated here because #15's
+  accessibility work touches the same file's focus/labelling code without touching this). Found
+  while working on #15. Severity: duplication, non-blocking.
