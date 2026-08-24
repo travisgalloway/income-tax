@@ -137,3 +137,24 @@ constant, so a future data revision that changes a series' start year fails a te
 silently mislabelling); it throws on an all-null series rather than falling back to `[0, 1]`, which
 would chart an empty series as though it were real. `clampToRange` filters a row array to the
 currently-selected `[lo, hi]`.
+
+## Economy route additions (`src/components/charts/estimates.tsx`)
+
+`economy.json` carries CBO actuals and its baseline projection in one series, and
+`_meta.notes[0]` forbids drawing the two as one continuous line. `estimates.tsx` is the shared
+vocabulary for that split, used by every Economy-route chart that touches `economy.json`:
+
+- `PROJECTED_DASH` (`'6 4'`) and `PROJECTED_OPACITY` (`0.55`) — the dash pattern and opacity every
+  projected branch uses, so a reader learns the convention once.
+- `splitAtBoundary(rows, lastActualFy)` — splits a row array into `{ actual, projected }` at the
+  boundary, **throwing** if a row is flagged `actual` past it. The boundary row is repeated as the
+  first point of `projected` so the dashed branch starts where the solid one ends; they remain two
+  separate `<path>` elements with different stroke styles.
+- `<BoundaryRule frame x label>` — a vertical rule at the boundary plus its own `.annotation` text,
+  so the split is legible without relying on the dash pattern alone.
+
+Two-panel convention (`WhoWorks.tsx`): when two series share a unit but not a base (percent of the
+labour force versus percent of the population 16 and over), they get two stacked `<Chart>`
+elements with the same `width`/`margin`/`x` scale rather than one chart with two y-axes. Only the
+panel with an interaction affordance carries focusable `.datum` elements — a second panel with no
+hoverable content needs no focusable one, so hover/focus parity still holds exactly.

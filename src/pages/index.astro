@@ -1,5 +1,10 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro'
+import Figure from '../components/Figure.astro'
+import { RealGdpLogScale } from '../components/islands/RealGdpLogScale'
+import { GrowthAndShadow } from '../components/islands/GrowthAndShadow'
+import { WhoWorks } from '../components/islands/WhoWorks'
+import { economy, income, vintageOf } from '../data'
 
 const sections = [
   { id: 'one-picture', label: 'One picture' },
@@ -22,7 +27,146 @@ const sections = [
     The denominators everything else on this site is measured against, and one thing they do
     not show on their own.
   </p>
-  {sections.map((s) => (
+  <section id="one-picture">
+    <p class="kicker"><span class="section-no">Section 1</span></p>
+    <h2>Seventy-five years, ten times the output</h2>
+    <p class="standfirst">
+      Real GDP was $2.38 trillion in fiscal 1950 and $23.72 trillion in fiscal 2025, both in
+      FY2025 chained dollars. That is 9.95 times as much output, an average of 3.1% a year over
+      75 years.
+    </p>
+    <p class="finding">
+      Real GDP grew 895% between FY1950 and FY2025, from $2.383T to $23.718T in FY2025 chained
+      dollars.
+    </p>
+
+    <Figure
+      ariaLabel="Real GDP grew 895% between fiscal 1950 and fiscal 2025, from $2.38 trillion to $23.72 trillion in FY2025 chained dollars, tracing a near-straight line on a log scale with visible bends at the 2008 to 2009 recession and in fiscal 2020."
+      title="Real GDP, fiscal 1950 to 2036, log scale"
+      source={economy._meta.source}
+      vintage={vintageOf(economy._meta)}
+      xUnit="Fiscal year"
+      yUnit="real GDP in $ trillions, FY2025 chained, on a base-10 log scale"
+      note="The series continues to FY2036 as a CBO baseline projection. Projected years are drawn as a separate dashed line beyond the marked FY2025 boundary and are not actuals."
+    >
+      <RealGdpLogScale
+        client:visible
+        rows={economy.data}
+        lastActualFy={economy._meta.estimate_boundary!.last_actual_fy}
+      />
+    </Figure>
+
+    <p class="prose">
+      The vertical axis is a base-10 log scale. Equal distances up the axis are equal percentage
+      changes, not equal dollar amounts, so a constant growth rate draws as a straight line. On a
+      linear axis the last twenty years would tower over the first fifty and every earlier
+      deviation would flatten into the baseline. Here the 2008 to 2009 recession and the fiscal
+      2020 dip read as bends in a line whose slope is otherwise close to constant.
+    </p>
+    <p class="prose">
+      Fiscal years, not calendar years. FY2025 ran October 2024 to September 2025. The CBO file
+      runs to FY2036, and everything after FY2025 is a baseline projection, drawn as a dashed
+      line beyond the marked boundary. Nominal GDP in FY1995 was $7.56 trillion, the same
+      denominator the government route divides by.
+    </p>
+  </section>
+
+  <section id="growth-shadow">
+    <p class="kicker"><span class="section-no">Section 2</span></p>
+    <h2>Output per hour, and what a household got</h2>
+    <p class="standfirst">
+      Between 1984 and 2024, output per hour in the nonfarm business sector rose 116.5%. Real
+      median household income rose 38.6%. Both are indexed to 1984 = 100.
+    </p>
+    <p class="finding">
+      Indexed to 1984 = 100, output per hour reached 216.5 by 2024 and real median household
+      income reached 138.6.
+    </p>
+
+    <Figure
+      ariaLabel="Indexed to 1984 = 100, output per hour reached 216.5 by 2024 while real median household income reached 138.6, the two lines separating over the period."
+      title="Output per hour and real median household income, 1984 to 2024, indexed"
+      source={`Output per hour: ${economy._meta.source}. Median household income: ${income._meta.source}`}
+      vintage={vintageOf(economy._meta)}
+      xUnit="Year (fiscal for output per hour, calendar for median household income)"
+      yUnit="index, 1984 = 100"
+      note="Two sources on two calendars. Output per hour is CBO, fiscal years; real median household income is Census via FRED, calendar years in 2024 dollars. The two use different price indexes and different units of observation, so the vertical gap between the indexed lines is not itself a measurable quantity."
+    >
+      <GrowthAndShadow client:visible economyRows={economy.data} incomeRows={income.data} />
+    </Figure>
+
+    <p class="prose">
+      The two lines are not directly commensurable and the gap between them is not a quantity of
+      anything. Output per hour is real nonfarm business output divided by hours worked, published
+      by CBO on a fiscal year basis. Real median household income is a Census Bureau household
+      survey median, published on a calendar year basis in 2024 dollars. They come from different
+      sources, are deflated by different price indexes, and count different units of observation:
+      one is per hour worked, the other is per household.
+    </p>
+    <p class="prose">
+      The shared window is 1984 to 2024. Median household income does not start until 1984 and
+      does not yet run past 2024, so the chart is drawn over that window rather than over the full
+      1950 to 2025 span of the output per hour series. The table below carries the full span, with
+      no data marked where the Census series does not reach.
+    </p>
+    <p class="prose">
+      This chart shows that the two series diverged. It does not show why, and nothing here
+      identifies a cause.
+    </p>
+  </section>
+
+  <section id="who-works">
+    <p class="kicker"><span class="section-no">Section 3</span></p>
+    <h2>Who works, and who is counted</h2>
+    <p class="standfirst">
+      Unemployment was 4.2% in fiscal 2025 against a noncyclical rate of 4.4%. Labour force
+      participation was 62.4%, down from a peak of 67.1% in fiscal 2000.
+    </p>
+    <p class="finding">
+      In FY2025 unemployment was 4.175% and CBO's noncyclical rate 4.408%, the first below the
+      second. Participation was 62.444%, 4.7 points below the FY2000 peak of 67.115%.
+    </p>
+
+    <Figure
+      ariaLabel="Unemployment was 4.2% in fiscal 2025 against a noncyclical rate of 4.4%, while labour force participation was 62.4%, 4.7 points below its fiscal 2000 peak."
+      title="Unemployment, the noncyclical rate and labour force participation, fiscal 1950 to 2036"
+      source={economy._meta.source}
+      vintage={vintageOf(economy._meta)}
+      xUnit="Fiscal year"
+      yUnit="percent of the labour force (unemployment and the noncyclical rate) and percent of the civilian population 16 and over (participation)"
+      note="Fiscal year averages. FY2020 averages 7.3% over October 2019 to September 2020; the monthly peak of spring 2020 is not in this file and is not shown. The noncyclical rate is a CBO estimate, not an observation. The series continues to FY2036 as a CBO baseline projection, drawn as a separate dashed line beyond the marked FY2025 boundary."
+    >
+      <WhoWorks
+        client:visible
+        rows={economy.data}
+        lastActualFy={economy._meta.estimate_boundary!.last_actual_fy}
+      />
+    </Figure>
+
+    <p class="prose">
+      The unemployment rate counts people without work who are looking for it, as a percent of
+      the labour force. The noncyclical rate is CBO's estimate of the rate that would prevail if
+      demand were neither short of nor in excess of the economy's capacity. It is an estimate
+      rather than an observation, CBO revises it, and it moves slowly. The two lines share the
+      upper panel because they measure the same thing.
+    </p>
+    <p class="prose">
+      Participation is in a separate panel because it is a percent of a different base: the
+      civilian population aged 16 and over, not the labour force. Putting it on the same axis as
+      unemployment would put two different denominators on one scale.
+    </p>
+    <p class="prose">
+      These are fiscal year averages. FY2020 ran October 2019 to September 2020 and averages
+      7.3%, so the monthly spike of spring 2020 sits inside that average rather than appearing as
+      a point. The highest fiscal year in the series is FY1983, at 10.1%. The unemployment panel
+      is linear and starts at zero, so nothing is compressed and nothing is clipped. The
+      participation panel does not start at zero: it runs over the range the series occupies,
+      which its axis states, because a zero-based axis would squeeze a move of about eight points
+      into a band too small to read.
+    </p>
+  </section>
+
+  {sections.slice(3).map((s) => (
     <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
   ))}
 </BaseLayout>

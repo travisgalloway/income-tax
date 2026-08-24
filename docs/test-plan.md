@@ -5,6 +5,14 @@ test runner (`cd pipeline && uv run pytest`, in `pipeline/tests/test_pipeline.py
 build-time checks (`npx astro check`, `npm run build`); there is no JS unit or e2e runner, so
 component-level and interaction coverage is manual and named explicitly rather than left implicit.
 
+## Economy route
+
+| ID | Pipeline (pytest) | Build-time | Manual | Gaps |
+|----|--------------------|-----------|--------|------|
+| ECO-1 | `test_real_gdp_is_positive_in_every_fiscal_year`, `test_nominal_gdp_fy1995_matches_the_budget_route_denominator` | `npx astro check`, `npm run build`, `grep -o '<svg' dist/index.html` (no-JS render proof) | 390px width and greyscale checks (`.claude/plans/issue-12.md` V-16, V-17) — no browser tooling in this environment, unexecuted | no automated JS coverage of `RealGdpLogScale.tsx`'s focus/readout interaction; proved only by the pytest data invariants plus the manual checks |
+| ECO-2 | `test_output_per_hour_and_median_income_share_1984_to_2024` | `npx astro check`, `npm run build` | same 390px/greyscale gap as ECO-1, unexecuted | no automated JS coverage of `GrowthAndShadow.tsx`'s interaction |
+| ECO-3 | `test_unemployment_peak_over_actuals_is_fy1983`, `test_participation_peak_over_actuals_is_fy2000`, `test_fy2020_unemployment_is_a_fiscal_year_average_not_a_monthly_peak` | `npx astro check`, `npm run build` | same 390px/greyscale gap as ECO-1, unexecuted | no automated JS coverage of `WhoWorks.tsx`'s two-panel interaction |
+
 ## Government route
 
 | ID | Pipeline (pytest) | Build-time | Manual | Gaps |

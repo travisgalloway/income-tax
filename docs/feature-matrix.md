@@ -5,6 +5,17 @@ reader encounters the sections. Status vocabulary is fixed: `Planned`, `In progr
 `Deprecated`. A row moves to `Shipped` only when its issue's full definition of done passes, not
 when the code merges.
 
+## Economy route (`src/pages/index.astro`)
+
+| ID | Capability | UI | Data | Status | Issue | Contract |
+|----|-----------|----|------|--------|-------|----------|
+| ECO-1 | One picture — real GDP FY1950-FY2036 on a log scale, actual/projection split | done | done | Shipped | #12 | contracts/interfaces/economy-data.md, contracts/interfaces/charts.md |
+| ECO-2 | Growth and its shadow — output per hour vs. real median household income, indexed 1984=100 | done | done | Shipped | #12 | contracts/interfaces/economy-data.md, contracts/interfaces/charts.md |
+| ECO-3 | Who works — unemployment vs. the noncyclical rate, and labour force participation | done | done | Shipped | #12 | contracts/interfaces/economy-data.md, contracts/interfaces/charts.md |
+| ECO-4 | Prices and rates | none | none | Planned | — | — |
+| ECO-5 | Labor and capital | none | none | Planned | — | — |
+| ECO-6 | Limits — what this route cannot tell you | none | none | Planned | — | — |
+
 ## Government route (`src/pages/government/index.astro`)
 
 | ID | Capability | UI | Data | Status | Issue | Contract |

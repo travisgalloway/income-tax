@@ -181,3 +181,13 @@ time. Appended to, never rewritten. None of these have been acted on.
   it updated rather than reverted, since a stale count ("41 of 41" instead of "48 of 48") would
   misrepresent the pipeline's actual state. Found while working on #11. Severity: plan file-list
   omission, non-blocking.
+- [2026-08-23] `.claude/plans/issue-12.md` V-21 and V-22 specify `grep -c 'View as table'
+  dist/index.html` and `grep -c 'aria-live="polite"' dist/index.html` (expecting exactly 3 and
+  `>= 3`). `astro build` emits `dist/index.html` as a single line with no line terminators
+  (confirmed: `wc -l` reports 0), so `grep -c` (which counts matching *lines*) always reports at
+  most 1 regardless of how many times the pattern actually occurs, on this file specifically.
+  Verified instead with `grep -o '<pattern>' dist/index.html | wc -l` (the same idiom the plan's
+  own V-20 already uses for `<svg`), which correctly reports 3 and 3. Not blocking: the
+  substantive Definition-of-done criteria (#9, #10) pass under the corrected count. Found while
+  working on #12. Severity: verification-command defect, non-blocking; the same `-c` pattern
+  should not be reused for single-line build output in future plans.
