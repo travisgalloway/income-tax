@@ -19,5 +19,5 @@ when the code merges.
 | GOV-8 | The laws — sortable/filterable explorer, cost, vote, enactment date | none | none | Planned | — | — |
 | GOV-9 | Who passed it, who signed it — attribution toggle | none | none | Planned | — | — |
 | GOV-10 | Where the money comes from — revenue by source, brackets, OECD | none | none | Planned | — | — |
-| GOV-11 | By state | none | none | Planned | — | — |
+| GOV-11 | By state, and which states give more than they get — IRS gross collections vs USASpending award spending, tile-grid cartogram, sortable table, state tax mix | done | done | Shipped | #14 | contracts/interfaces/state-data.md, contracts/interfaces/charts.md |
 | GOV-12 | What this cannot tell you — caveats in full | none | none | Planned | — | — |

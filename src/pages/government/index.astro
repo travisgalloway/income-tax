@@ -2,7 +2,14 @@
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import Figure from '../../components/Figure.astro'
 import { DebtChart } from '../../components/islands/DebtChart'
-import { debt, vintageOf } from '../../data'
+import { StateGiveGet } from '../../components/islands/StateGiveGet'
+import { StateTaxMix } from '../../components/islands/StateTaxMix'
+import { debt, statesBalance, statesTaxMix, vintageOf } from '../../data'
+
+// Every Government sibling section adds its own id to this Set once built;
+// the union of every branch's ids is what belongs here after all of them
+// merge (see the plan's cross-PR conflict register for #14).
+const built = new Set(['forty-trillion', 'by-state'])
 
 const sections = [
   { id: 'forty-trillion', label: 'The $40 trillion' },
@@ -67,7 +74,85 @@ const sections = [
     </p>
   </section>
 
-  {sections.slice(1).map((s) => (
+  <section id="by-state">
+    <p class="kicker"><span class="section-no">Section 11</span></p>
+    <h2>By state, and which states give more than they get</h2>
+    <p class="standfirst">
+      Every state pays federal tax and every state receives federal spending. Comparing the
+      two by state is not the balance-of-payments question it sounds like — what follows is
+      narrower on both sides, and says so before it says anything else.
+    </p>
+    <p class="finding">
+      In FY2025, {statesBalance.data.summary.n_get_more} states and DC received more in federal
+      award spending, per person, than the IRS collected from them in gross federal tax; {statesBalance.data.summary.n_give_more} paid more than they received.
+    </p>
+
+    <Figure
+      ariaLabel={`Federal gross tax collections against federal award spending by state, FY${statesBalance.data.fy_give}. ${statesBalance.data.summary.n_get_more} states and DC receive more than they pay; ${statesBalance.data.summary.n_give_more} pay more than they receive.`}
+      title="What each state gives the federal government and gets back, FY2025"
+      source={statesBalance._meta.source}
+      vintage={vintageOf(statesBalance._meta)}
+      xUnit="State or territory"
+      yUnit="federal gross tax collections against federal award spending, per person or in total"
+      note="Give is gross IRS collections by filer address; get is USASpending award spending by place of performance. This is narrower than a balance of payments on both sides — read the paragraphs below before comparing states."
+    >
+      <StateGiveGet client:visible data={statesBalance.data} />
+    </Figure>
+
+    <p class="prose">
+      <strong>What this is not.</strong> This is not a balance of payments. The Rockefeller
+      Institute's study of that name is the authoritative version, and its series ends at
+      FY2022. What is drawn here is federal tax <strong>collected</strong> in a state against
+      federal award spending <strong>performed</strong> in it, both for FY2025, and the two are
+      not opposite sides of one ledger.
+    </p>
+    <p class="prose">
+      <strong>Where the money is counted is not where it lands.</strong> The IRS classifies
+      collections by the filer's address, so a corporation's tax is booked to its principal
+      office and withholding is booked to the employer's location, which for a border employer
+      may sit in a different state from the people it withholds from. Federal spending is
+      counted where the work is performed, which sends money to the state hosting a
+      <strong> military base</strong> rather than the state its personnel came from, and to a
+      <strong> federal retiree's</strong> former duty station rather than where they now live.
+      <strong> Medicaid</strong> dollars are recorded against the state that passes them through
+      to providers.
+    </p>
+    <p class="prose">
+      <strong>Neither side is complete.</strong> Award spending excludes most direct benefit
+      payments, so the "get" side is smaller than what a state actually receives; gross
+      collections include penalties and interest and exclude excise taxes collected by Customs
+      and the Alcohol and Tobacco Tax and Trade Bureau. Read the ordering, not the arithmetic.
+    </p>
+
+    <Figure
+      ariaLabel={`Each state's own tax collections by category as a share of its total, FY${statesTaxMix.data.fy}.`}
+      title="State tax collections by category, as a share of each state's own total"
+      source={statesTaxMix._meta.source}
+      vintage={vintageOf(statesTaxMix._meta)}
+      xUnit="Tax category"
+      yUnit="percent of that state's own total tax collections"
+      note="A category can be genuinely not levied by a state (Alaska has no general sales tax) rather than merely unreported; the two are shown differently, never both as a dash."
+    >
+      <StateTaxMix client:visible data={statesTaxMix.data} />
+    </Figure>
+
+    <p class="prose">
+      Give (IRS), get (USASpending) and this state tax mix (Census) are three separately
+      discovered vintages, not one dataset: the IRS and USASpending figures above are both
+      FY2025 by construction, and this Census survey is also its FY2025 vintage — none of the
+      three shares a publication schedule, and a future run of this pipeline may find them out
+      of step again. Territories (Puerto Rico, Guam, the US Virgin Islands, the Northern
+      Mariana Islands and American Samoa) appear in the award-spending "get" figures but have
+      no state-level breakdown in IRS Table 5, so they carry a give figure of "no data" rather
+      than zero and are not drawn on the map above. Washington DC is drawn on the map and
+      counted in the table, but is excluded from the colour range: as the seat of the federal
+      government it is an outlier by construction, and including it would compress the scale
+      for all 50 states. In the tax-mix table below, "none levied" means the state does not
+      collect that tax at all — not that the figure is missing.
+    </p>
+  </section>
+
+  {sections.slice(1).filter((s) => !built.has(s.id)).map((s) => (
     <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
   ))}
 </BaseLayout>
