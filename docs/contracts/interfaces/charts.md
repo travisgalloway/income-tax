@@ -78,3 +78,24 @@ Every built section island (`DebtChart.tsx`, `BudgetChart.tsx`) follows the same
    readout) built from the **same formatting function** the `aria-label` uses, so hover and
    keyboard focus can never announce different text.
 5. A `<TableView>` mirroring the chart's active unit and columns.
+
+## Economy route additions (`src/components/charts/estimates.tsx`)
+
+`economy.json` carries CBO actuals and its baseline projection in one series, and
+`_meta.notes[0]` forbids drawing the two as one continuous line. `estimates.tsx` is the shared
+vocabulary for that split, used by every Economy-route chart that touches `economy.json`:
+
+- `PROJECTED_DASH` (`'6 4'`) and `PROJECTED_OPACITY` (`0.55`) — the dash pattern and opacity every
+  projected branch uses, so a reader learns the convention once.
+- `splitAtBoundary(rows, lastActualFy)` — splits a row array into `{ actual, projected }` at the
+  boundary, **throwing** if a row is flagged `actual` past it. The boundary row is repeated as the
+  first point of `projected` so the dashed branch starts where the solid one ends; they remain two
+  separate `<path>` elements with different stroke styles.
+- `<BoundaryRule frame x label>` — a vertical rule at the boundary plus its own `.annotation` text,
+  so the split is legible without relying on the dash pattern alone.
+
+Two-panel convention (`WhoWorks.tsx`): when two series share a unit but not a base (percent of the
+labour force versus percent of the population 16 and over), they get two stacked `<Chart>`
+elements with the same `width`/`margin`/`x` scale rather than one chart with two y-axes. Only the
+panel with an interaction affordance carries focusable `.datum` elements — a second panel with no
+hoverable content needs no focusable one, so hover/focus parity still holds exactly.

@@ -21,3 +21,14 @@ when the code merges.
 | GOV-10 | Where the money comes from — revenue by source, brackets, OECD | none | none | Planned | — | — |
 | GOV-11 | By state | none | none | Planned | — | — |
 | GOV-12 | What this cannot tell you — caveats in full | none | none | Planned | — | — |
+
+## Economy route (`src/pages/index.astro`)
+
+| ID | Capability | UI | Data | Status | Issue | Contract |
+|----|-----------|----|------|--------|-------|----------|
+| ECO-1 | One picture — real GDP FY1950-FY2036 on a log scale, actual/projection split | done | done | Shipped | #12 | contracts/interfaces/economy-data.md, contracts/interfaces/charts.md |
+| ECO-2 | Growth and its shadow — output per hour vs. real median household income, indexed 1984=100 | done | done | Shipped | #12 | contracts/interfaces/economy-data.md, contracts/interfaces/charts.md |
+| ECO-3 | Who works — unemployment vs. the noncyclical rate, and labour force participation | done | done | Shipped | #12 | contracts/interfaces/economy-data.md, contracts/interfaces/charts.md |
+| ECO-4 | Prices and rates | none | none | Planned | — | — |
+| ECO-5 | Labor and capital | none | none | Planned | — | — |
+| ECO-6 | Limits — what this route cannot tell you | none | none | Planned | — | — |

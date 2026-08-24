@@ -11,3 +11,11 @@ component-level and interaction coverage is manual and named explicitly rather t
 |----|--------------------|-----------|--------|------|
 | GOV-1 | — | `npx astro check`, `npm run build` | ad hoc | no automated coverage of `DebtChart.tsx` interactions |
 | GOV-4 | `test_outlay_components_sum_to_total_in_every_unit_family`, `test_party_control_is_null_outside_fy1995_2025`, `test_net_mandatory_is_positive_in_every_year`, `test_every_unit_family_covers_the_full_span`, `test_surplus_years_are_positive_deficit_values` | `npx astro check`, `npm run build` | M1–M12 in `.claude/plans/issue-2.md` (unit-sum spot check, control strip absent pre-1995, keyboard inspection parity, GDP-view clipping, no-JS render, 390px width, greyscale) | no automated JS coverage of `BudgetChart.tsx` — the stacking, strip and inspector logic are proved only by the pytest data invariants above plus the manual checks; no JS test runner exists in this repo to close that gap |
+
+## Economy route
+
+| ID | Pipeline (pytest) | Build-time | Manual | Gaps |
+|----|--------------------|-----------|--------|------|
+| ECO-1 | `test_real_gdp_is_positive_in_every_fiscal_year`, `test_nominal_gdp_fy1995_matches_the_budget_route_denominator` | `npx astro check`, `npm run build`, `grep -o '<svg' dist/index.html` (no-JS render proof) | 390px width and greyscale checks (`.claude/plans/issue-12.md` V-16, V-17) — no browser tooling in this environment, unexecuted | no automated JS coverage of `RealGdpLogScale.tsx`'s focus/readout interaction; proved only by the pytest data invariants plus the manual checks |
+| ECO-2 | `test_output_per_hour_and_median_income_share_1984_to_2024` | `npx astro check`, `npm run build` | same 390px/greyscale gap as ECO-1, unexecuted | no automated JS coverage of `GrowthAndShadow.tsx`'s interaction |
+| ECO-3 | `test_unemployment_peak_over_actuals_is_fy1983`, `test_participation_peak_over_actuals_is_fy2000`, `test_fy2020_unemployment_is_a_fiscal_year_average_not_a_monthly_peak` | `npx astro check`, `npm run build` | same 390px/greyscale gap as ECO-1, unexecuted | no automated JS coverage of `WhoWorks.tsx`'s two-panel interaction |
