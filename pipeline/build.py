@@ -31,7 +31,7 @@ FINAL_DIR = ROOT.parent / "src" / "data"
 # a HARD FAILURE, not a skip.
 TIERS: dict[str, list[str]] = {
     "monthly": ["cbo", "treasury", "fred", "curated_snapshots"],
-    "oneshot": ["party_splits"],
+    "oneshot": ["party_splits", "bracket_history"],
 }
 
 # Builders that are designed but not yet written. Naming them here rather than in
@@ -41,9 +41,6 @@ TIERS: dict[str, list[str]] = {
 PLANNED: dict[str, dict[str, str]] = {
     "monthly": {
         "states": "state balance of payments and tax collections (issue #14)",
-    },
-    "oneshot": {
-        "bracket_history": "statutory bracket schedules 1913-2025 (issue #10)",
     },
 }
 

@@ -160,6 +160,54 @@ outputs:
       100 with anything. They are comparable to each other over time, not to a factor-share decomposition.
     - The GDP deflator here is the series used to deflate every nominal dollar figure elsewhere on
       the site, rebased so FY2025 = 100.
+  bracket_history:
+    title: Statutory federal income tax bracket schedules, 1913-2025
+    source: Tax Foundation income-tax-rates dataset (1913-2019, from IRS SOI Historical Table 23
+      and IRS Revenue Procedures); IRS Revenue Procedures 2018-57 through 2024-40 (2019-2025,
+      curated); IRS SOI Historical Table 23 / Tax Policy Center for the published top rate;
+      FRED CPIAUCNS for the constant-dollar deflator
+    units:
+      s.*.r: percent
+      s.*.lo, s.*.hi: nominal dollars
+      s.*.rlo, s.*.rhi: constant 2024 dollars
+      top, sched_top: percent
+    fields:
+      y: tax year
+      top: top marginal rate as published (IRS SOI / Tax Policy Center)
+      sched_top: top marginal rate on the raw bracket schedule ladder (single filer)
+      adj: non-null only in the twelve years where top and sched_top disagree
+      nb: bracket count on the single-filer schedule
+      s: brackets per filing status (single, mfj, mfs, hoh), null before that status existed
+    notes:
+    - Statutory is not effective. Nobody pays the top rate on their whole income, and the
+      threshold it applies at has moved enormously.
+    - 'Twelve years diverge between the published top rate and the schedule ladder top: 1923,
+      1929, 1940, 1946, 1947, 1948, 1949, 1950, 1968, 1969, 1970, 1981. Each carries a documented
+      `adj` entry; see curated/bracket_adjustments.yaml.'
+    - mfj and mfs schedules do not exist before 1949; hoh does not exist before 1952. These are
+      null, never a back-projected copy of the single schedule.
+    - Excludes the alternative minimum tax, the phase-out of exemptions and deductions, and the
+      3.8% net investment income tax from 2013.
+  cbo_effective_rates:
+    title: Average federal tax rate by income group, published anchor years 1979-2022
+    source: CBO, The Distribution of Household Income, 2022 (January 2026), Supplemental Data
+      Table 9, Average Federal Tax Rates by Income Group, 1979 to 2022
+    units:
+      v.*: percent of income before means-tested transfers and federal taxes
+    fields:
+      lowest: lowest income quintile
+      second: second income quintile
+      middle: middle income quintile
+      fourth: fourth income quintile
+      highest: highest income quintile
+      top1: top 1 percent
+    notes:
+    - INCLUDES PAYROLL TAX, corporate income tax and excise tax, not individual income tax alone.
+      This is why it cannot be compared to the income-tax-only shares in income_tax_by_group.
+    - These are PUBLISHED ANCHOR YEARS, not an annual series. Never draw a connecting line between
+      them; the years in between were not observed by this table.
+    - The lowest quintile's average rate fell to near zero (0.6% in 2019, 1.4% in 2022) as
+      refundable credits grew; it was 9.3% in 1979.
   party_splits:
     title: Counted per-party roll-call splits for 23 major deficit-moving laws, 1997-2025
     source: 'Voteview (voteview.com/data): HSall_members.csv joined to per-congress roll-call and

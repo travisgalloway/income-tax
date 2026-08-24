@@ -202,3 +202,91 @@ def test_every_mapped_rollcall_passed(splits):
             if v is None:
                 continue
             assert v["yea"] >= (v["nay"] if ch == "senate" else v["nay"] + 1), f"{pl} {ch}"
+
+
+# ---- CBO effective rates (issue #10, Households §4) ----------------------
+
+def test_cbo_effective_rates_are_anchor_points_not_a_series():
+    """Published anchor years only. 1979 and 2022 are the hard floor the issue
+    names; charting a connecting line between years would assert an annual
+    series that was never observed."""
+    doc = load("cbo_effective_rates")
+    years = {r["year"] for r in doc["data"]["rows"]}
+    assert {1979, 2022} <= years
+    assert "not_an_annual_series" in doc["data"] or "not_an_annual_series" in doc["_meta"]
+    for r in doc["data"]["rows"]:
+        assert r["v"]["top1"] >= r["v"]["highest"] >= r["v"]["lowest"]
+
+
+def test_cbo_effective_rates_basis_names_payroll_tax():
+    """The comparability trap against income_tax_by_group must be structural,
+    not editorial: the basis text itself must say 'payroll'."""
+    doc = load("cbo_effective_rates")
+    assert "payroll" in doc["data"]["basis"].lower()
+
+
+# ---- Bracket history (issue #10, Households §3) ---------------------------
+
+@pytest.fixture(scope="module")
+def brackets() -> dict[int, dict]:
+    return {r["y"]: r for r in load("bracket_history")["data"]}
+
+
+def test_bracket_history_reproduces_curated_top_rates(brackets):
+    top_rates = curated._load("top_rates")["top_marginal_rate"]
+    assert len(brackets) == 113
+    for y, want in top_rates.items():
+        assert abs(brackets[y]["top"] - want) < 0.001, f"{y}: {brackets[y]['top']} != {want}"
+
+
+def test_bracket_history_adjustment_years_are_documented(brackets):
+    adj_years = sorted(y for y, r in brackets.items() if r["adj"])
+    assert adj_years == [1923, 1929, 1940, 1946, 1947, 1948, 1949, 1950, 1968, 1969, 1970, 1981]
+    for y in adj_years:
+        r = brackets[y]
+        assert abs(r["adj"]["schedule"] - r["sched_top"]) < 0.001
+        assert abs(r["adj"]["published"] - r["top"]) < 0.001
+        assert r["adj"]["why"].strip()
+        assert r["adj"]["source"].strip()
+    for y, r in brackets.items():
+        if y not in adj_years:
+            assert abs(r["sched_top"] - r["top"]) < 0.001, f"{y}: undocumented divergence"
+
+
+def test_bracket_thresholds_carry_both_nominal_and_constant_dollars(brackets):
+    for y, r in brackets.items():
+        for status, ladder in r["s"].items():
+            if ladder is None:
+                continue
+            for b in ladder:
+                assert "lo" in b and "rlo" in b and "hi" in b and "rhi" in b
+                assert b["rlo"] >= 0  # the lowest bracket in every schedule starts at $0
+                assert (b["hi"] is None) == (b["rhi"] is None)
+
+
+def test_filing_statuses_are_not_projected_backwards(brackets):
+    for y, r in brackets.items():
+        if y < 1949:
+            assert r["s"]["mfj"] is None and r["s"]["mfs"] is None
+        else:
+            assert r["s"]["mfj"] is not None and r["s"]["mfs"] is not None
+        if y < 1952:
+            assert r["s"]["hoh"] is None
+        else:
+            assert r["s"]["hoh"] is not None
+
+
+def test_bracket_count_runs_from_two_in_1988_to_fiftysix_in_1918(brackets):
+    nb = {y: r["nb"] for y, r in brackets.items()}
+    lo_year = min(nb, key=lambda y: nb[y])
+    hi_year = max(nb, key=lambda y: nb[y])
+    assert (lo_year, nb[lo_year]) == (1988, 2)
+    assert (hi_year, nb[hi_year]) == (1918, 56)
+
+
+def test_bracket_history_absent_values_are_null_not_zero(brackets):
+    for y, r in brackets.items():
+        if y < 1949:
+            assert r["s"]["mfj"] is None
+        top_bracket = r["s"]["single"][-1]
+        assert top_bracket["hi"] is None and top_bracket["rhi"] is None

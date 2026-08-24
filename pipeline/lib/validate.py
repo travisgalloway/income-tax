@@ -222,6 +222,80 @@ def check_snapshots(c: Checks) -> None:
          "without it misleads, per the curated note.")
 
 
+def check_bracket_history(c: Checks) -> None:
+    doc = _load("bracket_history")
+    rows = doc["data"]
+    by = {r["y"]: r for r in rows}
+    top_rates = curated._load("top_rates")["top_marginal_rate"]
+
+    years = sorted(by)
+    c.ok(years == list(range(1913, 2026)), f"bracket_history: expected 1913-2025 with no gaps, "
+                                            f"got {years[0]}-{years[-1]} ({len(years)} years)")
+
+    for y, want in top_rates.items():
+        c.ok(abs(by[int(y)]["top"] - want) < 0.001,
+             f"bracket_history: {y} top {by[int(y)]['top']} != curated top_rates {want}")
+
+    spot = {1913: 7.0, 1944: 94.0, 1965: 70.0, 1988: 28.0, 1993: 39.6, 1981: 69.125,
+            2018: 37.0, 2019: 37.0, 2020: 37.0, 2021: 37.0, 2022: 37.0, 2023: 37.0,
+            2024: 37.0, 2025: 37.0}
+    for y, want in spot.items():
+        c.ok(abs(by[y]["top"] - want) < 0.001, f"bracket_history: {y} top is {by[y]['top']}, expected {want}")
+    c.ok(bool(by[1981]["adj"] and by[1981]["adj"]["why"].strip()),
+         "bracket_history: 1981 has no documented adjustment reason")
+
+    nb = {y: r["nb"] for y, r in by.items()}
+    c.ok(min(nb.values()) == 2 and nb[1988] == 2, "bracket_history: minimum bracket count is not 2 at 1988")
+    c.ok(max(nb.values()) == 56 and nb[1918] == 56, "bracket_history: maximum bracket count is not 56 at 1918")
+
+    for y, r in by.items():
+        c.ok((r["s"]["mfj"] is None) == (y < 1949), f"bracket_history: {y} mfj null-ness is wrong")
+        c.ok((r["s"]["mfs"] is None) == (y < 1949), f"bracket_history: {y} mfs null-ness is wrong")
+        c.ok((r["s"]["hoh"] is None) == (y < 1952), f"bracket_history: {y} hoh null-ness is wrong")
+        for status, ladder in r["s"].items():
+            if ladder is None:
+                continue
+            for i, b in enumerate(ladder):
+                is_top = i == len(ladder) - 1
+                c.ok((b["hi"] is None) == is_top, f"bracket_history: {y} {status} bracket {i} "
+                     f"hi-nullness disagrees with being the top bracket")
+                c.ok((b["rhi"] is None) == is_top, f"bracket_history: {y} {status} bracket {i} "
+                     f"rhi-nullness disagrees with being the top bracket")
+
+    top_1913 = by[1913]["s"]["single"][-1]
+    c.ok(top_1913["lo"] == 500000, f"bracket_history: 1913 top bracket floor is {top_1913['lo']}, expected $500,000")
+    c.ok(12_000_000 <= top_1913["rlo"] <= 20_000_000,
+         f"bracket_history: 1913 top bracket in constant 2024 dollars is {top_1913['rlo']}, "
+         "expected between $12M and $20M")
+
+    top_2024 = by[2024]["s"]["single"][-1]
+    c.close(top_2024["rlo"], top_2024["lo"], top_2024["lo"] * 0.005,
+            "bracket_history: 2024 top bracket real vs nominal (base-year fixed point)")
+
+
+def check_cbo_effective_rates(c: Checks) -> None:
+    doc = _load("cbo_effective_rates")
+    rows = doc["data"]["rows"]
+    basis = doc["data"]["basis"]
+
+    for r in rows:
+        for g, v in r["v"].items():
+            c.ok(0 < v < 45, f"cbo_effective_rates: {r['year']} {g} rate {v} outside (0, 45)")
+        c.ok(r["v"]["highest"] > r["v"]["lowest"],
+             f"cbo_effective_rates: {r['year']} highest quintile is not above lowest")
+        c.ok(r["v"]["top1"] >= r["v"]["highest"],
+             f"cbo_effective_rates: {r['year']} top 1% rate is below the highest quintile")
+        c.ok(bool(r.get("source_table")),
+             f"cbo_effective_rates: {r['year']} has no source_table")
+
+    years = {r["year"] for r in rows}
+    c.ok(1979 in years and 2022 in years,
+         "cbo_effective_rates: the two endpoint years 1979 and 2022 are not both present")
+    c.ok("payroll" in basis.lower(),
+         "cbo_effective_rates: basis does not name payroll tax; the comparability trap must be "
+         "structural, not editorial")
+
+
 def check_party_splits(c: Checks) -> None:
     doc = _load("party_splits")
     rows = doc["data"]
@@ -290,4 +364,8 @@ def run(outputs: list[str]) -> Checks:
         check_snapshots(c)
     if "party_splits" in outputs:
         check_party_splits(c)
+    if "cbo_effective_rates" in outputs:
+        check_cbo_effective_rates(c)
+    if "bracket_history" in outputs:
+        check_bracket_history(c)
     return c

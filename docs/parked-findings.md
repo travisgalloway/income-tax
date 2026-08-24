@@ -14,3 +14,27 @@ time. Appended to, never rewritten. None of these have been acted on.
   number formatters inline rather than using `UnitToggle` and `charts/format.ts`. Section 4 uses
   the shared ones; §1 could be moved onto them. Found while working on #2. Severity: duplication,
   non-blocking.
+- [2026-08-23] Issue #10's plan specified `min_bytes=200_000` for the Tax Foundation
+  `income-tax-rates.csv` fetch in `pipeline/oneshot/bracket_history.py`. The live file is ~194,945
+  bytes, so the literal plan value made every fetch fail as "truncated". Deviated to `min_bytes=150_000`
+  (still comfortably below the live size, still catches real truncation). This is a criterion-
+  blocking plan defect, not a discretionary finding, so it was fixed rather than parked; noted here
+  per feature-closure record-keeping. Severity: plan defect, resolved, non-blocking.
+- [2026-08-23] Issue #10's plan specified requiring exactly 12 monthly CPIAUCNS observations per
+  year with no exception. The October 2025 CPI-U was never collected (2025 government shutdown;
+  BLS stated it cannot retroactively gather it — the first gap in this series since 1921), so 2025
+  permanently has only 11 monthly observations in FRED's `CPIAUCNS`. `bracket_history.py` carries a
+  narrow, dated exception (`EXPECTED_MONTHS = {2025: 11}`) rather than requiring an observation
+  that will never exist; every other year still requires exactly 12. Criterion-blocking, fixed
+  rather than parked. Severity: plan defect (real-world data gap the plan predates), resolved,
+  non-blocking.
+- [2026-08-23] The fetched Tax Foundation `income-tax-rates.csv` carries one corrupt row: 1985,
+  single filer, a duplicate zero-rate bracket with an open-ended top (`incomeGreaterThan=0`,
+  `incomeNotGreaterThan=` empty) alongside the real 0%-to-$2,390 "zero bracket amount" row (the
+  1977-1986 standard-deduction-equivalent). Left as fetched, this collides with the ladder's real
+  50% top bracket and breaks the "exactly one open-ended top bracket per status-year" invariant
+  the whole build depends on. `bracket_history.py`'s `_drop_phantom_zero_row` detects and drops
+  exactly this one known corrupt row and raises `SourceUnavailable` on any other unfamiliar
+  duplicate `incomeGreaterThan` it encounters, rather than guessing. Criterion-blocking (no other
+  year/status combination in 1913-2019 has a duplicate floor), fixed rather than parked. Severity:
+  upstream data defect, resolved, non-blocking.

@@ -61,3 +61,17 @@ figures:
   - {section: 8, text: "cross-party laws total $9.24T", output: party_splits, agg: cost_cross_party, quoted: 9.24, tol: 0.02}
   - {section: 8, text: "party-line laws total $7.52T", output: party_splits, agg: cost_party_line, quoted: 7.52, tol: 0.02}
   - {section: 11, text: "cumulative deficits $24.15T", output: budget, agg: sum_negated, field: n_de, years: [1995, 2025], quoted: 24.15, tol: 0.05}
+  - {section: 3, text: "1913 top statutory rate 7%", output: bracket_history, year: 1913, field: top, quoted: 7.0, tol: 0.01}
+  - {section: 3, text: "1944 top statutory rate 94%", output: bracket_history, year: 1944, field: top, quoted: 94.0, tol: 0.01}
+  - {section: 3, text: "1965 top statutory rate 70%", output: bracket_history, year: 1965, field: top, quoted: 70.0, tol: 0.01}
+  - {section: 3, text: "1988 top statutory rate 28%", output: bracket_history, year: 1988, field: top, quoted: 28.0, tol: 0.01}
+  - {section: 3, text: "1993 top statutory rate 39.6%", output: bracket_history, year: 1993, field: top, quoted: 39.6, tol: 0.01}
+  - {section: 3, text: "2018 top statutory rate 37%", output: bracket_history, year: 2018, field: top, quoted: 37.0, tol: 0.01}
+  - {section: 3, text: "1981 blended part-year top rate 69.125%", output: bracket_history, year: 1981, field: top, quoted: 69.125, tol: 0.001}
+  - {section: 3, text: "1988 bracket count is the series minimum, 2 brackets", output: bracket_history, path: _meta.bracket_count.min, quoted: 2, tol: 0}
+  - {section: 3, text: "1918 bracket count is the series maximum, 56 brackets", output: bracket_history, path: _meta.bracket_count.max, quoted: 56, tol: 0}
+  - {section: 4, text: "1979 top statutory rate 70%", output: bracket_history, year: 1979, field: top, quoted: 70.0, tol: 0.01}
+  - {section: 4, text: "2022 top statutory rate 37%", output: bracket_history, year: 2022, field: top, quoted: 37.0, tol: 0.01}
+  - {section: 4, text: "1979 top 1% average federal tax rate, includes payroll tax, 35.1%", output: cbo_effective_rates, path: data.rows.0.v.top1, quoted: 35.1, tol: 0.05}
+  - {section: 4, text: "2022 top 1% average federal tax rate, includes payroll tax, 31.5%", output: cbo_effective_rates, path: data.rows.4.v.top1, quoted: 31.5, tol: 0.05}
+  - {section: 4, text: "2019 lowest-quintile average federal tax rate fell to 0.6%", output: cbo_effective_rates, path: data.rows.3.v.lowest, quoted: 0.6, tol: 0.05}

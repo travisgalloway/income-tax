@@ -1,12 +1,21 @@
-_comment: "Curated. NEVER machine-written.\nTop STATUTORY marginal federal individual income tax\
-  \ rate on ORDINARY income,\ntax years 1913-2025. Source: IRS SOI Historical Table 23; Tax Policy\
-  \ Center.\nTRAPS:\n  - Statutory is not effective. Nobody pays this rate on their whole income,\
-  \ and\n    the income threshold it applies at has moved enormously. A chart of this line\n    alone\
-  \ invites a causal reading it cannot support.\n  - Ordinary income only. Capital gains have been\
-  \ taxed at separate, usually\n    lower, rates for most of this period.\n  - Excludes surtaxes,\
-  \ the alternative minimum tax, the phase-out of exemptions\n    and deductions, and the 3.8% net\
-  \ investment income tax from 2013.\n  - 1981 shows 69.125%, the blended rate after a part-year\
-  \ cut."
+_comment: |-
+  Curated. NEVER machine-written.
+  Top STATUTORY marginal federal individual income tax rate on ORDINARY income,
+  tax years 1913-2025. Source: IRS SOI Historical Table 23; Tax Policy Center.
+  TRAPS:
+    - Statutory is not effective. Nobody pays this rate on their whole income, and
+      the income threshold it applies at has moved enormously. A chart of this line
+      alone invites a causal reading it cannot support.
+    - Ordinary income only. Capital gains have been taxed at separate, usually
+      lower, rates for most of this period.
+    - Surtaxes are INCLUDED in the published figure for 1940 (a defense-preparedness
+      surtax) and for 1968-1970 (the Vietnam-era income tax surtax), which is why
+      those years read higher than the plain bracket-schedule ladder. Every other
+      year EXCLUDES surtaxes. See pipeline/curated/bracket_adjustments.yaml for the
+      full list of years where the published figure diverges from the schedule top.
+    - Excludes the alternative minimum tax, the phase-out of exemptions and
+      deductions, and the 3.8% net investment income tax from 2013.
+    - 1981 shows 69.125%, the blended rate after a part-year cut.
 coverage:
   start: 1913
   end: 2025

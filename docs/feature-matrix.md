@@ -21,3 +21,15 @@ when the code merges.
 | GOV-10 | Where the money comes from — revenue by source, brackets, OECD | none | none | Planned | — | — |
 | GOV-11 | By state | none | none | Planned | — | — |
 | GOV-12 | What this cannot tell you — caveats in full | none | none | Planned | — | — |
+
+## Households route (`src/pages/households/index.astro`)
+
+| ID | Capability | UI | Data | Status | Issue | Contract |
+|----|-----------|----|------|--------|-------|----------|
+| HH-1 | What a household earns | none | none | Planned | — | — |
+| HH-2 | The spread | none | none | Planned | — | — |
+| HH-3 | A century of brackets — bracket count, thresholds in constant 2024 dollars, top statutory rate vs the schedule ladder top, 1913-2025 | done | done | Shipped | #10 | contracts/interfaces/bracket-history-data.md |
+| HH-4 | Statutory is not effective — CBO average federal tax rate anchor points (includes payroll tax) against the top statutory rate | done | done | Shipped | #10 | contracts/interfaces/bracket-history-data.md |
+| HH-5 | Who pays the income tax | none | none | Planned | — | — |
+| HH-6 | The bill you do not see | none | none | Planned | — | — |
+| HH-7 | Limits | none | none | Planned | — | — |
