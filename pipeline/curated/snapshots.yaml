@@ -151,3 +151,36 @@ snapshots:
       v: 25.2
     - year: 2024
       v: 25.6
+  cbo_effective_rates:
+    as_of: '2026-01-15'
+    basis: >-
+      Average federal tax rate: individual income tax, payroll (social insurance) tax,
+      corporate income tax and excise tax combined, as a share of income before means-tested
+      transfers and federal taxes. INCLUDES PAYROLL TAX, so this is not comparable to the
+      income-tax-only shares in income_tax_by_group.
+    not_an_annual_series: >-
+      Published anchor years only, each transcribed from the report's own table for that
+      year's Distribution of Household Income vintage. Never chart these as a continuous
+      line; the years between them are not observed.
+    groups: [lowest, second, middle, fourth, highest, top1]
+    rows:
+    - year: 1979
+      source_table: 'CBO, The Distribution of Household Income, 2022 (Jan 2026), Supplemental
+        Data Table 9: Average Federal Tax Rates, by Income Group, 1979 to 2022'
+      v: {lowest: 9.3, second: 15.0, middle: 19.1, fourth: 21.7, highest: 27.1, top1: 35.1}
+    - year: 2000
+      source_table: 'CBO, The Distribution of Household Income, 2022 (Jan 2026), Supplemental
+        Data Table 9: Average Federal Tax Rates, by Income Group, 1979 to 2022'
+      v: {lowest: 7.2, second: 13.3, middle: 17.1, fourth: 21.0, highest: 27.8, top1: 32.2}
+    - year: 2007
+      source_table: 'CBO, The Distribution of Household Income, 2022 (Jan 2026), Supplemental
+        Data Table 9: Average Federal Tax Rates, by Income Group, 1979 to 2022'
+      v: {lowest: 4.9, second: 11.2, middle: 14.8, fourth: 18.1, highest: 24.8, top1: 28.2}
+    - year: 2019
+      source_table: 'CBO, The Distribution of Household Income, 2022 (Jan 2026), Supplemental
+        Data Table 9: Average Federal Tax Rates, by Income Group, 1979 to 2022'
+      v: {lowest: 0.6, second: 8.9, middle: 13.0, fourth: 16.8, highest: 24.3, top1: 30.0}
+    - year: 2022
+      source_table: 'CBO, The Distribution of Household Income, 2022 (Jan 2026), Supplemental
+        Data Table 9: Average Federal Tax Rates, by Income Group, 1979 to 2022'
+      v: {lowest: 1.4, second: 9.5, middle: 13.4, fourth: 17.6, highest: 25.9, top1: 31.5}

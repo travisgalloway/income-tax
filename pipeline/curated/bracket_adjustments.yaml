@@ -1,0 +1,110 @@
+_comment: >-
+  Curated. NEVER machine-written.
+  The twelve tax years where the top statutory rate PUBLISHED in
+  curated/top_rates.yaml (IRS SOI Historical Table 23 / Tax Policy Center) does not
+  match the top of the raw bracket-schedule ladder fetched from the Tax Foundation
+  income-tax-rates dataset. Both numbers are real; they differ because a credit,
+  surtax or part-year rate change moved the effective top rate away from the
+  statute's nominal top bracket rate for that one year. `bracket_history.py`
+  requires EXACTLY these twelve years to carry an entry here, and requires every
+  other year to carry none - see its step 3d reconciliation.
+adjustments:
+  1923:
+    schedule_top: 58.0
+    published_top: 43.5
+    why: >-
+      The Revenue Act of 1921 granted a 25 percent reduction of the computed tax
+      for the 1923 tax year, a one-time taxpayer credit layered on top of the
+      58% statutory ladder rather than a change to the bracket rate itself
+      (43.5 = 58 x 0.75).
+    source: Revenue Act of 1921, sec. 1200(a); IRS SOI Historical Table 23
+  1929:
+    schedule_top: 25.0
+    published_top: 24.0
+    why: >-
+      Congress voted a one-year, across-the-board reduction of the computed tax
+      for 1929 in response to a Treasury surplus (24 = 25 x 0.96); the underlying
+      bracket ladder was unchanged and the full 25% rate returned for 1930.
+    source: Joint resolution of Dec. 16, 1929; IRS SOI Historical Table 23
+  1940:
+    schedule_top: 79.0
+    published_top: 81.1
+    why: >-
+      The Revenue Act of 1940 added a defense-preparedness surtax on top of the
+      79% ladder rate, most of it enacted after the tax year began, producing a
+      blended published top of 81.1% rather than a clean 79 + surtax figure.
+    source: Revenue Act of 1940, Title II (defense tax); IRS SOI Historical Table 23
+  1946:
+    schedule_top: 91.0
+    published_top: 86.45
+    why: >-
+      The Individual Income Tax Reduction Act of 1945 applied a percentage
+      reduction credit to computed tax for 1946-1947 without rewriting the
+      nominal 91% bracket ladder, so the published top (86.45%) is the ladder
+      rate net of that credit.
+    source: Individual Income Tax Reduction Act of 1945; IRS SOI Historical Table 23
+  1947:
+    schedule_top: 91.0
+    published_top: 86.45
+    why: >-
+      Same 1945 Act reduction credit as 1946; it applied to both the 1946 and
+      1947 tax years before the Revenue Act of 1948 replaced it with a larger cut.
+    source: Individual Income Tax Reduction Act of 1945; IRS SOI Historical Table 23
+  1948:
+    schedule_top: 91.0
+    published_top: 82.13
+    why: >-
+      The Revenue Act of 1948 replaced the 1945 credit with a larger reduction
+      formula (a combination of a tax-computation credit and a split-income
+      provision for joint returns) for 1948-1949, again without changing the
+      nominal 91% ladder.
+    source: Revenue Act of 1948; IRS SOI Historical Table 23
+  1949:
+    schedule_top: 91.0
+    published_top: 82.13
+    why: >-
+      Same 1948 Act reduction formula as 1948; it covered both the 1948 and
+      1949 tax years before the Revenue Act of 1950 partially restored rates.
+    source: Revenue Act of 1948; IRS SOI Historical Table 23
+  1950:
+    schedule_top: 91.0
+    published_top: 84.36
+    why: >-
+      The Revenue Act of 1950 (enacted September 1950) partially restored the
+      pre-1948 rate structure but only for the remainder of the tax year, so
+      1950 carries a part-year blended top of 84.36% ahead of the full 91%
+      that took effect for 1951.
+    source: Revenue Act of 1950; IRS SOI Historical Table 23
+  1968:
+    schedule_top: 70.0
+    published_top: 75.25
+    why: >-
+      The Revenue and Expenditure Control Act of 1968 imposed a Vietnam-era
+      income tax surcharge effective partway through the year, blending to an
+      effective 7.5% surcharge on the 70% ladder for the full tax year
+      (75.25 = 70 x 1.075).
+    source: Revenue and Expenditure Control Act of 1968; IRS SOI Historical Table 23
+  1969:
+    schedule_top: 70.0
+    published_top: 77.0
+    why: >-
+      The 1968 surtax ran at a full 10% for all of 1969, cleanly scaling the
+      70% ladder (77.0 = 70 x 1.10).
+    source: Revenue and Expenditure Control Act of 1968; IRS SOI Historical Table 23
+  1970:
+    schedule_top: 70.0
+    published_top: 71.75
+    why: >-
+      The surtax was cut to 5% and applied for only half of 1970 before
+      expiring, blending to an effective 2.5% surcharge for the full tax year
+      (71.75 = 70 x 1.025).
+    source: Tax Reform Act of 1969 (surtax phase-out); IRS SOI Historical Table 23
+  1981:
+    schedule_top: 70.0
+    published_top: 69.125
+    why: >-
+      The Economic Recovery Tax Act of 1981 cut the top rate from 70% to 50%
+      effective October 1, 1981; the published figure is the part-year blended
+      rate for the nine months at 70% and three months at the newly enacted
+      50% schedule.
+    source: Economic Recovery Tax Act of 1981; IRS SOI Historical Table 23
