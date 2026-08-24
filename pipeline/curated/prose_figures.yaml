@@ -41,7 +41,7 @@ figures:
   - {section: 6, text: "mandatory 9.8% of GDP in FY1995 (NET)", output: budget, year: 1995, field: g_ma_net, quoted: 9.8, tol: 0.06}
   - {section: 6, text: "mandatory 13.7% of GDP in FY2025 (NET)", output: budget, year: 2025, field: g_ma_net, quoted: 13.7, tol: 0.06}
   - {section: 6, text: "discretionary 7.2% -> 6.2% of GDP", output: budget, year: 2025, field: g_di, quoted: 6.2, tol: 0.06}
-  - {section: 6, text: "real mandatory growth 189% (SEE NOTE: gross basis)", output: budget, agg: real_growth_gross_mandatory, years: [1995, 2025], quoted: 189, tol: 1.0}
+  - {section: 6, text: "real mandatory growth 194% (NET of offsetting receipts)", output: budget, agg: pct_growth, field: r_ma_net, years: [1995, 2025], quoted: 194, tol: 1.0}
   - {section: 6, text: "real discretionary growth 79%", output: budget, agg: real_growth_disc, years: [1995, 2025], quoted: 79, tol: 1.0}
   - {section: 7, text: "net interest FY1995 $232B", output: budget, year: 1995, field: n_ni, quoted: 0.232, tol: 0.002}
   - {section: 7, text: "net interest FY2025 $970B", output: budget, year: 2025, field: n_ni, quoted: 0.970, tol: 0.002}

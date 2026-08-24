@@ -125,7 +125,7 @@ them across two panels lets each be read on its own scale and hides how small th
 deficit is next to the budget that produces it. Here the deficit bar is the
 distance between the revenue line and the top of the stack.
 
-**Alt text:** Federal outlays from fiscal 1995 to 2025 stacked into mandatory,
+**Alt text:** Federal outlays from fiscal 1962 to 2025 stacked into mandatory,
 discretionary and net interest as a share of GDP, with a revenue line across them
 and the deficit drawn below zero. A three-row strip along the top shows which
 party held the presidency, House and Senate each year. Shaded bands mark the
@@ -170,7 +170,8 @@ appropriation. It is also the only one smaller today, relative to GDP, than in
 **Finding:** Share of GDP, FY1995 to FY2025: mandatory 9.8% to 13.7%,
 discretionary 7.2% to 6.2%, net interest 3.1% to 3.2%.
 
-**Body:** In real terms mandatory spending grew 189% over this span and
+**Body:** In real terms mandatory spending — net of offsetting receipts, the
+basis used throughout this section — grew 194% over this span and
 discretionary grew 79%. Mandatory runs on permanent law and net interest is set
 by past borrowing; neither requires an annual vote.
 
@@ -211,8 +212,6 @@ billion by 2025.
 
 **Source line:** CBO Historical Budget Data, February 2026. Nominal dollars.
 
-**Cross-link:** Section 3 explains why this curve is so steep. Link them.
-
 ---
 
 ## 8 / The laws
@@ -223,7 +222,7 @@ billion by 2025.
 was scored to cost, who voted for it, and when it was signed.
 
 **Finding:** Sixteen of the twenty-three passed with cross-party majorities.
-Cross-party laws total +$9.24T against +$7.52T for all seven party-line laws
+Cross-party laws total +$9.24T against +$7.51T for all seven party-line laws
 combined.
 
 **Body:** A law is voted on once. Its cost runs for a decade or longer, under
@@ -244,12 +243,19 @@ and 2025, each with its ten-year budget score, its vote in each chamber, the
 coalition that passed it, and the party control at the time of enactment. Above
 it, annual deficits as a share of GDP with each law's enactment date marked.
 
-**Source line:** CBO and JCT cost estimates at enactment. Vote composition is
-classified from published vote character except for PL 115-97, which is verified
-from House Clerk roll call 699.
+**Source line:** CBO and JCT cost estimates at enactment. Per-party vote splits
+are COUNTED from Voteview final-passage roll calls (voteview.com/data), joined
+to member party by ICPSR id. PL 115-97 is cross-checked against House Clerk
+roll call 699.
 
-**Required disclosure:** This section must state that composition is classified,
-not counted, for 22 of 23 laws. See SOURCES.md.
+**Required disclosure:** This section must state that all 23 splits are
+counted, not classified. Democratic votes are shown on the caucus basis by
+default (independents who caucus with the Democrats included), and the
+membership basis differs from it by two Senate seats through most of the
+period; a control switches between the two. The vote counted is final passage
+only — procedural votes, cloture and motions to recommit are excluded. A null
+chamber means no roll call exists (almost always a voice vote), never
+unanimity. See SOURCES.md.
 
 ---
 

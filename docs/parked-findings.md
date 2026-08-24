@@ -35,3 +35,43 @@ time. Appended to, never rewritten. None of these have been acted on.
   browser after the disclosure is opened client-side. Found while verifying #6 (GOV-2). Severity:
   test-coverage limitation shared by every figure on the site, non-blocking, no browser tooling
   available in this environment to open a follow-up investigation.
+- [2026-08-23] `src/components/Figure.astro:38` requires and validates `ariaLabel` at build time but
+  never renders it anywhere in the DOM -- the accessible text a screen reader actually gets comes
+  from the slotted chart's own internal `Chart` `ariaLabel` (per-unit-view, describing the shape),
+  not from `Figure`'s prop (the finding). The prop is effectively a build-time lint only. Found
+  while wiring §§5-7 into `government/index.astro` (#5) and reasoning about which of the two
+  `ariaLabel`s each section's Figure/Chart pair should carry. Severity: accessibility/API clarity,
+  non-blocking -- the actual announced text is correct in every shipped section, just not via the
+  prop whose docstring implies it should be.
+- [2026-08-23] `sections.md:377` §11 item 4 ("Party splits are classified, not counted") and
+  `BRIEF.md:179-182` rule 6 both still assert the classification that #3's counted `party_splits.json`
+  replaced. §11 is an unbuilt placeholder so no reader can reach the stale claim today, but the
+  `BRIEF.md` line will steer future work wrong. Found while working on #3. Belongs to the §11 issue.
+  Severity: correctness of the repo's own norms, non-blocking.
+- [2026-08-23] `pipeline/curated/laws.yaml` `totals.party_line_t: 7.52` rounds the true sum `7.512`
+  up; #3's UI and `sections.md` §8 now read `7.51`. Not consumed by `validate.py:check_laws` (only
+  `net_scored_t`/`gross_increases_t` are), and the existing `test_cross_party_and_party_line_totals`
+  pytest tolerance is ±0.02, so nothing fails — but §9 (unbuilt) quotes the same total split three
+  ways (`5.21 + 2.31`) and should reconcile all four numbers at once when it's built. Found while
+  working on #3. Severity: stale curated constant, non-blocking.
+- [2026-08-23] `src/pages/government/index.astro` §1 (`DebtChart`) mounts with `client:visible`, so
+  its SVG does not exist at all with JavaScript disabled — against the shared per-section done
+  contract's "renders with JS disabled" criterion. §8 (`LawExplorer`) uses `client:load` instead,
+  which server-renders the chart markup and only loses interactivity without JS. Found while working
+  on #3. Severity: accessibility/robustness, affects a shipped section (§1, issue #1).
+- [2026-08-23] `pipeline/curated/laws.yaml:24` hand-curates `party_line_t: 7.52` (naive
+  `$5.21T + $2.31T`), but the underlying integer-thousandths sum is `5.206 + 2.306 = 7.512`,
+  which rounds to `$7.51T`. `sections.md` §8 already moved to 7.51, and `pipeline/lib/validate.py`
+  does not currently gate `party_line_t` or `cross_party_t` at all (only `net_scored_t` and
+  `gross_increases_t`, `validate.py:110-111`), so this is not a failing check today — just a
+  curated value one cent off from what integer arithmetic gives. Found while working on #4, which
+  owns the §9 attribution split and deliberately does the summation in integers rather than
+  reading this field. Not fixed here: §8 (issue #3) owns `laws.yaml`'s totals. Severity: data
+  precision, non-blocking.
+- [2026-08-23] `src/components/attribution/aggregate.ts` and `src/components/laws/derive.ts`
+  (issue #3, `feat/3-law-explorer-counted-votes`) both independently join `laws` to
+  `splitByLaw`/`party_splits.json` on `public_law` and derive a per-law coalition or party
+  assignment. If both branches merge, the duplicated join-and-classify logic is a candidate for
+  consolidation into a single shared helper. Deliberately not pre-empted on this branch (run
+  policy: no component or module is shared between #3 and #4). Severity: duplication,
+  non-blocking. Tracked as issue #33.

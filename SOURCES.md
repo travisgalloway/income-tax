@@ -102,26 +102,33 @@ deficit. **If both numbers appear, explain the gap.**
 
 ---
 
-## The vote composition limitation
+## The counted vote splits, and what they still cannot tell you
 
-This is the single weakest point in the dataset and the site must be upfront
-about it.
+This used to be the single weakest point in the dataset: per-party splits were
+inferred from each bill's published vote character for 22 of 23 laws, and
+counted directly for only one (PL 115-97). That has been replaced.
 
-Each of the 23 laws carries a `comp` field: `PLR` party-line Republican, `PLD`
-party-line Democratic, `XP` cross-party. For **one** law, PL 115-97 (the Tax Cuts
-and Jobs Act), the per-party split is verified from the House Clerk roll call
-(House: R 224–12, D 0–189; Senate: R 51–0, D 0–48). For the other 22, the
-classification is derived from the published vote character, not from counting
-roll-call votes.
+All 23 laws now carry a per-party split COUNTED from Voteview
+(`voteview.com/data`: `HSall_members.csv` joined to per-congress roll-call and
+vote files), in `src/data/party_splits.json`. The final-passage roll call for
+each law was selected by hand, not inferred by date — a bill often has several
+roll calls (TCJA alone has five in the House), and picking by date would
+attach the wrong one. PL 115-97 is additionally cross-checked against the
+House Clerk's published record (House: R 224–12, D 0–189; Senate: R 51–0,
+D 0–48 on the caucus basis) and reproduces it exactly.
 
-Exact per-party tallies for all 23 are available from Voteview
-(`voteview.com/data`, `HSall_votes.csv` joined to `HSall_rollcalls.csv` and
-`HSall_members.csv`). A script that does this join is in the parent folder as
-`fetch_party_splits.py`. If someone runs it, replace the classifications with
-counted splits and delete this caveat.
+Two bases are carried for the Democratic column: party membership (`d`) and
+caucus, including independents who caucus with the Democrats (`d_caucus`).
+The site shows the caucus basis by default, because that is the convention
+the House Clerk, the Senate roll calls and press coverage all use; the two
+differ by two Senate seats through most of the period covered.
 
-Until then: the site says "classified from published vote character" wherever
-composition appears, and section 11 states it as a limitation.
+A counted split still cannot tell you everything. It is the FINAL PASSAGE
+vote only — procedural votes, cloture and motions to recommit are excluded,
+and a bill can clear several of each on the way to passage. Where no roll
+call exists at all (the CARES Act's House passage, by voice vote), the
+`house` or `senate` field is `null`. That is missing data, not unanimity, and
+must never be rendered as a vote, as `0-0`, or left blank.
 
 ---
 
