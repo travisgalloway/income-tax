@@ -184,6 +184,20 @@ def check_debt(c: Checks) -> None:
     c.ok(all(r.get("as_of") for r in rows if not r.get("year_end")),
          "debt: a non-year-end row has no as_of date")
 
+    # $40T crossing: record_date and reported_date must both be present and
+    # distinct, and the non-year-end row's as_of must equal record_date, so the
+    # note and the row can never drift apart. See discrepancies.yaml ->
+    # forty_trillion_crossing_date.
+    crossing = doc["_meta"].get("threshold_crossing")
+    if crossing:
+        c.ok(bool(crossing.get("record_date")) and bool(crossing.get("reported_date")),
+             "debt: threshold_crossing is missing record_date or reported_date")
+        c.ok(crossing.get("record_date") != crossing.get("reported_date"),
+             "debt: threshold_crossing record_date and reported_date must be distinct")
+        non_year_end = [r for r in rows if not r.get("year_end")]
+        c.ok(len(non_year_end) == 1 and non_year_end[0].get("as_of") == crossing.get("record_date"),
+             "debt: the non-year-end row's as_of does not match threshold_crossing.record_date")
+
 
 def check_income(c: Checks) -> None:
     doc = _load("income_inequality")
@@ -221,6 +235,33 @@ def check_snapshots(c: Checks) -> None:
     c.ok("federal reserve" not in blob and "fed_holdings" not in blob,
          "debt_holders: Federal Reserve holdings appeared; SOURCES.md requires they be "
          "OMITTED rather than picked between conflicting figures")
+
+    # discrepancies.yaml -> foreign_share_of_debt: a foreign share is never
+    # presented without naming which debt it is a share OF. The field name
+    # itself (share_of_public_pct, not share_pct) makes the denominator
+    # explicit, so a renderer cannot flatten it to a bare percentage.
+    c.ok(all("share_of_public_pct" in s and "share_pct" not in s for s in d["public_split"]),
+         "debt_holders: public_split must use share_of_public_pct, never a bare share_pct")
+    c.ok(all("share_of_gross_pct" in h for h in d["foreign_share_history"]),
+         "debt_holders: foreign_share_history must name share_of_gross_pct on every point")
+    latest_foreign = next((h for h in d["foreign_share_history"] if h["year"] == 2025), None)
+    c.ok(latest_foreign is not None and latest_foreign["share_of_gross_pct"] == 24,
+         "debt_holders: no 2025 foreign_share_history point at 24% of gross debt")
+
+    maturity = _load("debt_maturity")["data"]
+    comp = {row["k"]: row for row in maturity["composition"]}
+    total_amt = sum(row["amount_t"] for row in maturity["composition"])
+    # EC2: bills/notes/bonds are NOT an exhaustive partition of the marketable
+    # total, and must never be presented as one.
+    c.ok(abs(total_amt - maturity["marketable_total_t"]) > 0.01,
+         "debt_maturity: composition now sums to the marketable total; if this is no "
+         "longer true the 'not an exhaustive partition' note and test are stale")
+    # EC3: bills.share_pct (curated) disagrees with amount_t / total on purpose;
+    # only bills carries a curated share, and it must never be silently derived
+    # for notes or bonds from amount_t / marketable_total_t.
+    c.ok("share_pct" in comp["bills"] and "share_pct" not in comp["notes"]
+         and "share_pct" not in comp["bonds"],
+         "debt_maturity: share_pct must be present on bills only")
 
     oecd = _load("oecd")["data"]
     c.ok(oecd["us_pct_gdp"] == 25.6 and oecd["oecd_average_pct_gdp"] == 34.1,

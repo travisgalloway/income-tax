@@ -35,6 +35,10 @@
   --intragov: #C77D28;
   --positive: #2E7D5B;  /* surplus, deficit reduction */
 
+  /* Era shading (crisis / pandemic bands). Neutral: never a party or budget hue,
+   * so a shaded span cannot be misread as carrying partisan or category meaning. */
+  --band: #C9CCC3;
+
   /* Revenue by source (§10). Non-partisan, and deliberately NOT --positive:
    * a tax line growing or shrinking is not a surplus/deficit judgement. Largest
    * band first, adjacent bands vary in lightness as well as hue so the stack

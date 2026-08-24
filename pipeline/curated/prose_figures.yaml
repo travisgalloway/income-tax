@@ -25,7 +25,13 @@ figures:
   - {section: 2, text: "held by the public $32.14T", output: debt_holders, path: data.split.0.amount_t, quoted: 32.14, tol: 0.02}
   - {section: 2, text: "intragovernmental $7.74T", output: debt_holders, path: data.split.1.amount_t, quoted: 7.74, tol: 0.02}
   - {section: 2, text: "public share 80.6%", output: debt_holders, path: data.split.0.share_pct, quoted: 80.6, tol: 0.1}
+  - {section: 2, text: "foreign share of publicly held debt 30%", output: debt_holders, path: data.public_split.1.share_of_public_pct, quoted: 30, tol: 0}
+  - {section: 2, text: "foreign share of gross debt (2025) 24%", output: debt_holders, path: data.foreign_share_history.1.share_of_gross_pct, quoted: 24, tol: 0}
+  - {section: 2, text: "Japan holds $1.20T", output: debt_holders, path: data.top_foreign.0.amount_t, quoted: 1.203, tol: 0.01}
+  - {section: 2, text: "UK holds $889B", output: debt_holders, path: data.top_foreign.1.amount_t, quoted: 0.889, tol: 0.01}
+  - {section: 2, text: "China holds $683B", output: debt_holders, path: data.top_foreign.2.amount_t, quoted: 0.683, tol: 0.01}
   - {section: 3, text: "average maturity 71 months", output: debt_maturity, path: data.avg_maturity_months, quoted: 71, tol: 0.5}
+  - {section: 3, text: "longest instrument 30 years", output: debt_maturity, path: data.longest_instrument_years, quoted: 30, tol: 0}
   - {section: 4, text: "FY2025 outlays $7.01T", output: budget, year: 2025, field: n_ot, quoted: 7.01, tol: 0.005}
   - {section: 4, text: "FY2025 revenue $5.24T", output: budget, year: 2025, field: n_re, quoted: 5.24, tol: 0.006}
   - {section: 4, text: "FY2025 deficit $1.78T", output: budget, year: 2025, field: n_de, quoted: -1.78, tol: 0.006}
@@ -35,7 +41,7 @@ figures:
   - {section: 6, text: "mandatory 9.8% of GDP in FY1995 (NET)", output: budget, year: 1995, field: g_ma_net, quoted: 9.8, tol: 0.06}
   - {section: 6, text: "mandatory 13.7% of GDP in FY2025 (NET)", output: budget, year: 2025, field: g_ma_net, quoted: 13.7, tol: 0.06}
   - {section: 6, text: "discretionary 7.2% -> 6.2% of GDP", output: budget, year: 2025, field: g_di, quoted: 6.2, tol: 0.06}
-  - {section: 6, text: "real mandatory growth 189% (SEE NOTE: gross basis)", output: budget, agg: real_growth_gross_mandatory, years: [1995, 2025], quoted: 189, tol: 1.0}
+  - {section: 6, text: "real mandatory growth 194% (NET of offsetting receipts)", output: budget, agg: pct_growth, field: r_ma_net, years: [1995, 2025], quoted: 194, tol: 1.0}
   - {section: 6, text: "real discretionary growth 79%", output: budget, agg: real_growth_disc, years: [1995, 2025], quoted: 79, tol: 1.0}
   - {section: 7, text: "net interest FY1995 $232B", output: budget, year: 1995, field: n_ni, quoted: 0.232, tol: 0.002}
   - {section: 7, text: "net interest FY2025 $970B", output: budget, year: 2025, field: n_ni, quoted: 0.970, tol: 0.002}
