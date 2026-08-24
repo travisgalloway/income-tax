@@ -287,23 +287,37 @@ export function LawExplorer({
               })()}
 
             {/* Every fiscal-year point is Tab-focusable and reports the same
-               text hover does, via the shared fyReadout formatter (C3). */}
+               text hover does, via the shared fyReadout formatter (C3). The
+               hit-target circle keeps a constant radius so hovering the
+               focused state doesn't shrink out from under the pointer and
+               flicker; the visible marker is a separate, non-interactive
+               circle layered on top. */}
             {shownYears.map((r) => (
-              <circle
-                key={r.y}
-                className="datum"
-                cx={x(r.y)}
-                cy={y(r.g_de)}
-                r={focusFy === r.y ? 5 : 9}
-                fill={focusFy === r.y ? 'var(--ink)' : 'transparent'}
-                tabIndex={0}
-                role="img"
-                aria-label={fyReadout(r)}
-                onFocus={() => setFocusFy(r.y)}
-                onBlur={() => setFocusFy(null)}
-                onMouseEnter={() => setFocusFy(r.y)}
-                onMouseLeave={() => setFocusFy(null)}
-              />
+              <g key={r.y}>
+                <circle
+                  className="datum"
+                  cx={x(r.y)}
+                  cy={y(r.g_de)}
+                  r={9}
+                  fill="transparent"
+                  tabIndex={0}
+                  role="img"
+                  aria-label={fyReadout(r)}
+                  onFocus={() => setFocusFy(r.y)}
+                  onBlur={() => setFocusFy(null)}
+                  onMouseEnter={() => setFocusFy(r.y)}
+                  onMouseLeave={() => setFocusFy(null)}
+                />
+                {focusFy === r.y && (
+                  <circle
+                    cx={x(r.y)}
+                    cy={y(r.g_de)}
+                    r={5}
+                    fill="var(--ink)"
+                    pointerEvents="none"
+                  />
+                )}
+              </g>
             ))}
           </>
         )}
