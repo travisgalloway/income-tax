@@ -37,20 +37,22 @@ const current = Astro.url.pathname.replace(/\/$/, '')
     <a class="skip-link" href="#main">Skip to content</a>
     <div class="page">
       <div class="shell">
-        <nav class="rail" aria-label="Site">
-          <ol class="route-links">
-            {routes.map((r) => (
-              <li>
-                <a href={r.href} aria-current={r.href.replace(/\/$/, '') === current ? 'page' : undefined}>
-                  {r.label}
-                </a>
-              </li>
-            ))}
-          </ol>
+        <div class="rail">
+          <nav aria-label="Site">
+            <ol class="route-links">
+              {routes.map((r) => (
+                <li>
+                  <a href={r.href} aria-current={r.href.replace(/\/$/, '') === current ? 'page' : undefined}>
+                    {r.label}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </nav>
           {sections.length > 0 && (
-            <>
-              <p class="toc-heading">Contents</p>
-              <ol class="toc" aria-label="Sections">
+            <nav aria-labelledby="toc-heading">
+              <p class="toc-heading" id="toc-heading">Contents</p>
+              <ol class="toc">
                 {sections.map((s, i) => (
                   <li>
                     <span class="n" aria-hidden="true">{i + 1}.</span>
@@ -58,10 +60,10 @@ const current = Astro.url.pathname.replace(/\/$/, '')
                   </li>
                 ))}
               </ol>
-            </>
+            </nav>
           )}
-        </nav>
-        <main id="main">
+        </div>
+        <main id="main" tabindex="-1">
           <slot />
         </main>
       </div>

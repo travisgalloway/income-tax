@@ -346,7 +346,9 @@ figcaption .lead {
 :focus-visible { outline: 1.5px solid var(--ink); outline-offset: 2px; }
 
 .datum { cursor: pointer; }
-.datum:focus-visible { outline: 1.5px solid var(--ink); outline-offset: 1px; }
+/* WebKit does not paint `outline` on SVG shapes, so the ring is drawn twice:
+ * `outline` for engines that honour it, `stroke` for those that do not. */
+.datum:focus-visible { outline: 1.5px solid var(--ink); outline-offset: 1px; stroke: var(--ink); stroke-width: 2; }
 
 .skip-link {
   position: absolute; left: -9999px;
@@ -354,6 +356,8 @@ figcaption .lead {
   padding: 0.5rem 1rem; z-index: 10;
 }
 .skip-link:focus { left: 0.5rem; top: 0.5rem; }
+/* The skip link paints on --ink, so the default ink outline is invisible on it. */
+.skip-link:focus-visible { outline-color: var(--panel); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
