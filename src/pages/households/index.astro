@@ -3,7 +3,8 @@ import BaseLayout from '../../layouts/BaseLayout.astro'
 import Figure from '../../components/Figure.astro'
 import { WhoPays } from '../../components/islands/WhoPays'
 import { Top1TaxShare } from '../../components/islands/Top1TaxShare'
-import { incomeGroups, vintageOf } from '../../data'
+import { PayrollBill } from '../../components/islands/PayrollBill'
+import { incomeGroups, revenue, vintageOf } from '../../data'
 
 const sections = [
   { id: 'what-a-household-earns', label: 'What a household earns' },
@@ -80,7 +81,33 @@ const sections = [
     </p>
   </section>
 
-  {sections.slice(5).map((s) => (
+  <section id="the-bill-you-do-not-see">
+    <p class="kicker"><span class="section-no">Section 6</span></p>
+    <h2>The bill you do not see</h2>
+    <p class="standfirst">
+      Payroll tax raised 5.76% of GDP and 33.4% of all federal revenue in FY2025, and for
+      every household outside the top decile it is the larger of the two bills. The chart
+      in Section 5 counts none of it.
+    </p>
+    <p class="finding">
+      FY2025: payroll tax 5.76% of GDP and 33.4% of total federal revenue, against
+      individual income tax at 8.75% of GDP and 50.7% of revenue.
+    </p>
+
+    <Figure
+      ariaLabel="Payroll tax and individual income tax, each as a share of GDP and as a share of total federal revenue, fiscal 1962 to fiscal 2025. In FY2025 payroll tax was 5.76% of GDP and 33.4% of all federal revenue."
+      title="Payroll tax and individual income tax, share of GDP and share of total revenue, FY1962-FY2025"
+      source={revenue._meta.source}
+      vintage={vintageOf(revenue._meta)}
+      xUnit="Fiscal year"
+      yUnit="Percent of GDP, or percent of total federal revenue"
+      note="This figure is on fiscal years, while sections 1 through 5 are on calendar and tax years — FY2025 began in October 2024. Payroll tax funds Social Security and Medicare and is capped above a wage threshold, so its incidence is not the income tax's. Section 4's chart of CBO average federal tax rates does include payroll tax; this chart shows its scale as a share of federal revenue, which Section 4 does not."
+    >
+      <PayrollBill client:visible rows={revenue.data} />
+    </Figure>
+  </section>
+
+  {sections.slice(6).map((s) => (
     <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
   ))}
 </BaseLayout>
