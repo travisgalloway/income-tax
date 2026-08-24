@@ -39,6 +39,64 @@ def test_outlay_components_sum_to_total(budget):
         assert abs(got - r["n_ot"]) <= 0.002, f"FY{y}: {got:.3f} != {r['n_ot']:.3f}"
 
 
+def test_outlay_components_sum_to_total_in_every_unit_family(budget):
+    """The chart layer stacks ma+or+di+ni against ot in nominal, real and GDP
+    units (docs/contracts/interfaces/budget-data.md). This is issue #2
+    criterion 1's real guarantee: the net stack never silently misses the top
+    of the axis in any of the three views a reader can switch to."""
+    tolerances = {"n_": 0.002, "r_": 0.004, "g_": 0.02}
+    for y, r in budget.items():
+        for prefix, tol in tolerances.items():
+            got = r[f"{prefix}ma"] + r[f"{prefix}or"] + r[f"{prefix}di"] + r[f"{prefix}ni"]
+            want = r[f"{prefix}ot"]
+            assert abs(got - want) <= tol, f"FY{y} {prefix}: {got:.3f} != {want:.3f}"
+
+
+def test_party_control_is_null_outside_fy1995_2025(budget):
+    """Issue #2 criterion 2: the control strip must render for exactly
+    FY1995-2025 and nowhere else, matching _meta.coverage."""
+    curated = {y: r for y, r in budget.items() if r["ctl"] is not None}
+    assert len(curated) == 31
+    assert min(curated) == 1995
+    assert max(curated) == 2025
+    for y, r in budget.items():
+        if y < 1995 or y > 2025:
+            assert r["ctl"] is None, f"FY{y} should carry ctl: null"
+
+
+def test_net_mandatory_is_positive_in_every_year(budget):
+    """The stack this section draws never inverts: net mandatory (ma + or) is
+    positive in nominal, real and GDP terms for all 64 fiscal years."""
+    for y, r in budget.items():
+        assert r["n_ma"] + r["n_or"] > 0, f"FY{y} nominal"
+        assert r["r_ma"] + r["r_or"] > 0, f"FY{y} real"
+        assert r["g_ma"] + r["g_or"] > 0, f"FY{y} % of GDP"
+
+
+def test_every_unit_family_covers_the_full_span(budget):
+    """Switching units must not change which years are shown: all three
+    families are present and finite for every fiscal year, FY1962-2025."""
+    assert min(budget) == 1962
+    assert max(budget) == 2025
+    assert len(budget) == 64
+    fields = [f"{p}{k}" for p in ("n_", "r_", "g_") for k in ("ma", "or", "di", "ni", "re", "de", "ot")]
+    for y, r in budget.items():
+        for f in fields:
+            v = r[f]
+            assert v is not None and v == v, f"FY{y} {f} is missing or NaN"  # v == v excludes NaN
+
+
+def test_surplus_years_are_positive_deficit_values(budget):
+    """Edge case: FY1969, 1998-2001 are surplus years and must read as
+    positive `de`, not a negated 'deficit'."""
+    surplus_years = {1969, 1998, 1999, 2000, 2001}
+    for y in surplus_years:
+        assert budget[y]["n_de"] > 0, f"FY{y} should be a surplus"
+    for y, r in budget.items():
+        if y not in surplus_years:
+            assert r["n_de"] <= 0, f"FY{y} unexpectedly reads as a surplus"
+
+
 def test_deficit_is_revenue_minus_outlays(budget):
     for y, r in budget.items():
         assert abs((r["n_re"] - r["n_ot"]) - r["n_de"]) <= 0.002, f"FY{y}"
@@ -204,6 +262,113 @@ def test_every_mapped_rollcall_passed(splits):
             assert v["yea"] >= (v["nay"] if ch == "senate" else v["nay"] + 1), f"{pl} {ch}"
 
 
+# ---- section 8: the law explorer ----
+
+def _laws() -> list[dict]:
+    return [l for r in load("budget")["data"] for l in r["L"]]
+
+
+def _enactment_fy(date: str) -> int:
+    """Mirrors `enactmentFy` in src/components/laws/derive.ts: the federal
+    fiscal year starts 1 October of the prior calendar year."""
+    y, m, _ = (int(p) for p in date.split("-"))
+    return y + 1 if m >= 10 else y
+
+
+def _margin(split: dict) -> int | None:
+    """Mirrors `margin` in src/components/laws/derive.ts: the narrowest
+    passage margin across chambers that HAVE a roll call."""
+    chambers = [split[ch] for ch in ("house", "senate") if split[ch] is not None]
+    if not chambers:
+        return None
+    return min(v["yea"] - v["nay"] for v in chambers)
+
+
+def test_every_law_joins_to_a_counted_split(splits):
+    """D1: every law's vote data comes from the counted party_splits.json join
+    on public_law, not from vote_character or legacy_comp."""
+    laws = _laws()
+    assert len(splits) == 23
+    for l in laws:
+        assert l["public_law"] in splits, f"{l['public_law']} has no counted split"
+
+
+def test_filter_totals_render_to_the_published_two_places(splits):
+    """D5: the EXACT strings the UI prints, not a tolerance. Pins the
+    7.51/7.52 resolution — the true sum is 7.512, which the UI's toFixed(2)
+    renders as 7.51, and sections.md section 8 must agree."""
+    laws = _laws()
+    cost = {"cross-party": 0.0, "party-line": 0.0}
+    count = {"cross-party": 0, "party-line": 0}
+    for l in laws:
+        ch = splits[l["public_law"]]["character"]
+        count[ch] += 1
+        cost[ch] += l["score_t"] or 0
+    assert count["party-line"] == 7 and count["cross-party"] == 16
+    assert f"{cost['party-line']:.2f}" == "7.51"
+    assert f"{cost['cross-party']:.2f}" == "9.24"
+
+
+def test_the_two_1997_laws_carry_no_score_but_do_carry_votes(splits):
+    """D4/E2: the two 1997 laws predate the ten-year scoring convention and
+    are excluded from totals, but still carry a countable vote in both
+    chambers."""
+    laws = {l["public_law"]: l for l in _laws()}
+    for pl in ("105-33", "105-34"):
+        assert laws[pl]["score_t"] is None
+        assert splits[pl]["house"] is not None
+        assert splits[pl]["senate"] is not None
+
+
+def test_cares_house_cell_has_no_countable_vote(splits):
+    """D3: extends test_cares_house_vote_is_absent_not_unanimous with the
+    exact fields the House table cell and its footnote depend on."""
+    c = splits["116-136"]
+    assert c["house"] is None
+    assert c.get("note")
+
+
+def test_vp_tiebreak_laws_are_exactly_the_three_named(splits):
+    """E3: fails loudly if a fourth 50-50 Senate vote appears uncounted for."""
+    tied = {pl for pl, r in splits.items() if r["senate"] and r["senate"]["yea"] == r["senate"]["nay"]}
+    assert tied == {"108-27", "117-169", "119-21"}
+
+
+def test_narrowest_chamber_margin_is_defined_for_every_law(splits):
+    """D6: the counted margin (min over chambers with a roll call of
+    yea - nay) is a total function over all 23 laws, including CARES, which
+    has no House roll call but does have a Senate margin."""
+    for pl, r in splits.items():
+        m = _margin(r)
+        assert m is not None, f"{pl} has no margin"
+        assert m >= 0, f"{pl} margin is negative: {m}"
+
+
+def test_deficit_share_exists_for_every_enactment_fiscal_year(budget):
+    """E6: no enactment marker lands on a fiscal year missing from the
+    deficit series."""
+    for l in _laws():
+        fy = _enactment_fy(l["date"])
+        assert fy in budget, f"{l['public_law']} enacted in FY{fy}, missing from budget"
+        assert budget[fy]["g_de"] is not None, f"FY{fy} has no deficit share"
+
+
+def test_section_8_no_longer_claims_classified_composition():
+    """S4/D9: the shipped section states the splits are counted, not
+    classified, and stops the earlier claim from regressing."""
+    sections = (LEGACY / "sections.md").read_text()
+    start = sections.index("## 8 / The laws")
+    end = sections.index("## 9 /", start)
+    section_8 = sections[start:end]
+    assert "classified from published vote character" not in section_8
+    assert "Voteview" in section_8
+
+    sources = (LEGACY / "SOURCES.md").read_text()
+    vstart = sources.index("## The counted vote splits")
+    vend = sources.index("\n## ", vstart + 1)
+    vote_section = sources[vstart:vend]
+    assert "classified from published vote character" not in vote_section
+    assert "Voteview" in vote_section
 # ---- §9 attribution: the same $16.75T two ways ----------------------------
 #
 # These reproduce, independently of src/components/attribution/aggregate.ts,
