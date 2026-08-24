@@ -38,3 +38,13 @@ time. Appended to, never rewritten. None of these have been acted on.
   duplicate `incomeGreaterThan` it encounters, rather than guessing. Criterion-blocking (no other
   year/status combination in 1913-2019 has a duplicate floor), fixed rather than parked. Severity:
   upstream data defect, resolved, non-blocking.
+- [2026-08-23] Issue #10's plan lists `BracketHistory.tsx`'s `TableView` columns as Year / Top
+  statutory rate / Schedule ladder top / Brackets / threshold (nominal) / threshold (constant) /
+  Adjustment -- no mfj/mfs/hoh columns -- but its manual check M3 says "`no data`, never `0`, in
+  the mfj/mfs/hoh table columns for years before 1949/1952", which presumes columns the column
+  list does not include. Left the table matching the literal column list (kept narrow, matches the
+  issue's stated three things: bracket count, thresholds, top rate) rather than expanding scope to
+  reconcile M3; the underlying null-vs-zero invariant is still fully covered by
+  `test_filing_statuses_are_not_projected_backwards` and `test_bracket_history_absent_values_are_null_not_zero`
+  at the data layer. M3 itself is unexecuted here (no browser tooling). Severity: plan
+  inconsistency, non-blocking (M3 was already unexecuted for an unrelated reason).

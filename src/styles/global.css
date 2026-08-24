@@ -324,6 +324,17 @@ figcaption .lead {
   color: var(--ink-soft);
 }
 
+/* Sub-head for one panel inside a multi-panel single-SVG figure (BracketHistory's
+ * three stacked panels). Quieter than .figure-title: it labels a part, not the
+ * whole figure. */
+.panel-title {
+  font-family: var(--font-data);
+  font-size: 10.5px;
+  fill: var(--ink-soft);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.07em;
+}
+
 .readout {
   font-family: var(--font-data);
   font-size: 0.8125rem;

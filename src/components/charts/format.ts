@@ -50,3 +50,16 @@ export function value(v: number | null, unit: Unit): string {
 export function fiscalYear(y: number): string {
   return `FY${y}`
 }
+
+/** A calendar year, unadorned. The Households route runs on tax/calendar
+ *  years throughout and must never print an `FY` prefix the way the
+ *  Government route's fiscal-year figures do. */
+export function calendarYear(y: number): string {
+  return `${y}`
+}
+
+/** A rate already expressed in percent (not a 0-1 fraction), for statutory
+ *  and effective tax rate figures. */
+export function percentRate(v: number, digits = 1): string {
+  return `${v.toFixed(digits)}%`
+}

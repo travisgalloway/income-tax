@@ -138,6 +138,56 @@ export interface ChamberVote {
   rollnumber: number
 }
 
+export type FilingStatus = 'single' | 'mfj' | 'mfs' | 'hoh'
+
+/** One bracket on a filing status's ladder for one tax year. `hi`/`rhi` are
+ *  null on exactly the top bracket, never zero. `rlo`/`rhi` are constant 2024
+ *  dollars. */
+export interface Bracket {
+  r: number
+  lo: number
+  hi: number | null
+  rlo: number
+  rhi: number | null
+}
+
+/** Present only in the twelve years where the published top rate diverges
+ *  from the raw bracket-schedule ladder top. Both numbers are kept. */
+export interface RateAdjustment {
+  schedule: number
+  published: number
+  why: string
+  source: string
+}
+
+/** One tax year of `bracket_history.json`. `s.<status>` is null before that
+ *  status existed (never a back-projected copy of `single`). */
+export interface BracketYear {
+  y: number
+  top: number
+  sched_top: number
+  adj: RateAdjustment | null
+  nb: number
+  s: Record<FilingStatus, Bracket[] | null>
+}
+
+/** `cbo_effective_rates.json`'s `data` blob: PUBLISHED ANCHOR POINTS, never an
+ *  annual series. Kept structurally loose (`Record<string, unknown>` at the
+ *  import site) because its shape does not overlap enough with any tabular
+ *  `T[]` for a single `as Dataset<T>` assertion; narrow through this type at
+ *  the point of use instead. */
+export interface CboEffectiveRates {
+  as_of: string
+  basis: string
+  not_an_annual_series: string
+  groups: string[]
+  rows: {
+    year: number
+    source_table: string
+    v: { lowest: number; second: number; middle: number; fourth: number; highest: number; top1: number }
+  }[]
+}
+
 export interface PartySplit {
   public_law: string | null
   name: string
