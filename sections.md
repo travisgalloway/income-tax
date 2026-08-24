@@ -20,7 +20,8 @@ it was $19.6 trillion. Measured against the economy, though, the same decade
 moved the debt from 105% of GDP to 124%.
 
 **Finding:** Debt doubled in ten fiscal years, from $19.57T at the close of
-FY2016 to $40T on 19 August 2026, a 2.04x rise.
+FY2016 to $40T at the close of 18 August 2026, reported the following day, a
+2.04x rise.
 
 **Body:** Doubling is not new. FY2005 to FY2015 ran $7.9 trillion to $18.2
 trillion, a 2.3x rise, faster than this decade. What changed is the base. That

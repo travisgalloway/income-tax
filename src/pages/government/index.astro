@@ -2,18 +2,31 @@
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import Figure from '../../components/Figure.astro'
 import { DebtChart } from '../../components/islands/DebtChart'
+import { DebtHolders } from '../../components/islands/DebtHolders'
+import { DebtMaturity } from '../../components/islands/DebtMaturity'
 import { StructuralGap } from '../../components/islands/StructuralGap'
 import { VotedAndNot } from '../../components/islands/VotedAndNot'
 import { NetInterest } from '../../components/islands/NetInterest'
 import { AttributionSplit } from '../../components/islands/AttributionSplit'
 import { LawExplorer } from '../../components/islands/LawExplorer'
 import { BudgetChart } from '../../components/islands/BudgetChart'
-import { budget, debt, laws, partySplits, vintageOf } from '../../data'
+import {
+  budget,
+  debt,
+  debtHolders,
+  debtMaturity,
+  laws,
+  partySplits,
+  curatedVintage,
+  vintageOf,
+} from '../../data'
 
 // Sections built so far. Everything else still falls through to the
 // "Not built yet." placeholder below.
 const HAND_WRITTEN = new Set([
   'forty-trillion',
+  'who-holds-it',
+  'how-old',
   'whole-budget',
   'structural-gap',
   'what-congress-votes-on',
@@ -58,12 +71,12 @@ const sections = [
       105% of GDP to 124%.
     </p>
     <p class="finding">
-      Debt doubled in ten fiscal years, from $19.57T at the close of FY2016 to $40T in
-      August 2026, a 2.04x rise.
+      Debt doubled in ten fiscal years, from $19.57T at the close of FY2016 to $40T at the
+      close of 18 August 2026, reported the following day, a 2.04x rise.
     </p>
 
     <Figure
-      ariaLabel="Debt doubled in ten fiscal years, from $19.57 trillion at the close of FY2016 to $40 trillion in August 2026."
+      ariaLabel="Debt doubled in ten fiscal years, from $19.57 trillion at the close of FY2016 to $40 trillion at the close of 18 August 2026, reported the following day."
       title="Total public debt outstanding at fiscal year end, 1995 to 2026"
       source={debt._meta.source}
       vintage={vintageOf(debt._meta)}
@@ -82,6 +95,77 @@ const sections = [
     <p class="prose">
       CBO projected in May 2023 that the debt would reach $40 trillion in 2028. It arrived
       about two years early.
+    </p>
+  </section>
+
+  <section id="who-holds-it">
+    <p class="kicker"><span class="section-no">Section 2</span></p>
+    <h2>Most of it is owed to us</h2>
+    <p class="standfirst">
+      About 80% is held by the public: investors, pension funds, banks, the Federal Reserve
+      and foreign governments. The other 20% the government owes itself, mostly the Social
+      Security and Medicare trust funds.
+    </p>
+    <p class="finding">
+      $32.14T held by the public (80.6%), $7.74T intragovernmental (19.4%), as of 7 August
+      2026.
+    </p>
+
+    <Figure
+      ariaLabel="$32.14 trillion of the federal debt is held by the public and $7.74 trillion is held intragovernmentally by federal trust funds; about 30% of the publicly held part, 24% of gross, is held abroad."
+      title="Who holds the federal debt, 7 August 2026"
+      source={debtHolders._meta.source}
+      vintage={curatedVintage(debtHolders._meta, debtHolders.data.as_of)}
+      xUnit="Share of gross debt, and share of publicly held debt"
+      yUnit="holder category"
+      note="Foreign holders are about 30% of publicly held debt, which is about 24% of gross debt; the two are not interchangeable. Treasury International Capital is revised monthly and China has been reported between $683 billion and $760 billion depending on vintage."
+    >
+      <DebtHolders client:visible d={debtHolders.data} />
+    </Figure>
+
+    <p class="prose">
+      Of the publicly held part, roughly 70% is domestic. The biggest foreign holders are
+      Japan at about $1.20 trillion, the UK at $889 billion and China at $683 billion.
+      Foreign holders were 5% of the debt in 1970 and are now close to a quarter of it. That
+      is not a solvency problem by itself, but a growing share of interest payments leaves
+      the country.
+    </p>
+    <p class="prose">
+      The intragovernmental piece is real money owed to future retirees, but it does not
+      trade in bond markets and does not set interest rates.
+    </p>
+  </section>
+
+  <section id="how-old">
+    <p class="kicker"><span class="section-no">Section 3</span></p>
+    <h2>The debt is younger than you think</h2>
+    <p class="standfirst">
+      The longest security the Treasury sells is the 30-year bond, so nothing outstanding
+      today was issued before 1996. But the average is nowhere near thirty years. It is
+      about six.
+    </p>
+    <p class="finding">
+      Average maturity of marketable Treasury debt is 71 months as of June 2026. Roughly a
+      third matures within twelve months.
+    </p>
+
+    <Figure
+      ariaLabel="Chart showing US marketable Treasury debt split by instrument type, with bills under one year, notes of two to ten years and bonds of twenty to thirty years, above a scale marking the average maturity at about six years against the thirty-year maximum."
+      title="Maturity structure of marketable Treasury debt, June 2026"
+      source={debtMaturity._meta.source}
+      vintage={curatedVintage(debtMaturity._meta, debtMaturity.data.avg_maturity_as_of)}
+      xUnit="Years to maturity"
+      yUnit="amount outstanding, $ trillions"
+      note="Bills, notes and bonds are the three instrument families and their amounts do not sum exactly to the $28.0 trillion marketable total; they are not presented as an exhaustive partition. The 22% bills figure is the curated share and is not derived from the amounts beside it. Savings bonds (Series EE and I) are non-marketable and excluded throughout."
+    >
+      <DebtMaturity client:visible d={debtMaturity.data} />
+    </Figure>
+
+    <p class="prose">
+      This is why the interest line moved so fast. The government does not lock in a rate
+      for a generation. It refinances continuously, so when rates rose after 2021 the cost
+      of the entire stock repriced within a few years rather than a few decades. See
+      <a href="#net-interest">net interest</a> for what that did to the bill.
     </p>
   </section>
 

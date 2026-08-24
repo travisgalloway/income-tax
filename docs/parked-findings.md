@@ -14,6 +14,27 @@ time. Appended to, never rewritten. None of these have been acted on.
   number formatters inline rather than using `UnitToggle` and `charts/format.ts`. Section 4 uses
   the shared ones; §1 could be moved onto them. Found while working on #2. Severity: duplication,
   non-blocking.
+- [2026-08-23] `pipeline/curated/prose_figures.yaml` registers `debt_holders.data.split.0.share_pct`
+  (public 80.6%) but not `.split.1.share_pct` (intragovernmental 19.4%), even though both are
+  quoted in `sections.md` §2's finding ("...$7.74T intragovernmental (19.4%)..."). A future
+  revision to the intragov share could drift silently against that sentence. Found while working
+  on #6, out of scope (the issue's registration list named specific new §2/§3 figures and this one
+  predates it). Severity: prose-drift coverage gap, non-blocking.
+- [2026-08-23] Issue #6's plan draft for the §2 `Figure` `note` prop included a sentence restating
+  the Federal Reserve omission ("Federal Reserve holdings are deliberately omitted: ..."). That
+  sentence was dropped from the shipped note because it would have produced a second "Federal
+  Reserve" occurrence in `dist/government/index.html`, contradicting the issue's own DoD item 2 and
+  verification V6 (exactly one occurrence, in the §2 standfirst only). The TIC range and the
+  foreign-share denominator sentences were kept. Found while implementing #6. Severity: plan/
+  verification inconsistency, resolved in favour of the verification criterion, non-blocking.
+- [2026-08-23] `dist/government/index.html`'s `TableView` "View as table" content
+  (`.tableview-content`) is empty in the static SSR output for every figure on the page, including
+  the pre-existing `DebtChart.tsx` table: Radix `Collapsible.Content` does not render its children
+  while `open` is false server-side. This means no static grep of the built HTML (e.g. for `no
+  data` cells or column units) can verify table contents; it can only be checked with a real
+  browser after the disclosure is opened client-side. Found while verifying #6 (GOV-2). Severity:
+  test-coverage limitation shared by every figure on the site, non-blocking, no browser tooling
+  available in this environment to open a follow-up investigation.
 - [2026-08-23] `src/components/Figure.astro:38` requires and validates `ariaLabel` at build time but
   never renders it anywhere in the DOM -- the accessible text a screen reader actually gets comes
   from the slotted chart's own internal `Chart` `ariaLabel` (per-unit-view, describing the shape),

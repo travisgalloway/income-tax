@@ -7,13 +7,13 @@
    "gdp_share": "gross debt as percent of GDP"
   },
   "notes": [
-   "FY2026 value is the 19 August 2026 crossing of $40T, not a year-end close; gdp_share is null because FY2026 GDP is not final.",
+   "FY2026 value is the close of 18 August 2026, the first Debt to the Penny close at or above $40T, reported the following day; not a fiscal year-end close, and gdp_share is null because FY2026 GDP is not final.",
    "FY2016 $19.57T to $40T is a 2.04x rise in ten fiscal years. FY2005 to FY2015 was 2.29x, a faster doubling from a smaller base."
   ],
   "provenance": {
    "generator": "monthly/treasury.py",
-   "git_sha": "5920f6f",
-   "generated_at": "2026-08-22T17:51:54Z",
+   "git_sha": "d082a27",
+   "generated_at": "2026-08-23T22:16:37Z",
    "retrieved_at": "2026-08-20"
   },
   "coverage": {
@@ -31,6 +31,7 @@
   "threshold_crossing": {
    "threshold_t": 40.0,
    "record_date": "2026-08-18",
+   "reported_date": "2026-08-19",
    "value_t": 40.047,
    "rule": "Both are right and they are not in conflict. Debt to the Penny reports a date's CLOSING balance on the next business day, so the balance dated 18 August was published on 19 August. Say \"closed above $40 trillion on 18 August 2026, reported the following day\" or cite the reported date explicitly. Never present the two as competing figures, and never let the pipeline silently overwrite the cited date when Treasury revises the series."
   },

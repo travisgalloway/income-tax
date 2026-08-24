@@ -310,6 +310,146 @@ def test_every_mapped_rollcall_passed(splits):
             assert v["yea"] >= (v["nay"] if ch == "senate" else v["nay"] + 1), f"{pl} {ch}"
 
 
+# ---- issue #6: debt holders and repricing ---------------------------------
+
+def test_crossing_date_is_reconciled_not_competing():
+    """discrepancies.yaml -> forty_trillion_crossing_date: both dates are right
+    and must never be presented as competing figures."""
+    crossing = load("debt")["_meta"]["threshold_crossing"]
+    assert crossing["record_date"] == "2026-08-18"
+    assert crossing["reported_date"] == "2026-08-19"
+
+    rows = load("debt")["data"]
+    non_year_end = [r for r in rows if not r.get("year_end")]
+    assert len(non_year_end) == 1
+    assert non_year_end[0]["as_of"] == crossing["record_date"]
+
+    for path in (LEGACY / "SOURCES.md", LEGACY / "sections.md"):
+        # Collapse to one line first: prose wraps across source lines, and the
+        # rule is about the sentence, not the raw line.
+        blob = " ".join(path.read_text().split())
+        for sentence in blob.split(". "):
+            if "19 August 2026" in sentence:
+                assert "18 August 2026" in sentence, f"{path.name}: {sentence!r} names " \
+                    "19 August without 18 August in the same sentence"
+
+
+ISLANDS = LEGACY / "src" / "components" / "islands"
+GOV_PAGE = LEGACY / "src" / "pages" / "government" / "index.astro"
+
+
+def _rendered_section(section_id: str) -> str:
+    """The literal source of one hardcoded <section id="..."> block in
+    index.astro, from its opening tag to its first closing </section>."""
+    page = GOV_PAGE.read_text()
+    start = page.index(f'id="{section_id}"')
+    end = page.index("</section>", start)
+    return page[start:end]
+
+
+def test_foreign_share_always_carries_its_denominator():
+    """discrepancies.yaml -> foreign_share_of_debt: 30% of publicly held debt
+    and 24% of gross debt are different quantities and must never read as one."""
+    resolution = curated.discrepancies()["foreign_share_of_debt"]["use"]
+    assert resolution["share_of_public_pct"] == 30
+    assert resolution["share_of_gross_pct"] == 24
+
+    notes = " ".join(load("debt_holders")["_meta"]["notes"]).lower()
+    assert "publicly held" in notes and "gross" in notes
+
+    src = (ISLANDS / "DebtHolders.tsx").read_text()
+    fn_start = src.index("const foreignShare")
+    fn_end = src.index("\n\n", fn_start)
+    outside = src[:fn_start] + src[fn_end:]
+    assert "30%" not in outside and "24%" not in outside, \
+        "DebtHolders.tsx: a bare 30%/24% literal exists outside the foreignShare formatter"
+
+
+def test_public_split_is_keyed_to_its_denominator():
+    """Every public_split entry uses share_of_public_pct; none carries a bare
+    share_pct a renderer could mistake for a share of gross debt."""
+    for s in load("debt_holders")["data"]["public_split"]:
+        assert "share_of_public_pct" in s
+        assert "share_pct" not in s
+
+
+def test_section_2_uses_no_party_colours():
+    for name in ("DebtHolders.tsx", "DebtMaturity.tsx"):
+        src = (ISLANDS / name).read_text()
+        for tok in ("--dem", "--gop", "--mix"):
+            assert tok not in src, f"{name} uses the partisan token {tok}"
+
+
+def test_federal_reserve_absent_from_rendered_section_2():
+    """Scoped like test_federal_reserve_holdings_stay_omitted: the string is a
+    legitimate, sections.md-verbatim trap in the §2 STANDFIRST, but must not
+    reach the data, the island, or the rest of the rendered section."""
+    assert "federal reserve" not in json.dumps(load("debt_holders")["data"]).lower()
+    assert "federal reserve" not in (ISLANDS / "DebtHolders.tsx").read_text().lower()
+
+    section2 = _rendered_section("who-holds-it").lower()
+    assert section2.count("federal reserve") == 1, \
+        "section 2 should name the Federal Reserve exactly once, in its standfirst"
+    standfirst_end = section2.index("</p>", section2.index("standfirst"))
+    assert "federal reserve" in section2[:standfirst_end]
+
+
+def test_tic_revision_note_is_carried():
+    notes = " ".join(load("debt_holders")["_meta"]["notes"])
+    assert "683" in notes and "760" in notes and "monthly" in notes.lower()
+    section2 = _rendered_section("who-holds-it")
+    assert "683 billion" in section2 and "monthly" in section2.lower()
+
+
+def test_maturity_instruments_are_not_an_exhaustive_partition():
+    """EC2: 6.8 + 15.9 + 5.4 = 28.1 against a curated marketable_total_t of
+    28.0. This must stay true and must stay stated in words, or a reader could
+    mistake the three instrument families for an exhaustive partition."""
+    d = load("debt_maturity")["data"]
+    total = sum(c["amount_t"] for c in d["composition"])
+    assert abs(total - d["marketable_total_t"]) > 0.01
+    notes = " ".join(load("debt_maturity")["_meta"]["notes"]).lower()
+    assert "not an exhaustive partition" in notes or "do not sum" in notes
+
+
+def test_maturity_percentages_are_never_derived_from_amounts():
+    """EC3: bills.share_pct (22) disagrees with amount_t / marketable_total_t
+    (24.3%) on purpose. Only bills carries a curated share; DebtMaturity.tsx
+    must never compute one from amount_t / marketable_total_t."""
+    d = load("debt_maturity")["data"]
+    comp = {c["k"]: c for c in d["composition"]}
+    assert "share_pct" in comp["bills"]
+    assert "share_pct" not in comp["notes"] and "share_pct" not in comp["bonds"]
+
+    derived = round(100 * comp["bills"]["amount_t"] / d["marketable_total_t"], 1)
+    assert derived != comp["bills"]["share_pct"], \
+        "the curated bills share and the derived amount now agree; the EC3 trap may be stale"
+
+    src = (ISLANDS / "DebtMaturity.tsx").read_text()
+    assert "marketable_total_t" not in src or "amount_t /" not in src, \
+        "DebtMaturity.tsx appears to divide an amount by marketable_total_t"
+
+
+def test_maturity_history_is_not_charted():
+    """sections.md §3: 'Do not build this as a time series.' The field stays in
+    the data (deleting curated data is a separate editorial act) but no
+    component may reference it."""
+    assert "history_months" not in (ISLANDS / "DebtMaturity.tsx").read_text()
+    notes = " ".join(load("debt_maturity")["_meta"]["notes"]).lower()
+    assert "history_months" in notes and "not" in notes
+
+
+def test_curated_snapshots_expose_their_as_of():
+    """E1: a curated snapshot carries no vintage/retrieved_at, so vintageOf()
+    returns null and a figure could ship with no freshness stamp at all.
+    curatedVintage() must be used instead, and the page must call it."""
+    for name in ("debt_holders", "debt_maturity"):
+        meta = load(name)["_meta"]
+        assert meta.get("refresh", {}).get("mode") == "curated"
+
+    page = GOV_PAGE.read_text()
+    assert page.count("curatedVintage(") >= 2, \
+        "index.astro should call curatedVintage() for both debtHolders and debtMaturity"
 # ---- section 8: the law explorer ----
 
 def _laws() -> list[dict]:
