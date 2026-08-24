@@ -1019,3 +1019,53 @@ def test_fy2020_unemployment_is_a_fiscal_year_average_not_a_monthly_peak():
     rows = {r["y"]: r["unemp"] for r in load("economy")["data"] if r["actual"]}
     assert max(rows.values()) == rows[1983]
     assert rows[2020] < rows[1983]
+
+
+# ---- economy route: prices/rates, labor/capital (issue #13) ----
+
+def test_rate_series_start_at_their_documented_first_year():
+    """§4 states each series' own start. A back-fill or a zero-fill would break this."""
+    rows = {r["y"]: r for r in load("economy")["data"]}
+    for field, first in (("t3m", 1950), ("t10", 1954), ("ff", 1955),
+                         ("cpi", 1950), ("core_pce", 1960)):
+        assert rows[first][field] is not None, f"{field} is null at its documented start FY{first}"
+        for y in range(1950, first):
+            assert rows[y][field] is None, f"{field} is non-null at FY{y}, before FY{first}"
+
+
+def test_no_rate_series_is_negative_and_the_minima_are_near_zero():
+    """§4's axis holds the FY1981 peak and the near-zero years on one zero-anchored scale."""
+    rows = {r["y"]: r for r in load("economy")["data"] if r["actual"]}
+    for field in ("ff", "t3m", "t10"):
+        vals = {y: r[field] for y, r in rows.items() if r[field] is not None}
+        assert min(vals.values()) > 0, f"{field} goes negative; the zero-anchored axis is wrong"
+    assert abs(rows[1981]["ff"] - 16.945) <= 0.01
+    assert abs(rows[2021]["ff"] - 0.083) <= 0.005
+    assert abs(rows[2015]["t3m"] - 0.028) <= 0.005
+
+
+def test_cpi_inflation_is_negative_in_fy1955_and_fy2009():
+    """§4 draws a ZeroLine because the derived inflation series crosses zero."""
+    rows = {r["y"]: r["cpi"] for r in load("economy")["data"]}
+    def yoy(y):
+        return 100 * (rows[y] - rows[y - 1]) / rows[y - 1]
+    assert yoy(1955) < 0 and yoy(2009) < 0
+    assert abs(yoy(1980) - 13.556) <= 0.01
+
+
+def test_wage_and_profit_share_are_gdp_shares_and_do_not_sum_to_100():
+    """§5's required statement, held to the data: these are shares of GDP, so their sum
+    is nowhere near 100 in any year."""
+    notes = load("economy")["_meta"]["notes"]
+    assert any("shares of GDP, not of national income" in n for n in notes)
+    for r in load("economy")["data"]:
+        total = r["wage_share"] + r["profit_share"]
+        assert 45 < total < 70, f"FY{r['y']}: wage+profit = {total:.1f}"
+
+
+def test_fy2020_share_moves_are_denominator_artefacts():
+    """§5 says the wage share ROSE in FY2020 and the profit share fell then jumped."""
+    rows = {r["y"]: r for r in load("economy")["data"]}
+    assert rows[2020]["wage_share"] > rows[2019]["wage_share"]
+    assert rows[2020]["profit_share"] < rows[2019]["profit_share"]
+    assert rows[2021]["profit_share"] > rows[2020]["profit_share"]

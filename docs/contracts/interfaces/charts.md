@@ -81,7 +81,7 @@ exclusive options.
 Every built section island (`DebtChart.tsx`, `BudgetChart.tsx`, `StructuralGap.tsx`,
 `VotedAndNot.tsx`, `NetInterest.tsx`, `LawExplorer.tsx`, `DebtHolders.tsx`, `DebtMaturity.tsx`,
 `RevenueChart.tsx`, `OecdChart.tsx`, `MedianIncome.tsx`, `HouseholdSpread.tsx`, `WhoPays.tsx`,
-`Top1TaxShare.tsx`, `PayrollBill.tsx`)
+`Top1TaxShare.tsx`, `PayrollBill.tsx`, `PricesAndRates.tsx`, `LaborAndCapital.tsx`)
 follows the same skeleton:
 
 1. `useChartSize()` for sizing, `useState` for the active unit/view and the focused/hovered datum.
@@ -158,3 +158,28 @@ labour force versus percent of the population 16 and over), they get two stacked
 elements with the same `width`/`margin`/`x` scale rather than one chart with two y-axes. Only the
 panel with an interaction affordance carries focusable `.datum` elements — a second panel with no
 hoverable content needs no focusable one, so hover/focus parity still holds exactly.
+
+## Derived series and `ZeroLine` (`PricesAndRates.tsx`, issue #13)
+
+A series published as an index level (`cpi`, `core_pce`) is never charted or labelled as a rate.
+Where a chart needs a rate of change, it is derived once (a single `yoy()` helper computing
+`100 * (cur - prev) / prev` over the same dataset the chart already reads) and the transform is
+named in the `Figure`'s `yUnit`, `note`, axis title and table headers — never left implicit. The
+derived series still carries the source row's `actual` flag, so `splitAtBoundary` applies to it
+exactly as it does to a raw field.
+
+A derived rate of change can cross zero even when every underlying index level is monotonically
+increasing (CPI-U fell in FY1955 and FY2009 even though the CPI-U index itself never fell). A panel
+whose domain admits negative values draws `<ZeroLine frame={fr} y={yScale(0)} />` so a value below
+zero is legible by position, not only by colour or by reading the axis tick labels.
+
+`niceExtent` pads a value range outward by a fixed fraction of its span and only re-anchors the
+padded low end to `0` if that padded value is still positive — it does not pull a padded-negative
+low end back to zero. This is invisible when a series' minimum is not close to zero relative to its
+span (`WhoWorks`'s unemployment/noncyclical panel, for example), but it produces a small negative
+low end for a genuinely zero-anchored series whose minimum sits very close to zero while its
+maximum is far away — exactly the fed funds/3-month bill/10-year note panel, whose minimum is
+`0.028` (FY2015) against a maximum of `16.945` (FY1981). `PricesAndRates.tsx`'s rates panel
+therefore pins the low end to `0` explicitly and uses only `niceExtent`'s padded high end, rather
+than passing the raw `niceExtent(...)` domain straight to `linear()`. See `docs/parked-findings.md`
+for the finding logged against `niceExtent` itself.

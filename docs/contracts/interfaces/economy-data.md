@@ -94,3 +94,43 @@ outside a spot-checked year.
   label naming which series it belongs to.
 - `income._meta.provenance` carries neither `vintage` nor `retrieved_at`, so `vintageOf(income._meta)`
   returns `null`. Section 2's `Figure` uses `vintageOf(economy._meta)` only, for that reason.
+
+## `cpi` and `core_pce` are index levels, not rates (Section 4)
+
+`_meta.units.cpi` and `_meta.units.core_pce` both say `"index"`. Neither is a percent, and neither
+may be labelled "inflation" directly: `PricesAndRates.tsx` derives the year-over-year percent
+change once (`100 * (cur - prev) / prev`) and charts, tables and axis titles all name that
+transform. Coverage: `cpi` is non-null from FY1950 (so the derived rate is derivable from FY1951,
+one year later, since the first index year has no predecessor); `core_pce` is non-null from FY1960
+(derived rate from FY1961). `ff` is non-null from FY1955, `t3m` from FY1950, `t10` from FY1954 —
+these three are already percentages and are charted at their native level, not derived.
+
+No rate in this file goes negative: the minima are `ff` FY2021 `0.083` and `t3m` FY2015 `0.028`,
+both near-zero fiscal-year values on the same zero-anchored axis as the `ff` FY1981 peak of
+`16.945`. What *is* negative is the derived inflation series — CPI-U year-over-year is negative in
+FY1955 and again `-0.301%` in FY2009 — so the inflation panel's domain admits negative values and
+carries a `ZeroLine`, while the rates panel stays zero-anchored throughout.
+
+## `wage_share` and `profit_share` are shares of GDP, not of national income (Section 5)
+
+`_meta.notes[2]` states this exactly: **"wage_share and profit_share are shares of GDP, not of
+national income, so they do not sum to 100 with anything. They are comparable to each other over
+time, not to a factor-share decomposition."** `LaborAndCapital.tsx` plots both on one zero-based
+axis (they share the same GDP denominator, unlike `WhoWorks`'s two bases) and repeats the exact
+string in both the `Figure` note and body prose — any consumer adding a third series to this panel
+must carry the same caveat, not drop it because "it was already said once."
+
+Range: `wage_share` runs from a FY1970 peak of `51.532` to a FY2024 low of `42.229` (`42.402` at
+FY2025); `profit_share` runs from a FY1982 low of `7.020` to a FY2025 peak of `13.066`. Both are
+non-null in all 87 rows — no coverage gap to render as `no data` on this panel, unlike `core_pce`,
+`ff` and `t10` in Section 4.
+
+## FY2020 wage/profit share moves are a denominator artefact, not a trend (Section 5)
+
+Nominal GDP fell in FY2020, so both shares moved without a corresponding move in bargaining:
+`wage_share` **rose** from `43.278` (FY2019) to `43.981` (FY2020) — a share's numerator can rise
+relative to a shrinking denominator without anything newly earned — while `profit_share` fell from
+`11.484` (FY2019) to `11.270` (FY2020) before rising to `12.674` in FY2021. A chart or caption using
+these years must name the denominator explicitly, not describe the moves as a change in who is
+paid what. `test_fy2020_share_moves_are_denominator_artefacts` pins the direction of all three
+moves.

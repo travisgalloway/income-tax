@@ -4,6 +4,8 @@ import Figure from '../components/Figure.astro'
 import { RealGdpLogScale } from '../components/islands/RealGdpLogScale'
 import { GrowthAndShadow } from '../components/islands/GrowthAndShadow'
 import { WhoWorks } from '../components/islands/WhoWorks'
+import { PricesAndRates } from '../components/islands/PricesAndRates'
+import { LaborAndCapital } from '../components/islands/LaborAndCapital'
 import { economy, income, vintageOf } from '../data'
 
 const sections = [
@@ -166,7 +168,149 @@ const sections = [
     </p>
   </section>
 
-  {sections.slice(3).map((s) => (
-    <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
-  ))}
+  <section id="prices-rates">
+    <p class="kicker"><span class="section-no">Section 4</span></p>
+    <h2>Prices and rates</h2>
+    <p class="standfirst">
+      CPI-U inflation was 2.7% and the fed funds rate 4.4% in fiscal 2025, both well below the
+      fiscal 1980 and 1981 peaks of 13.6% and 16.9%, and both near zero for years between 2009
+      and 2021.
+    </p>
+    <p class="finding">
+      CPI-U inflation peaked at 13.6% in fiscal 1980 and the fed funds rate at 16.9% in fiscal
+      1981; both fell to near zero between 2009 and 2021 before rising again, with CPI-U
+      inflation at 2.7% and the fed funds rate at 4.4% in fiscal 2025.
+    </p>
+
+    <Figure
+      ariaLabel="CPI-U inflation peaked at 13.6% in fiscal 1980 and the fed funds rate at 16.9% in fiscal 1981; both fell to near zero between 2009 and 2021 before rising again, with CPI-U inflation at 2.7% and the fed funds rate at 4.4% in fiscal 2025."
+      title="Inflation and interest rates, fiscal 1950 to 2036"
+      source={economy._meta.source}
+      vintage={vintageOf(economy._meta)}
+      xUnit="Fiscal year"
+      yUnit="percent change in the price index from the previous fiscal year (CPI-U and core PCE) and percent per year (the fed funds rate, the 3-month bill and the 10-year note)"
+      note="CPI-U and core PCE are published as index levels. The inflation panel plots the year-over-year percent change in each index, not the index itself. CPI-U inflation is derivable from fiscal 1951 and core PCE inflation from fiscal 1961, one year after each index itself starts, because the first index year has no prior year to compare against. The fed funds rate starts fiscal 1955, the 3-month bill fiscal 1950, and the 10-year note fiscal 1954. The series continue to FY2036 as a CBO baseline projection, drawn as a separate dashed branch past the marked FY2025 boundary."
+    >
+      <PricesAndRates
+        client:visible
+        rows={economy.data}
+        lastActualFy={economy._meta.estimate_boundary!.last_actual_fy}
+      />
+    </Figure>
+
+    <p class="prose">
+      CPI-U and core PCE are published by CBO as index levels, not rates. Both panels above
+      derive the year-over-year percent change from the index instead: CPI-U inflation is
+      derivable from fiscal 1951, one year after the CPI-U index itself starts (fiscal 1950),
+      because the first index year has no prior year to compare against; core PCE inflation is
+      derivable from fiscal 1961, for the same reason, since the core PCE index itself starts
+      fiscal 1960. CPI-U inflation was negative in fiscal 1955 and again in fiscal 2009, when it
+      fell to -0.3%, rose to 7.9% in fiscal 2022, and was 2.7% in fiscal 2025. Core PCE inflation
+      peaked at 9.2% in fiscal 1981, was 5.3% in fiscal 2022, and 2.8% in fiscal 2025.
+    </p>
+    <p class="prose">
+      The rates panel holds the fed funds rate (from fiscal 1955), the 3-month bill (from fiscal
+      1950) and the 10-year note (from fiscal 1954) on one zero-anchored axis, because all three
+      are positive throughout. The fed funds rate peaked at 16.9% in fiscal 1981 and fell to
+      0.08% in fiscal 2021, before rising to 4.4% in fiscal 2025. The 3-month bill fell to 0.03%
+      in fiscal 2015 and was 4.2% in fiscal 2025. The 10-year note peaked at 13.9% in fiscal
+      1982, fell to 1.1% in fiscal 2020, and was 4.3% in fiscal 2025. Each near-zero value sits
+      on the same axis as the fiscal 1981 peak, not compressed onto a separate scale, and each
+      series draws a gap, never a zero, before its own documented start year.
+    </p>
+    <p class="prose">
+      Rates are the mechanism that reprices the debt. The government route shows what that
+      costs, in <a href="/government/#net-interest">net interest</a>, and how fast it feeds
+      through, in <a href="/government/#how-old">how old the debt is</a>.
+    </p>
+  </section>
+
+  <section id="labor-capital">
+    <p class="kicker"><span class="section-no">Section 5</span></p>
+    <h2>Labor and capital</h2>
+    <p class="standfirst">
+      Wages and salaries were 42.4% of GDP in fiscal 2025, down from a fiscal 1970 peak of
+      51.5%. Corporate profits were 13.1% of GDP in fiscal 2025, up from a fiscal 1982 low of
+      7.0%. Both are measured against the same denominator, GDP, not national income.
+    </p>
+    <p class="finding">
+      Wages and salaries fell from a fiscal 1970 peak of 51.5% of GDP to a fiscal 2024 low of
+      42.2%, while corporate profits rose from a fiscal 1982 low of 7.0% of GDP to a fiscal 2025
+      peak of 13.1%.
+    </p>
+
+    <Figure
+      ariaLabel="Wages and salaries fell from a fiscal 1970 peak of 51.5% of GDP to a fiscal 2024 low of 42.2%, while corporate profits rose from a fiscal 1982 low of 7.0% of GDP to a fiscal 2025 peak of 13.1%, both shares of GDP rather than of national income."
+      title="Wages and salaries against corporate profits, fiscal 1950 to 2036"
+      source={economy._meta.source}
+      vintage={vintageOf(economy._meta)}
+      xUnit="Fiscal year"
+      yUnit="percent of GDP"
+      note="Wages and salaries and corporate profits here are shares of GDP, not of national income, so they do not sum to 100 with anything. They are comparable to each other over time, not to a factor-share decomposition. The fiscal 2020 moves in both series follow a fall in the nominal GDP denominator, not a change in who was paid what. The series continue to FY2036 as a CBO baseline projection, drawn as a separate dashed branch past the marked FY2025 boundary."
+    >
+      <LaborAndCapital
+        client:visible
+        rows={economy.data}
+        lastActualFy={economy._meta.estimate_boundary!.last_actual_fy}
+      />
+    </Figure>
+
+    <p class="prose">
+      Wages and salaries and corporate profits here are shares of GDP, not of national income,
+      so they do not sum to 100 with anything. They are comparable to each other over time, but
+      this is not a factor-share decomposition of national income. Wages and salaries were 49.1%
+      of GDP in fiscal 1950, peaked at 51.5% in fiscal 1970, and fell to a low of 42.2% in fiscal
+      2024 before ending the series at 42.4% in fiscal 2025. Corporate profits were 11.2% of GDP
+      in fiscal 1950, fell to a low of 7.0% in fiscal 1982, and rose to a fiscal 2025 peak of
+      13.1%.
+    </p>
+    <p class="prose">
+      The fiscal 2020 moves in both series are pandemic denominator artefacts, not a trend.
+      Wages and salaries were 43.3% of GDP in fiscal 2019 and rose to 44.0% in fiscal 2020, even
+      though nothing about bargaining power moved that fast: nominal GDP fell in fiscal 2020, and
+      a share's numerator can rise relative to a shrinking denominator without any of it being
+      newly earned. Corporate profits fell to 11.3% of GDP in fiscal 2020 before rising to 12.7%
+      in fiscal 2021, the same denominator move working in the other direction.
+    </p>
+  </section>
+
+  <section id="limits">
+    <p class="kicker"><span class="section-no">Section 6</span></p>
+    <h2>Limits</h2>
+    <p class="standfirst">
+      This route runs fiscal 1950 to fiscal 2036 and answers what happened to output, prices,
+      rates and the wage/profit split at the level of the whole economy. It does not answer who
+      received any of it.
+    </p>
+
+    <p class="prose">
+      <strong>Fiscal-year basis.</strong> Every series on this route is a fiscal year, not a
+      calendar year. Fiscal 2025 ran October 2024 to September 2025. A monthly peak or trough
+      inside a fiscal year does not appear here as a point; only the fiscal-year average or
+      year-end value does.
+    </p>
+    <p class="prose">
+      <strong>The projection boundary.</strong> This route's data covers fiscal 1950 to fiscal
+      2036. CBO publishes actuals and a baseline projection in one series running to FY2036;
+      everything after fiscal 2025 is that baseline projection, not an observation, drawn as a
+      separate dashed branch past a labelled boundary rule on every chart.
+    </p>
+    <p class="prose">
+      <strong>National aggregates say nothing about distribution.</strong> Every series on this
+      route — GDP, prices, rates, the wage and profit shares — is one number for the whole
+      economy. None of them says who received it, which households gained or lost, or how any
+      of it was distributed.
+    </p>
+    <p class="prose">
+      <strong>The wage/profit comparison is not a factor-share decomposition.</strong> Section
+      5's wages-and-salaries and corporate-profits series are each measured against GDP as their
+      denominator, not against national income, so they do not sum to 100 with anything and are
+      not a complete accounting of who gets paid out of what the economy produces.
+    </p>
+    <p class="prose">
+      The <a href="/households/">households route</a> picks up from here: what a household
+      actually earns, how far the spread between households runs, and what is actually paid in
+      tax once payroll tax is counted.
+    </p>
+  </section>
 </BaseLayout>
