@@ -234,3 +234,21 @@ def test_cpi_inflation_is_negative_in_fy1955_and_fy2009():
         return 100 * (rows[y] - rows[y - 1]) / rows[y - 1]
     assert yoy(1955) < 0 and yoy(2009) < 0
     assert abs(yoy(1980) - 13.556) <= 0.01
+
+
+def test_wage_and_profit_share_are_gdp_shares_and_do_not_sum_to_100():
+    """§5's required statement, held to the data: these are shares of GDP, so their sum
+    is nowhere near 100 in any year."""
+    notes = load("economy")["_meta"]["notes"]
+    assert any("shares of GDP, not of national income" in n for n in notes)
+    for r in load("economy")["data"]:
+        total = r["wage_share"] + r["profit_share"]
+        assert 45 < total < 70, f"FY{r['y']}: wage+profit = {total:.1f}"
+
+
+def test_fy2020_share_moves_are_denominator_artefacts():
+    """§5 says the wage share ROSE in FY2020 and the profit share fell then jumped."""
+    rows = {r["y"]: r for r in load("economy")["data"]}
+    assert rows[2020]["wage_share"] > rows[2019]["wage_share"]
+    assert rows[2020]["profit_share"] < rows[2019]["profit_share"]
+    assert rows[2021]["profit_share"] > rows[2020]["profit_share"]

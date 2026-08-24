@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro'
 import Figure from '../components/Figure.astro'
 import { PricesAndRates } from '../components/islands/PricesAndRates'
+import { LaborAndCapital } from '../components/islands/LaborAndCapital'
 import { economy, vintageOf } from '../data'
 
 const sections = [
@@ -86,7 +87,56 @@ const sections = [
     </p>
   </section>
 
-  {sections.slice(4).map((s) => (
+  <section id="labor-capital">
+    <p class="kicker"><span class="section-no">Section 5</span></p>
+    <h2>Labor and capital</h2>
+    <p class="standfirst">
+      Wages and salaries were 42.4% of GDP in fiscal 2025, down from a fiscal 1970 peak of
+      51.5%. Corporate profits were 13.1% of GDP in fiscal 2025, up from a fiscal 1982 low of
+      7.0%. Both are measured against the same denominator, GDP, not national income.
+    </p>
+    <p class="finding">
+      Wages and salaries fell from a fiscal 1970 peak of 51.5% of GDP to a fiscal 2024 low of
+      42.2%, while corporate profits rose from a fiscal 1982 low of 7.0% of GDP to a fiscal 2025
+      peak of 13.1%.
+    </p>
+
+    <Figure
+      ariaLabel="Wages and salaries fell from a fiscal 1970 peak of 51.5% of GDP to a fiscal 2024 low of 42.2%, while corporate profits rose from a fiscal 1982 low of 7.0% of GDP to a fiscal 2025 peak of 13.1%, both shares of GDP rather than of national income."
+      title="Wages and salaries against corporate profits, fiscal 1950 to 2036"
+      source={economy._meta.source}
+      vintage={vintageOf(economy._meta)}
+      xUnit="Fiscal year"
+      yUnit="percent of GDP"
+      note="Wages and salaries and corporate profits here are shares of GDP, not of national income, so they do not sum to 100 with anything. They are comparable to each other over time, not to a factor-share decomposition. The fiscal 2020 moves in both series follow a fall in the nominal GDP denominator, not a change in who was paid what. The series continue to FY2036 as a CBO baseline projection, drawn as a separate dashed branch past the marked FY2025 boundary."
+    >
+      <LaborAndCapital
+        client:visible
+        rows={economy.data}
+        lastActualFy={economy._meta.estimate_boundary!.last_actual_fy}
+      />
+    </Figure>
+
+    <p class="prose">
+      Wages and salaries and corporate profits here are shares of GDP, not of national income,
+      so they do not sum to 100 with anything. They are comparable to each other over time, but
+      this is not a factor-share decomposition of national income. Wages and salaries were 49.1%
+      of GDP in fiscal 1950, peaked at 51.5% in fiscal 1970, and fell to a low of 42.2% in fiscal
+      2024 before ending the series at 42.4% in fiscal 2025. Corporate profits were 11.2% of GDP
+      in fiscal 1950, fell to a low of 7.0% in fiscal 1982, and rose to a fiscal 2025 peak of
+      13.1%.
+    </p>
+    <p class="prose">
+      The fiscal 2020 moves in both series are pandemic denominator artefacts, not a trend.
+      Wages and salaries were 43.3% of GDP in fiscal 2019 and rose to 44.0% in fiscal 2020, even
+      though nothing about bargaining power moved that fast: nominal GDP fell in fiscal 2020, and
+      a share's numerator can rise relative to a shrinking denominator without any of it being
+      newly earned. Corporate profits fell to 11.3% of GDP in fiscal 2020 before rising to 12.7%
+      in fiscal 2021, the same denominator move working in the other direction.
+    </p>
+  </section>
+
+  {sections.slice(5).map((s) => (
     <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
   ))}
 </BaseLayout>

@@ -76,3 +76,14 @@ figures:
   - {section: E4, text: "10-year note peak FY1982 13.9%", output: economy, year: 1982, field: t10, quoted: 13.857, tol: 0.01}
   - {section: E4, text: "10-year note trough FY2020 1.1%", output: economy, year: 2020, field: t10, quoted: 1.127, tol: 0.01}
   - {section: E4, text: "10-year note FY2025 4.3%", output: economy, year: 2025, field: t10, quoted: 4.338, tol: 0.01}
+  - {section: E5, text: "wage share FY1950 49.1% of GDP", output: economy, year: 1950, field: wage_share, quoted: 49.052, tol: 0.01}
+  - {section: E5, text: "wage share peak FY1970 51.5% of GDP", output: economy, year: 1970, field: wage_share, quoted: 51.532, tol: 0.01}
+  - {section: E5, text: "wage share low FY2024 42.2% of GDP", output: economy, year: 2024, field: wage_share, quoted: 42.229, tol: 0.01}
+  - {section: E5, text: "wage share FY2025 42.4% of GDP", output: economy, year: 2025, field: wage_share, quoted: 42.402, tol: 0.01}
+  - {section: E5, text: "profit share FY1950 11.2% of GDP", output: economy, year: 1950, field: profit_share, quoted: 11.217, tol: 0.01}
+  - {section: E5, text: "profit share low FY1982 7.0% of GDP", output: economy, year: 1982, field: profit_share, quoted: 7.02, tol: 0.01}
+  - {section: E5, text: "profit share peak FY2025 13.1% of GDP", output: economy, year: 2025, field: profit_share, quoted: 13.066, tol: 0.01}
+  - {section: E5, text: "wage share FY2019 43.3% of GDP, pre-pandemic base", output: economy, year: 2019, field: wage_share, quoted: 43.278, tol: 0.01}
+  - {section: E5, text: "wage share FY2020 44.0% of GDP, a denominator artefact", output: economy, year: 2020, field: wage_share, quoted: 43.981, tol: 0.01}
+  - {section: E5, text: "profit share FY2020 11.3% of GDP", output: economy, year: 2020, field: profit_share, quoted: 11.27, tol: 0.01}
+  - {section: E5, text: "profit share FY2021 12.7% of GDP", output: economy, year: 2021, field: profit_share, quoted: 12.674, tol: 0.01}
