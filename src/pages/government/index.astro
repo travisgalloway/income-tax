@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro'
 import Figure from '../../components/Figure.astro'
 import { DebtChart } from '../../components/islands/DebtChart'
 import { LawExplorer } from '../../components/islands/LawExplorer'
+import { BudgetChart } from '../../components/islands/BudgetChart'
 import { budget, debt, laws, partySplits, vintageOf } from '../../data'
 
 const sections = [
@@ -68,6 +69,37 @@ const sections = [
     </p>
   </section>
 
+  <section id="whole-budget">
+    <p class="kicker"><span class="section-no">Section 4</span></p>
+    <h2>One axis, everything on it</h2>
+    <p class="standfirst">
+      Above the line, outlays stacked by category with revenue drawn across. Below it, the
+      deficit that gap produces. Colour marks who held all three levers.
+    </p>
+    <p class="finding">
+      FY2025: $7.01 trillion out, $5.24 trillion in, $1.78 trillion short.
+    </p>
+
+    <Figure
+      ariaLabel="Federal outlays from fiscal 1962 to 2025 stacked into mandatory, discretionary and net interest as a share of GDP, with a revenue line across them and the deficit drawn below zero. A three-row strip along the top shows which party held the presidency, House and Senate each year. Shaded bands mark the 2008 to 2009 financial crisis and the 2020 to 2021 pandemic."
+      title="Federal outlays, revenue and the deficit, fiscal 1962 to 2025"
+      source={budget._meta.source}
+      vintage={vintageOf(budget._meta)}
+      xUnit="Fiscal year"
+      yUnit="outlays, revenue and deficit in nominal $ trillions, real FY2025 $ trillions, or percent of GDP"
+      note="Mandatory outlays are charted net of offsetting receipts, so the three stacked segments sum to total outlays. Party control is curated for FY1995 onward only; earlier years show no control strip."
+    >
+      <BudgetChart client:visible rows={budget.data} />
+    </Figure>
+
+    <p class="prose">
+      Outlays and the deficit are the same arithmetic seen twice. Splitting them across two
+      panels lets each be read on its own scale and hides how small the deficit is next to the
+      budget that produces it. Here the deficit bar is the distance between the revenue line and
+      the top of the stack.
+    </p>
+  </section>
+
   <section id="the-laws">
     <p class="kicker"><span class="section-no">Section 8</span></p>
     <h2>The bill arrives long after the vote</h2>
@@ -114,7 +146,7 @@ const sections = [
     </p>
   </section>
 
-  {sections.slice(1).filter((s) => s.id !== 'the-laws').map((s) => (
+  {sections.slice(1).filter((s) => s.id !== 'the-laws' && s.id !== 'whole-budget').map((s) => (
     <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
   ))}
 </BaseLayout>
