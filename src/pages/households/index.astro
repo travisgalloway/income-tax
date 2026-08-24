@@ -107,7 +107,28 @@ const sections = [
     </Figure>
   </section>
 
-  {sections.slice(6).map((s) => (
-    <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
-  ))}
+  <section id="limits">
+    <p class="kicker"><span class="section-no">Section 7</span></p>
+    <h2>Limits</h2>
+    <p class="standfirst">
+      These limits are load bearing, not decorative. Read them before drawing conclusions
+      from the charts above.
+    </p>
+
+    <p class="prose">
+      <strong>1. Income tax only.</strong> Section 5 counts the federal individual income tax only. Section 6 shows the payroll bill it omits; excise, corporate, and state and local taxes are outside this route entirely.
+    </p>
+    <p class="prose">
+      <strong>2. The Gini index here is for families, not households.</strong> The household series runs higher, about 0.47 to 0.49. The family series is used because it runs cleanly back to 1947.
+    </p>
+    <p class="prose">
+      <strong>3. Statutory is not effective.</strong> A top marginal rate applies only to the slice of income above its threshold. Deductions, credits and separately-taxed capital gains all sit between the statutory rate and what anyone pays.
+    </p>
+    <p class="prose">
+      <strong>4. Distributional data is by tax unit, not by person or by household</strong> — and not consistently across sources. The IRS counts returns filed, CBO counts households, and Census counts families. A married couple filing jointly is one tax unit, one household and one family, but a household of unrelated adults is several tax units. The shares on this route cannot be added across those sources.
+    </p>
+    <p class="prose">
+      <strong>5. The dates break the site's convention.</strong> The Government route runs FY1995 to FY2025. This route reads IRS tax year 2023, Census/FRED calendar 2024 and CBO calendar 2022, because those are the latest each publishes. Refundable credits are excluded from the IRS series, which overstates the effective rate at the bottom.
+    </p>
+  </section>
 </BaseLayout>
