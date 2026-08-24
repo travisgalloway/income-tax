@@ -61,7 +61,14 @@ def _resolve(fig: dict[str, Any]) -> float | None:
 
     a, b = fig["years"]
     rows = _rows(out)
-    span = [rows[y] for y in range(a, b + 1) if y in rows]
+    full = [rows[y] for y in range(a, b + 1) if y in rows]
+    span = full
+    # Section 11's concentration claim compares four named years against the rest of
+    # the span, so the resolver takes an explicit year set rather than a range only.
+    if "only_years" in fig:
+        span = [r for r in span if r["y"] in fig["only_years"]]
+    if "exclude_years" in fig:
+        span = [r for r in span if r["y"] not in fig["exclude_years"]]
     vals = [v for v in (_field(r, field) for r in span) if v is not None]
 
     match agg:
@@ -71,6 +78,11 @@ def _resolve(fig: dict[str, Any]) -> float | None:
             return -sum(vals)
         case "mean":
             return sum(vals) / len(vals)
+        case "mean_negated":
+            return -sum(vals) / len(vals)
+        case "share_negated_pct":
+            whole = [v for v in (_field(r, field) for r in full) if v is not None]
+            return 100 * sum(vals) / sum(whole)
         case "count_positive":
             return sum(1 for v in vals if v > 0)
         case "min_year":
@@ -78,8 +90,6 @@ def _resolve(fig: dict[str, Any]) -> float | None:
                        key=lambda r: _field(r, field))["y"]
         case "pct_growth":
             return 100 * (_field(rows[b], field) / _field(rows[a], field) - 1)
-        case "real_growth_gross_mandatory":
-            return 100 * (rows[b]["r_ma"] / rows[a]["r_ma"] - 1)
         case "real_growth_disc":
             return 100 * (rows[b]["r_di"] / rows[a]["r_di"] - 1)
     raise ValueError(f"unknown agg {agg!r}")

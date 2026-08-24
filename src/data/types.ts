@@ -30,6 +30,8 @@ export interface Meta {
   provenance: Provenance
   coverage?: Record<string, unknown>
   estimate_boundary?: { last_actual_fy: number; note: string }
+  /** Present on curated snapshots (not auto-fetched). See curatedVintage(). */
+  refresh?: { mode: string; reason: string }
   [key: string]: unknown
 }
 
@@ -138,6 +140,44 @@ export interface ChamberVote {
   rollnumber: number
 }
 
+/** One published observation of the CBO top 1% income share. Two of these
+ *  exist in total (1979, 2022) — see `IncomeGroupsTop1` below. Never a
+ *  continuous annual series. */
+export interface Top1IncomeSharePoint {
+  year: number
+  v: number
+}
+
+/** Narrow shape covering only the field this branch reads from
+ *  `income_tax_by_group.json`. The dataset also carries `tax_year`, `groups`
+ *  and `top1_tax_share_history`, which issue #11 will type in full; typing
+ *  only this field here keeps that widening additive rather than a rewrite. */
+export interface IncomeGroupsTop1 {
+  cbo_top1_income_share: Top1IncomeSharePoint[]
+}
+
+/** One row of the OECD total-tax-revenue comparison. `is_us` and `is_average`
+ *  are mutually exclusive flags: at most one row of each per dataset. Absent
+ *  on every other country row — never `false`. */
+export interface OecdCountry {
+  c: string
+  v: number
+  is_us?: boolean
+  is_average?: boolean
+}
+
+export interface OecdComparison {
+  year: number
+  us_pct_gdp: number
+  oecd_average_pct_gdp: number
+  us_rank: number
+  of_countries: number
+  /** A SELECTION of `of_countries` members, not the full membership. Any
+   *  chart built from this must say so. */
+  countries: OecdCountry[]
+  us_history: { year: number; v: number }[]
+}
+
 export type FilingStatus = 'single' | 'mfj' | 'mfs' | 'hoh'
 
 /** One bracket on a filing status's ladder for one tax year. `hi`/`rhi` are
@@ -199,4 +239,29 @@ export interface PartySplit {
   character: 'cross-party' | 'party-line' | 'no recorded vote'
   legacy_classification: string
   note?: string
+}
+
+export interface DebtHolders {
+  total_debt_t: number
+  as_of: string
+  split: { k: 'public' | 'intragov'; label: string; amount_t: number; share_pct: number }[]
+  /** Deliberately `share_of_public_pct`, NOT `share_pct`: the denominator is
+   *  part of the field name so a renderer cannot silently print it as a share
+   *  of gross debt. See discrepancies.yaml -> foreign_share_of_debt. */
+  public_split: { k: 'domestic' | 'foreign'; label: string; share_of_public_pct: number }[]
+  top_foreign: { country: string; amount_t: number }[]
+  foreign_share_history: { year: number; share_of_gross_pct: number }[]
+}
+
+export interface DebtMaturity {
+  avg_maturity_months: number
+  avg_maturity_as_of: string
+  longest_instrument_years: number
+  marketable_total_t: number
+  /** `share_pct` is present on bills only and DISAGREES with amount_t /
+   *  marketable_total_t. Geometry comes from amount_t; a percentage is
+   *  rendered only where this field supplies one. */
+  composition: { k: string; label: string; maturity: string; share_pct?: number; amount_t: number }[]
+  /** NOT rendered. sections.md §3: "Do not build this as a time series." */
+  history_months: { date: string; v: number }[]
 }

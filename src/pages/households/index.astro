@@ -1,9 +1,22 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import Figure from '../../components/Figure.astro'
+import { MedianIncome } from '../../components/islands/MedianIncome'
+import { HouseholdSpread } from '../../components/islands/HouseholdSpread'
 import { BracketHistory } from '../../components/islands/BracketHistory'
 import { StatutoryVsEffective } from '../../components/islands/StatutoryVsEffective'
-import { bracketHistory, cboEffectiveRatesData, vintageOf } from '../../data'
+import {
+  income, incomeGroups, cboTop1IncomeShare, bracketHistory, cboEffectiveRatesData, vintageOf,
+} from '../../data'
+
+// Sections built so far. Everything else still falls through to the
+// "Not built yet." placeholder below.
+const HAND_WRITTEN = new Set([
+  'what-a-household-earns',
+  'the-spread',
+  'a-century-of-brackets',
+  'statutory-vs-effective',
+])
 
 const sections = [
   { id: 'what-a-household-earns', label: 'What a household earns' },
@@ -30,9 +43,68 @@ const cbo = cboEffectiveRatesData()
     like once payroll tax is counted.
   </p>
 
-  {sections.slice(0, 2).map((s) => (
-    <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
-  ))}
+  <section id="what-a-household-earns">
+    <p class="kicker"><span class="section-no">Section 1</span></p>
+    <h2>What a household earns</h2>
+    <p class="standfirst">
+      Real median household income rose 28.1% in three decades, but the series only runs
+      back to 1984 — before that, this measure was not yet collected.
+    </p>
+    <p class="finding">
+      Real median household income was $65,380 in 1995 and $83,730 in 2024, in constant
+      2024 dollars, up 28.1%, about 0.86% a year.
+    </p>
+
+    <Figure
+      ariaLabel="Real median household income rose from $65,380 in 1995 to $83,730 in 2024, up 28.1%, in constant 2024 dollars."
+      title="Real median household income, 1984 to 2024"
+      source={income._meta.source}
+      vintage={vintageOf(income._meta)}
+      xUnit="Calendar year"
+      yUnit="constant 2024 dollars"
+      note="Constant 2024 dollars. The budget series elsewhere on this site is in FY2025 dollars — a different deflator and a different base year. The two are not directly comparable."
+    >
+      <MedianIncome client:visible rows={income.data} />
+    </Figure>
+
+    <p class="prose">
+      The series begins in 1984 because that is where the Census/FRED constant-dollar
+      measure of household income begins. The years before it are not flat — they are
+      unobserved by this particular measure. The family Gini index, in the next section,
+      does run back to 1947.
+    </p>
+  </section>
+
+  <section id="the-spread">
+    <p class="kicker"><span class="section-no">Section 2</span></p>
+    <h2>The spread</h2>
+    <p class="standfirst">
+      The family Gini index has climbed for decades. CBO's longer, separately-published
+      series has the top 1% share of income before transfers and taxes doubling since 1979.
+    </p>
+    <p class="finding">
+      The family Gini index went from 0.421 in 1995 to 0.456 in 2024. CBO's longer series
+      has the top 1% share of income before transfers and taxes going from 9% in 1979 to
+      18% in 2022.
+    </p>
+
+    <Figure
+      ariaLabel="The family Gini index rose from 0.421 in 1995 to 0.456 in 2024, and CBO's top 1% share of income before transfers and taxes rose from 9% in 1979 to 18% in 2022."
+      title="Family Gini index, 1947 to 2024, and the CBO top 1% income share"
+      source={`Family Gini index: ${income._meta.source} Top 1% share: ${incomeGroups._meta.source}`}
+      vintage={vintageOf(income._meta)}
+      xUnit="Calendar year"
+      yUnit="family Gini index, ratio 0 to 1, and percent of income before transfers and taxes"
+      note="The Gini is for families, not households; household series run about 0.47 to 0.49. The top 1% figure is two published points, not an annual series, and measures income before transfers and taxes — a different measure from the tax-share figures elsewhere on this route. The top 1% series is a curated snapshot, refreshed by hand."
+    >
+      <HouseholdSpread client:visible rows={income.data} top1={cboTop1IncomeShare} />
+    </Figure>
+
+    <p class="prose">
+      These are shown on one timeline without a causal claim attached: the distribution
+      moved for many reasons, and nothing here connects it to any particular policy.
+    </p>
+  </section>
 
   <section id="a-century-of-brackets">
     <p class="kicker"><span class="section-no">Section 3</span></p>
@@ -113,7 +185,7 @@ const cbo = cboEffectiveRatesData()
     </p>
   </section>
 
-  {sections.slice(4).map((s) => (
+  {sections.filter((s) => !HAND_WRITTEN.has(s.id)).map((s) => (
     <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
   ))}
 </BaseLayout>
