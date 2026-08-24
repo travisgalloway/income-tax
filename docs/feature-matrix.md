@@ -16,7 +16,7 @@ when the code merges.
 | GOV-5 | The structural gap — revenue vs outlays as % of GDP | none | none | Planned | — | — |
 | GOV-6 | What Congress votes on — mandatory vs discretionary vs interest | none | none | Planned | — | — |
 | GOV-7 | Net interest — the fastest-growing line | none | none | Planned | — | — |
-| GOV-8 | The laws — sortable/filterable explorer, cost, vote, enactment date | none | none | Planned | — | — |
+| GOV-8 | The laws — sortable/filterable explorer, cost, vote, enactment date | done | done | Shipped | #3 | contracts/interfaces/law-data.md, contracts/interfaces/charts.md, contracts/interfaces/budget-data.md |
 | GOV-9 | Who passed it, who signed it — attribution toggle | none | none | Planned | — | — |
 | GOV-10 | Where the money comes from — revenue by source, brackets, OECD | none | none | Planned | — | — |
 | GOV-11 | By state | none | none | Planned | — | — |

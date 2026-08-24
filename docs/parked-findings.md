@@ -14,3 +14,19 @@ time. Appended to, never rewritten. None of these have been acted on.
   number formatters inline rather than using `UnitToggle` and `charts/format.ts`. Section 4 uses
   the shared ones; §1 could be moved onto them. Found while working on #2. Severity: duplication,
   non-blocking.
+- [2026-08-23] `sections.md:377` §11 item 4 ("Party splits are classified, not counted") and
+  `BRIEF.md:179-182` rule 6 both still assert the classification that #3's counted `party_splits.json`
+  replaced. §11 is an unbuilt placeholder so no reader can reach the stale claim today, but the
+  `BRIEF.md` line will steer future work wrong. Found while working on #3. Belongs to the §11 issue.
+  Severity: correctness of the repo's own norms, non-blocking.
+- [2026-08-23] `pipeline/curated/laws.yaml` `totals.party_line_t: 7.52` rounds the true sum `7.512`
+  up; #3's UI and `sections.md` §8 now read `7.51`. Not consumed by `validate.py:check_laws` (only
+  `net_scored_t`/`gross_increases_t` are), and the existing `test_cross_party_and_party_line_totals`
+  pytest tolerance is ±0.02, so nothing fails — but §9 (unbuilt) quotes the same total split three
+  ways (`5.21 + 2.31`) and should reconcile all four numbers at once when it's built. Found while
+  working on #3. Severity: stale curated constant, non-blocking.
+- [2026-08-23] `src/pages/government/index.astro` §1 (`DebtChart`) mounts with `client:visible`, so
+  its SVG does not exist at all with JavaScript disabled — against the shared per-section done
+  contract's "renders with JS disabled" criterion. §8 (`LawExplorer`) uses `client:load` instead,
+  which server-renders the chart markup and only loses interactivity without JS. Found while working
+  on #3. Severity: accessibility/robustness, affects a shipped section (§1, issue #1).

@@ -222,7 +222,7 @@ billion by 2025.
 was scored to cost, who voted for it, and when it was signed.
 
 **Finding:** Sixteen of the twenty-three passed with cross-party majorities.
-Cross-party laws total +$9.24T against +$7.52T for all seven party-line laws
+Cross-party laws total +$9.24T against +$7.51T for all seven party-line laws
 combined.
 
 **Body:** A law is voted on once. Its cost runs for a decade or longer, under
@@ -243,12 +243,19 @@ and 2025, each with its ten-year budget score, its vote in each chamber, the
 coalition that passed it, and the party control at the time of enactment. Above
 it, annual deficits as a share of GDP with each law's enactment date marked.
 
-**Source line:** CBO and JCT cost estimates at enactment. Vote composition is
-classified from published vote character except for PL 115-97, which is verified
-from House Clerk roll call 699.
+**Source line:** CBO and JCT cost estimates at enactment. Per-party vote splits
+are COUNTED from Voteview final-passage roll calls (voteview.com/data), joined
+to member party by ICPSR id. PL 115-97 is cross-checked against House Clerk
+roll call 699.
 
-**Required disclosure:** This section must state that composition is classified,
-not counted, for 22 of 23 laws. See SOURCES.md.
+**Required disclosure:** This section must state that all 23 splits are
+counted, not classified. Democratic votes are shown on the caucus basis by
+default (independents who caucus with the Democrats included), and the
+membership basis differs from it by two Senate seats through most of the
+period; a control switches between the two. The vote counted is final passage
+only — procedural votes, cloture and motions to recommit are excluded. A null
+chamber means no roll call exists (almost always a voice vote), never
+unanimity. See SOURCES.md.
 
 ---
 
