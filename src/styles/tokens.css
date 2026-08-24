@@ -35,6 +35,10 @@
   --intragov: #C77D28;
   --positive: #2E7D5B;  /* surplus, deficit reduction */
 
+  /* Era shading (crisis / pandemic bands). Neutral: never a party or budget hue,
+   * so a shaded span cannot be misread as carrying partisan or category meaning. */
+  --band: #C9CCC3;
+
   /* ---- Type ---------------------------------------------------------------
    * Two roles, the way a statistical publication is set: a reading face for
    * running text, and a sturdier face for tables and chart furniture, which

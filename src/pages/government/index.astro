@@ -5,11 +5,22 @@ import { DebtChart } from '../../components/islands/DebtChart'
 import { StructuralGap } from '../../components/islands/StructuralGap'
 import { VotedAndNot } from '../../components/islands/VotedAndNot'
 import { NetInterest } from '../../components/islands/NetInterest'
-import { budget, debt, vintageOf } from '../../data'
+import { AttributionSplit } from '../../components/islands/AttributionSplit'
+import { LawExplorer } from '../../components/islands/LawExplorer'
+import { BudgetChart } from '../../components/islands/BudgetChart'
+import { budget, debt, laws, partySplits, vintageOf } from '../../data'
 
 // Sections built so far. Everything else still falls through to the
 // "Not built yet." placeholder below.
-const built = new Set(['forty-trillion', 'structural-gap', 'what-congress-votes-on', 'net-interest'])
+const HAND_WRITTEN = new Set([
+  'forty-trillion',
+  'whole-budget',
+  'structural-gap',
+  'what-congress-votes-on',
+  'net-interest',
+  'the-laws',
+  'passed-signed',
+])
 
 const sections = [
   { id: 'forty-trillion', label: 'The $40 trillion' },
@@ -71,6 +82,37 @@ const sections = [
     <p class="prose">
       CBO projected in May 2023 that the debt would reach $40 trillion in 2028. It arrived
       about two years early.
+    </p>
+  </section>
+
+  <section id="whole-budget">
+    <p class="kicker"><span class="section-no">Section 4</span></p>
+    <h2>One axis, everything on it</h2>
+    <p class="standfirst">
+      Above the line, outlays stacked by category with revenue drawn across. Below it, the
+      deficit that gap produces. Colour marks who held all three levers.
+    </p>
+    <p class="finding">
+      FY2025: $7.01 trillion out, $5.24 trillion in, $1.78 trillion short.
+    </p>
+
+    <Figure
+      ariaLabel="Federal outlays from fiscal 1962 to 2025 stacked into mandatory, discretionary and net interest as a share of GDP, with a revenue line across them and the deficit drawn below zero. A three-row strip along the top shows which party held the presidency, House and Senate each year. Shaded bands mark the 2008 to 2009 financial crisis and the 2020 to 2021 pandemic."
+      title="Federal outlays, revenue and the deficit, fiscal 1962 to 2025"
+      source={budget._meta.source}
+      vintage={vintageOf(budget._meta)}
+      xUnit="Fiscal year"
+      yUnit="outlays, revenue and deficit in nominal $ trillions, real FY2025 $ trillions, or percent of GDP"
+      note="Mandatory outlays are charted net of offsetting receipts, so the three stacked segments sum to total outlays. Party control is curated for FY1995 onward only; earlier years show no control strip."
+    >
+      <BudgetChart client:visible rows={budget.data} />
+    </Figure>
+
+    <p class="prose">
+      Outlays and the deficit are the same arithmetic seen twice. Splitting them across two
+      panels lets each be read on its own scale and hides how small the deficit is next to the
+      budget that produces it. Here the deficit bar is the distance between the revenue line and
+      the top of the stack.
     </p>
   </section>
 
@@ -175,7 +217,91 @@ const sections = [
     </p>
   </section>
 
-  {sections.filter((s) => !built.has(s.id)).map((s) => (
+  <section id="the-laws">
+    <p class="kicker"><span class="section-no">Section 8</span></p>
+    <h2>The bill arrives long after the vote</h2>
+    <p class="standfirst">
+      Twenty-three major deficit-moving laws since 1995, with what each was scored to cost, who
+      voted for it, and when it was signed.
+    </p>
+    <p class="finding">
+      Sixteen of the twenty-three passed with cross-party majorities. Cross-party laws total
+      +$9.24T against +$7.51T for all seven party-line laws combined.
+    </p>
+
+    <Figure
+      ariaLabel="Sixteen of the twenty-three major deficit-moving laws since 1995 passed with cross-party majorities, totalling $9.24 trillion against $7.51 trillion for the seven party-line laws."
+      title="Major deficit-moving laws, 1997 to 2025, against the annual deficit"
+      source={budget._meta.source}
+      vintage={vintageOf(budget._meta)}
+      xUnit="Fiscal year"
+      yUnit="deficit or surplus as percent of GDP; ten-year score in $ trillions at enactment"
+      note={`The chart window is FY1995 to FY2025; the underlying deficit series runs from FY1962. Each law's marker sits at its date's position within its enactment fiscal year, not on the year's tick. The two 1997 laws (Balanced Budget Act, Taxpayer Relief Act) predate the ten-year scoring convention and carry no score, so they are excluded from the cost totals. The CARES Act's House vote was a voice vote with no roll call. Three Senate votes (JGTRRA, the Inflation Reduction Act, and the One Big Beautiful Bill Act) tied 50-50 and passed on the Vice President's tiebreak, which does not appear in a roll call. Vote splits: ${partySplits._meta.source}`}
+    >
+      <LawExplorer
+        client:load
+        years={budget.data}
+        laws={laws}
+        splits={partySplits.data}
+        threshold={partySplits._meta.cross_party_threshold as string}
+      />
+    </Figure>
+
+    <p class="prose">
+      A law is voted on once. Its cost runs for a decade or longer, under whoever happens to be in
+      office later. The 2001 tax cuts were signed under unified Republican control, extended by a
+      Democratic president in 2010, and made permanent in 2013 under a divided Congress. The 2017
+      Tax Cuts and Jobs Act passed on a party-line vote, and most of its ten-year cost falls in
+      FY2019 to FY2027, spanning a Democratic House and a Democratic president. The CARES Act
+      passed with cross-party votes under a Republican president, a Democratic House and a
+      Republican Senate.
+    </p>
+    <p class="prose">
+      Scored laws net to $16.75 trillion against $24.15 trillion of deficits actually recorded over
+      the same span. The gap is mandatory growth, demographics, revenue drift, recessions and
+      compounding interest, none of which involves a roll call.
+    </p>
+  </section>
+
+  <section id="passed-signed">
+    <p class="kicker"><span class="section-no">Section 9</span></p>
+    <h2>The same $16.75 trillion, two ways</h2>
+    <p class="standfirst">
+      Every major law scored since 1995 nets to $16.75 trillion in ten-year costs. Sorted by
+      the coalition that voted for it, and by the president who signed it. Both total the same
+      number.
+    </p>
+    <p class="finding">
+      By coalition: cross-party +$9.24T (16 laws), party-line Republican +$5.21T (3),
+      party-line Democratic +$2.31T (4). By signing president: Trump I +$6.08T (5), Obama
+      +$3.98T (6), Trump II +$3.40T (1), G.W. Bush +$2.79T (4), Biden +$0.50T (5).
+    </p>
+
+    <Figure
+      ariaLabel="Two summary columns, each totalling $16.75 trillion in net ten-year legislative costs. The left column breaks the total down by the voting coalition that passed each law; the right column by the president who signed it."
+      title="Net ten-year legislative cost by voting coalition and by signing president, laws enacted 1995 to 2025"
+      source={budget._meta.source}
+      vintage={vintageOf(budget._meta)}
+      xUnit="$ trillions, ten-year score at enactment"
+      yUnit="voting coalition, or signing president"
+      note="Clinton's two 1997 laws are excluded: both predate the ten-year scoring convention and carry no comparable figure. The cross-party coalition passed 16 laws; 14 carry a score, and both counts are shown. Bars and totals are net figures, increases less reductions; gross increases alone total $20.73 trillion."
+    >
+      <AttributionSplit client:visible />
+    </Figure>
+
+    <p class="prose">
+      These are net figures, increases less reductions. Gross increases alone come to $20.73
+      trillion, and on that basis Obama reads $6.22T rather than $3.98T because he also signed
+      $2.24 trillion of scored deficit reduction. If you show both, label both.
+    </p>
+    <p class="prose">
+      A president signs what Congress sends. Coloring by control credits or blames one party
+      for laws the other party largely voted for: the 2018 and 2019 budget acts passed under
+      unified Republican control but cleared the Senate 71-28 and 67-28.
+    </p>
+  </section>
+
+  {sections.filter((s) => !HAND_WRITTEN.has(s.id)).map((s) => (
     <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
   ))}
 </BaseLayout>
