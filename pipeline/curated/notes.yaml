@@ -48,8 +48,9 @@ outputs:
       debt: nominal $ trillions
       gdp_share: gross debt as percent of GDP
     notes:
-    - FY2026 value is the 19 August 2026 crossing of $40T, not a year-end close; gdp_share is null
-      because FY2026 GDP is not final.
+    - FY2026 value is the close of 18 August 2026, the first Debt to the Penny close at or above
+      $40T, reported the following day; not a fiscal year-end close, and gdp_share is null because
+      FY2026 GDP is not final.
     - FY2016 $19.57T to $40T is a 2.04x rise in ten fiscal years. FY2005 to FY2015 was 2.29x, a faster
       doubling from a smaller base.
   debt_holders:
@@ -75,6 +76,13 @@ outputs:
       link to the net interest chart.
     - Savings bonds (Series EE and I) reach final maturity at 20-30 years and are non-marketable;
       excluded from these figures.
+    - Bills, notes and bonds are the three instrument families and their amounts do not sum exactly
+      to the $28.0T marketable total; they are not an exhaustive partition. The bills share_pct
+      (22) is the curated figure and disagrees with amount_t / marketable_total_t (24.3); geometry
+      comes from amount_t, the percentage only from this curated field.
+    - history_months is a four-point maturity time series and is deliberately NOT charted.
+      sections.md is explicit that this section is not built as a time series; the field is kept
+      in the data for reference but no component may reference it.
   revenue_sources:
     title: Federal revenue by source, FY1962 onward
     source: CBO Historical Budget Data, February 2026 vintage

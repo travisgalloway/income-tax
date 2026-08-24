@@ -1,0 +1,222 @@
+/** Section 2: who holds the debt.
+ *
+ *  Two stacked horizontal bars with connector lines, never a pie: Bar A splits
+ *  gross debt into public / intragovernmental; Bar B is the opened-up public
+ *  slice, split into domestic / foreign. sections.md's chart note is explicit
+ *  that a pie cannot express that subset relationship.
+ *
+ *  Every foreign percentage is rendered through `foreignShare`, the single
+ *  formatter that names both denominators (publicly held debt, gross debt).
+ *  See discrepancies.yaml -> foreign_share_of_debt and
+ *  docs/contracts/interfaces/curated-snapshots.md.
+ */
+import { useMemo, useState } from 'react'
+import { Chart } from '../charts/Chart'
+import { linear } from '../charts/scales'
+import { TableView } from './TableView'
+import { useChartSize } from '../charts/useChartSize'
+import type { DebtHolders as DebtHoldersData } from '../../data/types'
+
+type FocusKey = 'public' | 'intragov' | 'domestic' | 'foreign' | 'japan' | 'uk' | 'china'
+
+const fmtT = (v: number) => (v < 1 ? `$${Math.round(v * 1000)}B` : `$${v.toFixed(2)}T`)
+
+/** The one place either denominator's percentage is spelled out. Always names
+ *  BOTH: a share of publicly held debt is a different quantity from a share
+ *  of gross debt, and sections.md/discrepancies.yaml require they never read
+ *  as one. See discrepancies.yaml -> foreign_share_of_debt. */
+const foreignShare = (ofPublicPct: number, ofGrossPct: number) =>
+  `${ofPublicPct}% of publicly held debt, ${ofGrossPct}% of gross debt`
+
+export function DebtHolders({ d }: { d: DebtHoldersData }) {
+  const [boxRef, size] = useChartSize()
+  const { width: W, margin: f } = size
+  const iw = W - f.left - f.right
+  const narrow = W < 500
+
+  const [focus, setFocus] = useState<FocusKey | null>(null)
+
+  const model = useMemo(() => {
+    const split = Object.fromEntries(d.split.map((s) => [s.k, s])) as Record<
+      'public' | 'intragov',
+      (typeof d.split)[number]
+    >
+    const publicSplit = Object.fromEntries(d.public_split.map((s) => [s.k, s])) as Record<
+      'domestic' | 'foreign',
+      (typeof d.public_split)[number]
+    >
+    const foreignOfGross = d.foreign_share_history.find((h) => h.year === 2025)?.share_of_gross_pct
+    if (foreignOfGross == null) throw new Error('DebtHolders: no 2025 point in foreign_share_history')
+
+    const publicAmt = split.public.amount_t
+    const domesticAmt = (publicAmt * publicSplit.domestic.share_of_public_pct) / 100
+    const foreignAmt = (publicAmt * publicSplit.foreign.share_of_public_pct) / 100
+
+    return { split, publicSplit, foreignOfGross, publicAmt, domesticAmt, foreignAmt }
+  }, [d])
+
+  const { split, publicSplit, foreignOfGross, publicAmt, domesticAmt, foreignAmt } = model
+
+  // Bar A: full inner width is total gross debt. Bar B: full inner width is
+  // the public amount only, its OWN scale, not a fraction of Bar A's.
+  const xA = linear([0, d.total_debt_t], [0, iw])
+  const xB = linear([0, publicAmt], [0, iw])
+
+  const barH = narrow ? 26 : 34
+  const connH = narrow ? 34 : 46
+  const yA = 0
+  const yB = yA + barH + connH
+  const leadersY = yB + barH + (narrow ? 0 : 18)
+
+  const describe = (k: FocusKey): string => {
+    switch (k) {
+      case 'public':
+        return `Held by the public: ${fmtT(split.public.amount_t)}, ${split.public.share_pct}% of gross debt`
+      case 'intragov':
+        return `Intragovernmental holdings: ${fmtT(split.intragov.amount_t)}, ${split.intragov.share_pct}% of gross debt`
+      case 'domestic':
+        return `Domestic holders: ${fmtT(domesticAmt)}, ${publicSplit.domestic.share_of_public_pct}% of publicly held debt`
+      case 'foreign':
+        return `Foreign holders: ${fmtT(foreignAmt)}, ${foreignShare(publicSplit.foreign.share_of_public_pct, foreignOfGross)}`
+      case 'japan':
+        return `Japan: ${fmtT(d.top_foreign[0].amount_t)} of foreign-held debt`
+      case 'uk':
+        return `United Kingdom: ${fmtT(d.top_foreign[1].amount_t)} of foreign-held debt`
+      case 'china':
+        return `China: ${fmtT(d.top_foreign[2].amount_t)} of foreign-held debt`
+    }
+  }
+
+  const ariaLabel = `${fmtT(d.total_debt_t)} of the federal debt is held by the public and ` +
+    `intragovernmentally; about ${foreignShare(publicSplit.foreign.share_of_public_pct, foreignOfGross)} is held abroad.`
+
+  const leaderX = (i: number) => xB(domesticAmt) + ((iw - xB(domesticAmt)) * (i + 1)) / 4
+
+  return (
+    <div ref={boxRef}>
+      <Chart ariaLabel={ariaLabel} interactive width={W} height={leadersY + (narrow ? 30 : 46)} margin={f}>
+        {() => (
+          <>
+            {/* ---- Bar A: gross debt, public vs intragovernmental ---- */}
+            <rect
+              className="datum"
+              x={0} y={yA} width={xA(split.public.amount_t)} height={barH}
+              fill="var(--public)"
+              tabIndex={0} role="img" aria-label={describe('public')}
+              onFocus={() => setFocus('public')} onBlur={() => setFocus(null)}
+              onMouseEnter={() => setFocus('public')} onMouseLeave={() => setFocus(null)}
+            />
+            <rect
+              className="datum"
+              x={xA(split.public.amount_t)} y={yA} width={iw - xA(split.public.amount_t)} height={barH}
+              fill="var(--intragov)"
+              tabIndex={0} role="img" aria-label={describe('intragov')}
+              onFocus={() => setFocus('intragov')} onBlur={() => setFocus(null)}
+              onMouseEnter={() => setFocus('intragov')} onMouseLeave={() => setFocus(null)}
+            />
+            <text x={xA(split.public.amount_t) / 2} y={yA - 8} textAnchor="middle" className="holders-label">
+              Held by the public {fmtT(split.public.amount_t)} ({split.public.share_pct}%)
+            </text>
+            <text
+              x={xA(split.public.amount_t) + (iw - xA(split.public.amount_t)) / 2}
+              y={yA - 8} textAnchor="middle" className="holders-label"
+            >
+              {narrow ? 'Intragov.' : 'Intragovernmental'} {fmtT(split.intragov.amount_t)} ({split.intragov.share_pct}%)
+            </text>
+
+            {/* ---- Connectors: Bar B is the opened-up public slice of Bar A ---- */}
+            <line x1={0} y1={yA + barH} x2={0} y2={yB} stroke="var(--ink-soft)" strokeWidth={0.75} />
+            <line
+              x1={xA(split.public.amount_t)} y1={yA + barH} x2={iw} y2={yB}
+              stroke="var(--ink-soft)" strokeWidth={0.75}
+            />
+
+            {/* ---- Bar B: the public slice, opened, domestic vs foreign ---- */}
+            <rect
+              className="datum"
+              x={0} y={yB} width={xB(domesticAmt)} height={barH}
+              fill="var(--domestic)"
+              tabIndex={0} role="img" aria-label={describe('domestic')}
+              onFocus={() => setFocus('domestic')} onBlur={() => setFocus(null)}
+              onMouseEnter={() => setFocus('domestic')} onMouseLeave={() => setFocus(null)}
+            />
+            <rect
+              className="datum"
+              x={xB(domesticAmt)} y={yB} width={iw - xB(domesticAmt)} height={barH}
+              fill="var(--foreign)"
+              tabIndex={0} role="img" aria-label={describe('foreign')}
+              onFocus={() => setFocus('foreign')} onBlur={() => setFocus(null)}
+              onMouseEnter={() => setFocus('foreign')} onMouseLeave={() => setFocus(null)}
+            />
+            <text x={xB(domesticAmt) / 2} y={yB + barH + 16} textAnchor="middle" className="holders-label">
+              Domestic {fmtT(domesticAmt)} ({publicSplit.domestic.share_of_public_pct}% of publicly held)
+            </text>
+            <text
+              x={xB(domesticAmt) + (iw - xB(domesticAmt)) / 2}
+              y={yB + barH + 16} textAnchor="middle" className="holders-label"
+            >
+              {narrow
+                ? `Foreign ${fmtT(foreignAmt)}`
+                : `Foreign ${fmtT(foreignAmt)} (${foreignShare(publicSplit.foreign.share_of_public_pct, foreignOfGross)})`}
+            </text>
+
+            {/* ---- Top foreign holders, leadered off the foreign segment ----
+             *  Point markers, evenly spaced for legibility: Japan/UK/China are
+             *  the three LARGEST foreign holders, not an exhaustive partition
+             *  of the foreign segment, so they are never drawn as sub-widths. */}
+            {!narrow && (['japan', 'uk', 'china'] as const).map((k, i) => {
+              const idx = k === 'japan' ? 0 : k === 'uk' ? 1 : 2
+              const cx = leaderX(i)
+              return (
+                <g key={k}>
+                  <line x1={cx} y1={yB + barH} x2={cx} y2={leadersY} stroke="var(--ink-soft)" strokeWidth={0.5} />
+                  <circle cx={cx} cy={yB + barH / 2} r={2.5} fill="var(--ink)" />
+                  <text
+                    className="datum holders-label"
+                    x={cx} y={leadersY + 12} textAnchor="middle"
+                    tabIndex={0} role="img" aria-label={describe(k)}
+                    onFocus={() => setFocus(k)} onBlur={() => setFocus(null)}
+                    onMouseEnter={() => setFocus(k)} onMouseLeave={() => setFocus(null)}
+                  >
+                    {d.top_foreign[idx].country} {fmtT(d.top_foreign[idx].amount_t)}
+                  </text>
+                </g>
+              )
+            })}
+          </>
+        )}
+      </Chart>
+
+      {narrow && (
+        <ul className="holders-foreign-list">
+          {d.top_foreign.map((c) => (
+            <li key={c.country}>{c.country}: {fmtT(c.amount_t)}</li>
+          ))}
+        </ul>
+      )}
+
+      <p aria-live="polite" className="readout">
+        {focus ? describe(focus) : 'Focus or hover a segment to read its value.'}
+      </p>
+
+      <TableView
+        caption="Who holds the federal debt"
+        columns={[
+          { key: 'holder', label: 'Holder', unit: 'category' },
+          { key: 'amount', label: 'Amount', unit: '$ trillions' },
+          { key: 'ofGross', label: 'Share of gross debt', unit: 'percent' },
+          { key: 'ofPublic', label: 'Share of publicly held debt', unit: 'percent' },
+        ]}
+        rows={[
+          { holder: split.public.label, amount: split.public.amount_t.toFixed(2), ofGross: split.public.share_pct, ofPublic: null },
+          { holder: split.intragov.label, amount: split.intragov.amount_t.toFixed(2), ofGross: split.intragov.share_pct, ofPublic: null },
+          { holder: publicSplit.domestic.label, amount: domesticAmt.toFixed(2), ofGross: null, ofPublic: publicSplit.domestic.share_of_public_pct },
+          { holder: publicSplit.foreign.label, amount: foreignAmt.toFixed(2), ofGross: foreignOfGross, ofPublic: publicSplit.foreign.share_of_public_pct },
+          ...d.top_foreign.map((c) => ({
+            holder: `${c.country} (foreign holder)`, amount: c.amount_t.toFixed(2), ofGross: null, ofPublic: null,
+          })),
+        ]}
+      />
+    </div>
+  )
+}

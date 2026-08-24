@@ -90,8 +90,6 @@ def _resolve(fig: dict[str, Any]) -> float | None:
                        key=lambda r: _field(r, field))["y"]
         case "pct_growth":
             return 100 * (_field(rows[b], field) / _field(rows[a], field) - 1)
-        case "real_growth_gross_mandatory":
-            return 100 * (rows[b]["r_ma"] / rows[a]["r_ma"] - 1)
         case "real_growth_disc":
             return 100 * (rows[b]["r_di"] / rows[a]["r_di"] - 1)
     raise ValueError(f"unknown agg {agg!r}")
