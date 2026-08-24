@@ -1,5 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
+import Figure from '../../components/Figure.astro'
+import { WhoPays } from '../../components/islands/WhoPays'
+import { Top1TaxShare } from '../../components/islands/Top1TaxShare'
+import { incomeGroups, vintageOf } from '../../data'
 
 const sections = [
   { id: 'what-a-household-earns', label: 'What a household earns' },
@@ -23,7 +27,60 @@ const sections = [
     What a household earns, how far the spread runs, and what the tax bill actually looks
     like once payroll tax is counted.
   </p>
-  {sections.map((s) => (
+
+  {sections.slice(0, 4).map((s) => (
+    <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
+  ))}
+
+  <section id="who-pays">
+    <p class="kicker"><span class="section-no">Section 5</span></p>
+    <h2>Who pays the income tax</h2>
+    <p class="standfirst">
+      In tax year 2023 the top 1% earned 20.6% of adjusted gross income and paid 38.4% of
+      federal individual income tax.
+      This is the individual income tax only.
+      Outside the top decile, payroll tax is the larger bill.
+    </p>
+    <p class="finding">
+      Top 1%: 20.6% of AGI, 38.4% of the tax, a 26.3% average rate. Top 10%: 47.6% and
+      70.5%. The bottom half paid 3.3% of the tax at a 3.7% average rate.
+    </p>
+
+    <Figure
+      ariaLabel="The top 1% earned 20.6% of adjusted gross income and paid 38.4% of federal individual income tax in tax year 2023. The bottom half paid 3.3% of the tax. AGI share is not published for the Top 5%, Top 25% and Bottom 50% groups."
+      title="Share of AGI and share of federal individual income tax paid, by income percentile group, tax year 2023"
+      source={incomeGroups._meta.source}
+      vintage={vintageOf(incomeGroups._meta)}
+      xUnit="Percent"
+      yUnit="Percentile group of tax units"
+      note="This chart counts the federal individual income tax only, and excludes refundable credits, which overstates the effective rate at the bottom. The six groups are nested — Top 1% sits inside Top 5%, inside Top 10%, and so on — so they overlap and do not sum to 100, which is why nothing here is stacked."
+    >
+      <WhoPays client:visible rows={incomeGroups.data.groups} />
+    </Figure>
+
+    <Figure
+      ariaLabel="Share of federal individual income tax paid by the top 1% in the five published tax years: 33.2% in 2001, 38.8% in 2019, 45.8% in 2021, 40.4% in 2022 and 38.4% in 2023."
+      title="Share of federal individual income tax paid by the top 1%, published years only"
+      source={incomeGroups._meta.source}
+      vintage={vintageOf(incomeGroups._meta)}
+      xUnit="Tax year"
+      yUnit="Percent of income tax paid"
+      note="Five published years, not an annual series. The 2001-to-2019 span is unobserved by this series."
+    >
+      <Top1TaxShare client:visible rows={incomeGroups.data.top1_tax_share_history} />
+    </Figure>
+
+    <p class="prose">
+      Concentration of tax paid tracks concentration of income, and the tax-share column alone misleads about who pays the most versus who earns the most.
+      CBO's longer series has the top 1% share of income before transfers and taxes going from 9% in 1979 to 18% in 2022, shown in <a href="#the-spread">the spread</a> above.
+    </p>
+    <p class="prose">
+      Refundable credits are excluded from the IRS series, which overstates the effective rate at the bottom.
+      Tax year 2023 is the latest IRS year, and it breaks this site's FY1995 to FY2025 convention.
+    </p>
+  </section>
+
+  {sections.slice(5).map((s) => (
     <section id={s.id}><h2>{s.label}</h2><p class="num">Not built yet.</p></section>
   ))}
 </BaseLayout>
