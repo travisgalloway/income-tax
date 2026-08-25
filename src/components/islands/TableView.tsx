@@ -1,9 +1,10 @@
 /** "View as table" for every figure.
  *
- *  BRIEF.md: a REAL table anyone can open, not a screen-reader-only one. Radix
- *  Collapsible handles the disclosure semantics and focus; the styling is ours. */
-import * as Collapsible from '@radix-ui/react-collapsible'
-import { useState } from 'react'
+ *  BRIEF.md: a REAL table anyone can open, not a screen-reader-only one. Native
+ *  <details>/<summary> handles the disclosure semantics, focus and keyboard
+ *  operation for free, and — unlike a Radix Collapsible, which unmounts its
+ *  content while closed — keeps the table present in the server-rendered HTML
+ *  even with scripting off. */
 
 export interface Column {
   key: string
@@ -19,13 +20,13 @@ export interface TableViewProps {
 }
 
 export function TableView({ caption, columns, rows }: TableViewProps) {
-  const [open, setOpen] = useState(false)
   return (
-    <Collapsible.Root open={open} onOpenChange={setOpen} className="tableview">
-      <Collapsible.Trigger className="tableview-trigger">
-        {open ? 'Hide table' : 'View as table'}
-      </Collapsible.Trigger>
-      <Collapsible.Content className="tableview-content">
+    <details className="tableview">
+      <summary className="tableview-trigger">
+        <span className="tv-open">View as table</span>
+        <span className="tv-close">Hide table</span>
+      </summary>
+      <div className="tableview-content">
         <div className="tableview-scroll">
           <table>
             <caption>{caption}</caption>
@@ -54,7 +55,7 @@ export function TableView({ caption, columns, rows }: TableViewProps) {
             </tbody>
           </table>
         </div>
-      </Collapsible.Content>
-    </Collapsible.Root>
+      </div>
+    </details>
   )
 }

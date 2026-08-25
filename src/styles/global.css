@@ -297,6 +297,14 @@ figcaption .lead {
 }
 .tableview-trigger:hover { color: var(--ink); border-bottom-color: var(--ink); }
 
+/* Scripting-off label swap: no `open` state variable to read, so the two
+ * labels are both in the markup and CSS shows exactly one. */
+.tableview > summary { list-style: none; cursor: pointer; }
+.tableview > summary::-webkit-details-marker { display: none; }
+.tableview .tv-close { display: none; }
+.tableview[open] .tv-open { display: none; }
+.tableview[open] .tv-close { display: inline; }
+
 .tableview-scroll { overflow-x: auto; margin-top: 0.9rem; }
 .tableview table {
   border-collapse: collapse;
@@ -588,7 +596,9 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 :focus-visible { outline: 1.5px solid var(--ink); outline-offset: 2px; }
 
 .datum { cursor: pointer; }
-.datum:focus-visible { outline: 1.5px solid var(--ink); outline-offset: 1px; }
+/* WebKit does not paint `outline` on SVG shapes, so the ring is drawn twice:
+ * `outline` for engines that honour it, `stroke` for those that do not. */
+.datum:focus-visible { outline: 1.5px solid var(--ink); outline-offset: 1px; stroke: var(--ink); stroke-width: 2; }
 
 .skip-link {
   position: absolute; left: -9999px;
@@ -596,6 +606,8 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   padding: 0.5rem 1rem; z-index: 10;
 }
 .skip-link:focus { left: 0.5rem; top: 0.5rem; }
+/* The skip link paints on --ink, so the default ink outline is invisible on it. */
+.skip-link:focus-visible { outline-color: var(--panel); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

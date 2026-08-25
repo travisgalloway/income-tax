@@ -62,17 +62,15 @@ function noteFor(y: number): string | null {
 function shapeLabel(view: View): string {
   if (view === 'real') {
     return (
-      'Bar chart of federal net interest payments by fiscal year in real FY2025 dollars, FY1995 ' +
-      'to FY2025. Real net interest runs higher in the 1990s than the nominal series, falls ' +
-      'through the 2000s to the series low in FY2003, eases to a recent trough in FY2015, then ' +
-      'climbs sharply through FY2025.'
+      'Real net interest payments, FY2025 dollars, ran higher in the 1990s than the nominal ' +
+      'series, fell through the 2000s to the series low in FY2003, eased to a recent trough in ' +
+      'FY2015, then climbed sharply through FY2025.'
     )
   }
   return (
-    'Bar chart of federal net interest payments by fiscal year in nominal dollars, FY1995 to ' +
-    'FY2025. Values sit near $250 billion through the 1990s, fall through the 2000s to the series ' +
-    'low of $153 billion in FY2003, reach a recent trough of $223 billion in FY2015, then climb ' +
-    'sharply to $970 billion by FY2025.'
+    'Federal net interest payments in nominal dollars sat near $250 billion through the 1990s, ' +
+    'fell through the 2000s to the series low of $153 billion in FY2003, reached a recent trough ' +
+    'of $223 billion in FY2015, then climbed sharply to $970 billion by FY2025.'
   )
 }
 

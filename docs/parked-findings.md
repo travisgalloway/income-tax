@@ -259,3 +259,26 @@ time. Appended to, never rewritten. None of these have been acted on.
   does not appear in `dist/government/index.html`. All other Definition-of-done criteria pass
   unmodified with real fetched data (`states_receiving more than they pay` reconciles at 28 of 51,
   not the plan's placeholder of 0). Reported in the exec return message for this issue.
+- [2026-08-23] `docs/test-plan.md`'s `GOV-11` row does not exist in this branch's base (introduced
+  by PR #14/#28) and is out of scope for #15 to invent. When #28 lands, its `GOV-11` manual column
+  should name, among its items: "Tab-focusable data points + live-region parity (one live region
+  per chart, not per data point)" and "colour never carries meaning alone — every colour-coded
+  category also appears as a table column (state names/postal codes)". Found while working on #15.
+  Severity: test-plan completeness, non-blocking; belongs to the PR that owns the row.
+- [2026-08-23] `@radix-ui/react-collapsible` has no remaining consumer after #15 replaced
+  `TableView`'s Radix `Collapsible` with a native `<details>`/`<summary>`. Left in `package.json`
+  because removing a dependency changes the lockfile, and thirteen other open PRs (#16–#28) branch
+  from a `main` that still has it. Found while working on #15. Severity: dead dependency,
+  non-blocking; remove once those PRs have merged.
+- [2026-08-23] `src/components/islands/DebtChart.tsx` inlines its own number formatters instead of
+  `charts/format.ts` (same finding as the `UnitToggle` one above, restated here because #15's
+  accessibility work touches the same file's focus/labelling code without touching this). Found
+  while working on #15. Severity: duplication, non-blocking.
+- [2026-08-24] Merge of #29 (`feat/15-accessibility-keyboard-screenreader`) onto `main`, the last of
+  fourteen PRs in this integration: two of the three findings directly above are now stale in a way
+  worth flagging rather than silently leaving. (1) `docs/test-plan.md`'s `GOV-11` row now exists
+  (landed via #28/main) and already names both items the earlier finding asked for. (2)
+  `@radix-ui/react-collapsible` is now removable — all thirteen PRs (#16–#28) it was waiting on have
+  merged — but removing a dependency and regenerating the lockfile is out of scope for a
+  conflict-resolution merge, so it was left as-is here. Found while resolving #29's merge. Severity:
+  both non-blocking; the dependency removal is a good candidate for a small standalone follow-up.

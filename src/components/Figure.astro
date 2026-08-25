@@ -41,7 +41,7 @@ if (!source?.trim()) throw new Error('Figure: source is required and is rendered
 if (!xUnit?.trim() || !yUnit?.trim()) throw new Error('Figure: both axes must name their units')
 ---
 
-<figure class="figure" id={id}>
+<figure class="figure" aria-label={ariaLabel} id={id}>
   <div class="figure-head">
     <span class="figure-title">{title}</span>
   </div>

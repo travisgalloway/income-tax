@@ -45,10 +45,10 @@ function outlaysOf(r: BudgetYear, unit: Unit): number {
 function shapeLabel(unit: Unit): string {
   const basis = unit === 'gdp' ? 'as a percent of GDP' : unit === 'real' ? 'in real FY2025 dollars' : 'in nominal dollars'
   return (
-    `Line chart comparing federal outlays and revenue ${basis}, FY1995 to FY2025. Outlays run ` +
-    'consistently above revenue and the area between them is shaded as a deficit, hatched and ' +
-    'labelled as a surplus during FY1998-FY2001 when revenue briefly exceeds outlays. Both lines ' +
-    'spike in FY2009 and FY2020.'
+    `Federal outlays ran above revenue ${basis} in every fiscal year from 1995 to 2025 except ` +
+    'FY1998-FY2001, when revenue briefly exceeded outlays; the area between the lines is shaded ' +
+    'as a deficit, hatched and labelled as a surplus during those years, and both lines spike in ' +
+    'FY2009 and FY2020.'
   )
 }
 

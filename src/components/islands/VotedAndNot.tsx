@@ -51,10 +51,9 @@ function netInterestOf(r: BudgetYear, unit: Unit): number {
 function shapeLabel(unit: Unit): string {
   const basis = unit === 'gdp' ? 'as a percent of GDP' : unit === 'real' ? 'in real FY2025 dollars' : 'in nominal dollars'
   return (
-    `Line chart of mandatory spending net of offsetting receipts, discretionary spending and net ` +
-    `interest ${basis}, FY1995 to FY2025. Mandatory rises the most and spikes in FY2020. ` +
-    'Discretionary drifts down. Net interest dips through the mid-2010s, is marked at FY2015, ' +
-    'then climbs steeply after 2021.'
+    `Mandatory spending net of offsetting receipts rose the most and spiked in FY2020, discretionary ` +
+    `spending drifted down, and net interest ${basis}, FY1995 to FY2025, dipped through the ` +
+    'mid-2010s, marked at FY2015, then climbed steeply after 2021.'
   )
 }
 
