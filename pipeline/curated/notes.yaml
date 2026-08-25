@@ -48,8 +48,9 @@ outputs:
       debt: nominal $ trillions
       gdp_share: gross debt as percent of GDP
     notes:
-    - FY2026 value is the 19 August 2026 crossing of $40T, not a year-end close; gdp_share is null
-      because FY2026 GDP is not final.
+    - FY2026 value is the close of 18 August 2026, the first Debt to the Penny close at or above
+      $40T, reported the following day; not a fiscal year-end close, and gdp_share is null because
+      FY2026 GDP is not final.
     - FY2016 $19.57T to $40T is a 2.04x rise in ten fiscal years. FY2005 to FY2015 was 2.29x, a faster
       doubling from a smaller base.
   debt_holders:
@@ -75,6 +76,13 @@ outputs:
       link to the net interest chart.
     - Savings bonds (Series EE and I) reach final maturity at 20-30 years and are non-marketable;
       excluded from these figures.
+    - Bills, notes and bonds are the three instrument families and their amounts do not sum exactly
+      to the $28.0T marketable total; they are not an exhaustive partition. The bills share_pct
+      (22) is the curated figure and disagrees with amount_t / marketable_total_t (24.3); geometry
+      comes from amount_t, the percentage only from this curated field.
+    - history_months is a four-point maturity time series and is deliberately NOT charted.
+      sections.md is explicit that this section is not built as a time series; the field is kept
+      in the data for reference but no component may reference it.
   revenue_sources:
     title: Federal revenue by source, FY1962 onward
     source: CBO Historical Budget Data, February 2026 vintage
@@ -160,6 +168,54 @@ outputs:
       100 with anything. They are comparable to each other over time, not to a factor-share decomposition.
     - The GDP deflator here is the series used to deflate every nominal dollar figure elsewhere on
       the site, rebased so FY2025 = 100.
+  bracket_history:
+    title: Statutory federal income tax bracket schedules, 1913-2025
+    source: Tax Foundation income-tax-rates dataset (1913-2019, from IRS SOI Historical Table 23
+      and IRS Revenue Procedures); IRS Revenue Procedures 2018-57 through 2024-40 (2019-2025,
+      curated); IRS SOI Historical Table 23 / Tax Policy Center for the published top rate;
+      FRED CPIAUCNS for the constant-dollar deflator
+    units:
+      s.*.r: percent
+      s.*.lo, s.*.hi: nominal dollars
+      s.*.rlo, s.*.rhi: constant 2024 dollars
+      top, sched_top: percent
+    fields:
+      y: tax year
+      top: top marginal rate as published (IRS SOI / Tax Policy Center)
+      sched_top: top marginal rate on the raw bracket schedule ladder (single filer)
+      adj: non-null only in the twelve years where top and sched_top disagree
+      nb: bracket count on the single-filer schedule
+      s: brackets per filing status (single, mfj, mfs, hoh), null before that status existed
+    notes:
+    - Statutory is not effective. Nobody pays the top rate on their whole income, and the
+      threshold it applies at has moved enormously.
+    - 'Twelve years diverge between the published top rate and the schedule ladder top: 1923,
+      1929, 1940, 1946, 1947, 1948, 1949, 1950, 1968, 1969, 1970, 1981. Each carries a documented
+      `adj` entry; see curated/bracket_adjustments.yaml.'
+    - mfj and mfs schedules do not exist before 1949; hoh does not exist before 1952. These are
+      null, never a back-projected copy of the single schedule.
+    - Excludes the alternative minimum tax, the phase-out of exemptions and deductions, and the
+      3.8% net investment income tax from 2013.
+  cbo_effective_rates:
+    title: Average federal tax rate by income group, published anchor years 1979-2022
+    source: CBO, The Distribution of Household Income, 2022 (January 2026), Supplemental Data
+      Table 9, Average Federal Tax Rates by Income Group, 1979 to 2022
+    units:
+      v.*: percent of income before means-tested transfers and federal taxes
+    fields:
+      lowest: lowest income quintile
+      second: second income quintile
+      middle: middle income quintile
+      fourth: fourth income quintile
+      highest: highest income quintile
+      top1: top 1 percent
+    notes:
+    - INCLUDES PAYROLL TAX, corporate income tax and excise tax, not individual income tax alone.
+      This is why it cannot be compared to the income-tax-only shares in income_tax_by_group.
+    - These are PUBLISHED ANCHOR YEARS, not an annual series. Never draw a connecting line between
+      them; the years in between were not observed by this table.
+    - The lowest quintile's average rate fell to near zero (0.6% in 2019, 1.4% in 2022) as
+      refundable credits grew; it was 9.3% in 1979.
   party_splits:
     title: Counted per-party roll-call splits for 23 major deficit-moving laws, 1997-2025
     source: 'Voteview (voteview.com/data): HSall_members.csv joined to per-congress roll-call and
@@ -175,3 +231,56 @@ outputs:
       party.
     - The vote counted is FINAL PASSAGE. Procedural votes, cloture and motions to recommit are excluded,
       and a bill often has several of each.
+  states_balance:
+    title: What each state gives the federal government and gets back, by IRS gross collections
+      against USASpending award spending
+    source: IRS Statistics of Income, SOI Data Book Table 5, Gross Collections by Type of Tax and
+      State (vintage discovered per run); USASpending.gov spending_by_geography, place of performance
+      basis, same fiscal year window as the IRS vintage
+    units:
+      give_b: federal tax gross collections, $ billions
+      get_b: federal award spending, $ billions
+      pop: population (from USASpending)
+      give_pc: give_b per person, $
+      get_pc: get_b per person, $ (USASpending's own per_capita figure)
+      balance_b: get_b minus give_b, $ billions
+      balance_pc: get_pc minus give_pc, $ per person
+      ratio: get_b / give_b
+    fields:
+      code: two-letter postal code
+      is_state: true ONLY for the 50 actual states; false for DC (excluded from the colour-scale
+        domain) and for territories
+      in_grid: whether the jurisdiction is drawn on the tile-grid cartogram (states + DC only)
+    notes:
+    - THIS IS NOT A BALANCE OF PAYMENTS. Give is gross collections classified by the filer's
+      address (IRS Table 5's own note); get is award spending classified by place of PERFORMANCE,
+      not the recipient's residence. A border employer's withholding can be booked to a
+      neighbouring state; a military base or federal retiree's former duty station pulls spending
+      away from where the money is actually used. State this in body copy, never a tooltip.
+    - Award spending EXCLUDES most direct benefit payments (Social Security, Medicare, SNAP), so
+      the "get" side understates what a state actually receives. Gross collections include
+      penalties and interest and exclude excise taxes collected by Customs and the Alcohol and
+      Tobacco Tax and Trade Bureau.
+    - DC is not a state, is an extreme outlier by construction (federal employment concentration),
+      and is excluded from the colour-scale domain so it does not flatten the 50-state range. It
+      is still drawn and still in the table.
+    - Territories (PR, GU, VI, MP, AS) appear in USASpending but not in IRS Table 5's state
+      breakdown; give_b is null for them, not zero. They are not drawn on the tile grid.
+    - The Rockefeller Institute publishes an actual state balance-of-payments study; its series
+      ends FY2022 and it is cited, never ingested (no machine-readable feed exists).
+  states_tax_mix:
+    title: State tax collections by category, as a share of each state's own total
+    source: US Census Bureau, Annual Survey of State Government Tax Collections (STC), detailed
+      table, transposed (vintage discovered per run)
+    units:
+      total_b: total state tax collections, $ billions
+      shares: percent of that state's own total tax collections
+    notes:
+    - A category value of 'X' in the source means the state does NOT LEVY that tax (e.g. Alaska
+      has no general sales tax). This is a fact, distinct from a genuinely missing figure, and is
+      recorded in each jurisdiction's `not_levied` list rather than rendered as `0` or `no data`.
+    - The source's US-total column excludes Washington DC regardless of whether DC has its own
+      jurisdiction column; `_meta.coverage.stc_includes_dc` records which is actually true for the
+      fetched vintage rather than assuming it.
+    - The `other` category is derived as the state's total minus the four named categories, not a
+      Census item code on its own.

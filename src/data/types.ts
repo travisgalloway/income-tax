@@ -30,6 +30,8 @@ export interface Meta {
   provenance: Provenance
   coverage?: Record<string, unknown>
   estimate_boundary?: { last_actual_fy: number; note: string }
+  /** Present on curated snapshots (not auto-fetched). See curatedVintage(). */
+  refresh?: { mode: string; reason: string }
   [key: string]: unknown
 }
 
@@ -138,6 +140,86 @@ export interface ChamberVote {
   rollnumber: number
 }
 
+/** One published observation of the CBO top 1% income share. Two of these
+ *  exist in total (1979, 2022) — see `IncomeGroups` below. Never a
+ *  continuous annual series. */
+export interface Top1IncomeSharePoint {
+  year: number
+  v: number
+}
+
+/** One row of the OECD total-tax-revenue comparison. `is_us` and `is_average`
+ *  are mutually exclusive flags: at most one row of each per dataset. Absent
+ *  on every other country row — never `false`. */
+export interface OecdCountry {
+  c: string
+  v: number
+  is_us?: boolean
+  is_average?: boolean
+}
+
+export interface OecdComparison {
+  year: number
+  us_pct_gdp: number
+  oecd_average_pct_gdp: number
+  us_rank: number
+  of_countries: number
+  /** A SELECTION of `of_countries` members, not the full membership. Any
+   *  chart built from this must say so. */
+  countries: OecdCountry[]
+  us_history: { year: number; v: number }[]
+}
+
+export type FilingStatus = 'single' | 'mfj' | 'mfs' | 'hoh'
+
+/** One bracket on a filing status's ladder for one tax year. `hi`/`rhi` are
+ *  null on exactly the top bracket, never zero. `rlo`/`rhi` are constant 2024
+ *  dollars. */
+export interface Bracket {
+  r: number
+  lo: number
+  hi: number | null
+  rlo: number
+  rhi: number | null
+}
+
+/** Present only in the twelve years where the published top rate diverges
+ *  from the raw bracket-schedule ladder top. Both numbers are kept. */
+export interface RateAdjustment {
+  schedule: number
+  published: number
+  why: string
+  source: string
+}
+
+/** One tax year of `bracket_history.json`. `s.<status>` is null before that
+ *  status existed (never a back-projected copy of `single`). */
+export interface BracketYear {
+  y: number
+  top: number
+  sched_top: number
+  adj: RateAdjustment | null
+  nb: number
+  s: Record<FilingStatus, Bracket[] | null>
+}
+
+/** `cbo_effective_rates.json`'s `data` blob: PUBLISHED ANCHOR POINTS, never an
+ *  annual series. Kept structurally loose (`Record<string, unknown>` at the
+ *  import site) because its shape does not overlap enough with any tabular
+ *  `T[]` for a single `as Dataset<T>` assertion; narrow through this type at
+ *  the point of use instead. */
+export interface CboEffectiveRates {
+  as_of: string
+  basis: string
+  not_an_annual_series: string
+  groups: string[]
+  rows: {
+    year: number
+    source_table: string
+    v: { lowest: number; second: number; middle: number; fourth: number; highest: number; top1: number }
+  }[]
+}
+
 export interface PartySplit {
   public_law: string | null
   name: string
@@ -149,4 +231,112 @@ export interface PartySplit {
   character: 'cross-party' | 'party-line' | 'no recorded vote'
   legacy_classification: string
   note?: string
+}
+
+/** One jurisdiction's give/get row. `is_state` is true ONLY for the 50 actual
+ *  states — DC is false, deliberately, because it is excluded from the
+ *  colour-scale domain. `in_grid` is the 51 the tile cartogram draws (the 50
+ *  states plus DC); territories are in the data but not on the grid. Every
+ *  derived field (`*_pc`, `balance_*`, `ratio`) is null when either side is
+ *  missing — see docs/contracts/interfaces/state-data.md. */
+export interface StateJurisdiction {
+  code: string
+  name: string
+  is_state: boolean
+  in_grid: boolean
+  give_b: number | null
+  get_b: number | null
+  pop: number | null
+  give_pc: number | null
+  get_pc: number | null
+  balance_b: number | null
+  balance_pc: number | null
+  ratio: number | null
+}
+
+export interface StatesBalance {
+  fy_give: number
+  fy_get: number
+  national: { give_b: number; get_b: number; population: number }
+  color_domain: { basis: string; min: number; max: number; mid: number; excludes: string[] }
+  summary: { n_get_more: number; n_give_more: number; n_with_both: number }
+  jurisdictions: StateJurisdiction[]
+}
+
+export interface TaxMixCategory {
+  k: string
+  label: string
+  item: string
+}
+
+/** `shares[k] === null` alone means "not reported"; `shares[k] === null` PLUS
+ *  `k` present in `not_levied` means the state does not levy that tax at all.
+ *  The two must never render the same way. */
+export interface TaxMixJurisdiction {
+  code: string
+  name: string
+  total_b: number | null
+  shares: Record<string, number | null>
+  not_levied: string[]
+  partial?: boolean
+}
+
+export interface StatesTaxMix {
+  fy: number
+  categories: TaxMixCategory[]
+  jurisdictions: TaxMixJurisdiction[]
+}
+
+export interface DebtHolders {
+  total_debt_t: number
+  as_of: string
+  split: { k: 'public' | 'intragov'; label: string; amount_t: number; share_pct: number }[]
+  /** Deliberately `share_of_public_pct`, NOT `share_pct`: the denominator is
+   *  part of the field name so a renderer cannot silently print it as a share
+   *  of gross debt. See discrepancies.yaml -> foreign_share_of_debt. */
+  public_split: { k: 'domestic' | 'foreign'; label: string; share_of_public_pct: number }[]
+  top_foreign: { country: string; amount_t: number }[]
+  foreign_share_history: { year: number; share_of_gross_pct: number }[]
+}
+
+export interface DebtMaturity {
+  avg_maturity_months: number
+  avg_maturity_as_of: string
+  longest_instrument_years: number
+  marketable_total_t: number
+  /** `share_pct` is present on bills only and DISAGREES with amount_t /
+   *  marketable_total_t. Geometry comes from amount_t; a percentage is
+   *  rendered only where this field supplies one. */
+  composition: { k: string; label: string; maturity: string; share_pct?: number; amount_t: number }[]
+  /** NOT rendered. sections.md §3: "Do not build this as a time series." */
+  history_months: { date: string; v: number }[]
+}
+
+/** One percentile group of tax units, IRS Statistics of Income.
+ *
+ *  The groups are NESTED — "Top 1%" is inside "Top 5%" — so they never
+ *  partition a whole. They must not be summed, and must not be drawn as one
+ *  bar divided into parts.
+ *
+ *  `income_share_pct` and `avg_rate_pct` are ABSENT, not zero, where the IRS
+ *  does not publish them. Income share is absent for Top 5%, Top 25% and
+ *  Bottom 50%; average rate is absent for every group but Top 1% and Bottom
+ *  50%. Rendering an absent cell as 0 is a factual error, not a display
+ *  choice. */
+export interface IncomeTaxGroup {
+  g: string
+  income_share_pct?: number
+  tax_share_pct: number
+  avg_rate_pct?: number
+}
+
+/** `income_tax_by_group.json`. INDIVIDUAL INCOME TAX ONLY: it excludes payroll
+ *  tax, which is the larger bill outside the top decile, and it excludes
+ *  refundable credits, which overstates the effective rate at the bottom. */
+export interface IncomeGroups {
+  tax_year: number
+  groups: IncomeTaxGroup[]
+  /** Five scattered published years, not an annual series. */
+  top1_tax_share_history: Top1IncomeSharePoint[]
+  cbo_top1_income_share: Top1IncomeSharePoint[]
 }

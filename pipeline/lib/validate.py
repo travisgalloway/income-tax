@@ -11,10 +11,13 @@ import json
 from pathlib import Path
 from typing import Any
 
+import jsonschema
+
 from . import curated
 from .errors import ValidationFailed
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent / "src" / "data"
+SCHEMA_DIR = Path(__file__).resolve().parent.parent / "schemas"
 
 
 class Checks:
@@ -50,6 +53,21 @@ def check_meta(c: Checks, names: list[str]) -> None:
             "CBO data" != m.get("source"),
             f"{n}: _meta.source was summarised; BRIEF.md rule 1 forbids this",
         )
+
+
+def check_schema(c: Checks, names: list[str]) -> None:
+    """Generic, opt-in JSON Schema check: an output is validated iff
+    `schemas/<name>.schema.json` exists. Nothing retrofits the nine outputs
+    that predate this gate; a new output opts in by adding its schema file."""
+    for n in names:
+        path = SCHEMA_DIR / f"{n}.schema.json"
+        if not path.exists():
+            continue
+        try:
+            jsonschema.validate(_load(n), json.loads(path.read_text()))
+            c.ok(True, f"{n}: schema ok")
+        except jsonschema.ValidationError as exc:
+            c.ok(False, f"{n}: schema violation at {list(exc.absolute_path)}: {exc.message}")
 
 
 def check_budget(c: Checks) -> None:
@@ -120,13 +138,30 @@ def check_revenue(c: Checks) -> None:
     rows = _load("revenue_sources")["data"]
     parts = ["ii", "pr", "ci", "ex", "cu", "eg", "mi"]
     for r in rows:
-        s = sum(r[f"n_{p}"] for p in parts)
-        c.ok(abs(s - r["n_tot"]) <= 0.003,
-             f"FY{r['y']}: revenue components sum to {s:.3f}, total is {r['n_tot']:.3f}")
+        s_n = sum(r[f"n_{p}"] for p in parts)
+        c.ok(abs(s_n - r["n_tot"]) <= 0.003,
+             f"FY{r['y']}: revenue components sum to {s_n:.3f}, total is {r['n_tot']:.3f}")
+
+        # GOV-10 (#7): the g_ and s_ families carry the same sum-to-total
+        # invariant as n_. Left unchecked before this issue.
+        s_g = sum(r[f"g_{p}"] for p in parts)
+        c.ok(abs(s_g - r["g_tot"]) <= 0.01,
+             f"FY{r['y']}: % of GDP components sum to {s_g:.3f}, total is {r['g_tot']:.3f}")
+
+        s_s = sum(r[f"s_{p}"] for p in parts)
+        c.ok(abs(s_s - 100.0) <= 0.05,
+             f"FY{r['y']}: % of total revenue components sum to {s_s:.3f}, expected 100.0")
+
+        # Miscellaneous must never silently drop to zero or disappear.
+        c.ok(r["n_mi"] > 0 and r["g_mi"] > 0,
+             f"FY{r['y']}: miscellaneous revenue is not positive (n_mi={r['n_mi']}, "
+             f"g_mi={r['g_mi']}); it must never be silently dropped")
     by = {r["y"]: r for r in rows}
     c.close(by[1995]["n_tot"], 1.352, 0.002, "FY1995 total revenue $T")
     c.close(by[2025]["n_tot"], 5.235, 0.002, "FY2025 total revenue $T")
     c.close(by[2025]["g_ii"], 8.75, 0.02, "FY2025 individual income tax, % of GDP")
+    c.close(by[2025]["g_pr"], 5.76, 0.02, "FY2025 payroll tax, % of GDP")
+    c.close(by[2025]["s_pr"], 33.4, 0.15, "FY2025 payroll tax, % of total revenue")
 
 
 def check_economy(c: Checks) -> None:
@@ -169,6 +204,20 @@ def check_debt(c: Checks) -> None:
     c.ok(all(r.get("as_of") for r in rows if not r.get("year_end")),
          "debt: a non-year-end row has no as_of date")
 
+    # $40T crossing: record_date and reported_date must both be present and
+    # distinct, and the non-year-end row's as_of must equal record_date, so the
+    # note and the row can never drift apart. See discrepancies.yaml ->
+    # forty_trillion_crossing_date.
+    crossing = doc["_meta"].get("threshold_crossing")
+    if crossing:
+        c.ok(bool(crossing.get("record_date")) and bool(crossing.get("reported_date")),
+             "debt: threshold_crossing is missing record_date or reported_date")
+        c.ok(crossing.get("record_date") != crossing.get("reported_date"),
+             "debt: threshold_crossing record_date and reported_date must be distinct")
+        non_year_end = [r for r in rows if not r.get("year_end")]
+        c.ok(len(non_year_end) == 1 and non_year_end[0].get("as_of") == crossing.get("record_date"),
+             "debt: the non-year-end row's as_of does not match threshold_crossing.record_date")
+
 
 def check_income(c: Checks) -> None:
     doc = _load("income_inequality")
@@ -207,6 +256,33 @@ def check_snapshots(c: Checks) -> None:
          "debt_holders: Federal Reserve holdings appeared; SOURCES.md requires they be "
          "OMITTED rather than picked between conflicting figures")
 
+    # discrepancies.yaml -> foreign_share_of_debt: a foreign share is never
+    # presented without naming which debt it is a share OF. The field name
+    # itself (share_of_public_pct, not share_pct) makes the denominator
+    # explicit, so a renderer cannot flatten it to a bare percentage.
+    c.ok(all("share_of_public_pct" in s and "share_pct" not in s for s in d["public_split"]),
+         "debt_holders: public_split must use share_of_public_pct, never a bare share_pct")
+    c.ok(all("share_of_gross_pct" in h for h in d["foreign_share_history"]),
+         "debt_holders: foreign_share_history must name share_of_gross_pct on every point")
+    latest_foreign = next((h for h in d["foreign_share_history"] if h["year"] == 2025), None)
+    c.ok(latest_foreign is not None and latest_foreign["share_of_gross_pct"] == 24,
+         "debt_holders: no 2025 foreign_share_history point at 24% of gross debt")
+
+    maturity = _load("debt_maturity")["data"]
+    comp = {row["k"]: row for row in maturity["composition"]}
+    total_amt = sum(row["amount_t"] for row in maturity["composition"])
+    # EC2: bills/notes/bonds are NOT an exhaustive partition of the marketable
+    # total, and must never be presented as one.
+    c.ok(abs(total_amt - maturity["marketable_total_t"]) > 0.01,
+         "debt_maturity: composition now sums to the marketable total; if this is no "
+         "longer true the 'not an exhaustive partition' note and test are stale")
+    # EC3: bills.share_pct (curated) disagrees with amount_t / total on purpose;
+    # only bills carries a curated share, and it must never be silently derived
+    # for notes or bonds from amount_t / marketable_total_t.
+    c.ok("share_pct" in comp["bills"] and "share_pct" not in comp["notes"]
+         and "share_pct" not in comp["bonds"],
+         "debt_maturity: share_pct must be present on bills only")
+
     oecd = _load("oecd")["data"]
     c.ok(oecd["us_pct_gdp"] == 25.6 and oecd["oecd_average_pct_gdp"] == 34.1,
          "oecd: headline figures moved; sections.md quotes 25.6% and 34.1%")
@@ -214,12 +290,120 @@ def check_snapshots(c: Checks) -> None:
     c.ok(len(us) == 1 and us[0]["v"] == oecd["us_pct_gdp"],
          "oecd: the US row disagrees with us_pct_gdp")
 
+    # GOV-10 (#7): the average must be flagged exactly once (a chart must be
+    # able to pull it out of the country rows), and the country list must be
+    # provably a selection, never the full membership rendered as if it were.
+    avg = [x for x in oecd["countries"] if x.get("is_average")]
+    c.ok(len(avg) == 1 and avg[0]["v"] == oecd["oecd_average_pct_gdp"],
+         "oecd: the average row disagrees with oecd_average_pct_gdp")
+    c.ok(len(oecd["countries"]) < oecd["of_countries"],
+         f"oecd: countries list has {len(oecd['countries'])} rows, of_countries is "
+         f"{oecd['of_countries']}; the plot is a selection and must be labelled as one")
+
     grp = _load("income_tax_by_group")["data"]
     top1 = [g for g in grp["groups"] if g["g"] == "Top 1%"][0]
     c.close(top1["tax_share_pct"], 38.4, 0.05, "income_tax_by_group: top 1% tax share")
     c.ok(top1["income_share_pct"] is not None,
          "income_tax_by_group: the top 1% income share is missing. Showing the tax share "
          "without it misleads, per the curated note.")
+
+    c.ok(grp["tax_year"] == 2023,
+         f"income_tax_by_group: tax year moved to {grp['tax_year']}; sections 5-7 state 2023")
+
+    by_g = {g["g"]: g for g in grp["groups"]}
+    # NESTED, not a partition: each wider group must contain the narrower one.
+    ladder = ["Top 1%", "Top 5%", "Top 10%", "Top 25%", "Top 50%"]
+    for narrow, wide in zip(ladder, ladder[1:]):
+        c.ok(by_g[narrow]["tax_share_pct"] <= by_g[wide]["tax_share_pct"],
+             f"income_tax_by_group: {narrow} tax share exceeds {wide}; the groups are "
+             f"nested, and a chart that stacked them would double-count")
+
+    # Partial BY DESIGN. If the IRS series gains these, the chart must be revisited
+    # rather than silently filling cells the prose says are unpublished.
+    for g in ("Top 5%", "Top 25%", "Bottom 50%"):
+        c.ok(by_g[g].get("income_share_pct") is None,
+             f"income_tax_by_group: {g} gained an income share; section 5 renders it as "
+             f"unpublished and its note says so")
+
+    hist = grp["top1_tax_share_history"]
+    years = [p["year"] for p in hist]
+    c.ok(max(b - a for a, b in zip(years, years[1:])) > 1,
+         "income_tax_by_group: top1_tax_share_history became annual; section 5 draws it as "
+         "discrete published years and must be revisited if it is now a continuous series")
+
+
+def check_bracket_history(c: Checks) -> None:
+    doc = _load("bracket_history")
+    rows = doc["data"]
+    by = {r["y"]: r for r in rows}
+    top_rates = curated._load("top_rates")["top_marginal_rate"]
+
+    years = sorted(by)
+    c.ok(years == list(range(1913, 2026)), f"bracket_history: expected 1913-2025 with no gaps, "
+                                            f"got {years[0]}-{years[-1]} ({len(years)} years)")
+
+    for y, want in top_rates.items():
+        c.ok(abs(by[int(y)]["top"] - want) < 0.001,
+             f"bracket_history: {y} top {by[int(y)]['top']} != curated top_rates {want}")
+
+    spot = {1913: 7.0, 1944: 94.0, 1965: 70.0, 1988: 28.0, 1993: 39.6, 1981: 69.125,
+            2018: 37.0, 2019: 37.0, 2020: 37.0, 2021: 37.0, 2022: 37.0, 2023: 37.0,
+            2024: 37.0, 2025: 37.0}
+    for y, want in spot.items():
+        c.ok(abs(by[y]["top"] - want) < 0.001, f"bracket_history: {y} top is {by[y]['top']}, expected {want}")
+    c.ok(bool(by[1981]["adj"] and by[1981]["adj"]["why"].strip()),
+         "bracket_history: 1981 has no documented adjustment reason")
+
+    nb = {y: r["nb"] for y, r in by.items()}
+    c.ok(min(nb.values()) == 2 and nb[1988] == 2, "bracket_history: minimum bracket count is not 2 at 1988")
+    c.ok(max(nb.values()) == 56 and nb[1918] == 56, "bracket_history: maximum bracket count is not 56 at 1918")
+
+    for y, r in by.items():
+        c.ok((r["s"]["mfj"] is None) == (y < 1949), f"bracket_history: {y} mfj null-ness is wrong")
+        c.ok((r["s"]["mfs"] is None) == (y < 1949), f"bracket_history: {y} mfs null-ness is wrong")
+        c.ok((r["s"]["hoh"] is None) == (y < 1952), f"bracket_history: {y} hoh null-ness is wrong")
+        for status, ladder in r["s"].items():
+            if ladder is None:
+                continue
+            for i, b in enumerate(ladder):
+                is_top = i == len(ladder) - 1
+                c.ok((b["hi"] is None) == is_top, f"bracket_history: {y} {status} bracket {i} "
+                     f"hi-nullness disagrees with being the top bracket")
+                c.ok((b["rhi"] is None) == is_top, f"bracket_history: {y} {status} bracket {i} "
+                     f"rhi-nullness disagrees with being the top bracket")
+
+    top_1913 = by[1913]["s"]["single"][-1]
+    c.ok(top_1913["lo"] == 500000, f"bracket_history: 1913 top bracket floor is {top_1913['lo']}, expected $500,000")
+    c.ok(12_000_000 <= top_1913["rlo"] <= 20_000_000,
+         f"bracket_history: 1913 top bracket in constant 2024 dollars is {top_1913['rlo']}, "
+         "expected between $12M and $20M")
+
+    top_2024 = by[2024]["s"]["single"][-1]
+    c.close(top_2024["rlo"], top_2024["lo"], top_2024["lo"] * 0.005,
+            "bracket_history: 2024 top bracket real vs nominal (base-year fixed point)")
+
+
+def check_cbo_effective_rates(c: Checks) -> None:
+    doc = _load("cbo_effective_rates")
+    rows = doc["data"]["rows"]
+    basis = doc["data"]["basis"]
+
+    for r in rows:
+        for g, v in r["v"].items():
+            c.ok(0 < v < 45, f"cbo_effective_rates: {r['year']} {g} rate {v} outside (0, 45)")
+        c.ok(r["v"]["highest"] > r["v"]["lowest"],
+             f"cbo_effective_rates: {r['year']} highest quintile is not above lowest")
+        c.ok(r["v"]["top1"] >= r["v"]["highest"],
+             f"cbo_effective_rates: {r['year']} top 1% rate is below the highest quintile")
+        c.ok(bool(r.get("source_table")),
+             f"cbo_effective_rates: {r['year']} has no source_table")
+
+    years = {r["year"] for r in rows}
+    c.ok(1979 in years and 2022 in years,
+         "cbo_effective_rates: the two endpoint years 1979 and 2022 are not both present")
+    c.ok("payroll" in basis.lower(),
+         "cbo_effective_rates: basis does not name payroll tax; the comparability trap must be "
+         "structural, not editorial")
 
 
 def check_party_splits(c: Checks) -> None:
@@ -272,9 +456,56 @@ def check_party_splits(c: Checks) -> None:
          f"party_splits: {chars.count('party-line')} party-line laws, sections.md says 7")
 
 
+def check_states(c: Checks) -> None:
+    d = _load("states_balance")["data"]
+    jurs = d["jurisdictions"]
+
+    in_grid = [j for j in jurs if j["in_grid"]]
+    c.ok(len(in_grid) == 51, f"states: expected 51 in_grid jurisdictions, got {len(in_grid)}")
+
+    dc = next((j for j in jurs if j["code"] == "DC"), None)
+    c.ok(dc is not None, "states: DC is missing")
+    if dc:
+        c.ok(dc.get("is_state") is False, "states: DC.is_state should be False; DC is not a state")
+        c.ok("DC" in d["color_domain"]["excludes"],
+             "states: DC is not recorded in color_domain.excludes")
+
+    territories = [j for j in jurs if not j["in_grid"]]
+    c.ok(bool(territories), "states: no territory rows found; coverage was silently dropped")
+    for j in territories:
+        c.ok(j["give_b"] is None, f"states: territory {j['code']} has a give_b; should be null")
+        c.ok(j["get_b"] is not None, f"states: territory {j['code']} has no get_b")
+
+    for j in jurs:
+        for k in ("give_b", "get_b", "balance_pc", "ratio"):
+            c.ok(j[k] is None or j[k] != 0, f"states: {j['code']}.{k} is exactly 0; absence must be null")
+
+    total_give = sum(j["give_b"] for j in jurs if j["give_b"] is not None)
+    nat_give = d["national"]["give_b"]
+    c.ok(total_give <= nat_give + 1e-6,
+         f"states: sum of jurisdiction give_b ({total_give}) exceeds the national total ({nat_give})")
+    c.close(total_give, nat_give, nat_give * 0.02, "states: sum of jurisdiction give_b vs national")
+
+    for j in jurs:
+        c.ok(j["ratio"] is None or j["ratio"] > 0,
+             f"states: {j['code']}.ratio is non-positive: {j['ratio']}")
+
+    c.ok(d["fy_give"] == d["fy_get"],
+         f"states: fy_give {d['fy_give']} != fy_get {d['fy_get']}; give and get must be the same FY")
+
+    mix = _load("states_tax_mix")["data"]
+    for j in mix["jurisdictions"]:
+        for k, v in j["shares"].items():
+            c.ok(v is None or 0 <= v <= 100, f"states_tax_mix: {j['code']}.{k} share {v} out of [0,100]")
+            if v is None:
+                c.ok(k in j.get("not_levied", []) or j.get("partial"),
+                     f"states_tax_mix: {j['code']}.{k} is null but not in not_levied and not partial")
+
+
 def run(outputs: list[str]) -> Checks:
     c = Checks()
     check_meta(c, outputs)
+    check_schema(c, outputs)
     if "budget" in outputs:
         check_budget(c)
         check_laws(c)
@@ -290,4 +521,10 @@ def run(outputs: list[str]) -> Checks:
         check_snapshots(c)
     if "party_splits" in outputs:
         check_party_splits(c)
+    if "states_balance" in outputs:
+        check_states(c)
+    if "cbo_effective_rates" in outputs:
+        check_cbo_effective_rates(c)
+    if "bracket_history" in outputs:
+        check_bracket_history(c)
     return c

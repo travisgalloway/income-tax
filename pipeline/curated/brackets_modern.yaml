@@ -1,0 +1,66 @@
+_comment: >-
+  Curated. NEVER machine-written.
+  The Tax Foundation income-tax-rates CSV (bracket_history.py's fetched source)
+  ends at tax year 2019. 2020-2025 have no fetchable source, so they are
+  transcribed by hand from the IRS Revenue Procedure that sets each year's TCJA
+  inflation adjustments, cross-checked against Tax Foundation's published
+  "20XX Tax Brackets" pages. 2019 is included here TOO, but only as a
+  REGRESSION YEAR: the fetched CSV stays authoritative for 2019, and
+  bracket_history.py raises if this transcription does not reproduce the CSV
+  exactly on (rate, lo, hi) for all four filing statuses.
+  Each `ceilings` list is the upper edge of each bracket in `rate_ladder` order,
+  i.e. the "not over" threshold from the Revenue Procedure; the last entry is
+  always null (open-ended top bracket). The builder derives each bracket's
+  floor as the previous bracket's ceiling plus one dollar, matching the
+  convention the fetched CSV already uses for modern years.
+rate_ladder: [0.10, 0.12, 0.22, 0.24, 0.32, 0.35, 0.37]
+years:
+  2019:
+    source: IRS Rev. Proc. 2018-57 (2019 inflation adjustments)
+    ceilings:
+      single: [9700, 39475, 84200, 160725, 204100, 510300, null]
+      mfj: [19400, 78950, 168400, 321450, 408200, 612350, null]
+      mfs: [9700, 39475, 84200, 160725, 204100, 306175, null]
+      hoh: [13850, 52850, 84200, 160700, 204100, 510300, null]
+  2020:
+    source: IRS Rev. Proc. 2019-44 (2020 inflation adjustments)
+    ceilings:
+      single: [9875, 40125, 85525, 163300, 207350, 518400, null]
+      mfj: [19750, 80250, 171050, 326600, 414700, 622050, null]
+      mfs: [9875, 40125, 85525, 163300, 207350, 311025, null]
+      hoh: [14100, 53700, 85500, 163300, 207350, 518400, null]
+  2021:
+    source: IRS Rev. Proc. 2020-45 (2021 inflation adjustments)
+    ceilings:
+      single: [9950, 40525, 86375, 164925, 209425, 523600, null]
+      mfj: [19900, 81050, 172750, 329850, 418850, 628300, null]
+      mfs: [9950, 40525, 86375, 164925, 209425, 314150, null]
+      hoh: [14200, 54200, 86350, 164900, 209400, 523600, null]
+  2022:
+    source: IRS Rev. Proc. 2021-45 (2022 inflation adjustments)
+    ceilings:
+      single: [10275, 41775, 89075, 170050, 215950, 539900, null]
+      mfj: [20550, 83550, 178150, 340100, 431900, 647850, null]
+      mfs: [10275, 41775, 89075, 170050, 215950, 323925, null]
+      hoh: [14650, 55900, 89050, 170050, 215950, 539900, null]
+  2023:
+    source: IRS Rev. Proc. 2022-38 (2023 inflation adjustments)
+    ceilings:
+      single: [11000, 44725, 95375, 182100, 231250, 578125, null]
+      mfj: [22000, 89450, 190750, 364200, 462500, 693750, null]
+      mfs: [11000, 44725, 95375, 182100, 231250, 346875, null]
+      hoh: [15700, 59850, 95350, 182100, 231250, 578100, null]
+  2024:
+    source: IRS Rev. Proc. 2023-34 (2024 inflation adjustments)
+    ceilings:
+      single: [11600, 47150, 100525, 191950, 243725, 609350, null]
+      mfj: [23200, 94300, 201050, 383900, 487450, 731200, null]
+      mfs: [11600, 47150, 100525, 191950, 243725, 365600, null]
+      hoh: [16550, 63100, 100500, 191950, 243700, 609350, null]
+  2025:
+    source: IRS Rev. Proc. 2024-40 (2025 inflation adjustments)
+    ceilings:
+      single: [11925, 48475, 103350, 197300, 250525, 626350, null]
+      mfj: [23850, 96950, 206700, 394600, 501050, 751600, null]
+      mfs: [11925, 48475, 103350, 197300, 250525, 375800, null]
+      hoh: [17000, 64850, 103350, 197300, 250500, 626350, null]

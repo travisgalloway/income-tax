@@ -89,11 +89,28 @@ stale — either a new token with no row, or a hex edit that this table's ratios
 | `--intragov` | `#C77D28` | 2.47 | 2.97 | series | redundant-encoding: table column (`th scope` cell carries the category as text) |
 | `--foreign` | `#93A8B3` | 1.86 | 2.24 | series | redundant-encoding: table column (`th scope` cell carries the category as text) |
 | `--positive` | `#2E7D5B` | 3.75 | 4.53 | series | |
+| `--band` | `#C9CCC3` | 1.22 | 1.47 | rule | |
+| `--rev-ii` | `#3E7C86` | 3.56 | 4.29 | series | |
+| `--rev-pr` | `#C77D28` | 2.47 | 2.97 | series | redundant-encoding: table column (`th scope` cell carries the category as text) |
+| `--rev-ci` | `#55606B` | 4.82 | 5.81 | series | |
+| `--rev-ex` | `#93A8B3` | 1.86 | 2.24 | series | redundant-encoding: table column (`th scope` cell carries the category as text) |
+| `--rev-cu` | `#263038` | 10.09 | 12.17 | series | |
+| `--rev-eg` | `#A8895A` | 2.47 | 2.97 | series | redundant-encoding: table column (`th scope` cell carries the category as text) |
+| `--rev-mi` | `#B7BDB0` | 1.44 | 1.74 | series | redundant-encoding: table column (`th scope` cell carries the category as text) |
 
 `--rule` clears neither the 4.5:1 text threshold nor the 3:1 non-text threshold on either ground.
 It is used only for hairline rules, never for text or a category-carrying series, so it is marked
 `role: rule` rather than `text` or `series` and carries no enforcement test of its own — recorded
 here so a future use of `--rule` for anything else is a deliberate decision, not an oversight.
+`--band` (era-shading crisis/pandemic bands, GOV-4) is the same kind of decorative, non-text,
+non-category wash and is marked `role: rule` for the same reason — it is explicitly "neutral" in
+`tokens.css`'s own comment, never carrying party or budget-category meaning.
+
+`--rev-ii` through `--rev-mi` (GOV-10's revenue-by-source stack) are `role: series` like the other
+category colours above: `RevenueChart.tsx`'s `<TableView>` carries every one of the seven sources
+as its own labelled column, so the four scoring below 3:1 against `--panel` (`--rev-pr`, `--rev-ex`,
+`--rev-eg`, `--rev-mi`) carry the same `redundant-encoding:` note as `--int`/`--intragov`/
+`--foreign` above.
 
 `--ink-soft` at 4.66:1 against `--ground` has 0.16 of headroom above the 4.5:1 floor —
 `test_text_role_tokens_meet_4_5_to_1` locks this so a future ground-token edit that erodes it fails

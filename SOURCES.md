@@ -26,7 +26,10 @@ this file, not an actual.
 **US Treasury, Historical Debt Outstanding and Debt to the Penny**
 `fiscaldata.treasury.gov`
 Total public debt outstanding at fiscal year end, and the daily series.
-$40 trillion crossed 19 August 2026. Debt to the Penny stood at $39.89T on
+$40 trillion first closed above the threshold on 18 August 2026 at $40.047
+trillion, and was reported the following day, 19 August 2026. Debt to the
+Penny publishes a date's closing balance on the next business day, so these
+are one event, not two figures. Debt to the Penny stood at $39.89T on
 7 August 2026 and $39.84T on 30 July.
 
 **US Treasury, Monthly Statement of the Public Debt**
@@ -99,26 +102,71 @@ deficit. **If both numbers appear, explain the gap.**
 
 ---
 
-## The vote composition limitation
+## The counted vote splits, and what they still cannot tell you
 
-This is the single weakest point in the dataset and the site must be upfront
-about it.
+This was the dataset's weakest point and is no longer. Each of the 23 laws
+carries per-party yea and nay counts taken from Voteview roll-call records
+(`voteview.com/data`, `HSall_members.csv` joined to the per-congress roll-call
+and vote files) by `pipeline/oneshot/party_splits.py`. PL 115-97 reproduces the
+published House Clerk record on the caucus basis: House R 224–12, D 0–189;
+Senate R 51–0, D 0–48.
 
-Each of the 23 laws carries a `comp` field: `PLR` party-line Republican, `PLD`
-party-line Democratic, `XP` cross-party. For **one** law, PL 115-97 (the Tax Cuts
-and Jobs Act), the per-party split is verified from the House Clerk roll call
-(House: R 224–12, D 0–189; Senate: R 51–0, D 0–48). For the other 22, the
-classification is derived from the published vote character, not from counting
-roll-call votes.
+Four limits remain, and section 11 states all four. The final-passage roll call
+for each law was curated by hand, because a bill carries many roll calls and
+selecting one by date returns the wrong vote. The House passed the CARES Act by
+voice on 27 March 2020, so no roll call exists and one chamber of one law has no
+split; **render that as missing data, never as unanimity and never as 0–0.** A
+vote is called cross-party when at least 10% of the yes votes came from the
+minority party in at least one chamber, which is a judgement and is stated so it
+can be disagreed with. `r`, `d` and `i` are party membership; `d_caucus` adds the
+independents who caucus with the Democrats, the basis the chamber records and
+press coverage use, and the two differ by two Senate seats through most of this
+period. **A chart must say which basis it shows.**
 
-Exact per-party tallies for all 23 are available from Voteview
-(`voteview.com/data`, `HSall_votes.csv` joined to `HSall_rollcalls.csv` and
-`HSall_members.csv`). A script that does this join is in the parent folder as
-`fetch_party_splits.py`. If someone runs it, replace the classifications with
-counted splits and delete this caveat.
+---
 
-Until then: the site says "classified from published vote character" wherever
-composition appears, and section 11 states it as a limitation.
+## State give-and-get
+
+Government §11 compares what each state pays the federal government against what it gets back.
+Four sources were probed; two were fetched, one was rejected outright, and one is cited but never
+ingested.
+
+**IRS Statistics of Income, SOI Data Book Table 5, Gross Collections by Type of Tax and State**
+`irs.gov/pub/irs-soi/` (basename discovered per run; FY2025 fetched as `25db-1-05-co.xlsx`, 61,340
+bytes). Gross federal tax collections by state, classified by the filer's address. **This is
+"give."** The workbook's own note: classification by state can misattribute a corporation's tax to
+its principal office and a border employer's withholding to the wrong side of a state line.
+
+**USASpending.gov, `POST /api/v2/search/spending_by_geography/`** Keyless, no API key required.
+Queried for the same fiscal-year window the IRS vintage covers (FY2025: 2024-10-01 to 2025-09-30),
+returning 57 rows: the 50 states, DC, Puerto Rico, Guam, the US Virgin Islands, the Northern
+Mariana Islands, American Samoa, and one row with an empty `shape_code` (unattributed award
+spending, recorded in `_meta.coverage.unattributed_get_b` rather than dropped). **This is "get,"**
+classified by **place of performance**, and it supplies the population denominator used for every
+per-capita figure on both sides.
+
+**US Census Bureau, Annual Survey of State Government Tax Collections (STC)**
+`www2.census.gov/programs-surveys/stc/tables/{year}/FY{year}-STC-Detailed-Table-Transposed.xlsx`,
+vintage discovered per run (resolved to FY2025 at time of writing). States are columns, tax items
+are rows keyed by Census item code; a cell of `X` means the state does not levy that tax at all
+(Alaska has no general sales tax), a fact recorded distinctly from a genuinely missing figure.
+Used for the state tax-mix figure.
+
+**Census API (`api.census.gov`)** — **Rejected.** Every endpoint tried, including keyless
+`timeseries/govs` and `2023/acs/acs1`, redirected to `data/missing_key.html`. No API secret is
+introduced into this pipeline's CI.
+
+**Rockefeller Institute of Government, state balance-of-payments studies** — **Cited, never
+ingested.** This is the authoritative balance-of-payments comparison and the honest name for what
+a reader might expect §11 to be; its published series ends at FY2022 with no machine-readable feed.
+Hand-transcribing a 50-state table from a PDF is exactly the fabrication risk this pipeline's
+fetch-and-validate gate exists to prevent, so it is cited in body copy and never treated as data.
+
+**The IRS and USASpending figures are deliberately FY-matched** (the USASpending fetch window is
+derived from the discovered IRS fiscal year, never the other way independently), so give and get
+compare the same twelve months by construction. The Census tax-mix vintage is discovered
+separately and is not guaranteed to land on the same fiscal year as give and get in every future
+run — read `_meta.provenance.vintage` on the actual published output rather than assuming.
 
 ---
 
