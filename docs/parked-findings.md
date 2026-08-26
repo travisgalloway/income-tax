@@ -402,3 +402,9 @@ time. Appended to, never rewritten. None of these have been acted on.
   ships the 2026-08-22 vintage for those two outputs. Severity: low, but it is a standing divergence
   between `src/data/` and what a fresh build produces, and it grows with every copy-only branch that
   has to refetch. Worth its own data-refresh issue. Found while working on #31.
+- [2026-08-26] **Closed by #32:** the two `party_line_t: 7.52` entries above (the #3 one and the #4
+  one) are resolved. `pipeline/curated/laws.yaml:24` now reads `7.51`, and
+  `pipeline/lib/validate.py:check_laws` gates both `party_line_t` and `cross_party_t` by equality
+  against the per-law `score_t` sums (exact decimal, rounded once half-up), so the class of drift
+  cannot recur silently. Recorded here rather than by editing those entries: this file is appended
+  to, never rewritten.

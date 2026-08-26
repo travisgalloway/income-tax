@@ -82,9 +82,13 @@ convention and carry `score_t: null`. They:
 
 Filtering to `character: 'party-line'` (7 laws) totals `$7.51T`; `'cross-party'` (16 laws, including
 the two null-score 1997 laws contributing `0`) totals `$9.24T`. These are the exact `toFixed(2)`
-strings the UI prints (`test_filter_totals_render_to_the_published_two_places`), not a tolerance —
-`pipeline/curated/laws.yaml`'s `totals.party_line_t: 7.52` is a stale rounding of the true `7.512`
-and is not the number this UI or `sections.md` §8 states; see `docs/parked-findings.md`.
+strings the UI prints (`test_filter_totals_render_to_the_published_two_places`), not a tolerance.
+`pipeline/curated/laws.yaml`'s `totals.party_line_t: 7.51` and `totals.cross_party_t: 9.24` carry
+the same two numbers, and since #32 `validate.py:check_laws` gates both by **equality**: it sums
+each composition's `score_t` in exact decimal, partitioned by `legacy_comp`, and rounds the sum
+once, half-up. Rounding the per-law displays first (`5.21 + 2.31`) gives `7.52`, which is what the
+curated constant used to say; the true sum is `5.206 + 2.306 = 7.512` → `7.51`. Never widen that
+check into a tolerance — a ±0.02 tolerance is what let the two values disagree unnoticed.
 
 ## Enactment-date chart markers
 

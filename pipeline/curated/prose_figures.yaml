@@ -65,7 +65,7 @@ figures:
   - {section: 10, text: "median income +28.1% over 29 years", output: income_inequality, agg: pct_growth, field: mhi, years: [1995, 2024], quoted: 28.1, tol: 0.3}
   - {section: 8, text: "16 of 23 laws passed cross-party", output: party_splits, agg: count_cross_party, quoted: 16, tol: 0}
   - {section: 8, text: "cross-party laws total $9.24T", output: party_splits, agg: cost_cross_party, quoted: 9.24, tol: 0.02}
-  - {section: 8, text: "party-line laws total $7.52T", output: party_splits, agg: cost_party_line, quoted: 7.52, tol: 0.02}
+  - {section: 8, text: "party-line laws total $7.51T", output: party_splits, agg: cost_party_line, quoted: 7.51, tol: 0.02}
   - {section: 12, text: "cumulative deficits $24.15T", output: budget, agg: sum_negated, field: n_de, years: [1995, 2025], quoted: 24.15, tol: 0.05}
   - {section: 11, text: "IRS gross collections, US total FY2025 $5.314T", output: states_balance, path: data.national.give_b, quoted: 5313.76, tol: 5.0}
   - {section: 11, text: "states receiving more than they pay (count)", output: states_balance, path: data.summary.n_get_more, quoted: 28, tol: 0}
