@@ -295,6 +295,11 @@ time. Appended to, never rewritten. None of these have been acted on.
   per chart, not per data point)" and "colour never carries meaning alone — every colour-coded
   category also appears as a table column (state names/postal codes)". Found while working on #15.
   Severity: test-plan completeness, non-blocking; belongs to the PR that owns the row.
+  **Resolved 2026-08-26 by #41.** The row now names both. Live-region parity was absent from it
+  entirely and is added, with the announcement half marked NOT EXECUTED (#80) rather than folded
+  into the 2026-08-24/26 browser pass, which covered the Tab-focusable half only. Colour-never-alone
+  was already present in substance inside the greyscale note and is now stated in the project's
+  standing wording, so a reader scanning for the check finds it.
 - [2026-08-23] `@radix-ui/react-collapsible` has no remaining consumer after #15 replaced
   `TableView`'s Radix `Collapsible` with a native `<details>`/`<summary>`. Left in `package.json`
   because removing a dependency changes the lockfile, and thirteen other open PRs (#16–#28) branch
@@ -317,6 +322,16 @@ time. Appended to, never rewritten. None of these have been acted on.
   both non-blocking; the dependency removal is a good candidate for a small standalone follow-up.
   **Resolved 2026-08-26 by #40**, which is that standalone follow-up. Point (2) is closed; point (1)
   was already true when written.
+  **Correction, 2026-08-26 (#41).** Point (1) above is **false**, and so is the line endorsing it.
+  Measured against `docs/test-plan.md:45` at `7f3445c`, the `GOV-11` row named one of the two items
+  the earlier finding asked for, not both. Colour-never-alone was there in substance (the `+`/`−`
+  glyph on every tile, magnitude carried by the table, the tax-mix segments named only inside the
+  disclosure table) though not in the standing wording. **Live-region parity was absent outright**:
+  the string `live` did not occur anywhere in the row, while ECO-4, GOV-5, GOV-6, GOV-7 and HH-3
+  all name "keyboard/live-region parity" explicitly. The row named "keyboard walk across all 51
+  tiles into the sortable table (Enter/Space to sort)" — the Tab-focusable half without the
+  live-region half. #41 adds both. The original entry is left byte-for-byte as written, per this
+  file's append-only convention; this paragraph is the retraction.
 - [2026-08-24] **Backlog created, #42-#68.** Twenty-seven issues filed in one pass covering six
   areas the first build never reached: a root intro route (`/` becomes "Income & Tax"; Economy moves
   to `/economy`), a real mobile navigation with section-level position, a seven-issue prose-craft
