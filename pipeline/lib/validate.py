@@ -8,6 +8,7 @@ cannot quietly violate one.
 from __future__ import annotations
 
 import json
+from collections import Counter
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 from typing import Any
@@ -444,7 +445,8 @@ def check_bracket_history(c: Checks) -> None:
             if ladder is None:
                 continue
             los = [b["lo"] for b in ladder]
-            dupes = sorted({lo for lo in los if los.count(lo) > 1})
+            counts = Counter(los)
+            dupes = sorted(lo for lo, n in counts.items() if n > 1)
             c.ok(all(a < b for a, b in zip(los, los[1:])),
                  f"bracket_history: {y} {status} duplicate bracket floor {dupes}"
                  if dupes else
