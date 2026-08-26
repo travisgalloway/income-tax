@@ -31,6 +31,7 @@ SRC = ROOT / "src"
 GLOBAL_CSS = SRC / "styles" / "global.css"
 TOKENS_CSS = SRC / "styles" / "tokens.css"
 ACCESSIBILITY_DOC = ROOT / "docs" / "contracts" / "accessibility.md"
+BASE_LAYOUT = SRC / "layouts" / "BaseLayout.astro"
 
 VOID_ELEMENTS = {
     "area", "base", "br", "col", "embed", "hr", "img", "input",
@@ -735,6 +736,31 @@ def narrow_media_block() -> str:
     return matches[0]
 
 
+_INLINE_SCRIPT_RE = re.compile(r"<script is:inline>(.*?)</script>", re.DOTALL)
+
+
+def layout_inline_script() -> str:
+    """The body of `BaseLayout.astro`'s single `<script is:inline>` block.
+
+    Comments are kept, not stripped: the block's own prose is part of what the
+    checks below read, and #44's `aria-current='true'` comment is single-quoted
+    on purpose so the built page carries no double-quoted literal of it.
+
+    Raises rather than returning `""` if the block moves, is renamed or is
+    split in two — same contract, and same reason, as `narrow_media_block()`
+    above: a helper that finds nothing to check reads exactly like one whose
+    checks passed.
+    """
+    matches = _INLINE_SCRIPT_RE.findall(BASE_LAYOUT.read_text())
+    if len(matches) != 1:
+        raise AssertionError(
+            f"expected exactly one `<script is:inline>` block in {BASE_LAYOUT}, "
+            f"found {len(matches)} — the checks that read the layout script "
+            "have nothing to read"
+        )
+    return matches[0]
+
+
 def _hrefs(root: Node, ol_class: str, exclude: str | None = None) -> set[str]:
     out: set[str] = set()
     for ol in root.iter_descendants():
@@ -885,8 +911,6 @@ def test_the_suite_ran_against_a_real_build():
 # section 1 statically would be wrong for every reader not at the top.
 # ---------------------------------------------------------------------------
 
-BASE_LAYOUT = SRC / "layouts" / "BaseLayout.astro"
-
 
 def test_no_built_page_ships_a_section_level_aria_current(page):
     """The JS-off criterion, guarded against passing by accident.
@@ -1025,7 +1049,14 @@ def test_section_state_selector_is_scoped_and_not_bare():
             )
 
 
-_SCROLL_API_RE = re.compile(r"scrollIntoView|scrollTo\s*\(|scrollBy\s*\(|behavior\s*:")
+# `behavior\s*:` is anchored with a lookbehind so it matches the scroll
+# options bag (`behavior: 'smooth'`) and not the CSS properties
+# `overscroll-behavior` or `scroll-behavior`, which are declarations about
+# containment and about motion preference, not scripted scrolls — and which
+# would otherwise make this regex unusable over served HTML that inlines CSS.
+_SCROLL_API_RE = re.compile(
+    r"scrollIntoView|scrollTo\s*\(|scrollBy\s*\(|(?<![\w-])behavior\s*:"
+)
 
 
 def test_the_section_spy_introduces_no_scripted_scrolling():
@@ -1035,14 +1066,12 @@ def test_the_section_spy_introduces_no_scripted_scrolling():
     the spy reads scroll position and writes an attribute — it moves nothing.
     The `IntersectionObserver` assertion is what stops this passing by finding
     no script at all.
+
+    Reads `src/`; `test_no_built_page_scripts_a_scroll` (#46) makes the same
+    check over `dist/`, where an island bundled into the page would show up and
+    here it would not. The overlap is deliberate — neither is redundant.
     """
-    text = BASE_LAYOUT.read_text()
-    scripts = re.findall(r"<script is:inline>(.*?)</script>", text, re.DOTALL)
-    assert len(scripts) == 1, (
-        f"{BASE_LAYOUT}: expected exactly one `<script is:inline>` block, "
-        f"found {len(scripts)}"
-    )
-    block = scripts[0]
+    block = layout_inline_script()
     assert "IntersectionObserver" in block, (
         f"{BASE_LAYOUT}: the inline script declares no IntersectionObserver — "
         "the section spy is gone, and the checks below would pass vacuously"
@@ -1052,4 +1081,175 @@ def test_the_section_spy_introduces_no_scripted_scrolling():
         f"{BASE_LAYOUT}: the inline script calls {found} — the navigation "
         "chrome introduces no scripted scrolling at all, which is how "
         "prefers-reduced-motion is satisfied here"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Reading position across navigation (#46). Nothing here implements scroll
+# restoration, and that is the deliverable: the browser's own
+# `history.scrollRestoration = 'auto'` default already returns the reader to
+# the place they were reading on Back and Forward, and scroll anchoring already
+# absorbs both the post-hydration chart growth and the collapsed <details>
+# tables. Measured, not assumed — the numbers are in
+# `docs/contracts/accessibility.md` § Manual pass results.
+#
+# So the code change is a guard. Five one-line changes elsewhere in this repo
+# would each silently take the behaviour away with every other test still
+# green; the five checks below are what turns each of them red. Each asserts an
+# absence, so each is paired with a positive assertion that fails if the file
+# it reads is empty, moved or unreadable.
+# ---------------------------------------------------------------------------
+
+_TEXT_SUFFIXES = {".astro", ".ts", ".tsx", ".js", ".mjs", ".css", ".json", ".md"}
+
+
+def _src_text_files() -> list[Path]:
+    return sorted(
+        p for p in SRC.rglob("*") if p.is_file() and p.suffix in _TEXT_SUFFIXES
+    )
+
+
+def test_scroll_restoration_is_left_to_the_browser():
+    """`history.scrollRestoration` is never assigned, anywhere in `src/`.
+
+    Setting it to `'manual'` opts out of the browser's restore *and* of scroll
+    anchoring's correction of it, replacing a pixel-exact result with a
+    hand-rolled offset — which the `<details>` case, where the document is
+    11,689px shorter on return, would put thousands of pixels wrong. Reading it
+    is harmless, but there is no reason to and no way to tell the two apart by
+    grep, so the string is barred outright.
+
+    Over `src/` rather than `dist/`: `is:inline` scripts are not bundled and a
+    future island's code would be, so only the source covers both.
+    """
+    files = _src_text_files()
+    assert BASE_LAYOUT in files, (
+        f"{BASE_LAYOUT} was not among the {len(files)} source files scanned — "
+        "the check below would pass by reading the wrong tree"
+    )
+    offenders = [
+        str(p.relative_to(ROOT))
+        for p in files
+        if "scrollRestoration" in p.read_text(errors="replace")
+    ]
+    assert not offenders, (
+        f"{offenders} mention `history.scrollRestoration`. Scroll restoration "
+        "is the platform's here: the default is 'auto', nothing assigns it, "
+        "and no storage of our own mirrors it — see docs/contracts/"
+        "accessibility.md, 'Scroll restoration is the platform's'"
+    )
+
+
+_SCROLL_BEHAVIOR_RE = re.compile(r"(?<![\w-])scroll-behavior\s*:\s*([^;}]+)")
+
+
+def test_no_stylesheet_requests_smooth_scrolling():
+    """No rule asks for smooth scrolling, and the reduce block still says so.
+
+    `html { scroll-behavior: smooth }` would turn every history restore into a
+    visible animated scroll, and would defeat `prefers-reduced-motion` for any
+    reader whose engine resolves the cascade before the reduce block. The
+    second assertion is what stops this passing by finding no `scroll-behavior`
+    declaration at all.
+    """
+    declarations = []
+    for _selectors, body in iter_css_rules(GLOBAL_CSS.read_text()):
+        declarations.extend(m.strip() for m in _SCROLL_BEHAVIOR_RE.findall(body))
+    assert declarations, (
+        f"{GLOBAL_CSS} declares `scroll-behavior` nowhere — the "
+        "prefers-reduced-motion block's `scroll-behavior: auto !important` is "
+        "gone, and the check below has nothing to read"
+    )
+    for value in declarations:
+        assert value.split()[0] == "auto", (
+            f"{GLOBAL_CSS} declares `scroll-behavior: {value}` — only `auto` "
+            "may be declared. Smooth scrolling animates every history restore "
+            "and fights prefers-reduced-motion"
+        )
+
+
+def test_scroll_anchoring_is_not_disabled():
+    """`overflow-anchor` is declared nowhere, and that absence is load-bearing.
+
+    Scroll anchoring is the single mechanism that absorbs layout change landing
+    *after* a history restore: Government's charts grow by ~123px when
+    `useChartSize` swaps the WIDE preset for NARROW, and the document is
+    11,689px shorter on return because `<details>` `open` is not restored. Both
+    self-correct to the pixel with anchoring on (default `auto`), and neither
+    would with `overflow-anchor: none` on `html`, `body` or `main`. Nobody
+    would think to look for a declaration that is not there, so this test looks
+    for it instead.
+
+    Paired with `.navbar-panel`'s `overscroll-behavior: contain`, which is a
+    real declaration in the same file, so this cannot pass by failing to read
+    the stylesheet.
+    """
+    rules = list(iter_css_rules(GLOBAL_CSS.read_text()))
+    for selectors, body in rules:
+        assert not re.search(r"(?<![\w-])overflow-anchor\s*:", body), (
+            f"{GLOBAL_CSS} rule {selectors!r} declares `overflow-anchor`. "
+            "Scroll anchoring must stay at its `auto` default — it is what "
+            "makes the back button land on the reader's section after the "
+            "charts and the collapsed tables have changed the document height"
+        )
+    contained = [
+        body
+        for selectors, body in rules
+        if ".navbar-panel" in selectors and "overscroll-behavior" in body
+    ]
+    assert contained, (
+        f"{GLOBAL_CSS}: `.navbar-panel` no longer declares "
+        "`overscroll-behavior` — the absence check above may have read nothing"
+    )
+
+
+def test_the_layout_registers_no_bfcache_disqualifying_listener():
+    """No `unload` or `beforeunload` listener anywhere in the layout script.
+
+    Either one permanently disqualifies the page from the back/forward cache,
+    so *every* Back navigation takes the full-reload path instead of the free
+    one. The measurements behind #46 were all taken on that slow path and hold
+    there — but there is no reason to force it, and a listener added for an
+    unrelated purpose would do so invisibly.
+
+    The substring `unload` is barred outright: it catches `beforeunload`,
+    `onunload` and the bare event name in one check, and nothing else in this
+    script legitimately contains it.
+    """
+    block = layout_inline_script()
+    assert "addEventListener" in block, (
+        f"{BASE_LAYOUT}: the inline script registers no listener at all — the "
+        "check below would pass against an empty or gutted script"
+    )
+    assert "unload" not in block, (
+        f"{BASE_LAYOUT}: the inline script mentions `unload`. An `unload` or "
+        "`beforeunload` listener disqualifies the page from bfcache, making "
+        "every back navigation a full reload"
+    )
+
+
+def test_no_built_page_scripts_a_scroll(page):
+    """Nothing in the served HTML moves the viewport for the reader.
+
+    The built-output companion to
+    `test_the_section_spy_introduces_no_scripted_scrolling`, which reads
+    `src/`: this one would catch a scripted scroll arriving through an island
+    bundled into the page, which the source check cannot see. Keep both.
+
+    This is also #46's `prefers-reduced-motion` proof, and it is a vacuous one
+    on purpose — a scroll that never happens needs no `behavior: 'auto'`. A
+    scripted scroll after load would also fight the history restore, producing
+    the double-jump the issue names.
+    """
+    path, _root = page
+    html = path.read_text()
+    assert "IntersectionObserver" in html, (
+        f"{path}: the layout's inline script is not in the served page — the "
+        "check below would pass by finding no script"
+    )
+    found = _SCROLL_API_RE.findall(html)
+    assert not found, (
+        f"{path} ships {found}. Nothing here scrolls the reader: the section "
+        "spy reads position and writes an attribute, and the back button's "
+        "restore is the browser's"
     )
