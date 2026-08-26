@@ -20,7 +20,7 @@ when the code merges.
 
 | ID | Capability | UI | Data | Status | Issue | Contract |
 |----|-----------|----|------|--------|-------|----------|
-| GOV-1 | The $40 trillion — debt series, ten-year doubling, nominal / % of GDP toggle | done | done | Shipped | #1, #35 | contracts/interfaces/budget-data.md, contracts/interfaces/charts.md |
+| GOV-1 | The $40 trillion — debt series, ten-year doubling, nominal / % of GDP toggle | done | done | Shipped | #1, #35, #36 | contracts/interfaces/budget-data.md, contracts/interfaces/charts.md |
 | GOV-2 | Who holds it — public vs intragovernmental, domestic vs foreign | done | done | Shipped | #6 | contracts/interfaces/curated-snapshots.md, contracts/interfaces/charts.md |
 | GOV-3 | How old is the debt — maturity ladder against the 30-year ceiling | done | done | Shipped | #6 | contracts/interfaces/curated-snapshots.md, contracts/interfaces/charts.md |
 | GOV-4 | The whole budget — outlays stacked (mandatory net/discretionary/interest), revenue line, deficit below zero, party-control strip, unit toggle, year inspection, era bands | done | done | Shipped | #2 | contracts/interfaces/budget-data.md, contracts/interfaces/charts.md |

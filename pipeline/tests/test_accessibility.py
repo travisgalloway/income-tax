@@ -300,6 +300,130 @@ def test_every_chart_svg_states_a_finding(page):
         )
 
 
+# Figures that legitimately carry no chart. Empty today, and it stays an
+# explicit named set on purpose: a prose-only or table-only figure is exempted
+# by `id`, never by weakening the assertion below to "some figure has a chart".
+FIGURES_WITHOUT_A_CHART: set[str] = set()
+
+
+def _figure_title(fig: Node) -> str:
+    for d in fig.iter_descendants():
+        if "figure-title" in d.classes():
+            return d.text().strip()
+    return fig.get("id") or "(untitled figure)"
+
+
+def test_every_figure_server_renders_its_chart_svg(page):
+    """Existence, not conformance. Issue #36.
+
+    Every other chart test in this module iterates the SVGs it finds and
+    asserts about them, so a chart whose SVG vanished from the server render
+    — a mount switched to `client:only`, a `mounted` gate added to
+    `useChartSize` — would contribute zero assertions and leave the suite
+    green. This test is the one that goes red instead.
+    """
+    path, root = page
+    for fig in nodes_of(root, "figure"):
+        if "figure" not in fig.classes():
+            continue
+        if (fig.get("id") or "") in FIGURES_WITHOUT_A_CHART:
+            continue
+        charts = [
+            n for n in fig.iter_descendants()
+            if n.tag == "svg" and "chart" in n.classes()
+        ]
+        assert charts, (
+            f"{path}: the figure {_figure_title(fig)!r} contains no "
+            "svg.chart in the server-rendered HTML — with scripting off it "
+            "shows no chart at all. Islands must server-render their <svg>; "
+            "`client:only` and mount-gated sizing are forbidden."
+        )
+
+
+def test_government_section_1_renders_its_whole_apparatus_without_scripting(page):
+    """Issue #36's criterion 2, section 1 specifically.
+
+    The generic guard above proves the `<svg>` exists. Section 1's contract
+    enumerates more than that: prose, axis labels, tick text, the figcaption
+    apparatus and the table caption all have to survive with scripting off.
+    Kept literal and §1-shaped — a generic "every chart has axis labels" test
+    would false-fail on the axis-free islands (`DebtHolders`, the
+    `StateGiveGet` cartogram).
+    """
+    path, root = page
+    if path.parent.name != "government":
+        pytest.skip("section 1 lives on /government/")
+
+    figs = [
+        f for f in nodes_of(root, "figure")
+        if "figure" in f.classes()
+        and "Total public debt outstanding" in _figure_title(f)
+    ]
+    assert len(figs) == 1, (
+        f"{path}: expected exactly one 'Total public debt outstanding' "
+        f"figure, found {len(figs)}"
+    )
+    fig = figs[0]
+
+    charts = [
+        n for n in fig.iter_descendants()
+        if n.tag == "svg" and "chart" in n.classes()
+    ]
+    assert charts, f"{path}: section 1's figure server-renders no svg.chart"
+    svg = charts[0]
+
+    texts = [
+        d.text().strip() for d in svg.iter_descendants() if d.tag == "text"
+    ]
+    for label in ("Fiscal year", "$ trillions"):
+        assert label in texts, (
+            f"{path}: section 1's SSR svg has no {label!r} axis label — "
+            f"its <text> nodes are {texts!r}"
+        )
+
+    y_ticks = [t for t in texts if re.fullmatch(r"\$\d+T?", t)]
+    x_ticks = [t for t in texts if re.fullmatch(r"(19|20)\d{2}", t)]
+    assert len(y_ticks) >= 4, (
+        f"{path}: section 1's SSR svg carries {len(y_ticks)} dollar tick "
+        f"labels, expected at least 4: {texts!r}"
+    )
+    assert len(x_ticks) >= 4, (
+        f"{path}: section 1's SSR svg carries {len(x_ticks)} year tick "
+        f"labels, expected at least 4: {texts!r}"
+    )
+
+    captions = [d for d in fig.iter_descendants() if d.tag == "figcaption"]
+    assert captions, f"{path}: section 1's figure has no <figcaption>"
+    leads = [
+        d.text().strip() for d in captions[0].iter_descendants()
+        if "lead" in d.classes()
+    ]
+    for lead in ("Units.", "Note.", "Source."):
+        assert lead in leads, (
+            f"{path}: section 1's figcaption is missing its {lead!r} line "
+            f"with scripting off — it carries {leads!r}"
+        )
+
+    section = next(
+        (a for a in fig.ancestors() if a.tag == "section"), None
+    )
+    assert section is not None, f"{path}: section 1's figure has no <section>"
+    paragraphs = [
+        p for p in section.iter_descendants()
+        if p.tag == "p" and len(p.text().strip()) > 80
+    ]
+    assert paragraphs, (
+        f"{path}: section 1 renders no prose paragraph with scripting off"
+    )
+    table_captions = [
+        d.text().strip() for d in section.iter_descendants() if d.tag == "caption"
+    ]
+    assert any(table_captions), (
+        f"{path}: section 1's TableView renders no <caption> with scripting "
+        "off — the chart's data has no non-visual equivalent"
+    )
+
+
 def test_focusable_data_points_are_labelled_and_grouped(page):
     path, root = page
     for svg in nodes_of(root, "svg"):
