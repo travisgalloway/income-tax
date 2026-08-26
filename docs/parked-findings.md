@@ -348,3 +348,35 @@ time. Appended to, never rewritten. None of these have been acted on.
   (~72 characters at desktop, ~48 at mobile) and the type scale is a deliberate system in
   `src/styles/tokens.css`, so this is a design opinion rather than a defect and filing it as a bug
   would misrepresent it. Recorded here for whoever revisits the type scale. Severity: none, observation.
+- [2026-08-26] **Four greyscale observations from #30's pass, none of them a defect under this
+  repo's contract.** Each is a chart whose category colours separate by less than 3:1 once
+  desaturated but whose category is carried by something other than colour, so
+  `test_no_island_encodes_a_category_only_in_colour` is satisfied and the results table marks them
+  PASS with a note. Recorded here because "satisfies the rule" and "reads well in greyscale" are not
+  the same thing, and a future colour-system pass should start from this list.
+  **(1)** `src/components/islands/RevenueChart.tsx` — `--rev-pr` (`#C77D28`) and `--rev-eg`
+  (`#A8895A`) have **identical** WCAG relative luminance, 1.00:1. They co-occur in GOV-10's
+  seven-source stack. The two bands are not adjacent, every boundary is drawn, and the tightest
+  adjacent pair is 1.44:1, so the stack still reads — but two of its seven sources are the same grey.
+  **(2)** `src/components/islands/StateGiveGet.tsx` — the cartogram's sequential scale collapses in
+  greyscale: adjacent tile steps separate by 1.00:1 and the legend's "Gives more" and "Gets more"
+  swatches become the same grey. Direction survives only because every tile carries a `+`/`−` glyph;
+  magnitude survives only in the table below.
+  **(3)** `src/components/islands/StateTaxMix.tsx` — the figure renders **no legend and no in-plot
+  label at either viewport**, and its segments carry neither a `class` nor an `aria-label`. Its
+  three categories (1.44:1 apart in greyscale) are named nowhere inside the figure; only the
+  disclosure table names them. Every other chart on the site labels its series in-plot.
+  **(4)** `src/components/islands/PricesAndRates.tsx` — the rates panel puts `--ink-soft`
+  (`#5A6268`) and `--rev-ci` (`#55606B`) in the same plot at **1.03:1**, the tightest pair on the
+  Economy route. Three of the five lines cross repeatedly; only the end-of-line labels tell them
+  apart. `src/components/islands/HouseholdSpread.tsx`'s neighbour `StatutoryVsEffective.tsx` shows
+  what the fix looks like — marker shape rather than hue.
+  Severity: design observation, non-blocking. Found while working on #30, whose scope is the audit
+  and explicitly not the remediation.
+- [2026-08-26] **`--dem` and `--gop` separate by only 1.26:1 in greyscale.** `#1D4E89` and `#A8322D`
+  both land mid-tone. GOV-4's party-control strip is the only place they co-occur, and it prints "D"
+  and "R" as text on every tile, so nothing is lost today. Recorded because the pair is the obvious
+  candidate for a future chart that does *not* carry the letters, and because the token-contrast
+  table above measures each token against the ground rather than against its co-occurring sibling —
+  a good ratio against `--panel` says nothing about the ratio against the other party. Severity:
+  none, observation. Found while working on #30.
