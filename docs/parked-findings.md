@@ -408,3 +408,22 @@ time. Appended to, never rewritten. None of these have been acted on.
   against the per-law `score_t` sums (exact decimal, rounded once half-up), so the class of drift
   cannot recur silently. Recorded here rather than by editing those entries: this file is appended
   to, never rewritten.
+- [2026-08-26] **Closed by #33:** the 2026-08-23 entry above ("`aggregate.ts` and `derive.ts` both
+  independently join `laws` to `splitByLaw`/`party_splits.json`") is resolved. The join now has one
+  implementation, `src/components/laws/join.ts`; `splitByLaw` is deleted from `src/data/index.ts`
+  and both §8 and §9 call `joinLawsToSplits`, which throws on an unmatched law rather than the
+  previous split behaviour (§9 threw, §8 dropped silently). The coalition derivation named in that
+  entry turned out **not** to be duplicated — `coalitionKey`/`countedYeas` exist only in
+  `aggregate.ts`; `derive.ts` reads `split.character` verbatim as a filter predicate — so nothing
+  was moved for it. Recorded here rather than by editing that entry: this file is appended to,
+  never rewritten.
+- [2026-08-26] **Three unrelated private `interface Row` declarations shadow the name the laws join
+  now owns.** `src/components/islands/BudgetChart.tsx:25` and
+  `src/components/islands/GrowthAndShadow.tsx:19` each declare a module-private `interface Row` for
+  their own chart data, unrelated to `src/components/laws/join.ts:28`'s exported `Row`
+  (`{ law, split }`). Nothing is broken — they are local and never exported — but the collision
+  makes a repo-wide `grep "interface Row" src/` (the shape #33's DoD reaches for) return two false
+  positives, and a reader grepping for the join's `Row` lands on a chart. One-line fix each: rename
+  to `ChartRow` / `YearRow`. Severity: low, naming only. Found while working on #33 (proving
+  criterion 4, "no unreferenced export left behind"); outside its criteria, which name only
+  `splitByLaw` and the laws `Row`.

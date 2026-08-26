@@ -1,7 +1,8 @@
 # Interface: `src/components/attribution/aggregate.ts`
 
-The consumer contract for §9's derivation — joining `laws` to `splitByLaw`
-(`src/data/index.ts`) and bucketing the result two ways. Read this before touching
+The consumer contract for §9's derivation — joining `laws` to `partySplits.data`
+(`src/data/index.ts`) via `joinLawsToSplits` (`src/components/laws/join.ts`) and
+bucketing the result two ways. Read this before touching
 `AttributionSplit.tsx` or adding a third breakdown: the join key, the exclusion
 rule and the rounding rule are each a single place, and moving them anywhere
 else reopens the reconciliation bug this module exists to prevent.
@@ -10,8 +11,17 @@ else reopens the reconciliation bug this module exists to prevent.
 
 `law.public_law` against `PartySplit.public_law` (`src/data/party_splits.json`).
 All 23 laws in `laws` resolve, including the composite key `"111-148 / 111-152"`,
-which matches on both sides as one exact string. A law with no match throws at
-import time rather than being silently dropped.
+which matches on both sides as one exact string — never split, never normalised.
+
+**The join itself is not implemented here.** Since #33 it lives in
+`src/components/laws/join.ts` and is **shared with §8's `LawExplorer`** — that
+module is the only place in `src/` that joins the two datasets, and this one
+calls `joinLawsToSplits(laws, partySplits.data)` at module top level. The
+unmatched rule is therefore shared, not local: a law with no matching split, or
+with no `public_law` at all, **throws** with the law named, at prerender (this
+module is evaluated during `astro build`), rather than being silently dropped —
+a dropped law would shrink a published total with no signal. `coalitionKey` and
+`countedYeas` below stay here; they are §9's alone and are not duplicated in §8.
 
 ## Exclusion rule
 

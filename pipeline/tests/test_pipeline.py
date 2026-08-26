@@ -8,6 +8,7 @@ site will actually ship, not what a builder would produce in isolation.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -820,6 +821,57 @@ def test_every_law_joins_to_a_counted_split(splits):
     assert len(splits) == 23
     for l in laws:
         assert l["public_law"] in splits, f"{l['public_law']} has no counted split"
+
+
+def test_the_laws_to_splits_join_has_exactly_one_implementation():
+    """#33: the laws-to-party_splits join lived in two places (aggregate.ts
+    threw on an unmatched law, LawExplorer.tsx silently dropped it). It is now
+    src/components/laws/join.ts alone. A source-level guard, the same shape as
+    test_no_document_still_calls_vote_composition_classified: no JS test runner
+    exists in this repo, so this is the only automated way to hold the rule."""
+    owner = LEGACY / "src/components/laws/join.ts"
+    assert owner.exists(), "the shared join module is missing"
+    assert "joinLawsToSplits" in owner.read_text()
+
+    ts_files = sorted(
+        p
+        for p in (LEGACY / "src").rglob("*")
+        if p.suffix in (".ts", ".tsx") and p.is_file()
+    )
+    assert len(ts_files) > 10, "the src/ sweep found suspiciously few files"
+
+    # The retired export. Any reappearance means a second map is back.
+    for p in ts_files:
+        assert "splitByLaw" not in p.read_text(), f"{p.relative_to(LEGACY)} still uses splitByLaw"
+
+    # Only join.ts may build a lookup keyed on public_law. Matches the two
+    # shapes a join takes here: `new Map(... public_law ...)` on one line, and
+    # `.set(<something>.public_law, ...)`.
+    builders = []
+    for p in ts_files:
+        for line in p.read_text().splitlines():
+            if ("new Map" in line and "public_law" in line) or re.search(
+                r"\.set\(\s*\w+\.public_law", line
+            ):
+                builders.append(p.relative_to(LEGACY).as_posix())
+                break
+    assert builders == ["src/components/laws/join.ts"], builders
+
+    # Both consumers go through it and construct nothing of their own.
+    for rel in (
+        "src/components/attribution/aggregate.ts",
+        "src/components/islands/LawExplorer.tsx",
+    ):
+        text = (LEGACY / rel).read_text()
+        assert "joinLawsToSplits" in text, f"{rel} does not call the shared join"
+
+    # And the Row type has exactly one definition across the laws modules.
+    defs = [
+        p.relative_to(LEGACY).as_posix()
+        for p in ts_files
+        if re.search(r"^export (interface|type) Row\b", p.read_text(), re.M)
+    ]
+    assert defs == ["src/components/laws/join.ts"], defs
 
 
 def test_filter_totals_render_to_the_published_two_places(splits):
