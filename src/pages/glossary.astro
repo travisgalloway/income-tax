@@ -115,7 +115,7 @@ const sections = groups.map((g) => ({ id: g.id, label: g.letter }))
               <p class="glossary-short">{entry.data.short}</p>
               <p class="glossary-long">{entry.data.long}</p>
               <p class="glossary-meta">
-                <span><span class="lead">Source.</span> {entry.data.source}</span>
+                <span class="term-source"><span class="lead">Source.</span> {entry.data.source.text}</span>
                 {entry.data.see_also.length > 0 && (
                   <span class="glossary-see-also">
                     <span class="lead">See also.</span>{' '}

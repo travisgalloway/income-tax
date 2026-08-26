@@ -1,5 +1,6 @@
 import { defineCollection, z } from 'astro:content'
 import { glob } from 'astro/loaders'
+import { REGISTER_KEYS, sourceLine } from './data/source-register'
 
 /** SOURCES.md is the repository's reference document and lives at the root, where the pipeline
  *  and the brief both point at it. A glob loader renders it in place rather than copying it into
@@ -26,9 +27,33 @@ export const collections = {
       short: z.string().min(20).max(180),
       /** The full entry, plain text. */
       long: z.string().min(80),
-      /** A plain-text citation, printed verbatim — not a URL, and not validated as one.
-       *  Deliberately `z.string()` so source discipline can widen it additively. */
-      source: z.string().min(1),
+      /** A reference into `pipeline/curated/sources.yaml`'s `registry:`, never prose (#50).
+       *  `z.enum` over the register's keys is what makes an unresolvable key a schema failure
+       *  naming the term, the key and the valid set — so the raw key has no code path to the
+       *  page. `.min(1)` covers an empty list; a missing `source` is Zod's own required-field
+       *  failure. The `.transform` keeps this the ONLY module that touches the register, so
+       *  `glossary.astro` stays register-unaware and no island can pull `node:fs` into a
+       *  bundle. `text` is the register's `registered_as` verbatim, joined by "; " — the one
+       *  prose copy of a source stays in `SOURCES.md`. */
+      source: z
+        .array(
+          z.enum(REGISTER_KEYS as [string, ...string[]], {
+            // Zod's own wording lists the valid set but not the value it rejected, and the
+            // rejected value is the whole diagnosis. Name it, name the rule, refuse.
+            error: (issue) =>
+              `source key ${JSON.stringify(issue.input)} is in no ` +
+              `pipeline/curated/sources.yaml registry entry. A definition is a claim; refusing ` +
+              `to ship a term whose citation the reader cannot trace to /sources (#50). ` +
+              `Valid keys: ${REGISTER_KEYS.join(', ')}`,
+          }),
+        )
+        .min(1, {
+          error:
+            'source is missing or empty. A definition is a claim; refusing to ship a term ' +
+            'whose citation the reader cannot trace to /sources (#50). source is a list of ' +
+            'pipeline/curated/sources.yaml registry keys.',
+        })
+        .transform((keys) => ({ keys, text: sourceLine(keys) })),
       /** Sibling term ids. Zod cannot see sibling entries, so a dangling value is caught by a
        *  build-time throw on the page, not here. */
       see_also: z.array(z.string()).default([]),

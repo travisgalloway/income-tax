@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import jsonschema
+import yaml
 
 from . import curated
 from .errors import ValidationFailed
@@ -22,6 +23,7 @@ from .errors import ValidationFailed
 DATA_DIR = Path(__file__).resolve().parent.parent.parent / "src" / "data"
 SCHEMA_DIR = Path(__file__).resolve().parent.parent / "schemas"
 SOURCES_DOC = Path(__file__).resolve().parent.parent.parent / "SOURCES.md"
+GLOSSARY_DIR = Path(__file__).resolve().parent.parent.parent / "src" / "content" / "glossary"
 
 
 class Checks:
@@ -284,6 +286,93 @@ def _shape(source: str, keys: list[str], registry: dict[str, Any]) -> str:
     return out
 
 
+_FRONTMATTER_RE = re.compile(r"\A---\r?\n(.*?\r?\n)---\r?\n?", re.DOTALL)
+
+
+def _glossary_frontmatter() -> list[tuple[str, dict[str, Any]]]:
+    """(term id, parsed frontmatter) for every src/content/glossary/*.md, sorted.
+
+    The term id is the filename stem, which is what Astro's glob loader derives the
+    entry id from -- see docs/contracts/interfaces/glossary.md. Frontmatter is the text
+    between the opening `---` fence and the next line that is exactly `---`; nothing
+    calls render() on these entries, so the body is empty by contract and is not read
+    here. Matching fences by line position (not `str.split("---")`) means a `---` inside
+    a YAML string -- e.g. a source title containing an em dash written as `---` -- can't
+    be mistaken for a fence.
+
+    Returns [] for an absent or empty directory. That is NOT treated as clean: the
+    caller turns it into a named failure, the #37 rule.
+    """
+    if not GLOSSARY_DIR.is_dir():
+        return []
+    out: list[tuple[str, dict[str, Any]]] = []
+    for path in sorted(GLOSSARY_DIR.glob("*.md")):
+        match = _FRONTMATTER_RE.match(path.read_text())
+        data = yaml.safe_load(match.group(1)) if match else None
+        out.append((path.stem, data if isinstance(data, dict) else {}))
+    return out
+
+
+def _glossary_entries() -> list[tuple[str, list[str]]]:
+    """(term id, the register keys its `source` cites). A missing, empty or malformed
+    `source` yields an empty list; check_glossary_sources is what names that as a
+    failure."""
+    entries = []
+    for term, data in _glossary_frontmatter():
+        raw = data.get("source")
+        keys = [k for k in raw if isinstance(k, str)] if isinstance(raw, list) else []
+        entries.append((term, keys))
+    return entries
+
+
+def check_glossary_sources(c: Checks) -> None:
+    """Every glossary term's `source` must resolve to an entry in the register (#50).
+
+    The site's figures have carried this discipline since #39; a definition had none.
+    Each of the 23 terms carried a hand-typed citation restating a line already in
+    SOURCES.md, with nothing relating either copy to the other -- so a vintage bump in
+    SOURCES.md left 23 stale citations with every check green.
+
+    Layer 1 is the Zod schema in src/content.config.ts, which fails `astro check` and
+    `npm run build`. This is layer 2, and it exists because that lane is blind to the
+    workflow that runs unattended: refresh-data.yml runs the pipeline and pytest, never
+    a site build. A source discipline enforced only where a human is watching is the
+    "check that is not looking" shape of #36, #37 and #38.
+
+    The glossary is NOT a pipeline output -- nothing emits it and there is no
+    src/data/glossary.json -- so it gets no schema file and no sources.yaml `outputs:`
+    entry, either of which would be an orphan. This check reads the term files directly
+    instead, as a second population beside src/data/*.json.
+    """
+    registry: dict[str, Any] = curated.source_register()["registry"]
+    entries = _glossary_entries()
+
+    # An empty or unreadable glossary is UNKNOWN, never clean -- the #37 rule, in the
+    # same register as check_sources' own "an unreadable register is unknown".
+    c.ok(
+        bool(entries),
+        f"no glossary terms found at {GLOSSARY_DIR}; every term's citation is therefore "
+        f"unchecked, and an unreadable glossary is unknown, never clean (#50).",
+    )
+
+    for term, keys in entries:
+        if not keys:
+            c.ok(
+                False,
+                f"{term}: source is missing or empty. A definition is a claim; refusing "
+                f"to ship a term whose citation the reader cannot trace to /sources "
+                f"(#50). source is a list of pipeline/curated/sources.yaml registry keys.",
+            )
+            continue
+        for key in keys:
+            c.ok(
+                key in registry,
+                f"{term}: source key {key!r} is in no pipeline/curated/sources.yaml "
+                f"registry entry. A definition is a claim; refusing to ship a term whose "
+                f"citation the reader cannot trace to /sources (#50).",
+            )
+
+
 def check_sources(c: Checks, names: list[str]) -> None:
     """Every source a published output CITES must be REGISTERED in SOURCES.md,
     the document /sources renders in full (#39).
@@ -322,13 +411,18 @@ def check_sources(c: Checks, names: list[str]) -> None:
             f"unregistered source is one the reader cannot trace (#39).",
         )
 
-    # C -- no orphan entries left behind by a rename.
+    # C -- no orphan entries left behind by a rename. Spans outputs AND glossary terms
+    # since #50: a term's `source` is a list of register keys, so a definitional-only
+    # source is legitimately cited by no output, and deleting the sole term that cites a
+    # key orphans it here rather than passing unnoticed.
     cited_anywhere = {k for o in outputs.values() for k in o["cites"]}
+    cited_anywhere |= {k for _, keys in _glossary_entries() for k in keys}
     for key, entry in sorted(registry.items()):
         c.ok(
             key in cited_anywhere or bool(entry.get("cited_in_prose_only")),
-            f"{key}: in the register but cited by no published output. Add it to an "
-            f"output's cites, or mark it cited_in_prose_only: true with a reason.",
+            f"{key}: in the register but cited by no published output and by no glossary "
+            f"term. Add it to an output's cites or to a term's source, or mark it "
+            f"cited_in_prose_only: true with a reason.",
         )
 
     for n in names:
@@ -887,6 +981,7 @@ def run(outputs: list[str]) -> Checks:
     # `if "x" in outputs:` gate: a check skipped because its output was not in
     # the tier reads exactly like a check that passed (#37).
     check_sources(c, outputs)
+    check_glossary_sources(c)
     if "budget" in outputs:
         check_budget(c)
         check_laws(c)

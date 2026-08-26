@@ -2,7 +2,7 @@
 
 The site's vocabulary, as data. Read this before touching `src/content/glossary/`,
 `src/content.config.ts`'s `glossary` entry, `src/pages/glossary.astro` or `src/data/sections.ts` —
-four downstream issues attach to the shapes recorded here, and changing one of them silently
+the downstream issues attach to the shapes recorded here, and changing one of them silently
 forces those issues to be replanned.
 
 Its sibling is `content-sources.md`, which covers the other content collection (`reference` →
@@ -22,7 +22,8 @@ glossary: defineCollection({
     term:       z.string().min(1),
     short:      z.string().min(20).max(180),
     long:       z.string().min(80),
-    source:     z.string().min(1),
+    source:     z.array(z.enum(REGISTER_KEYS)).min(1)
+                  .transform((keys) => ({ keys, text: sourceLine(keys) })),
     see_also:   z.array(z.string()).default([]),
     first_used: z.object({
       route:  z.enum(['/economy', '/households', '/government']),
@@ -37,7 +38,7 @@ glossary: defineCollection({
 | `term` | Display text. Recasing or rewording it must never move an anchor — see the slug rule below. |
 | `short` | One sentence. Floored at 20 characters so a stub is a build failure, **capped at 180 so it fits an in-prose popover**. The cap is the schema's job: a definition that will not fit in place is caught now, not discovered later by #47. |
 | `long` | The full entry, plain text. |
-| `source` | A plain-text citation, printed verbatim. **Not** a URL and not validated as one; a `source` containing a URL is still printed as text, which is how "zero external hyperlinks" stays true. |
+| `source` | A **non-empty YAML block sequence of `pipeline/curated/sources.yaml` `registry:` keys**, never prose (#50). The rendered line is each key's `registered_as`, verbatim, joined by `"; "`, produced at build time by `src/data/source-register.ts` and never stored under `src/`. `z.enum` over the register's keys makes an unresolvable key a schema failure, so the raw key has no code path to the page; `.min(1)` covers an empty list and a missing `source` is Zod's own required-field failure. The rendered text is never a URL, which is how "zero external hyperlinks" stays true. |
 | `see_also` | Sibling term **ids** (filename slugs), not display text. Optional, defaults to `[]`. |
 | `first_used` | Where a reader first meets the term. The route enum is the three routes that carry a contents list; the anchor is checked against `routeSections` at build time. |
 
@@ -49,6 +50,13 @@ glossary: defineCollection({
 `test_source_register_covers_every_published_output`, whose populations are `src/data/*.json`. The
 Zod schema above is what makes a missing or malformed field a build failure, enforced by
 `npx astro check` and `npm run build`.
+
+That stays true after #50. `check_glossary_sources` in `pipeline/lib/validate.py` reads
+`src/content/glossary/*.md` **directly**, as a second population beside `src/data/*.json`; it does
+not make the glossary an output and adds no `outputs:` entry, so neither orphan test above changes.
+`src/data/index.ts`'s `assertDataset` is likewise not a third layer here — it guards
+`src/data/*.json` and the glossary is not one. Two layers, and §"Where the gate lives" in
+`content-sources.md` says why they are enough.
 
 ## The filename is the slug, and that is the durability guarantee
 
@@ -217,9 +225,10 @@ route's prose does not name the term:
 The right fix for the first four is a prose edit that names the term, which is a content change and
 not #47's scope. Until then the reader reaches them through `/glossary` and the nav.
 
-## What the four downstream issues attach to
+## What the downstream issues attach to
 
-Recorded so none of them needs this design reopened.
+Recorded so none of them needs this design reopened. #50 is shipped and is recorded here as the
+design it landed as; #47, #49 and #59 are still open.
 
 **#47 — terms explain themselves in place, on hover and on focus.** Attaches to the `short` field
 (already capped at 180, so #47 inherits a fit guarantee rather than discovering a misfit), the
@@ -235,14 +244,17 @@ wraps words and rewords no sentence — #45 makes no prose edits at all.
 `id` prop for figures. `routeSections` is precisely the map #49 would otherwise have had to build
 by parsing three `.astro` frontmatters.
 
-**#50 — glossary definitions carry the same source discipline as figures.** Attaches to the
-`source` field, already required and non-empty, and already carrying a real citation traceable to
-`SOURCES.md` in all 23 files — so #50 is a check to write, not 23 files to backfill. Two shape
-decisions here mean it needs **no migration**: `source` is `z.string()` and may be widened
-additively (to a union, or with sibling `source_key` / `retrieved` fields), and nothing in
-`glossary.astro` reads it as anything but text to print. **The gate itself is #50's scope and is
-deliberately absent here**: nothing relates a `source` value to `SOURCES.md` the way `check_sources`
-does for `_meta.source`.
+**#50 — glossary definitions carry the same source discipline as figures. Shipped.** `source` is a
+list of `pipeline/curated/sources.yaml` `registry:` keys, resolved to the register's `registered_as`
+at build time by `src/data/source-register.ts` and printed verbatim. The migration was form, not
+substance: all 23 terms already cited a source that resolved to an existing register entry, so free
+text became a key and no `SOURCES.md` entry was added. The gate is two layers — Zod here
+(`astro check` + `npm run build`) and `check_glossary_sources` in `pipeline/lib/validate.py`
+(`build.py --dry-run` + `pytest`) — and `check_sources` rule C now spans outputs **and** glossary
+terms, so a key cited only by a term is not an orphan and deleting that term's file is a build
+failure. `content-sources.md` §"A glossary term's `source` is a reference into the register" carries
+the full statement, including the qualifiers six terms lost and why keeping them would have been the
+second copy through a side door.
 
 **#59 — every technical term is defined the first time a reader meets it.** Attaches to
 `first_used` and the term list. `getCollection('glossary')` plus `first_used.{route,anchor}` is the
