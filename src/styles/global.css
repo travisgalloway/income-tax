@@ -283,9 +283,12 @@ section[id]:first-of-type { border-top: 0; padding-top: 1.5rem; }
   .navbar-toc li:has(a[aria-current='true']) .n { color: var(--ink); }
 
   /* The bar is fixed, so an anchor landing at scroll offset 0 would sit under
-   * it. `#main` needs this too: the skip link targets it. */
+   * it. `#main` needs this too: the skip link targets it. And `/glossary`'s
+   * anchors are its `<dt>` elements, not its sections — a link straight to
+   * `#net-interest` would otherwise land the term under the bar. */
   section[id] { scroll-margin-top: calc(var(--navbar-h) + 0.75rem); }
   #main { scroll-margin-top: calc(var(--navbar-h) + 0.75rem); }
+  .glossary dt[id] { scroll-margin-top: calc(var(--navbar-h) + 0.75rem); }
 }
 
 /* ---- Figure apparatus ---------------------------------------------------
@@ -973,6 +976,40 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 .limits > li > h3 + .prose { display: inline; text-indent: 0; }
 .reference-doc { max-width: var(--measure-wide); }
 .reference-doc table { border-collapse: collapse; font-variant-numeric: var(--num-table); }
+
+/* ---- Glossary -----------------------------------------------------------
+ * A definition list, set the way a reference work sets one: the term in the
+ * margin of the eye rather than the page, the entry indented under it, and the
+ * source line carrying the same small-caps `.lead` the figure apparatus uses,
+ * so a citation reads the same wherever it appears.
+ */
+
+.glossary { margin: 0; }
+.glossary dt {
+  font-weight: 600;
+  font-size: 1.0625rem;
+  margin: 1.5rem 0 0.35rem;
+  padding-top: 0.85rem;
+  border-top: var(--rule-hair) solid var(--rule);
+}
+.glossary dt:first-of-type { margin-top: 0.6rem; }
+.glossary dd { margin: 0 0 0.2rem; max-width: var(--measure); }
+/* The one-sentence definition is the thing a reader came for, so it is set at
+   reading size and the full entry sits beneath it, quieter. */
+.glossary-short { margin: 0 0 0.55em; }
+.glossary-long { margin: 0 0 0.6em; color: var(--ink); }
+.glossary-meta {
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+  display: grid;
+  gap: 0.22rem;
+  margin: 0;
+}
+.glossary-meta .lead {
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.07em;
+  color: var(--ink);
+}
 
 /* ---- Households route: brushable year range and multi-panel figures -----
  * The shared timeline (`YearRange.tsx`) and the sub-heads/empty-state used by

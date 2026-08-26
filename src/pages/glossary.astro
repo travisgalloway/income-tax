@@ -1,0 +1,128 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import { getCollection } from 'astro:content'
+import { routeSections } from '../data/sections'
+
+/* Static Astro, no island, no `client:` directive: nothing on this page needs hydration, so
+ * #36's server-render rule is satisfied vacuously and greppably. */
+
+const entries = await getCollection('glossary')
+
+/* Four build-time throws, in the spirit of `src/pages/sources.astro`'s: a silently empty or
+ * silently broken page is indistinguishable from a working one at a glance, so each failure gets
+ * its own named message rather than a fallback render. */
+if (entries.length === 0) {
+  throw new Error(
+    'The glossary collection loaded no entries. /glossary defines the site\'s vocabulary; refusing to build a heading over nothing.'
+  )
+}
+
+const ids = new Set(entries.map((e) => e.id))
+
+/* Ids the layout and this page's own section headings already own. `test_no_page_repeats_an_id`
+ * is the net; a named throw here is the better error. */
+const RESERVED = new Set(['main', 'toc-heading', 'navbar-toc-heading', 'navbar-panel', 'navbar-disclosure'])
+
+for (const entry of entries) {
+  if (entry.body?.trim()) {
+    throw new Error(
+      `Glossary term "${entry.id}" has a Markdown body. Nothing renders it — the full entry is the \`long\` frontmatter field. Move the prose there.`
+    )
+  }
+  if (RESERVED.has(entry.id) || /^terms-.$/.test(entry.id)) {
+    throw new Error(
+      `Glossary term "${entry.id}" collides with an id this page or the layout already owns. Rename the file.`
+    )
+  }
+  for (const target of entry.data.see_also) {
+    if (!ids.has(target)) {
+      throw new Error(
+        `Glossary term "${entry.id}" lists see_also "${target}", which is not a term. Every see_also value must be another term's filename slug.`
+      )
+    }
+  }
+  const { route, anchor } = entry.data.first_used
+  if (!routeSections[route].some((s) => s.id === anchor)) {
+    throw new Error(
+      `Glossary term "${entry.id}" declares first_used ${route}#${anchor}, and ${route} has no section with that id. Fix the anchor, or the section was renamed — see src/data/sections.ts.`
+    )
+  }
+}
+
+/* Locale-independent by construction: a normalised ASCII key compared with `<`/`>`, never the
+ * locale-sensitive string comparator, whose result depends on the ICU locale the build machine
+ * happens to carry and can therefore differ between a developer's machine and CI. The name of
+ * that comparator is deliberately not written here: the criterion that proves this greps the
+ * file for it, and a mention would read as a use. */
+const sortKey = (term: string) =>
+  term
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '')
+
+const sorted = entries
+  .map((e) => ({ entry: e, key: sortKey(e.data.term) }))
+  .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : a.entry.id < b.entry.id ? -1 : 1))
+
+/* A letter group is the key's first character; anything non-alphabetic groups under `#`, so a
+ * future term starting with a digit or a symbol cannot silently vanish from the page. */
+const groups: { letter: string; id: string; terms: typeof sorted }[] = []
+for (const item of sorted) {
+  const first = item.key.charAt(0)
+  const letter = first >= 'a' && first <= 'z' ? first.toUpperCase() : '#'
+  const last = groups[groups.length - 1]
+  if (last && last.letter === letter) last.terms.push(item)
+  else groups.push({ letter, id: `terms-${letter.toLowerCase()}`, terms: [item] })
+}
+
+/* One contents entry per letter actually present, in the order the sections render — so the
+ * `sections` prop names real `<section id>` elements in document order, which is what
+ * `test_every_contents_anchor_is_addressable_by_the_spy` asserts. */
+const sections = groups.map((g) => ({ id: g.id, label: g.letter }))
+---
+
+<BaseLayout
+  title="Glossary | US federal finance"
+  description="Every technical term this site uses, defined once, at a durable anchor."
+  sections={sections}
+>
+  <p class="kicker">Reference</p>
+  <h1>Glossary</h1>
+  <p class="standfirst">
+    The vocabulary the three routes lean on, defined here so a term you do not know is a
+    look-up rather than a reason to leave. Each entry sits at its own anchor.
+  </p>
+  {groups.map((group) => (
+    <section id={group.id}>
+      <h2>{group.letter}</h2>
+      <dl class="glossary">
+        {group.terms.map(({ entry }) => (
+          <>
+            <dt id={entry.id}>{entry.data.term}</dt>
+            <dd>
+              <p class="glossary-short">{entry.data.short}</p>
+              <p class="glossary-long">{entry.data.long}</p>
+              <p class="glossary-meta">
+                <span><span class="lead">Source.</span> {entry.data.source}</span>
+                {entry.data.see_also.length > 0 && (
+                  <span class="glossary-see-also">
+                    <span class="lead">See also.</span>{' '}
+                    {entry.data.see_also.map((target, i) => (
+                      <>
+                        {i > 0 && ', '}
+                        <a href={`#${target}`}>
+                          {entries.find((e) => e.id === target)!.data.term}
+                        </a>
+                      </>
+                    ))}
+                  </span>
+                )}
+              </p>
+            </dd>
+          </>
+        ))}
+      </dl>
+    </section>
+  ))}
+</BaseLayout>
