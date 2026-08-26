@@ -41,11 +41,17 @@ export function extent(values: (number | null | undefined)[]): [number, number] 
 
 /** Extent padded outward, and anchored at zero when the data does not cross it. */
 export function niceExtent(values: (number | null | undefined)[], pad = 0.08): [number, number] {
+  const ok = values.filter((v): v is number => v != null && Number.isFinite(v))
   let [lo, hi] = extent(values)
   const span = hi - lo
   lo -= span * pad
   hi += span * pad
-  if (lo > 0) lo = 0
+  // A series that never goes below zero gets a floor of exactly 0, whether the pad
+  // left the low end above zero or pushed it below it (#34). The sign test reads the
+  // raw values, not extent()'s output: extent() widens a degenerate range by ±1, so a
+  // single datum at 0.5 would otherwise look signed. `lo > 0` is the original guard,
+  // kept so the no-observation fallback extent is untouched.
+  if ((ok.length > 0 && ok.every((v) => v >= 0)) || lo > 0) lo = 0
   if (hi < 0) hi = 0
   return [lo, hi]
 }

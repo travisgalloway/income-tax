@@ -218,13 +218,15 @@ increasing (CPI-U fell in FY1955 and FY2009 even though the CPI-U index itself n
 whose domain admits negative values draws `<ZeroLine frame={fr} y={yScale(0)} />` so a value below
 zero is legible by position, not only by colour or by reading the axis tick labels.
 
-`niceExtent` pads a value range outward by a fixed fraction of its span and only re-anchors the
-padded low end to `0` if that padded value is still positive — it does not pull a padded-negative
-low end back to zero. This is invisible when a series' minimum is not close to zero relative to its
-span (`WhoWorks`'s unemployment/noncyclical panel, for example), but it produces a small negative
-low end for a genuinely zero-anchored series whose minimum sits very close to zero while its
-maximum is far away — exactly the fed funds/3-month bill/10-year note panel, whose minimum is
-`0.028` (FY2015) against a maximum of `16.945` (FY1981). `PricesAndRates.tsx`'s rates panel
-therefore pins the low end to `0` explicitly and uses only `niceExtent`'s padded high end, rather
-than passing the raw `niceExtent(...)` domain straight to `linear()`. See `docs/parked-findings.md`
-for the finding logged against `niceExtent` itself.
+`niceExtent` pads a value range outward by a fixed fraction of its span, then anchors the low end
+at exactly `0` for any series with no negative observation — whether the pad left that low end
+above zero or pushed it below. A series that does contain a negative value keeps its padded
+negative low end untouched, and a panel whose domain therefore admits negatives still draws its
+`<ZeroLine>`. The sign test reads the raw values rather than `extent()`'s output, because `extent()`
+widens a degenerate range by `±1` and a single non-negative datum would otherwise look signed.
+
+The practical consequence is that a zero-anchored series whose minimum sits very close to zero
+while its maximum is far away — the fed funds/3-month bill/10-year note panel, minimum `0.028`
+(FY2015) against a maximum of `16.945` (FY1981) — now gets a floor of exactly `0` from
+`niceExtent` itself. Call sites pass the returned domain straight to `linear()`; none of them
+re-pins the low end by hand.
