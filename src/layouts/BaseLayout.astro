@@ -23,6 +23,7 @@ const routes = [
 ]
 
 const current = Astro.url.pathname.replace(/\/$/, '')
+const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
 ---
 
 <!doctype html>
@@ -52,6 +53,46 @@ const current = Astro.url.pathname.replace(/\/$/, '')
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
+    {/* Narrow-viewport navigation chrome. `display: none` at >= 62rem, where the
+     * rail is the navigation; the rail is `display: none` below it. Sits after
+     * the skip link so the skip link stays the first focusable node, and is
+     * `position: fixed`, so its DOM position costs nothing visually. */}
+    <div class="navbar">
+      <span class="navbar-title">Income &amp; Tax</span>
+      <details class="navbar-disclosure" id="navbar-disclosure">
+        <summary class="navbar-trigger">
+          <span class="navbar-where" data-navbar-where>{currentRoute?.label ?? 'Menu'}</span>
+          <span class="vh"> — routes and contents</span>
+          <span class="navbar-chevron" aria-hidden="true"></span>
+        </summary>
+        <div class="navbar-panel" id="navbar-panel" tabindex="-1">
+          <nav aria-label="Site">
+            <ol class="navbar-routes">
+              {routes.map((r) => (
+                <li>
+                  <a href={r.href} aria-current={r.href.replace(/\/$/, '') === current ? 'page' : undefined}>
+                    {r.label}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+          {sections.length > 0 && (
+            <nav aria-labelledby="navbar-toc-heading">
+              <p class="navbar-toc-heading" id="navbar-toc-heading">Contents</p>
+              <ol class="toc navbar-toc">
+                {sections.map((s, i) => (
+                  <li>
+                    <span class="n" aria-hidden="true">{i + 1}.</span>
+                    <a href={`#${s.id}`} data-section={s.id}>{s.label}</a>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          )}
+        </div>
+      </details>
+    </div>
     <div class="page">
       <div class="shell">
         <div class="rail">
@@ -73,7 +114,7 @@ const current = Astro.url.pathname.replace(/\/$/, '')
                 {sections.map((s, i) => (
                   <li>
                     <span class="n" aria-hidden="true">{i + 1}.</span>
-                    <a href={`#${s.id}`}>{s.label}</a>
+                    <a href={`#${s.id}`} data-section={s.id}>{s.label}</a>
                   </li>
                 ))}
               </ol>
@@ -85,5 +126,43 @@ const current = Astro.url.pathname.replace(/\/$/, '')
         </main>
       </div>
     </div>
+    <script is:inline>
+      /* Progressive enhancement over the native <details> disclosure above: the
+       * panel opens, closes and exposes every link with zero scripting, and
+       * only Escape-to-close, focus-return and the two dismissals below need
+       * this. `is:inline` because the bar is layout chrome, not an island — it
+       * must work on first paint, with no bundle and no hydration. */
+      ;(function navbarEnhancement() {
+        var d = document.getElementById('navbar-disclosure')
+        if (!d) return
+        var trigger = d.querySelector('summary')
+        var panel = document.getElementById('navbar-panel')
+        function close(refocus) {
+          if (!d.open) return
+          d.open = false
+          if (refocus) trigger.focus()
+        }
+        d.addEventListener('toggle', function () {
+          if (d.open) panel.focus()
+        })
+        /* On `d`, not on `document`: focus is inside `d` whenever the panel is
+         * open, and a document-level handler would contend with the three
+         * /government/ filter dropdowns that already own Escape. */
+        d.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') {
+            e.preventDefault()
+            close(true)
+          }
+        })
+        /* A same-page anchor does not reload, so without this the panel stays
+         * open covering the section it just scrolled to. */
+        panel.addEventListener('click', function (e) {
+          if (e.target instanceof Element && e.target.closest('a')) close(false)
+        })
+        document.addEventListener('click', function (e) {
+          if (!d.contains(e.target)) close(false)
+        })
+      })()
+    </script>
   </body>
 </html>

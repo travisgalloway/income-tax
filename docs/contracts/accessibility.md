@@ -42,9 +42,56 @@ per data point, is a runtime property no static check can observe — see the ma
 **Two named `<nav>` landmarks, not one.** The route list (`aria-label="Site"`) and the section
 contents list (`aria-labelledby="toc-heading"`) are separate landmarks. "Contents" is a `<p
 id="toc-heading">`, not a heading — the rail precedes `<main>` in document order, and a heading
-there would outrank the page's `<h1>`. Enforced by
-`test_route_nav_and_contents_nav_are_separate_landmarks` and
-`test_every_nav_landmark_has_an_accessible_name`.
+there would outrank the page's `<h1>`. Since #42 there are **four** `<nav>` elements in the DOM,
+not two: the desktop rail carries one pair, the narrow-viewport bar the other. Exactly two are in
+the accessibility tree at any viewport, because `.rail` and `.navbar` are mutually `display: none`
+across the `62rem` breakpoint. All four are named, and the two headings are `toc-heading` (rail)
+and `navbar-toc-heading` (panel) — **they must never collide**, because `aria-labelledby`
+resolution against a duplicated id is undefined. Enforced by
+`test_route_nav_and_contents_nav_are_separate_landmarks`,
+`test_every_nav_landmark_has_an_accessible_name` and `test_no_page_repeats_an_id`.
+
+**Narrow-viewport navigation is a native disclosure, not a modal.** Below `62rem` the rail is
+replaced by a bar fixed to the top of the viewport carrying the site title, the current route name
+and a `<details>`/`<summary>` trigger; behind the trigger, `#navbar-panel` holds all five route
+links and the page's full contents list, internally scrolled (`overflow-y: auto` against a
+`100dvh`-derived `max-height`), so opening it never grows the page.
+
+- **The primitive is native `<details>`/`<summary>`, and Radix `Dialog` was evaluated and
+  rejected.** `<details>` needs no scripting, which is what makes the JS-off guarantee below
+  achievable at all; `Dialog` would have required the whole route list duplicated into
+  `<noscript>`, a second source of truth and the duplicate-id hazard above. It is also the
+  repository's established disclosure primitive (every `TableView`; see checklist item 8), and it
+  keeps the site's navigation chrome off the React hydration path — a hydration-gated nav bar is a
+  worse failure than the scrolling block of links it replaced. `@radix-ui/react-dialog` therefore
+  still has no consumer. Recorded here so it is not re-litigated.
+- **There is no focus trap, deliberately.** The panel is non-modal: no `aria-modal`, no `inert`,
+  nothing behind it is `aria-hidden`. Three reasons. (1) It is a dropdown, not a dialog, and the
+  panel sits in DOM order immediately after its own trigger, so Tab past the last panel link
+  continues into `main` — the correct disclosure behaviour. (2) It matches the site's existing
+  precedent: checklist item 3 records the three `/government/` filter dropdowns as PASS, "Escape
+  closes and restores focus to their trigger… nothing traps focus." (3) A trap is reachable only
+  through scripting, which would put focus management in direct conflict with the JS-off
+  guarantee. Escape-to-close and focus-return are progressive enhancements and may degrade;
+  trapping cannot be enhanced — it is load-bearing or absent.
+- **It works with scripting off.** The disclosure opens and closes by click and by Enter, and
+  every route link and section link is reachable, with zero JavaScript. Only Escape-to-close,
+  focus-move-on-open, focus-return and the two dismissals (in-panel link, outside click) need the
+  inline `<script>`; with scripting off Escape does nothing and the panel stays open until the
+  trigger is activated again. Verified in Chromium at 390×844 with `javaScriptEnabled: false`.
+- **The panel's scroll container is keyboard-reachable, so it is not a new instance of #71.** #71
+  is about wide table containers that scroll but hold nothing focusable, leaving a keyboard user
+  no way to scroll them. `#navbar-panel` contains 17 focusable links; tabbing through them scrolls
+  it, and opening the panel moves focus to the container itself, which arrow keys then scroll. It
+  is deliberately not filed again.
+- **No transition and no animation exists on any `.navbar*` rule.** That is how
+  `prefers-reduced-motion` is satisfied here — vacuously, and greppably, rather than by relying on
+  the global reduce block to zero out a motion that was written anyway. Enforced by
+  `test_nav_bar_open_close_is_not_animated`.
+- **The bar costs exactly one tab stop, before `main`.** Tab stop 1 remains `.skip-link`, stop 2
+  is the trigger, stop 3 is inside `main`. It skips nothing inside `main` and is therefore not a
+  bypass mechanism for #69. Its own height is `--navbar-h`, 52px, which is also the offset
+  `section[id]` and `#main` subtract via `scroll-margin-top` below `62rem`.
 
 **`<main id="main" tabindex="-1">`.** The skip link's target must be programmatically focusable, or
 activating it scrolls the viewport while leaving keyboard focus on the link itself (this was D3 on
@@ -309,9 +356,26 @@ say so.
      focus to the trigger. **EXECUTED**, PASS, Chrome 151, 2026-08-24. The menu's width at 390px is
      an open defect (#62).
    - **`<details>`/`<summary>` disclosures** — every `<TableView>`, present in the server-rendered
-     HTML with scripting off (13 on `/government/`, 7 on `/households/`, 5 on `/`). Keyboard
-     operation **EXECUTED**, PASS. Whether the native disclosure *announces* its state correctly is
-     a screen-reader question and is **NOT EXECUTED** — #80.
+     HTML with scripting off (13 on `/government/`, 7 on `/households/`, 5 on `/`), and since #42
+     the **narrow-viewport nav panel** (`details#navbar-disclosure`, one per page, below `62rem`).
+     Keyboard operation **EXECUTED**, PASS.
+
+     The nav panel's keyboard model, expected and actual, **EXECUTED 2026-08-26**, Chromium via
+     Playwright at 390×844 and 844×390, PASS on every line: Enter or Space on the `<summary>`
+     toggles the panel (native, no `aria-expanded` written by hand — `<summary>` supplies the
+     state); opening moves focus to `#navbar-panel`; Escape closes and returns focus to the
+     `<summary>`; Tab from the last panel link continues into `main` rather than wrapping, because
+     there is no trap; activating an in-panel link closes the panel, and so does a click outside
+     it. The Escape listener is bound to `#navbar-disclosure`, not `document`, so it does not
+     contend with the three `/government/` filter dropdowns above — re-checked at 390px, those
+     still close on Escape and still restore focus to their own trigger. **With scripting off,
+     stated rather than implied:** the toggle works by click and by Enter and all 17 links are
+     reachable, while Escape, the focus move, the focus return and both dismissals do not happen.
+
+     #42 evaluated Radix `Dialog` for this panel and chose the native disclosure instead; the
+     decision and its four reasons are recorded in Conventions above, so a later reader does not
+     re-litigate it. Whether the native disclosure *announces* its state correctly is a
+     screen-reader question and is **NOT EXECUTED** — #80.
 
    Any PR that introduces the first consumer of a further primitive adds its keyboard-model check
    here, with expected and actual key behaviour, before this item can be marked anything but blocked
