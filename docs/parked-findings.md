@@ -282,3 +282,69 @@ time. Appended to, never rewritten. None of these have been acted on.
   merged — but removing a dependency and regenerating the lockfile is out of scope for a
   conflict-resolution merge, so it was left as-is here. Found while resolving #29's merge. Severity:
   both non-blocking; the dependency removal is a good candidate for a small standalone follow-up.
+- [2026-08-24] **Backlog created, #42-#68.** Twenty-seven issues filed in one pass covering six
+  areas the first build never reached: a root intro route (`/` becomes "Income & Tax"; Economy moves
+  to `/economy`), a real mobile navigation with section-level position, a seven-issue prose-craft
+  series grounded in the OpenStax *Writing Guide with Handbook* (the site's genre is its Chapter 8,
+  Analytical Report), a glossary route with hover/focus popovers plus a derived index, replacement of
+  seven secondary sources with the primaries they paraphrase, and the findings of the first browser
+  review ever run against the deployed site. Sources for the last: a Playwright pass at 1440x900 and
+  390x844 over all four routes. Four defects it found are now #62-#65; #66 is the 390px remediation
+  sweep, #67 puts a browser check in CI, and #68 splits the executable keyboard half out of #30,
+  which keeps the screen-reader, greyscale and measured-contrast passes that still need a human.
+  Three findings recorded here rather than filed: (1) `src/pages/households/index.astro` uses a raw
+  double hyphen ` -- ` as a dash 8 times and an em dash 8 times, while `index.astro` uses 2 em dashes
+  and `government/index.astro` 6 — three routes, three conventions, against `BRIEF.md`'s flat "Never
+  use em dashes in prose". #51 owns the ruling. (2) Households §4's figure note shouts "it INCLUDES
+  PAYROLL TAX" in mid-sentence capitals; #58 owns it. (3) The live site rendering in a system serif
+  rather than Bricolage Grotesque / IBM Plex is **not** a defect — it is the documented departure at
+  `src/styles/tokens.css:4-5` — and was deliberately not filed, so a future reader does not "fix" it.
+  Severity: none, record only.
+- [2026-08-24] **Backlog addendum, #70-#74.** The full Playwright report arrived after the first
+  pass of backlog issues was filed and contained five findings the first pass had missed. The most
+  serious is #70 and it is a live production defect, not a backlog item: `src/pages/index.astro:223`,
+  `:224` and `:311` write cross-route links as absolute paths (`/government/#net-interest`,
+  `/government/#how-old`, `/households/`) with no `/income-tax/` base, so all three 404 on the
+  deployed site today. Confirmed by `curl` against production and by `grep` against `dist/`.
+  `index.astro:311` is the Economy route's closing sentence and the site's only forward path between
+  routes. Every other link is correct — same-page anchors need no base, and `government/index.astro:32`
+  builds `sourcesHref` from `import.meta.env.BASE_URL` — so these three are the only absolute
+  cross-route links and the only wrong ones. #70 therefore also asks for a build-time guard, because
+  a one-time fix does not stop a fourth from being written the same way.
+  The other four: #71 (wide-table scroll containers are not keyboard focusable, WCAG 2.1.1 Level A —
+  Economy's 7-column table is 1216px in a 736px wrapper, so columns 4-7 need a pointer), #72 (four
+  `radiogroup`s on Government all resolve to the accessible name "Measured in"), #73 (charts instruct
+  a phone reader to "Focus or hover" with 3.3px-wide hit targets), #74 (Government §11's legend wraps
+  a swatch away from its label, inverting a colour-only encoding).
+  Also recorded, against issues already filed: the annotation clipping in #64 produces *legible wrong
+  numbers*, not merely truncated ones — `2022: top 1% 31.5%` renders as `2022: top 19`. And a scope
+  correction for #68: the site has **zero `<input>` and zero `<select>` elements**, so there are no
+  sliders or native selects to write keyboard-model checks against, contrary to what
+  `docs/contracts/accessibility.md` item 8 anticipates. Severity: #70 is a live defect; the rest are
+  record-only here and tracked in their issues.
+- [2026-08-24] **One review finding checked and rejected, recorded so it is not "fixed" later.** The
+  browser review reported that the contents `<nav>` in `src/layouts/BaseLayout.astro` is unnamed, so a
+  screen-reader user cycling landmarks would hear "navigation" twice. This is **false**. Line 69 reads
+  `<nav aria-labelledby="toc-heading">` and line 70 supplies `<p class="toc-heading" id="toc-heading">Contents</p>`,
+  so the landmark resolves to "Contents" and is distinct from `<nav aria-label="Site">`. Verified in
+  `dist/` and by `curl` against the live site. No issue filed. Recorded here because a plausible-sounding
+  accessibility claim from a browser agent is exactly the kind of thing a later reader would act on
+  without re-checking. Severity: none, correction only.
+- [2026-08-24] **Backlog addendum 2, #75-#77.** Auditing the full browser report line by line against
+  the filed issues turned up three defects that had been recorded only as comments, not as work:
+  #75 (the focus ring is `1.5px` at `src/styles/global.css:596`, `:601` and `:887` but `2px` at
+  `:628`, so the codebase disagrees with itself, and `.datum`'s WebKit `stroke-width: 2` fallback
+  disagrees with its own `outline` width -- under WCAG 2.2 Focus Appearance either way), #76
+  (`.tableview-scroll` at `global.css:308` is `overflow-x: auto` with no fade, shadow or persistent
+  scrollbar, so a table wider than its container reads as truncated rather than scrollable -- Economy's
+  is 1216px in a 736px wrapper), and #77 (the same rule sets no height cap, so each open table adds
+  ~2,664px and `/` goes from 11,316px to 24,195px at 390px with all five open).
+  All three touch the same element from different angles and are cross-linked to #71, which makes the
+  container keyboard reachable; #77 in particular *adds* a vertical scroll container that then needs
+  #71's focusability and #76's affordance, so executing them in isolation risks shipping a second
+  unreachable, unmarked container while fixing the first. Noted on each.
+  **One review observation deliberately not filed:** body prose is 15px at 24.3px line-height, which
+  the review called "on the small side for a 13-to-31-screen read". The measure it produces is good
+  (~72 characters at desktop, ~48 at mobile) and the type scale is a deliberate system in
+  `src/styles/tokens.css`, so this is a design opinion rather than a defect and filing it as a bug
+  would misrepresent it. Recorded here for whoever revisits the type scale. Severity: none, observation.
