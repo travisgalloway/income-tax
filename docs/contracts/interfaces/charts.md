@@ -152,11 +152,11 @@ a value, it does not activate anything), and the outer `<svg>` is `role="group"`
 
 ### The sortable table (`StateGiveGet.tsx`)
 
-`TableView` is not used for the by-state map's non-visual equivalent, because `TableView`'s
-Collapsible starts closed and Radix does not render `Collapsible.Content` into the DOM while
-closed — confirmed by building the site and finding no `<table>` tag in `dist/*.html` for any
-existing `TableView` usage. A collapsed-by-default table can never be the map's required
-keyboard-reachable equivalent, and a JS-disabled reader could never open it at all. The by-state
+`TableView` is not used for the by-state map's non-visual equivalent, because every `TableView`
+disclosure starts **closed**: the markup is present either way (it is a native `<details>`, see
+above), but a reader meets a collapsed summary, not a table. A table that must be opened before it
+can be read is not an acceptable *primary* non-visual equivalent for a figure whose only other
+presentation is a map. The by-state
 section instead renders a **plain, always-visible** `<table className="sortable-table">`, with
 `<th scope="col">` sort buttons (`.sort-button`) toggling `aria-sort` and click-to-resort — reusing
 `.tableview-scroll` for the horizontal-scroll wrapper, since that concern is identical. `TableView`
