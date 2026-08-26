@@ -875,3 +875,181 @@ def test_the_suite_ran_against_a_real_build():
     # raised at import time above. This assertion exists so a future refactor
     # that accidentally removes those guards has something failing here too.
     assert DIST.exists() and PAGES
+
+
+# ---------------------------------------------------------------------------
+# Reading position in the contents list (#44). One IntersectionObserver in
+# `BaseLayout.astro`'s inline <script> marks the section containing the viewport
+# midpoint with aria-current='true' on both contents lists at once. Nothing is
+# marked at build time and nothing is marked with scripting off — marking
+# section 1 statically would be wrong for every reader not at the top.
+# ---------------------------------------------------------------------------
+
+BASE_LAYOUT = SRC / "layouts" / "BaseLayout.astro"
+
+
+def test_no_built_page_ships_a_section_level_aria_current(page):
+    """The JS-off criterion, guarded against passing by accident.
+
+    A build that dropped the route markers entirely would satisfy "no
+    aria-current='true' anywhere" vacuously, so this also pins the route
+    markers at exactly two per page — the rail's and the panel's, the same
+    duplication that puts two in the DOM and one in the accessibility tree.
+    """
+    path, root = page
+    marked = [
+        n for n in root.iter_descendants() if n.get("aria-current") == "true"
+    ]
+    assert not marked, (
+        f"{path}: {len(marked)} element(s) carry aria-current='true' in the "
+        "server-rendered HTML. Reading position is derived from scroll "
+        "position at runtime; a static mark is wrong for every reader who is "
+        f"not at the top: {[n.attrs for n in marked]}"
+    )
+    routed = [
+        n for n in root.iter_descendants() if n.get("aria-current") == "page"
+    ]
+    assert len(routed) == 2, (
+        f"{path}: expected exactly 2 aria-current='page' elements (the rail's "
+        f"route list and the panel's), found {len(routed)}"
+    )
+
+
+def _anchors_in(root: Node, ol_class: str, exclude: str | None = None) -> list[Node]:
+    out: list[Node] = []
+    for ol in root.iter_descendants():
+        if ol.tag != "ol" or ol_class not in ol.classes():
+            continue
+        if exclude and exclude in ol.classes():
+            continue
+        out.extend(a for a in ol.iter_descendants() if a.tag == "a")
+    return out
+
+
+def test_every_contents_anchor_is_addressable_by_the_spy(page):
+    """The spy writes to `a[data-section="<id>"]` and reads `main section[id]`.
+
+    A section added to a page but not to its `sections` array — or the reverse
+    — is silently unmarkable, and no rendered check would notice on a route
+    nobody re-scrolls.
+    """
+    path, root = page
+    mains = nodes_of(root, "main")
+    assert mains, f"{path}: no <main> element found"
+    section_ids = [
+        n.get("id") for n in mains[0].iter_descendants()
+        if n.tag == "section" and n.get("id")
+    ]
+    lists = {
+        ol_class: _anchors_in(root, ol_class, exclude)
+        for ol_class, exclude in (("toc", "navbar-toc"), ("navbar-toc", None))
+    }
+    if not any(lists.values()):
+        # `/` and `/sources` pass no `sections` prop: one section each, no
+        # contents list, and the spy returns before observing anything (E6).
+        return
+    for ol_class, anchors in lists.items():
+        assert anchors, (
+            f"{path}: has a .{'navbar-toc' if ol_class == 'toc' else 'toc'} "
+            f"contents list but no .{ol_class} one — the two must stay in "
+            "sync, because one querySelectorAll writes both"
+        )
+        listed = [a.get("data-section") for a in anchors]
+        assert all(listed), (
+            f"{path}: an anchor in .{ol_class} carries no data-section, so "
+            f"the section spy cannot address it: {[a.attrs for a in anchors]}"
+        )
+        assert listed == section_ids, (
+            f"{path}: .{ol_class} lists {listed} but <main> renders "
+            f"{section_ids} — every contents entry must name a section that "
+            "exists, in document order, or the mark cannot track the page"
+        )
+
+
+_LIVE_REGION_ATTRS = ("aria-live", "aria-atomic")
+_LIVE_REGION_ROLES = {"status", "alert", "log", "marquee", "timer"}
+
+
+def test_contents_lists_are_not_live_regions(page):
+    """The proof of the screen-reader criterion, not an assumption.
+
+    An `aria-current` change on an element that is neither focused nor inside a
+    live region is not announced, so rapid scrolling produces no stream of
+    announcements — the state is there when the reader navigates into the list
+    and silent until then. That holds only while no live region is added to or
+    above either contents list, which is what this checks. Complements
+    `test_live_regions_do_not_outnumber_charts`, which counts them site-wide.
+    """
+    path, root = page
+    for ol in root.iter_descendants():
+        if ol.tag != "ol" or "toc" not in ol.classes():
+            continue
+        for node in [ol, *ol.ancestors(), *ol.iter_descendants()]:
+            for attr in _LIVE_REGION_ATTRS:
+                assert node.get(attr) is None, (
+                    f"{path}: <{node.tag}> at or around a contents list "
+                    f"declares {attr}={node.get(attr)!r} — every reading-"
+                    "position change would then be announced while scrolling"
+                )
+            role = (node.get("role") or "").strip().lower()
+            assert role not in _LIVE_REGION_ROLES, (
+                f"{path}: <{node.tag}> at or around a contents list declares "
+                f"role={role!r}, which is an implicit live region"
+            )
+
+
+def test_section_state_selector_is_scoped_and_not_bare():
+    """`[aria-current]` bare would restyle the route links too.
+
+    Two values live on this page — `page`, server-rendered on route links and
+    styled ink-with-underline, and `true`, client-set on contents links and
+    styled ink alone. A bare attribute selector collapses the distinction.
+    """
+    rules = list(iter_css_rules(GLOBAL_CSS.read_text()))
+    scoped = [
+        selectors for selectors, _ in rules
+        for s in selectors
+        if "[aria-current='true']" in s and (".toc" in s or ".navbar-toc" in s)
+    ]
+    assert scoped, (
+        "global.css declares no rule matching [aria-current='true'] inside "
+        ".toc / .navbar-toc — the marked section has no visible treatment"
+    )
+    bare = re.compile(r"\[aria-current\]")
+    for selectors, _ in rules:
+        for s in selectors:
+            assert not bare.search(s), (
+                f"global.css rule {s!r} matches [aria-current] bare, which "
+                "catches the route links' aria-current='page' as well as the "
+                "contents list's aria-current='true'"
+            )
+
+
+_SCROLL_API_RE = re.compile(r"scrollIntoView|scrollTo\s*\(|scrollBy\s*\(|behavior\s*:")
+
+
+def test_the_section_spy_introduces_no_scripted_scrolling():
+    """What makes "reduced motion is satisfied vacuously" an observation.
+
+    The rail is not a scroll container and the panel is never auto-scrolled, so
+    the spy reads scroll position and writes an attribute — it moves nothing.
+    The `IntersectionObserver` assertion is what stops this passing by finding
+    no script at all.
+    """
+    text = BASE_LAYOUT.read_text()
+    scripts = re.findall(r"<script is:inline>(.*?)</script>", text, re.DOTALL)
+    assert len(scripts) == 1, (
+        f"{BASE_LAYOUT}: expected exactly one `<script is:inline>` block, "
+        f"found {len(scripts)}"
+    )
+    block = scripts[0]
+    assert "IntersectionObserver" in block, (
+        f"{BASE_LAYOUT}: the inline script declares no IntersectionObserver — "
+        "the section spy is gone, and the checks below would pass vacuously"
+    )
+    found = _SCROLL_API_RE.findall(block)
+    assert not found, (
+        f"{BASE_LAYOUT}: the inline script calls {found} — the navigation "
+        "chrome introduces no scripted scrolling at all, which is how "
+        "prefers-reduced-motion is satisfied here"
+    )
