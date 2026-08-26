@@ -969,8 +969,9 @@ def test_every_contents_anchor_is_addressable_by_the_spy(page):
         for ol_class, exclude in (("toc", "navbar-toc"), ("navbar-toc", None))
     }
     if not any(lists.values()):
-        # `/` and `/sources` pass no `sections` prop: one section each, no
-        # contents list, and the spy returns before observing anything (E6).
+        # `/sources` passes no `sections` prop: one section, no contents list,
+        # and the spy returns before observing anything (E6). `/` left this
+        # branch when #48 shipped — it now passes a page-local array of four.
         return
     for ol_class, anchors in lists.items():
         assert anchors, (

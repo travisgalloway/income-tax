@@ -73,8 +73,9 @@ Four things follow, and each is load-bearing.
 - **With scripting off, nothing is marked, and that is the correct behaviour** — not a degradation
   to paper over. Reading position is derived from scroll position; server-rendering a mark on
   section 1 would be wrong for every reader who is not at the top. The built HTML therefore carries
-  zero `aria-current="true"`, and `/` and `/sources`, which pass no `sections` prop, make the IIFE
-  return before it observes anything.
+  zero `aria-current="true"`, and `/sources`, which passes no `sections` prop, makes the IIFE
+  return before it observes anything. `/` passed no `sections` prop until #48; it now passes a
+  page-local array of four and carries a contents list like any route.
 - **Nothing is announced while scrolling.** An `aria-current` change on an element that is neither
   focused nor inside a live region is not announced, so a fast scroll down `/government`'s twelve
   sections produces no stream of speech; the state is there, silently, for a reader who navigates
@@ -433,7 +434,7 @@ and no live region, and it is asserted by the five `test_*term*` checks.
 | Taller than the viewport | `#the-laws` (5.38 × viewport) marked across all 24 samples inside its bounds and `#by-state` (4.99 ×) across all 22, with no other id appearing |
 | Anchor jump, 390×844 | all **12** panel links clicked in turn: the marked href equals the clicked one every time, including §12 `#limits`; the panel closes on each; the target's top lands at 64px, clearing the 52px bar |
 | Panel open while the page scrolls behind it | rail and panel agree at every sampled offset (0 → 19,000px) with the disclosure held open |
-| Routes with no contents list | `/` and `/sources` — **0** marks with JavaScript **on** at top, middle and bottom, 0 `a[data-section]`, and no console error: the IIFE returns before observing |
+| Routes with no contents list | `/sources` — **0** marks with JavaScript **on** at top, middle and bottom, 0 `a[data-section]`, and no console error: the IIFE returns before observing. `/` was in this class when the pass ran and behaved identically; it left the class when #48 gave it four sections, and the spy is **NOT EXECUTED** against `/` at its new contents list |
 | `javaScriptEnabled: false` | **0** `[aria-current="true"]` and **2** `[aria-current="page"]` on all five routes. Paired against the same context with scripting **on**, which shows 2 at load with no scrolling — the difference is the proof that the script, not the server, writes the mark. #36's guard is intact in the same run: 14 of 14 `figure.figure svg.chart` server-render on `/government` with scripting off |
 | Layout shift on a mark change | the rail's contents `<ol>` measures 208 × 314.34 before and after the mark moves — identical |
 | Desktop-unchanged proof | with the stylesheet content-hash normalised, `dist/government/index.html` and `dist/index.html` each differ from their pre-change build by **92 added lines and zero removed lines**, all of them the `sectionSpy()` block. No markup changed |

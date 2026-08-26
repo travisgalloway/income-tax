@@ -774,3 +774,11 @@ time. Appended to, never rewritten. None of these have been acted on.
   `first_used` says `/economy`, where it appears only as a `<Figure vintage={…}>` prop, and
   `net-interest`'s `/economy` occurrence is already the text of a cross-route `<a>` that cannot
   nest another. Found while marking first uses for #47. Severity: content, non-blocking.
+- [2026-08-26] `pipeline/tests/test_accessibility.py:1325`, `_PAGE_FOR_ROUTE` is a second,
+  hand-maintained copy of the content-route list that `src/data/sections.ts`'s `routeSections`
+  already owns — the exact duplication `routeSections` was extracted to prevent. A fourth content
+  route added to `routeSections` is simply never scanned by
+  `test_every_first_used_route_carries_its_term_marker`, whose `marks` dict is built from
+  `_PAGE_FOR_ROUTE.values()` alone; a term declaring the new route fails loudly with a `KeyError`
+  at line 1411, but a route with no such term is silently unchecked. Found while deciding whether
+  `/` should become a `routeSections` key for #48. Severity: test coverage, non-blocking.
