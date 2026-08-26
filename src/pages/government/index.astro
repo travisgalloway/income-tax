@@ -28,29 +28,15 @@ import {
   curatedVintage,
   vintageOf,
 } from '../../data'
+import { routeSections } from '../../data/sections'
 
 const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
-
-const sections = [
-  { id: 'forty-trillion', label: 'The $40 trillion' },
-  { id: 'who-holds-it', label: 'Who holds it' },
-  { id: 'how-old', label: 'How old is the debt' },
-  { id: 'whole-budget', label: 'The whole budget' },
-  { id: 'structural-gap', label: 'The structural gap' },
-  { id: 'what-congress-votes-on', label: 'What Congress votes on' },
-  { id: 'net-interest', label: 'Net interest' },
-  { id: 'the-laws', label: 'The laws' },
-  { id: 'passed-signed', label: 'Who passed it, who signed it' },
-  { id: 'where-money-comes-from', label: 'Where the money comes from' },
-  { id: 'by-state', label: 'By state' },
-  { id: 'limits', label: 'What this cannot tell you' },
-]
 ---
 
 <BaseLayout
   title="Government | US federal finance"
   description="Federal taxation, spending, debt and the votes behind them, FY1962 to FY2025."
-  sections={sections}
+  sections={routeSections['/government']}
 >
   <p class="kicker">Route 3 of 3</p>
   <h1>Government</h1>

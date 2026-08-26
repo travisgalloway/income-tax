@@ -56,6 +56,7 @@ when the code merges.
 | ID | Capability | UI | Data | Status | Issue | Contract |
 |----|-----------|----|------|--------|-------|----------|
 | REF-1 | /sources renders SOURCES.md in full, including known discrepancies — and the register is now **gated, not merely rendered**: every source cited by a published output's `_meta.source` must be findable in SOURCES.md or the build fails (see DATA-3) | done | done | Shipped | #8, #39 | contracts/interfaces/content-sources.md |
+| REF-2 | /glossary defines every technical term the three routes use, one per file, each at a durable anchor derived from its filename — alphabetical, letter-grouped, server-rendered with zero islands, and **gated by a Zod schema plus five build-time throws**: an empty collection, a Markdown body nothing renders, an id collision, a dangling `see_also`, and a `first_used` naming a section its route does not have all fail the build rather than shipping a page that looks right. `src/data/sections.ts` is the one map of route → section anchors the last of those checks against | done | done | Shipped | #45 | contracts/interfaces/glossary.md |
 
 ## Cross-cutting
 

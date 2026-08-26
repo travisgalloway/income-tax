@@ -7,23 +7,15 @@ import { WhoWorks } from '../../components/islands/WhoWorks'
 import { PricesAndRates } from '../../components/islands/PricesAndRates'
 import { LaborAndCapital } from '../../components/islands/LaborAndCapital'
 import { economy, income, vintageOf } from '../../data'
+import { routeSections } from '../../data/sections'
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '')
-
-const sections = [
-  { id: 'one-picture', label: 'One picture' },
-  { id: 'growth-shadow', label: 'Growth and its shadow' },
-  { id: 'who-works', label: 'Who works' },
-  { id: 'prices-rates', label: 'Prices and rates' },
-  { id: 'labor-capital', label: 'Labor and capital' },
-  { id: 'limits', label: 'Limits' },
-]
 ---
 
 <BaseLayout
   title="The economy | US federal finance"
   description="Real growth, work, prices and the split between labor and capital, from 1950."
-  sections={sections}
+  sections={routeSections['/economy']}
 >
   <p class="kicker">Route 1 of 3</p>
   <h1>The economy</h1>

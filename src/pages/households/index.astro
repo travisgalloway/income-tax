@@ -12,16 +12,7 @@ import {
   income, incomeGroups, cboTop1IncomeShare, bracketHistory, cboEffectiveRatesData, revenue,
   vintageOf,
 } from '../../data'
-
-const sections = [
-  { id: 'what-a-household-earns', label: 'What a household earns' },
-  { id: 'the-spread', label: 'The spread' },
-  { id: 'a-century-of-brackets', label: 'A century of brackets' },
-  { id: 'statutory-vs-effective', label: 'Statutory is not effective' },
-  { id: 'who-pays', label: 'Who pays the income tax' },
-  { id: 'the-bill-you-do-not-see', label: 'The bill you do not see' },
-  { id: 'limits', label: 'Limits' },
-]
+import { routeSections } from '../../data/sections'
 
 const cbo = cboEffectiveRatesData()
 ---
@@ -29,7 +20,7 @@ const cbo = cboEffectiveRatesData()
 <BaseLayout
   title="Households | US federal finance"
   description="Household income, inequality, and what people actually pay in tax."
-  sections={sections}
+  sections={routeSections['/households']}
 >
   <p class="kicker">Route 2 of 3</p>
   <h1>Households</h1>

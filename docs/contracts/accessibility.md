@@ -52,7 +52,7 @@ resolution against a duplicated id is undefined. Enforced by
 `test_every_nav_landmark_has_an_accessible_name` and `test_no_page_repeats_an_id`.
 
 **Two `aria-current` values, two lists.** The route lists carry
-`aria-current="page"`, server-rendered by `BaseLayout.astro` on whichever of the five routes is
+`aria-current="page"`, server-rendered by `BaseLayout.astro` on whichever of the six routes is
 open. The contents lists carry `aria-current="true"`, written at runtime by the `sectionSpy()` IIFE
 in the layout's one `<script is:inline>` block, on whichever section contains the **viewport
 midpoint** — the lowest section in document order whose top edge is at or above it, decided by one
@@ -93,7 +93,7 @@ asserts the `IntersectionObserver` is still there so it cannot pass by finding n
 
 **Narrow-viewport navigation is a native disclosure, not a modal.** Below `62rem` the rail is
 replaced by a bar fixed to the top of the viewport carrying the site title, the current route name
-and a `<details>`/`<summary>` trigger; behind the trigger, `#navbar-panel` holds all five route
+and a `<details>`/`<summary>` trigger; behind the trigger, `#navbar-panel` holds all six route
 links and the page's full contents list, internally scrolled (`overflow-y: auto` against a
 `100dvh`-derived `max-height`), so opening it never grows the page.
 
@@ -253,34 +253,42 @@ rendering. The JavaScript-off state is checked by `M5` instead, on its own terms
 | M1 keyboard traversal | `/government/` | FAIL | Chrome 151 | Skip link and landmark order as above. 380 of 471 tab stops are data points — #69. #71. Four `radiogroup`s all resolve to the name "Measured in" — #72. |
 | M1 keyboard traversal | `/households/` | FAIL | Chrome 151 | Skip link and landmark order as above. 356 tab stops, every datum reachable — #69. #71. |
 | M1 keyboard traversal | `/sources/` | PASS | Chrome 151 | Skip link first at (8,8) 135×44; `main[tabindex="-1"]`; zero positive `tabindex`; no focusable datum and no scroll container renders on this route. |
+| M1 keyboard traversal | `/glossary` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. |
 | M2 screen-reader pass | `/` | NOT EXECUTED | — | No assistive technology exists in this environment. Human required — #80. |
 | M2 screen-reader pass | `/government/` | NOT EXECUTED | — | As above — #80. |
 | M2 screen-reader pass | `/households/` | NOT EXECUTED | — | As above — #80. |
 | M2 screen-reader pass | `/sources/` | NOT EXECUTED | — | As above — #80. |
+| M2 screen-reader pass | `/glossary` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. |
 | M3 roving tabindex / focus trap | `/` | PASS | Chrome 151 | Radio groups carry `role` plus `aria-checked` plus a roving tabindex; no control traps focus. |
 | M3 roving tabindex / focus trap | `/government/` | PASS | Chrome 151 | All 20 radios site-wide carry `role` + `aria-checked` + roving tabindex; the three filter dropdowns close on Escape and restore focus to their trigger. Naming defect only, not focus behaviour — #72. |
 | M3 roving tabindex / focus trap | `/households/` | PASS | Chrome 151 | As above; no focus trap. |
 | M3 roving tabindex / focus trap | `/sources/` | PASS | Chrome 151 | Vacuous — no roving-tabindex control renders on this route. |
+| M3 roving tabindex / focus trap | `/glossary` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. |
 | M4 390px legibility, JS on | `/` | FAIL | Chrome 151, 390×844 | Body does not scroll horizontally (`scrollWidth` 390 = `clientWidth`). Right-edge annotations clipped — #64. Chart legibility sweep — #66. "Focus or hover" instruction with 3.3px hit targets — #73. Open tables uncapped, page 11,316px → 24,195px — #77. |
 | M4 390px legibility, JS on | `/government/` | FAIL | Chrome 151, 390×844 | No horizontal body scroll. Filter menu wider than the phone — #62. §11 by-state table hides four of five columns — #63. #64, #66, #73. §11 legend wraps a swatch away from its label — #74. |
 | M4 390px legibility, JS on | `/households/` | FAIL | Chrome 151, 390×844 | No horizontal body scroll. §4 Figure 4 clipped at the right edge — #64. #66, #73. |
 | M4 390px legibility, JS on | `/sources/` | FAIL | Chrome 151, 390×844 | `documentElement.scrollWidth` 520px against `clientWidth` 390px — **130px of horizontal body scroll**, from three unbroken `<code>` spans measuring 459px, 500px and 500px. New finding, filed as #79. |
+| M4 390px legibility, JS on | `/glossary` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. |
 | M5 390px legibility, JS off | `/` | FAIL | Chrome 151, 390×844, `javaScriptEnabled: false` | `useChartSize` never runs, so the 720×396 `WIDE` viewBox renders into 350 CSS px (scale 0.486): `.axis-title` **5.10px**, `.axis-label` **5.35px**, `.annotation` **5.59px**. The `<noscript>` mitigation is emitted before the bundled stylesheet and loses the cascade, so it never applies. New finding, filed as #78. Same page with JS on: 10.21 / 10.69 / 11.18px. |
 | M5 390px legibility, JS off | `/government/` | FAIL | Chrome 151, 390×844, `javaScriptEnabled: false` | Same wide-preset scaling and the same overridden mitigation — #78. All 13 `<details>` tables are present in the static HTML with scripting off. |
 | M5 390px legibility, JS off | `/households/` | FAIL | Chrome 151, 390×844, `javaScriptEnabled: false` | 5.10px minimum, same cause — #78. All 7 `<details>` tables present with scripting off. |
 | M5 390px legibility, JS off | `/sources/` | FAIL | Chrome 151, 390×844, `javaScriptEnabled: false` | No chart renders, so #78 does not apply; the 130px `<code>` overflow is identical with scripting off — #79. |
+| M5 390px legibility, JS off | `/glossary` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. |
 | M6 greyscale render | `/` | PASS (note) | Chrome 151, 1440×900 and 390×844, JS on | Worst co-occurring pair **1.03:1** (ECO-4 rates panel, `--ink-soft` #5A6268 against `--rev-ci` #55606B). Every series carries an in-plot end label and a `<TableView>` column, at both viewports. See the per-chart table below. |
 | M6 greyscale render | `/government/` | PASS (note) | Chrome 151, 1440×900 and 390×844, JS on | Worst co-occurring pair **1.00:1** (GOV-10, `--rev-pr` #C77D28 against `--rev-eg` #A8895A), non-adjacent bands in the stack; the tightest *adjacent* band pair is 1.44:1 and every boundary is drawn. GOV-11's cartogram carries direction as a `+`/`−` glyph on every tile. See the per-chart table below. |
 | M6 greyscale render | `/households/` | PASS | Chrome 151, 1440×900 and 390×844, JS on | Worst co-occurring pair **1.06:1** (HH-4, `--positive` against `--rev-ii`) and it does not matter: HH-4 encodes its five income groups as **marker shapes** (circle, square, triangle, diamond, ×, +) with a shape legend, so colour carries nothing on its own. |
 | M6 greyscale render | `/sources/` | PASS | Chrome 151, 1440×900 and 390×844, JS on | Vacuous — zero `<figure>`, zero `<svg>`, and every `main` text colour is `--ink` or `--ink-soft`. No colour-coded category renders on this route. |
+| M6 greyscale render | `/glossary` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. |
 | M7 focus ring paints on SVG | `/` | PASS | WebKit 26.5 | Focused `rect.datum` (389 of them): `outline: 1px solid rgb(17,22,27)`, `outline-offset: 1px`, `stroke: rgb(17,22,27)`, `stroke-width: 2px`. A ring paints, confirmed by screenshot. WebKit computes the 1.5px rule as **1px** — evidence for #75. Safari.app itself NOT EXECUTED — #80. |
 | M7 focus ring paints on SVG | `/government/` | PASS | WebKit 26.5 | Focused `circle.datum` (249): same computed ring. Safari.app NOT EXECUTED — #80. |
 | M7 focus ring paints on SVG | `/households/` | PASS | WebKit 26.5 | Focused `circle.datum` (356): same computed ring. Safari.app NOT EXECUTED — #80. |
 | M7 focus ring paints on SVG | `/sources/` | PASS | WebKit 26.5 | Vacuous — no `.datum` renders on this route. Focus-ring visibility on the route's links in Safari.app NOT EXECUTED — #80. |
+| M7 focus ring paints on SVG | `/glossary` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. |
 | M8 measured rendered-pixel contrast | `/` | FAIL | Chrome 151 | Focus ring measured as `outline: 1.5px solid rgb(17,22,27)` at 13.65:1 against `rgb(221,224,219)`. The colour passes comfortably; the **thickness is under the WCAG 2.2 Focus Appearance 2px minimum** — #75. Text tokens measured against the shipped grounds pass (see the token table above). |
 | M8 measured rendered-pixel contrast | `/government/` | FAIL | Chrome 151 | Same shared-layer ring, same measurement — #75. |
 | M8 measured rendered-pixel contrast | `/households/` | FAIL | Chrome 151 | Same shared-layer ring, same measurement — #75. |
 | M8 measured rendered-pixel contrast | `/sources/` | FAIL | Chrome 151 | Same shared-layer ring, same measurement — #75. |
+| M8 measured rendered-pixel contrast | `/glossary` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. |
 
 Two review results are recorded here because they were checked and found **correct**, so that a later
 reader does not "fix" them: both `<nav>` landmarks *are* named (`aria-label="Site"` and

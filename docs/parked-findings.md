@@ -681,3 +681,29 @@ time. Appended to, never rewritten. None of these have been acted on.
   intended claim was proved structurally instead: the script appears verbatim in
   `dist/government/index.html`, and the 92-line HTML diff against the pre-change build is exactly
   that block. Found while working on #44. Severity: plan defect, non-blocking.
+- [2026-08-26] `src/content.config.ts:1`, importing `z` from `astro:content` now emits a
+  `ts(6385) 'z' is deprecated` hint on every use — 11 hints where `npx astro check` reported 0
+  before. Astro 7 wants `import { z } from 'zod'` instead; zod 4.4.3 is present only as a
+  transitive dependency, so doing that means declaring it in `package.json`. The check still exits
+  0 (hints are neither errors nor warnings) and the plan specifies `astro:content`, so it was left
+  as written. Found while adding the glossary collection for #45. Severity: build-output noise,
+  non-blocking.
+- [2026-08-26] `.claude/plans/issue-45.md` § Definition of done, criterion 12 expects
+  `grep -o 'href="/income-tax/glossary"'` over the five other built pages to return **5**; it
+  returns **10**, because since #42 every page renders the route array twice — once in the desktop
+  rail and once in the narrow-viewport panel. The intended claim (the link is present and
+  base-prefixed on every page) holds and was proved: 2 per page across 5 pages, and the unbased
+  form returns 0. Found while verifying #45. Severity: plan defect, worked around in place,
+  non-blocking.
+- [2026-08-26] `docs/feature-matrix.md:72`, the `A11Y-2` row says the remaining screen-reader work
+  is "the screen-reader passes on all four pages", counted before `/glossary` existed. #80's real
+  surface is now five pages. Not changed here: the row records the scope of the #30 sweep, and
+  `/glossary`'s own unexecuted state is carried by its eight `NOT EXECUTED` rows in
+  `docs/contracts/accessibility.md` and by `REF-2`. Found while working on #45. Severity: doc
+  precision, non-blocking.
+- [2026-08-26] `pipeline/tests/test_accessibility.py`, nothing in the automated lane asserts any of
+  `/glossary`'s five build-time throws: the suite reads `dist/`, and a build that fails writes no
+  page for it to check. The throws are proved only by the six negative tests run by hand in #45 and
+  recorded under `REF-2` in `docs/test-plan.md`. The analogous gap for `check_schema` was closed by
+  a guard-bites unit test (DATA-1); this one has no equivalent. Found while working on #45.
+  Severity: coverage gap, non-blocking.
