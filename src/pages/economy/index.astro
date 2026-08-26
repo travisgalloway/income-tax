@@ -8,13 +8,11 @@ import { WhoWorks } from '../../components/islands/WhoWorks'
 import { PricesAndRates } from '../../components/islands/PricesAndRates'
 import { LaborAndCapital } from '../../components/islands/LaborAndCapital'
 import { economy, income } from '../../data'
-import { routeSections } from '../../data/sections'
+import { join, routeSections } from '../../data/sections'
 import { figuresOf } from '../../data/figures'
 
 /* Figure number, title and source come from the manifest, which /contents reads too. */
 const fig = figuresOf('/economy')
-
-const base = import.meta.env.BASE_URL.replace(/\/$/, '')
 ---
 
 <BaseLayout
@@ -212,8 +210,8 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
     </p>
     <p class="prose">
       Rates are the mechanism that reprices the debt. The government route shows what that
-      costs, in <a href={`${base}/government/#net-interest`}>net interest</a>, and how fast it feeds
-      through, in <a href={`${base}/government/#how-old`}>how old the debt is</a>.
+      costs, in <a href={`${join('/government')}/#net-interest`}>net interest</a>, and how fast it feeds
+      through, in <a href={`${join('/government')}/#how-old`}>how old the debt is</a>.
     </p>
   </section>
 
@@ -298,7 +296,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
       not a complete accounting of who gets paid out of what the economy produces.
     </p>
     <p class="prose">
-      The <a href={`${base}/households/`}>households route</a> picks up from here: what a household
+      The <a href={`${join('/households')}/`}>households route</a> picks up from here: what a household
       actually earns, how far the spread between households runs, and what is actually paid in
       tax once <Term id="payroll-tax">payroll tax</Term> is counted.
     </p>

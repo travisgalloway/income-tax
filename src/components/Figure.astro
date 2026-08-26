@@ -42,7 +42,8 @@ if (!fig || typeof fig.n !== 'number' || fig.n < 1) {
   )
 }
 if (!fig.title?.trim()) throw new Error('Figure: fig.title is required')
-if (!fig.sourceLine?.trim()) throw new Error('Figure: fig.source is required and is rendered verbatim')
+if (!fig.sourceLine?.trim())
+  throw new Error('Figure: fig.sourceLine is required and is rendered verbatim')
 if (!xUnit?.trim() || !yUnit?.trim()) throw new Error('Figure: both axes must name their units')
 ---
 

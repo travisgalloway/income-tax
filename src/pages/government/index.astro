@@ -27,13 +27,13 @@ import {
   statesBalance,
   statesTaxMix,
 } from '../../data'
-import { routeSections } from '../../data/sections'
+import { join, routeSections } from '../../data/sections'
 import { figuresOf } from '../../data/figures'
 
 /* Figure number, title and source come from the manifest, which /contents reads too. */
 const fig = figuresOf('/government')
 
-const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
+const sourcesHref = join('/sources')
 ---
 
 <BaseLayout

@@ -33,6 +33,12 @@ const terms = entries
 /* An id per route block. `/` has no path segment to slug, so it is named for what it is. */
 const blockId = (path: string) => `contents-${path === '/' ? 'introduction' : path.replace(/^\//, '')}`
 
+/* `siteRoutes` also carries `/`, `/sources` and `/glossary`, none of which are `ContentRoute`
+ * keys and so carry no figures. A real type guard, not an `as ContentRoute` assertion, keeps
+ * the compiler honest about that instead of lying to it for every route in the array. */
+const isContentRoute = (path: string): path is ContentRoute =>
+  Object.prototype.hasOwnProperty.call(routeFigures, path)
+
 /* Every destination the rail names except this one. Listing the index inside the index would make
  * its own section list self-referential; the rail still carries it, which is how a reader gets
  * here. */
@@ -42,7 +48,7 @@ const blocks = siteRoutes
     ...r,
     id: blockId(r.path),
     href: join(r.path),
-    figures: routeFigures[r.path as ContentRoute] ?? [],
+    figures: isContentRoute(r.path) ? routeFigures[r.path] : [],
   }))
 
 /* Own `sections` prop, built from the same loop the page renders, so the rail's contents list and
