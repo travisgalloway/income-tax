@@ -7,10 +7,14 @@ site will actually ship, not what a builder would produce in isolation.
 
 from __future__ import annotations
 
+import copy
 import json
 import re
+import shutil
+from collections.abc import Callable
 from pathlib import Path
 
+import jsonschema
 import pytest
 
 from lib import curated, validate
@@ -1319,3 +1323,221 @@ def test_nice_extent_zero_anchors_a_non_negative_series():
     assert "niceExtentBefore" in cases, (
         "the signed case no longer compares against the pre-#34 implementation"
     )
+
+
+# ---- schema coverage -----------------------------------------------------
+#
+# #37. `check_schema` used to be opt-in: an output with no schema file was
+# skipped, so twelve of the fourteen published outputs contributed zero schema
+# assertions and the build's "validation: N checks passed" line read the same
+# whether the data was good or the schema was simply absent. The same defect
+# shape as #36's conformance suite, which iterated the SVGs it found.
+#
+# The fix is a population guard, not a bigger pile of schemas: the tests below
+# assert that EVERY published output is covered, that every schema still names
+# a live output, and that the build gate itself fails loudly on an output with
+# no schema. Authoring the fourteenth schema does not cover the fifteenth
+# output; the guard does.
+
+SCHEMAS = ROOT / "schemas"
+OUTPUTS = sorted(p.stem for p in DATA.glob("*.json"))
+
+
+def _schema(name: str) -> dict:
+    return json.loads((SCHEMAS / f"{name}.schema.json").read_text())
+
+
+def _corrupt_budget(d: dict) -> None:
+    """Offsetting receipts are negative by construction (SOURCES.md)."""
+    d["data"][0]["n_or"] = 0.5
+
+
+def _corrupt_revenue_sources(d: dict) -> None:
+    del d["data"][0]["s_tot"]
+
+
+def _corrupt_economy(d: dict) -> None:
+    """An unobserved year must stay null; 0 would plot as deflation."""
+    d["data"][0]["core_pce"] = 0
+
+
+def _corrupt_debt(d: dict) -> None:
+    d["data"][-1]["gdp_share"] = 0
+
+
+def _corrupt_income_inequality(d: dict) -> None:
+    d["data"][0]["gini"] = 0
+
+
+def _corrupt_bracket_history(d: dict) -> None:
+    """A bracket ceiling of 0 is the sparse-series bug, not a bracket."""
+    d["data"][0]["s"]["single"][0]["hi"] = 0
+
+
+def _corrupt_party_splits(d: dict) -> None:
+    d["data"][0]["character"] = "bipartisan"
+
+
+def _corrupt_debt_holders(d: dict) -> None:
+    d["data"]["split"][0]["share_pct"] = 150
+
+
+def _corrupt_debt_maturity(d: dict) -> None:
+    d["data"]["history_months"][0]["v"] = "71"
+
+
+def _corrupt_income_tax_by_group(d: dict) -> None:
+    d["data"]["groups"][0]["tax_share_pct"] = 150
+
+
+def _corrupt_oecd(d: dict) -> None:
+    d["data"]["countries"] = []
+
+
+def _corrupt_cbo_effective_rates(d: dict) -> None:
+    """A dropped quintile is the corruption the per-group `required` catches."""
+    del d["data"]["rows"][0]["v"]["top1"]
+
+
+def _corrupt_states_balance(d: dict) -> None:
+    d["data"]["jurisdictions"][0]["ratio"] = 0
+
+
+def _corrupt_states_tax_mix(d: dict) -> None:
+    shares = d["data"]["jurisdictions"][0]["shares"]
+    shares[next(iter(shares))] = 150
+
+
+CORRUPTIONS: dict[str, tuple[str, Callable[[dict], None]]] = {
+    "budget": ("offsetting-receipts-turned-positive", _corrupt_budget),
+    "revenue_sources": ("share-total-dropped-from-a-row", _corrupt_revenue_sources),
+    "economy": ("absent-core-pce-written-as-zero", _corrupt_economy),
+    "debt": ("absent-gdp-share-written-as-zero", _corrupt_debt),
+    "income_inequality": ("absent-gini-written-as-zero", _corrupt_income_inequality),
+    "bracket_history": ("bracket-ceiling-written-as-zero", _corrupt_bracket_history),
+    "party_splits": ("character-outside-the-counted-vocabulary", _corrupt_party_splits),
+    "debt_holders": ("share-pct-over-one-hundred", _corrupt_debt_holders),
+    "debt_maturity": ("history-value-arrives-as-a-string", _corrupt_debt_maturity),
+    "income_tax_by_group": ("tax-share-pct-over-one-hundred", _corrupt_income_tax_by_group),
+    "oecd": ("country-comparison-emptied", _corrupt_oecd),
+    "cbo_effective_rates": ("top1-quintile-dropped-from-a-row", _corrupt_cbo_effective_rates),
+    "states_balance": ("give-get-ratio-written-as-zero", _corrupt_states_balance),
+    "states_tax_mix": ("tax-mix-share-over-one-hundred", _corrupt_states_tax_mix),
+}
+
+
+def _corruption_params() -> list:
+    """Sourced from the glob, never a hand-typed list: output number fifteen
+    lands here with the id NO-CORRUPTION-CASE and fails the test below."""
+    return [
+        pytest.param(
+            n, id=f"{n}-{CORRUPTIONS[n][0] if n in CORRUPTIONS else 'NO-CORRUPTION-CASE'}"
+        )
+        for n in OUTPUTS
+    ]
+
+
+def test_every_published_output_has_a_schema():
+    """#37 criterion 1. The population is `src/data/*.json`, not the schemas
+    that happen to exist. No output is exempt today; if one ever must be, it
+    goes in an explicit named frozenset here, never in a weakened assertion."""
+    assert OUTPUTS, "no published outputs found in src/data"
+    missing = [n for n in OUTPUTS if not (SCHEMAS / f"{n}.schema.json").exists()]
+    assert not missing, (
+        f"published with no schema: {missing}. Every output build.py emits is "
+        f"schema-validated (#37); add pipeline/schemas/<name>.schema.json."
+    )
+
+
+def test_every_schema_names_a_published_output():
+    """The converse. A rename that leaves the old schema behind would otherwise
+    keep the coverage count whole while the new output ships unchecked."""
+    published = set(OUTPUTS)
+    orphans = [
+        p.name for p in sorted(SCHEMAS.glob("*.schema.json"))
+        if p.name[: -len(".schema.json")] not in published
+    ]
+    assert not orphans, f"schemas with no published output: {orphans}"
+
+
+def test_check_schema_fails_when_an_output_has_no_schema(monkeypatch, tmp_path):
+    """#37 criterion 2, the whole point of the issue: the guard must BITE. The
+    automated analogue of #36's manual client:only flip. Both directions are
+    asserted in one test, so it cannot pass by failing for an unrelated
+    reason."""
+    partial = tmp_path / "schemas"
+    partial.mkdir()
+    for p in SCHEMAS.glob("*.schema.json"):
+        if p.name != "budget.schema.json":
+            shutil.copy2(p, partial / p.name)
+
+    monkeypatch.setattr(validate, "SCHEMA_DIR", partial)
+    c = validate.Checks()
+    validate.check_schema(c, OUTPUTS)
+
+    assert len(c.failures) == 1, f"expected exactly one failure, got {c.failures}"
+    assert "budget" in c.failures[0]
+    assert "schemas/budget.schema.json" in c.failures[0]
+    assert c.passed == len(OUTPUTS) - 1
+
+    # The inverse: with the real directory the same call is clean.
+    monkeypatch.setattr(validate, "SCHEMA_DIR", SCHEMAS)
+    clean = validate.Checks()
+    validate.check_schema(clean, OUTPUTS)
+    assert clean.failures == []
+    assert clean.passed == len(OUTPUTS)
+
+
+def test_check_schema_reports_malformed_json_rather_than_raising(monkeypatch, tmp_path):
+    """#37 criterion 3. A broken schema file must be a named failure the build
+    reports, not a traceback out of validate.run."""
+    broken = tmp_path / "schemas"
+    broken.mkdir()
+    (broken / "budget.schema.json").write_text("{")
+
+    monkeypatch.setattr(validate, "SCHEMA_DIR", broken)
+    c = validate.Checks()
+    validate.check_schema(c, ["budget"])
+
+    assert len(c.failures) == 1
+    assert "not valid JSON" in c.failures[0]
+
+
+def test_check_schema_reports_an_invalid_schema_document_rather_than_raising(
+    monkeypatch, tmp_path
+):
+    """#37 criterion 3, the subtler half: a file that IS JSON but is not a valid
+    JSON Schema. jsonschema would raise SchemaError, and a typo'd keyword is the
+    next version of this same bug."""
+    invalid = tmp_path / "schemas"
+    invalid.mkdir()
+    (invalid / "budget.schema.json").write_text('{"type": "not-a-type"}')
+
+    monkeypatch.setattr(validate, "SCHEMA_DIR", invalid)
+    c = validate.Checks()
+    validate.check_schema(c, ["budget"])
+
+    assert len(c.failures) == 1
+    assert "not a valid JSON Schema" in c.failures[0]
+
+
+@pytest.mark.parametrize("name", _corruption_params())
+def test_every_schema_rejects_a_realistic_corruption(name):
+    """#37 criteria 5-7. A schema that only asserted "is an object" would pass
+    the coverage test above and prove nothing; this is what makes that
+    impossible to ship. The real document must validate clean, and a named
+    realistic corruption of it must not."""
+    assert name in CORRUPTIONS, (
+        f"{name} is published but has no corruption case in CORRUPTIONS. Every "
+        f"schema must prove it can fail (#37)."
+    )
+    _, corrupt = CORRUPTIONS[name]
+    schema = _schema(name)
+    doc = load(name)
+
+    jsonschema.validate(doc, schema)  # the real data is clean
+
+    broken = copy.deepcopy(doc)
+    corrupt(broken)
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate(broken, schema)

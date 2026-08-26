@@ -214,10 +214,14 @@ time. Appended to, never rewritten. None of these have been acted on.
   unrelated to §§4-6. Found while working on #13. Severity: scope gap against the issue's edge-case
   list, parked rather than acted on; not blocking any Definition-of-done criterion for #13.
 - [2026-08-23] `pipeline/schemas/` is now filled for `states_balance` and `states_tax_mix` only.
-  The other nine outputs still have no JSON Schema; `lib/validate.py`'s `check_schema` is
+  The other outputs still have no JSON Schema; `lib/validate.py`'s `check_schema` is
   deliberately generic and opt-in (validates iff `schemas/<name>.schema.json` exists) rather than
   a mandate retrofitted onto them. Found while working on #14. Severity: coverage gap, non-blocking,
   candidate for a dedicated follow-up issue.
+  **RESOLVED 2026-08-26 by #37.** The count was recorded here as nine and measured at **twelve**
+  when #37 was planned — the population had grown and nothing noticed, which is the argument the
+  issue was closed on. All 14 outputs now carry a schema and `check_schema` fails loudly on an
+  output that has none.
 - [2026-08-23] `src/pages/sources.astro` does not list the IRS SOI Table 5 or Census STC (Annual
   Survey of State Government Tax Collections) sources; both are documented in `SOURCES.md` and
   rendered verbatim in each `<Figure>`'s Source line instead. Once #22 replaces `sources.astro`
