@@ -827,8 +827,9 @@ def test_the_laws_to_splits_join_has_exactly_one_implementation():
     """#33: the laws-to-party_splits join lived in two places (aggregate.ts
     threw on an unmatched law, LawExplorer.tsx silently dropped it). It is now
     src/components/laws/join.ts alone. A source-level guard, the same shape as
-    test_no_document_still_calls_vote_composition_classified: no JS test runner
-    exists in this repo, so this is the only automated way to hold the rule."""
+    test_no_document_still_calls_vote_composition_classified: the JS unit runner
+    added in #34 (`npm run test:unit`) does not cover this module and is not wired
+    into CI, so this is the only automated way to hold the rule."""
     owner = LEGACY / "src/components/laws/join.ts"
     assert owner.exists(), "the shared join module is missing"
     assert "joinLawsToSplits" in owner.read_text()
@@ -1276,3 +1277,45 @@ def test_fy2020_share_moves_are_denominator_artefacts():
     assert rows[2020]["wage_share"] > rows[2019]["wage_share"]
     assert rows[2020]["profit_share"] < rows[2019]["profit_share"]
     assert rows[2021]["profit_share"] > rows[2020]["profit_share"]
+
+
+def test_nice_extent_zero_anchors_a_non_negative_series():
+    """#34: niceExtent padded the low end outward and only re-anchored it to 0 when
+    the padded value was still positive, so a non-negative series whose minimum sits
+    close to zero got an axis floor below zero. A source-level guard, the same shape
+    as test_the_laws_to_splits_join_has_exactly_one_implementation: the JS unit tests
+    (`npm run test:unit`) are not wired into any CI workflow, so the pytest suite is
+    the only thing that runs this rule unattended."""
+    scales = LEGACY / "src/components/charts/scales.ts"
+    assert scales.exists(), "src/components/charts/scales.ts is missing"
+    text = scales.read_text()
+
+    body = text[text.index("export function niceExtent") :]
+    clamps = [ln.strip() for ln in body.splitlines() if re.search(r"\blo\s*=\s*0\b", ln)]
+    assert clamps, "niceExtent no longer clamps the low end at all"
+
+    # The pre-#34 guard alone is not enough: something must condition the clamp on
+    # every observation being >= 0, not merely on the padded low end being positive.
+    assert any(
+        re.search(r"every\s*\(.*>=\s*0", ln) for ln in clamps
+    ), f"niceExtent's low-end clamp does not test for a non-negative series: {clamps}"
+
+    # And the clamp must read >= 0, so a minimum of exactly 0 floors at 0.
+    assert not re.search(r"every\s*\(\s*\(?\w+\)?\s*=>\s*\w+\s*>\s*0", body), (
+        "niceExtent's sign test uses > 0; a minimum of exactly 0 is non-negative"
+    )
+
+    unit = LEGACY / "src/components/charts/scales.test.ts"
+    assert unit.exists(), "the niceExtent unit tests are gone"
+    cases = unit.read_text()
+    assert "niceExtent" in cases
+    # Both directions, or the guard is only half a guard.
+    assert re.search(r"test\((['\"]).*floors at exactly zero.*\1", cases), (
+        "no unit test covers the non-negative direction"
+    )
+    assert re.search(r"test\((['\"]).*mixed-sign.*bit-for-bit unchanged.*\1", cases), (
+        "no unit test covers the signed direction"
+    )
+    assert "niceExtentBefore" in cases, (
+        "the signed case no longer compares against the pre-#34 implementation"
+    )

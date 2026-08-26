@@ -427,3 +427,19 @@ time. Appended to, never rewritten. None of these have been acted on.
   to `ChartRow` / `YearRow`. Severity: low, naming only. Found while working on #33 (proving
   criterion 4, "no unreferenced export left behind"); outside its criteria, which name only
   `splitByLaw` and the laws `Row`.
+- [2026-08-26] **Closed by #34:** both 2026-08-23 `niceExtent` entries above (line 84, "only clamps
+  the low end to 0 when the padded value is still positive", and line 194, the same finding logged
+  again from #13 together with the `PricesAndRates` local workaround) are resolved.
+  `src/components/charts/scales.ts` now also clamps the low end to exactly `0` when every finite
+  observation is `>= 0`, so `RevenueChart`'s nominal axis and all three `VotedAndNot` unit views
+  start at the axis line; signed series are unchanged, asserted against the pre-fix implementation
+  in `src/components/charts/scales.test.ts`. The `PricesAndRates.tsx` workaround named in the
+  second entry is retired and its explanatory comment rewritten. Recorded here rather than by
+  editing those entries: this file is appended to, never rewritten.
+- [2026-08-26] **`npm run test:unit` is not wired into CI.** #34 adds a JS unit lane
+  (`node --test` over `src/**/*.test.ts`, no new dependency), but `.github/workflows/deploy.yml`
+  only builds and `refresh-data.yml` runs pytest on its monthly schedule, so nothing runs the unit
+  tests on a push or a PR. The `niceExtent` rule is held unattended only by the source-level pytest
+  guard `test_nice_extent_zero_anchors_a_non_negative_series`. Deferred to **#67**, which already
+  covers wiring the test lanes into a per-push check. Severity: medium, coverage. Found while
+  working on #34; explicitly outside its criteria.

@@ -12,7 +12,7 @@ when the code merges.
 | ECO-1 | One picture — real GDP FY1950-FY2036 on a log scale, actual/projection split | done | done | Shipped | #12 | contracts/interfaces/economy-data.md, contracts/interfaces/charts.md |
 | ECO-2 | Growth and its shadow — output per hour vs. real median household income, indexed 1984=100 | done | done | Shipped | #12 | contracts/interfaces/economy-data.md, contracts/interfaces/charts.md |
 | ECO-3 | Who works — unemployment vs. the noncyclical rate, and labour force participation | done | done | Shipped | #12 | contracts/interfaces/economy-data.md, contracts/interfaces/charts.md |
-| ECO-4 | Prices and rates — CPI-U and core PCE inflation (derived YoY), fed funds, 3-month bill, 10-year note | done | done | Shipped | #13 | contracts/interfaces/economy-data.md, contracts/interfaces/charts.md |
+| ECO-4 | Prices and rates — CPI-U and core PCE inflation (derived YoY), fed funds, 3-month bill, 10-year note | done | done | Shipped | #13, #34 | contracts/interfaces/economy-data.md, contracts/interfaces/charts.md |
 | ECO-5 | Labor and capital — wages and salaries against corporate profits, both % of GDP | done | done | Shipped | #13 | contracts/interfaces/economy-data.md, contracts/interfaces/charts.md |
 | ECO-6 | Limits — what this route cannot tell you, hand-off to /households | done | done | Shipped | #13 | contracts/interfaces/economy-data.md |
 
@@ -25,11 +25,11 @@ when the code merges.
 | GOV-3 | How old is the debt — maturity ladder against the 30-year ceiling | done | done | Shipped | #6 | contracts/interfaces/curated-snapshots.md, contracts/interfaces/charts.md |
 | GOV-4 | The whole budget — outlays stacked (mandatory net/discretionary/interest), revenue line, deficit below zero, party-control strip, unit toggle, year inspection, era bands | done | done | Shipped | #2 | contracts/interfaces/budget-data.md, contracts/interfaces/charts.md |
 | GOV-5 | The structural gap — revenue vs outlays, nominal / real / % of GDP toggle, sign-and-position surplus band | done | done | Shipped | #5 | contracts/interfaces/budget-data.md, contracts/interfaces/charts.md |
-| GOV-6 | What Congress votes on — mandatory (net) vs discretionary vs net interest, nominal / real / % of GDP toggle, FY2015 trajectory marker | done | done | Shipped | #5 | contracts/interfaces/budget-data.md, contracts/interfaces/charts.md |
+| GOV-6 | What Congress votes on — mandatory (net) vs discretionary vs net interest, nominal / real / % of GDP toggle, FY2015 trajectory marker | done | done | Shipped | #5, #34 | contracts/interfaces/budget-data.md, contracts/interfaces/charts.md |
 | GOV-7 | Net interest — nominal/real bars by fiscal year, FY2015 trough and FY2003 series low marked, cross-linked to debt maturity | done | done | Shipped | #5 | contracts/interfaces/budget-data.md, contracts/interfaces/charts.md |
 | GOV-8 | The laws — sortable/filterable explorer, cost, vote, enactment date | done | done | Shipped | #3, #31, #32, #33 | contracts/interfaces/law-data.md, contracts/interfaces/charts.md, contracts/interfaces/budget-data.md |
 | GOV-9 | Who passed it, who signed it — the same $16.75T by voting coalition and by signing president, Radix Tabs | done | done | Shipped | #4, #33 | contracts/interfaces/attribution.md, contracts/interfaces/budget-data.md |
-| GOV-10 | Where the money comes from — revenue by source (nominal/%GDP/%share toggle), OECD comparison | done | done | Shipped | #7 | contracts/interfaces/revenue-data.md, contracts/interfaces/charts.md |
+| GOV-10 | Where the money comes from — revenue by source (nominal/%GDP/%share toggle), OECD comparison | done | done | Shipped | #7, #34 | contracts/interfaces/revenue-data.md, contracts/interfaces/charts.md |
 | GOV-11 | By state, and which states give more than they get — IRS gross collections vs USASpending award spending, tile-grid cartogram, sortable table, state tax mix | done | done | Shipped | #14 | contracts/interfaces/state-data.md, contracts/interfaces/charts.md |
 | GOV-12 | What this cannot tell you — five limits in full, no disclosure wrapper, plus the concentration and deficit-vs-debt items | done | n/a (prose) | Shipped | #8 | contracts/interfaces/content-sources.md |
 

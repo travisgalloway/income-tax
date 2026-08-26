@@ -67,26 +67,15 @@ export function PricesAndRates({ rows, lastActualFy }: { rows: EconomyYear[]; la
   const xTicks = x.ticks(narrow ? 4 : 8).filter((t) => Number.isInteger(t))
 
   // Top panel: derived inflation. The data minimum (CPI-U FY1955, -0.47%) is
-  // negative, and niceExtent's zero-anchoring branch only fires when the
-  // padded low end is still positive, so this domain correctly stays negative
-  // and a ZeroLine is drawn to make that legible by position.
+  // negative, so niceExtent leaves the padded low end negative and a ZeroLine
+  // is drawn to make that legible by position.
   const yTop = linear(niceExtent(inflationRows.flatMap((r) => [r.cpiYoy, r.pceYoy])), [ih, 0])
   const yTopTicks = yTop.ticks(narrow ? 4 : 6)
 
-  // Bottom panel: all three rates are positive, so this axis is zero-anchored.
-  // niceExtent itself is not used for the low end here: its 8% pad is a
-  // fraction of the FULL span (about 16.9 points, because FY1981's 16.945%
-  // peak and FY2015's 0.028% trough sit on the same axis), so padding below
-  // the 0.028% minimum overshoots past zero and niceExtent's reset only
-  // catches a padded low end that is still positive — it does not pull a
-  // padded-negative low end back to zero. The high end still uses niceExtent's
-  // padding; the low end is pinned to 0 explicitly. Deviates from the plan's
-  // literal `niceExtent(...)` snippet for this reason (logged in
-  // docs/parked-findings.md); the plan's own Definition of done requires a
-  // zero-anchored axis here, which is what this produces.
+  // Bottom panel: none of the three rate series ever goes negative, so
+  // niceExtent anchors this axis at exactly 0 and pads only the high end (#34).
   const rateValues = rows.flatMap((r) => [r.ff, r.t3m, r.t10])
-  const [, ratesHi] = niceExtent(rateValues)
-  const yBottom = linear([0, ratesHi], [ih2, 0])
+  const yBottom = linear(niceExtent(rateValues), [ih2, 0])
   const yBottomTicks = yBottom.ticks(narrow ? 4 : 6)
 
   const cpiLine = d3line<InflationRow>().defined((r) => r.cpiYoy != null).x((r) => x(r.y)).y((r) => yTop(r.cpiYoy as number))
