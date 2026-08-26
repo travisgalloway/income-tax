@@ -314,11 +314,13 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
                                                  * overlap */
           var trigger = triggerOf(t)
           var pop = popOf(t)
-          /* The only number script supplies. `offsetParent` is the paragraph,
-           * guaranteed by the `p:has(.term)` rule, and offsetHeight spans both
-           * line boxes when the trigger wraps, so the popover lands below the
-           * whole trigger rather than through it. Recomputed on every open, so
-           * a resize between opens needs no listener. */
+          /* The only number script supplies. `offsetParent` is whichever
+           * ancestor CSS makes a positioning context — `p`, `li`, `h2` or
+           * `.standfirst` containing `.term`, per the `:has(.term)` rule in
+           * global.css — and offsetHeight spans both line boxes when the
+           * trigger wraps, so the popover lands below the whole trigger
+           * rather than through it. Recomputed on every open, so a resize
+           * between opens needs no listener. */
           pop.style.top = (trigger.offsetTop + trigger.offsetHeight) + 'px'
           pop.hidden = false
           trigger.setAttribute('aria-expanded', 'true')
@@ -366,6 +368,16 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
            * was inside the popover about to be hidden, so nothing here moves
            * the reader. */
           t.addEventListener('keydown', function (e) {
+            /* An <a> synthesizes a click on Enter but not on Space — Space's
+             * default on a link is to scroll the page. The a11y contract
+             * ("Enter / Space | opens; does not navigate") promises both, so
+             * Space is intercepted here the same way Enter already arrives
+             * via the trigger's own click event. */
+            if (e.key === ' ' && e.target === trigger) {
+              e.preventDefault()
+              show(t)
+              return
+            }
             if (e.key !== 'Escape') return
             e.preventDefault()
             var inside = t.contains(document.activeElement) && document.activeElement !== trigger

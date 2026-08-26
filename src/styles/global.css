@@ -1089,18 +1089,23 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
  *    popover. That is WCAG 1.4.13 *hoverable*, met by the DOM shape rather
  *    than by a timer. Do not portal it, and do not position it against the
  *    viewport.
- * 2. `left: 0; right: 0` sizes it to the paragraph, whose `max-width` is the
- *    measure. It is therefore exactly as wide as the prose it interrupts and
- *    cannot overflow any viewport the prose fits — no collision detection and
- *    no width clamp, which is what keeps the Radix Select clipping of #62 out
- *    of reach here.
+ * 2. `left: 0; right: 0` sizes it to its positioned ancestor — `p`, `li`,
+ *    `h2` or `.standfirst` containing `.term`, per the `:has(.term)` rule
+ *    below — whose `max-width` is the measure. It is therefore exactly as
+ *    wide as the prose it interrupts and cannot overflow any viewport the
+ *    prose fits — no collision detection and no width clamp, which is what
+ *    keeps the Radix Select clipping of #62 out of reach here. All four
+ *    container types are listed below because the glossary contract
+ *    (docs/contracts/interfaces/glossary.md, "In-prose markers") allows a
+ *    marker in any of them — a marker landing in a container missing from
+ *    this rule would position against a higher, unpositioned ancestor.
  *
  * Deliberately without a transition or an animation anywhere: that is how
  * prefers-reduced-motion is satisfied here, vacuously and greppably, the same
  * way the nav bar satisfies it.
  */
 
-p:has(.term), li:has(.term), .standfirst:has(.term) { position: relative; }
+p:has(.term), li:has(.term), h2:has(.term), .standfirst:has(.term) { position: relative; }
 
 /* Not a colour-only distinction: the underline is the affordance and --ink is
  * the body colour, so nothing here depends on hue. */

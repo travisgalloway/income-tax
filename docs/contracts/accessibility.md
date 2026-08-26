@@ -652,6 +652,15 @@ say so.
      | Tab (from it) | moves to `.term-more`, the popover's own link; **popover stays open**. **Actual**: `.term-more`, `href="/income-tax/glossary#payroll-tax"`, still open | moves to the next focusable and the popover closes. **Actual**: landed on the next marked term's trigger, the first term's `aria-expanded` back to `false`, exactly 1 popover open (the new one) |
      | Shift-Tab | closes, moves to the previous element | moves back to the trigger; **popover stays open**. **Actual**: `aria-expanded="true"`, 1 open |
      | Enter / Space | opens; **does not navigate** | `.term-more` navigates to `/glossary#<slug>` |
+
+     **Re-verified 2026-08-26**, Chromium 151 (Playwright MCP), `/economy`: an `<a>` synthesizes a
+     click on Enter but not on Space, so Space had no handler and fell through to its native
+     default — scrolling the page — until this pass added an explicit `keydown` intercept in
+     `termPopovers()`. **Actual**, after the fix: focusing `.term-trigger[data-term="real"]`,
+     closing with Escape, then pressing Space — `aria-expanded` `false` → `true`, `activeElement`
+     unchanged (still the trigger), `location.href` unchanged, `window.scrollY` **0** before and
+     after. The row above previously carried no **Actual** line, unlike its neighbors; this is
+     that gap closed, not a re-statement of an old result.
      | Escape | closes; **focus stays exactly where it is**. **Actual**: `activeElement` still the trigger, `window.scrollY` 0 before and after | closes; focus returns to the trigger. **Actual**: `activeElement` the trigger, `scrollY` unchanged |
 
      **The refinement, recorded rather than silently implemented.** #47's checklist says "Tab again
