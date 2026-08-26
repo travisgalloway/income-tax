@@ -49,7 +49,7 @@ when the code merges.
 
 | ID | Capability | UI | Data | Status | Issue | Contract |
 |----|-----------|----|------|--------|-------|----------|
-| REF-1 | /sources renders SOURCES.md in full, including known discrepancies | done | done | Shipped | #8 | contracts/interfaces/content-sources.md |
+| REF-1 | /sources renders SOURCES.md in full, including known discrepancies — and the register is now **gated, not merely rendered**: every source cited by a published output's `_meta.source` must be findable in SOURCES.md or the build fails (see DATA-3) | done | done | Shipped | #8, #39 | contracts/interfaces/content-sources.md |
 
 ## Cross-cutting
 
@@ -57,5 +57,6 @@ when the code merges.
 |----|-----------|----|------|--------|-------|----------|
 | DATA-1 | Every pipeline output is JSON-Schema validated on every build; an output with no schema fails the build rather than being skipped, so coverage cannot silently lapse as the population grows | n/a | done | Shipped | #14, #37 | contracts/interfaces/*.md § Schema |
 | DATA-2 | The pipeline emits every CBO price series the sections need (CPI-U, chained CPI-U, core CPI-U, core PCE), rejects the one known corrupt upstream bracket row loudly at ingest and would catch a new duplicate bracket floor on the published output, and drift-checks both halves of the debt split | n/a | done | Shipped | #38 | contracts/interfaces/economy-data.md, contracts/interfaces/bracket-history-data.md |
+| DATA-3 | Every source a published output cites is registered in SOURCES.md, the document /sources renders in full; the reconciliation runs unconditionally on every build, so a cited-but-unregistered source fails the build rather than shipping unnoticed | n/a | done | Shipped | #39 | contracts/interfaces/content-sources.md § Every cited source is registered |
 | A11Y-1 | Shared-layer accessibility: no-JS data tables, named figure/nav landmarks, focusable skip target, SVG focus ring, JS-off chart legibility, token contrast enforcement, static conformance suite | done | n/a | Shipped | #15 | contracts/accessibility.md |
 | A11Y-2 | Keyboard and assistive-technology sweep across all three routes and `/sources` — executed in a browser 2026-08-24 and 2026-08-26 (Chrome 151, WebKit 26.5): keyboard traversal, roving tabindex and focus restoration, 390px with scripting on and off, rendered-pixel contrast, and the greyscale pass with computed per-chart luminance ratios; results in `contracts/accessibility.md` § Manual pass results, FAILs filed as #62–#66, #69–#79. Remaining: the screen-reader passes on all four pages and the focus-ring check in Safari.app, which no agent can execute — **#80 blocks `Shipped`** | none | n/a | In progress | #30 | contracts/accessibility.md |

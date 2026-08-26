@@ -1661,3 +1661,103 @@ def test_chained_and_core_cpi_are_index_levels_not_rates():
     # A level compounds; a year-over-year rate would stay in single digits.
     assert rows[2024]["chained_cpiu"] > rows[2002]["chained_cpiu"] > 20
     assert rows[2024]["core_cpiu"] > 5 * rows[1958]["core_cpiu"]
+
+
+# ---- #39: the source register ----------------------------------------------
+
+def test_source_register_covers_every_published_output():
+    """#39 criterion 5. The population is `src/data/*.json`, not the entries that
+    happen to exist in the register, so output number fifteen cannot ship with an
+    unchecked source line. The converse is asserted too: an entry left behind by a
+    rename would otherwise keep the count whole while the new output went
+    unregistered."""
+    register = curated.source_register()
+    declared = set(register["outputs"])
+    assert declared == set(OUTPUTS), (
+        f"register/published mismatch — unregistered outputs: "
+        f"{sorted(set(OUTPUTS) - declared)}; register entries with no output: "
+        f"{sorted(declared - set(OUTPUTS))}"
+    )
+
+
+def test_check_sources_is_clean_against_the_real_tree():
+    """The inverse, asserted first so nothing below can pass by failing for an
+    unrelated reason. Every source cited by every published output resolves to an
+    entry in SOURCES.md, which is what /sources renders."""
+    c = validate.Checks()
+    validate.check_sources(c, OUTPUTS)
+    assert c.failures == [], c.failures
+    assert c.passed > 0
+
+
+def test_check_sources_fails_when_a_cited_source_is_not_registered(monkeypatch, tmp_path):
+    """#39 criterion 7, the guard-bites proof and the whole point of the issue.
+    This is the defect the issue was filed for: a source the site cites, absent
+    from the document /sources publishes, with every other check green. Both
+    entries are mutated in one test, so the guard is proven generic over the
+    register rather than special-cased to whichever source happened to be
+    missing, and the test cannot pass by failing for an unrelated reason."""
+    original = (LEGACY / "SOURCES.md").read_text()
+    cases = {
+        "irs_soi_table_5": (
+            "IRS Statistics of Income, SOI Data Book Table 5, "
+            "Gross Collections by Type of Tax and State"
+        ),
+        "census_stc": (
+            "US Census Bureau, Annual Survey of State Government Tax Collections (STC)"
+        ),
+    }
+
+    for key, lead_in in cases.items():
+        assert lead_in in original, f"{lead_in!r} is not in SOURCES.md; the mutation is a no-op"
+        doc = tmp_path / f"SOURCES-{key}.md"
+        doc.write_text(original.replace(lead_in, "Some Other Thing"))
+
+        monkeypatch.setattr(validate, "SOURCES_DOC", doc)
+        c = validate.Checks()
+        validate.check_sources(c, OUTPUTS)
+
+        assert len(c.failures) == 1, f"{key}: expected exactly one failure, got {c.failures}"
+        assert key in c.failures[0]
+        assert "SOURCES.md" in c.failures[0]
+
+
+def test_check_sources_fails_when_an_output_cites_an_unregistered_source(monkeypatch, tmp_path):
+    """#39 criterion 7, the other direction: a source ADDED to an _meta.source and
+    never registered. Rule B alone cannot see this one — the register does not know
+    the new source exists — so the stored source_shape carries it instead, and the
+    unaccounted free text is what fails."""
+    for name in OUTPUTS:
+        shutil.copy2(DATA / f"{name}.json", tmp_path / f"{name}.json")
+    doc = json.loads((tmp_path / "states_tax_mix.json").read_text())
+    doc["_meta"]["source"] += "; Some Unregistered Source"
+    (tmp_path / "states_tax_mix.json").write_text(json.dumps(doc))
+
+    monkeypatch.setattr(validate, "DATA_DIR", tmp_path)
+    c = validate.Checks()
+    validate.check_sources(c, OUTPUTS)
+
+    assert len(c.failures) == 1, f"expected exactly one failure, got {c.failures}"
+    assert "states_tax_mix" in c.failures[0]
+    assert "Some Unregistered Source" in c.failures[0]
+
+
+def test_check_sources_tolerates_a_vintage_refresh(monkeypatch, tmp_path):
+    """The loose-on-purpose proof (E3/E4). An ordinary CBO refresh moves the
+    vintage on both sides and must NOT turn the build red. Without this, a future
+    author tightens `_normalize_source` into an exact match and every upstream
+    republication becomes a failed build — at which point the check gets disabled,
+    and a disabled check is a check that is not looking."""
+    for name in OUTPUTS:
+        shutil.copy2(DATA / f"{name}.json", tmp_path / f"{name}.json")
+    doc = json.loads((tmp_path / "budget.json").read_text())
+    refreshed = doc["_meta"]["source"].replace("Feb 2026", "February 2027")
+    assert refreshed != doc["_meta"]["source"], "budget.json no longer carries the Feb 2026 vintage"
+    doc["_meta"]["source"] = refreshed
+    (tmp_path / "budget.json").write_text(json.dumps(doc))
+
+    monkeypatch.setattr(validate, "DATA_DIR", tmp_path)
+    c = validate.Checks()
+    validate.check_sources(c, OUTPUTS)
+
+    assert c.failures == [], c.failures

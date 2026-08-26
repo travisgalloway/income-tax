@@ -8,6 +8,7 @@ cannot quietly violate one.
 from __future__ import annotations
 
 import json
+import re
 from collections import Counter
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
@@ -20,6 +21,7 @@ from .errors import ValidationFailed
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent / "src" / "data"
 SCHEMA_DIR = Path(__file__).resolve().parent.parent / "schemas"
+SOURCES_DOC = Path(__file__).resolve().parent.parent.parent / "SOURCES.md"
 
 
 class Checks:
@@ -94,6 +96,139 @@ def check_schema(c: Checks, names: list[str]) -> None:
                 False,
                 f"{n}: schemas/{n}.schema.json is not a valid JSON Schema: {exc.message}",
             )
+
+
+_DATEISH = re.compile(
+    r"\b(19|20)\d{2}\b"
+    r"|\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\b"
+    r"|\d+"
+)
+
+
+def _normalize_source(s: str) -> str:
+    """Strip vintages before comparing source strings.
+
+    A CBO February-2026 -> February-2027 refresh must PASS; a source added,
+    renamed or dropped must FAIL. Loose on purpose, the same balance the
+    schemas' bounds strike (docs/test-plan.md, DATA-1): a check that turned
+    every ordinary upstream refresh red would be turned off, and a check that
+    is off is a check that is not looking.
+
+    Applied to BOTH sides of every comparison. SOURCES.md carries the same
+    vintages the _meta.source strings do ("..., February 2026"), so a refresh
+    moves both and only one normalizer may exist.
+    """
+    return " ".join(_DATEISH.sub("", s).split())
+
+
+def _citations(entry: dict[str, Any]) -> list[str]:
+    """The normalized forms an _meta.source may use for one register entry.
+
+    Several are allowed because two outputs legitimately name one source
+    differently: debt.json writes "US Treasury, Historical Debt Outstanding and
+    Debt to the Penny" in full, debt_holders.json uses the short form.
+    """
+    raw = entry.get("cited_as", [])
+    variants = [raw] if isinstance(raw, str) else list(raw)
+    return [_normalize_source(v) for v in variants]
+
+
+def _shape(source: str, keys: list[str], registry: dict[str, Any]) -> str:
+    """The output's _meta.source, normalized, with every citation it declares
+    replaced by its {key}. Longest variant first, so a substitution never eats
+    a prefix of a longer one. Whatever is left as free text is a source the
+    register does not account for."""
+    out = _normalize_source(source)
+    pairs = [(v, k) for k in keys for v in _citations(registry[k])]
+    for variant, key in sorted(pairs, key=lambda p: len(p[0]), reverse=True):
+        out = out.replace(variant, "{" + key + "}")
+    return out
+
+
+def check_sources(c: Checks, names: list[str]) -> None:
+    """Every source a published output CITES must be REGISTERED in SOURCES.md,
+    the document /sources renders in full (#39).
+
+    check_meta only asserts that _meta.source is non-empty and not the summary
+    string "CBO data". NOTHING reconciled a citation against the register, so a
+    source could be named on the page and absent from /sources with every check
+    green -- the same "check that is not looking" shape as #36 (a manual check
+    nobody ran), #37 (a missing schema read as a skip) and #38 (an unregistered
+    prose figure). Adding the missing sources alone would leave the next one
+    just as silent; this is the check that makes the class impossible.
+
+    The register is an explicit curated YAML, never scraped out of SOURCES.md:
+    the document uses **bold** for ordinary emphasis too, so a scraper would
+    count "**Rejected.**" as a source and report a full register while a real
+    source was missing. registered_as is matched INTO SOURCES.md; SOURCES.md is
+    never parsed OUT of.
+    """
+    reg = curated.source_register()
+    registry: dict[str, Any] = reg["registry"]
+    outputs: dict[str, Any] = reg["outputs"]
+
+    doc = _normalize_source(SOURCES_DOC.read_text()) if SOURCES_DOC.exists() else ""
+    c.ok(
+        bool(doc),
+        f"SOURCES.md not found or empty at {SOURCES_DOC}; the source register cannot "
+        f"be checked, and an unreadable register is unknown, never clean",
+    )
+
+    # B -- the #39 defect itself: a cited source absent from what /sources renders.
+    for key, entry in sorted(registry.items()):
+        c.ok(
+            _normalize_source(entry["registered_as"]) in doc,
+            f"{key}: cited by this site but NOT registered in SOURCES.md (looked for "
+            f"{entry['registered_as']!r}). /sources renders SOURCES.md in full, so an "
+            f"unregistered source is one the reader cannot trace (#39).",
+        )
+
+    # C -- no orphan entries left behind by a rename.
+    cited_anywhere = {k for o in outputs.values() for k in o["cites"]}
+    for key, entry in sorted(registry.items()):
+        c.ok(
+            key in cited_anywhere or bool(entry.get("cited_in_prose_only")),
+            f"{key}: in the register but cited by no published output. Add it to an "
+            f"output's cites, or mark it cited_in_prose_only: true with a reason.",
+        )
+
+    for n in names:
+        if n not in outputs:
+            c.ok(
+                False,
+                f"{n}: no entry in curated/sources.yaml. Every published output must "
+                f"declare which sources it cites, or its source line is unchecked (#39).",
+            )
+            continue
+
+        spec = outputs[n]
+        src = _load(n).get("_meta", {}).get("source", "")
+        norm = _normalize_source(src)
+        known = []
+
+        # A -- a citation renamed or dropped out from under the register.
+        for key in spec["cites"]:
+            if key not in registry:
+                c.ok(False, f"{n}: cites unknown register key {key!r}")
+                continue
+            known.append(key)
+            c.ok(
+                any(v in norm for v in _citations(registry[key])),
+                f"{n}: curated/sources.yaml says it cites {key}, but no form of that "
+                f"citation appears in its _meta.source. Rename it in both places, or "
+                f"drop it from cites.",
+            )
+
+        # D -- a source ADDED to the source line and never registered.
+        got = _shape(src, known, registry)
+        c.ok(
+            got == spec["source_shape"],
+            f"{n}: _meta.source no longer matches its registered shape, so a source was "
+            f"added, removed or renamed without updating curated/sources.yaml -- and an "
+            f"unregistered source never reaches /sources (#39).\n"
+            f"  expected: {spec['source_shape']}\n"
+            f"  got:      {got}",
+        )
 
 
 def check_budget(c: Checks) -> None:
@@ -608,6 +743,10 @@ def run(outputs: list[str]) -> Checks:
     c = Checks()
     check_meta(c, outputs)
     check_schema(c, outputs)
+    # Unconditional, next to check_meta and check_schema and never behind an
+    # `if "x" in outputs:` gate: a check skipped because its output was not in
+    # the tier reads exactly like a check that passed (#37).
+    check_sources(c, outputs)
     if "budget" in outputs:
         check_budget(c)
         check_laws(c)

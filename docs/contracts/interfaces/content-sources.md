@@ -48,6 +48,65 @@ prose. If a page needs to say what a source is, it either links to `/sources` or
 `_meta.source` from the relevant dataset (see `budget-data.md`). Two prose copies of the same
 source list is how one of them goes stale while the other is edited.
 
+## Every cited source is registered, and the build enforces it
+
+**A source named in any published output's `_meta.source` must be findable in `SOURCES.md`.**
+`/sources` renders that document in full, so a source that is cited but not registered is one the
+reader cannot trace — and until #39 nothing observed it. `check_meta` asserts only that
+`_meta.source` is non-empty and is not the summary string `"CBO data"`; nothing related a citation
+to the register.
+
+The register lives at **`pipeline/curated/sources.yaml`** and is enforced by
+**`check_sources`** in `pipeline/lib/validate.py`, called from `run()` **unconditionally**,
+alongside `check_meta` and `check_schema` and never behind an `if "x" in outputs:` gate — a check
+skipped because its output was not in the tier reads exactly like a check that passed (#37).
+
+The file has two blocks:
+
+- `registry` — one entry per cited source: `registered_as` (a string that must appear in
+  `SOURCES.md`), `cited_as` (one string, or several, that may appear in an `_meta.source`), and
+  the optional `cited_in_prose_only: true`.
+- `outputs` — one entry per published output: `cites` (register keys) and `source_shape`, that
+  output's `_meta.source` vintage-normalized with every citation replaced by its `{key}`.
+
+Four rules, each a named failure:
+
+| | Rule | Catches |
+|---|---|---|
+| **A** | every declared `cited_as` appears in that output's `_meta.source` | a citation renamed or dropped out from under the register |
+| **B** | every `registered_as` appears in `SOURCES.md` | **the #39 defect** — a cited source absent from `/sources` |
+| **C** | every register entry is cited by some output, or is `cited_in_prose_only` | an orphan entry left behind by a rename |
+| **D** | the recomputed shape equals the stored `source_shape` exactly | a source **added** to `_meta.source` and never registered — the case B cannot see, because the register does not know the new source exists |
+
+Three rules that are not negotiable when editing any of this:
+
+- **The register is curated YAML, never scraped from `SOURCES.md`.** The document uses `**bold**`
+  for ordinary emphasis as well as for source lead-ins (`**Rejected.**`, `**This is "give."**`),
+  so a scraper would count prose emphasis as a source and report a full register while a real
+  source was missing. `registered_as` is matched **into** `SOURCES.md`; `SOURCES.md` is never
+  parsed **out of**.
+- **Both sides are vintage-normalized by the same function**, `_normalize_source`, which strips
+  years, month names and bare digits. `SOURCES.md` carries the same vintages the `_meta.source`
+  strings do, so an ordinary CBO February-2026 → February-2027 refresh moves both and must pass.
+  This is loose on purpose, the same balance the schema bounds strike (`docs/test-plan.md`,
+  DATA-1): a check that turns every upstream republication red is a check that gets disabled.
+- **A source that is cited but genuinely never ingested is an explicit named exemption**, not a
+  weakened assertion. `rockefeller_bop` carries `cited_in_prose_only: true` because §11 names the
+  Rockefeller Institute's balance-of-payments series in body copy and the pipeline ingests
+  nothing from it. That exempts it from C and D, **never from B**.
+
+Adding an output without adding its `outputs` entry fails the build.
+`test_source_register_covers_every_published_output` asserts both directions against
+`src/data/*.json`, so neither an unregistered new output nor an orphan entry left by a rename can
+keep the count whole.
+
+**What this register is not (#57).** It makes the register **complete** — every cited source is
+in `SOURCES.md`. It does not make it **navigable**. Source *tiers* (primary / derived /
+cited-never-ingested) as a reader-facing taxonomy, the format of a `<Figure>`'s "Source:" line,
+and anchor links from that line into `/sources` are #57's scope and are deliberately absent here.
+`cited_in_prose_only` is a build-gate exemption flag, not a tier: do not read it as one, and do
+not grow it into one without #57.
+
 ## §12 — "What this cannot tell you" (`id="limits"`, `src/pages/government/index.astro`)
 
 Structural rules, load-bearing per `BRIEF.md`'s "section 11 is not optional and does not get
