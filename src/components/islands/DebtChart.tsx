@@ -7,32 +7,41 @@
  */
 import { useMemo, useState } from 'react'
 import { line as d3line, area as d3area, curveMonotoneX } from 'd3-shape'
-import * as ToggleGroup from '@radix-ui/react-toggle-group'
 import { Chart } from '../charts/Chart'
 import { AxisBottom, AxisLeft } from '../charts/Axis'
 import { linear, niceExtent } from '../charts/scales'
+import { UnitToggle } from './UnitToggle'
 import { TableView } from './TableView'
 import { useChartSize } from '../charts/useChartSize'
+import {
+  fiscalYear,
+  percent,
+  percentGdp,
+  tick,
+  trillions,
+  trillionsLong,
+  type Unit,
+} from '../charts/format'
 import type { DebtYear } from '../../data/types'
 
-type View = 'nominal' | 'gdp'
+/** Debt has no real-dollar series — deflating a stock of borrowing to FY2025
+ *  dollars would answer no question this section asks — so §1 offers two of the
+ *  three shared units, not all three. */
+type DebtUnit = Extract<Unit, 'nominal' | 'gdp'>
 
-const VIEWS: { value: View; label: string }[] = [
-  { value: 'nominal', label: 'Nominal dollars' },
-  { value: 'gdp', label: '% of GDP' },
-]
+const UNITS: readonly DebtUnit[] = ['nominal', 'gdp']
 
 export function DebtChart({ rows }: { rows: DebtYear[] }) {
-  const [view, setView] = useState<View>('nominal')
+  const [unit, setUnit] = useState<DebtUnit>('nominal')
   const [focus, setFocus] = useState<number | null>(null)
 
   // The share-of-GDP view can only show years with a final GDP denominator.
   // Dropping them is honest; carrying them as zero would not be.
   const shown = useMemo(
-    () => (view === 'gdp' ? rows.filter((r) => r.gdp_share != null) : rows),
-    [rows, view],
+    () => (unit === 'gdp' ? rows.filter((r) => r.gdp_share != null) : rows),
+    [rows, unit],
   )
-  const get = (r: DebtYear) => (view === 'gdp' ? (r.gdp_share as number) : r.debt)
+  const get = (r: DebtYear) => (unit === 'gdp' ? (r.gdp_share as number) : r.debt)
 
   const [boxRef, size] = useChartSize()
   const { width: W, height: H, margin: f } = size
@@ -47,13 +56,10 @@ export function DebtChart({ rows }: { rows: DebtYear[] }) {
   const path = d3line<DebtYear>().x((r) => x(r.y)).y((r) => y(get(r))).curve(curveMonotoneX)
   const fill = d3area<DebtYear>().x((r) => x(r.y)).y0(ih).y1((r) => y(get(r))).curve(curveMonotoneX)
 
-  const fmt = (v: number) => {
-    if (view === 'gdp') return `${v.toFixed(0)}%`
-    if (v === 0) return '$0'
-    return v < 1 ? `$${(v * 1000).toFixed(0)}B` : `$${v.toFixed(0)}T`
-  }
-  const fmtFull = (r: DebtYear) =>
-    view === 'gdp' ? `${(r.gdp_share as number).toFixed(1)}% of GDP` : `$${r.debt.toFixed(2)} trillion`
+  // Read aloud by the point `aria-label`s and the live readout, so the nominal
+  // magnitude is spelled out rather than abbreviated to a letter.
+  const full = (r: DebtYear) =>
+    unit === 'gdp' ? percentGdp(r.gdp_share as number, 1) : trillionsLong(r.debt, 2)
 
   const yTicks = y.ticks(narrow ? 4 : 6)
   const xTicks = x.ticks(narrow ? 4 : 8).filter((t) => Number.isInteger(t))
@@ -63,7 +69,7 @@ export function DebtChart({ rows }: { rows: DebtYear[] }) {
   const active = focus != null ? shown.find((r) => r.y === focus) : null
 
   const label =
-    view === 'gdp'
+    unit === 'gdp'
       ? 'Gross US federal debt as a share of GDP at each fiscal year end from 1995 to 2025, rising from about 66% to about 124%, with a step up in 2020.'
       : 'Total US public debt outstanding at each fiscal year end from 1995 to 2026 in nominal dollars, rising from about $5 trillion to $40 trillion, with the FY2016 value of $19.6 trillion and the FY2026 value of $40 trillion marked to show the ten-year doubling.'
 
@@ -71,19 +77,7 @@ export function DebtChart({ rows }: { rows: DebtYear[] }) {
     <div ref={boxRef}>
       <div className="controls">
         <span className="controls-label" id="debt-units">Measured in</span>
-        <ToggleGroup.Root
-          type="single"
-          value={view}
-          onValueChange={(v) => v && setView(v as View)}
-          aria-labelledby="debt-units"
-          className="unit-toggle"
-        >
-          {VIEWS.map((v) => (
-            <ToggleGroup.Item key={v.value} value={v.value} className="unit-toggle-item">
-              {v.label}
-            </ToggleGroup.Item>
-          ))}
-        </ToggleGroup.Root>
+        <UnitToggle units={UNITS} value={unit} onChange={setUnit} label="Measured in" />
       </div>
 
       <Chart ariaLabel={label} interactive width={W} height={H} margin={f}>
@@ -92,8 +86,8 @@ export function DebtChart({ rows }: { rows: DebtYear[] }) {
             <AxisLeft
               frame={fr}
               ticks={yTicks}
-              format={fmt}
-              label={view === 'gdp' ? 'Percent of GDP' : '$ trillions'}
+              format={(v) => tick(v, unit)}
+              label={unit === 'gdp' ? 'Percent of GDP' : '$ trillions'}
               scale={y}
             />
             <AxisBottom
@@ -124,7 +118,9 @@ export function DebtChart({ rows }: { rows: DebtYear[] }) {
                     textAnchor="end"
                     className="annotation"
                   >
-                    {narrow ? `FY${r.y} ${view === 'gdp' ? `${(r.gdp_share as number).toFixed(0)}%` : `$${r.debt.toFixed(1)}T`}` : `FY${r.y} ${fmtFull(r)}`}
+                    {narrow
+                      ? `${fiscalYear(r.y)} ${unit === 'gdp' ? percent(r.gdp_share as number, 0) : trillions(r.debt, 1)}`
+                      : `${fiscalYear(r.y)} ${full(r)}`}
                   </text>
                 </g>
               )
@@ -144,7 +140,7 @@ export function DebtChart({ rows }: { rows: DebtYear[] }) {
                 // not activate anything. Announcing it as pressable would promise
                 // an action that does not exist.
                 role="img"
-                aria-label={`Fiscal year ${r.y}: ${fmtFull(r)}${r.year_end ? '' : ', not a year-end value'}`}
+                aria-label={`Fiscal year ${r.y}: ${full(r)}${r.year_end ? '' : ', not a year-end value'}`}
                 onFocus={() => setFocus(r.y)}
                 onBlur={() => setFocus(null)}
                 onMouseEnter={() => setFocus(r.y)}
@@ -157,7 +153,7 @@ export function DebtChart({ rows }: { rows: DebtYear[] }) {
 
       <p aria-live="polite" className="readout">
         {active
-          ? `FY${active.y}: ${fmtFull(active)}${active.year_end ? '' : ' (not a fiscal year-end close)'}`
+          ? `${fiscalYear(active.y)}: ${full(active)}${active.year_end ? '' : ' (not a fiscal year-end close)'}`
           : 'Focus or hover a year to read its value.'}
       </p>
 
