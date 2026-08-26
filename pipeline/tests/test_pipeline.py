@@ -2103,3 +2103,51 @@ def test_expand_title_raises_rather_than_publishing_a_placeholder():
 
     verbatim = "Who holds the federal debt"
     assert emit.expand_title("debt_holders", verbatim, None) == verbatim
+
+
+# ---- #41: BRIEF.md's file list against the files that exist -----------------
+
+
+def _brief_file_list() -> list[str]:
+    """The first token of every entry in BRIEF.md's "Files in this folder" fence.
+
+    Raises rather than returning an empty list if the section or its fence has
+    moved: a parser that quietly finds nothing would make this whole check pass
+    by having nothing to check, which is the failure shape the block already
+    demonstrated once.
+    """
+    text = (LEGACY / "BRIEF.md").read_text()
+    m = re.search(r"^## Files in this folder\s*\n+```\n(.*?)^```", text, re.S | re.M)
+    assert m, "BRIEF.md has no '## Files in this folder' fenced block to check"
+    entries = [line.split()[0] for line in m.group(1).splitlines() if line.strip()]
+    assert entries, "the 'Files in this folder' fence is empty"
+    return entries
+
+
+def test_brief_file_list_paths_exist():
+    """#41: the block claimed a `data/` directory that does not exist and a
+    `content/sections.md` that is `sections.md`, and nothing noticed for the
+    length of the build. Existence-only on purpose: an exhaustiveness check
+    would fight every new file in the repository and end up disabled, while this
+    fails on exactly the drift that produced the issue -- a listed path that
+    stops being true."""
+    missing = [e for e in _brief_file_list() if not (LEGACY / e.rstrip("/")).exists()]
+    assert missing == [], f"BRIEF.md lists paths that do not exist: {missing}"
+
+
+def test_brief_file_list_names_the_brief_itself_and_every_root_json():
+    """The two specific claims the block got wrong. The first line named
+    README.md as "this brief" -- README.md exists, so an existence check alone
+    would have passed a line pointing at the wrong file -- and the eight curated
+    inputs sat under a `data/` prefix that never existed."""
+    entries = _brief_file_list()
+    assert "BRIEF.md" in entries
+    assert "sections.md" in entries
+    root_json = sorted(
+        p.name for p in LEGACY.glob("*.json")
+        if p.name not in {"package.json", "package-lock.json", "tsconfig.json"}
+    )
+    assert root_json, "no curated root JSON inputs found; the glob is checking nothing"
+    assert set(root_json) <= set(entries), \
+        f"BRIEF.md omits root inputs: {sorted(set(root_json) - set(entries))}"
+    assert not [e for e in entries if e.startswith(("data/", "content/"))]

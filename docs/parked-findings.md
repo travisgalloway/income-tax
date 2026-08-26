@@ -18,6 +18,11 @@ time. Appended to, never rewritten. None of these have been acted on.
 - [2026-08-23] `BRIEF.md` "Files in this folder" still lists `data/budget-fy1995-2025.json` and
   `content/sections.md`; the repo has the JSON at the root and `sections.md` at the root. Stale
   paths in the brief. Found while working on #2. Severity: documentation, non-blocking.
+  **Resolved 2026-08-26 by #41**, and the delta was wider than this entry recorded: besides the
+  `data/` and `content/` prefixes, the first line named `README.md` as "this brief" (the brief is
+  `BRIEF.md`; `README.md` is a separate file that still exists, so an existence check alone would
+  have passed that line), and `data-report.md` was missing from the list entirely.
+  `test_brief_file_list_paths_exist` now fails if any listed path stops resolving.
 - [2026-08-23] `src/components/islands/DebtChart.tsx:35–100` re-implements the unit toggle and the
   number formatters inline rather than using `UnitToggle` and `charts/format.ts`. Section 4 uses
   the shared ones; §1 could be moved onto them. Found while working on #2. Severity: duplication,
@@ -582,3 +587,12 @@ time. Appended to, never rewritten. None of these have been acted on.
   `docs/contracts/interfaces/pipeline-http.md`, where criterion 12 places it; both V12 and criterion
   12 then pass as written. Found while working on #40. Severity: plan defect, resolved in place,
   non-blocking.
+- [2026-08-26] `BRIEF.md:30-43`, the stack section, is stale in the same way the file list was:
+  it says Vite + React and `public/data/`, while the repository is Astro with React islands and
+  `src/data/`. Out of scope for #41, whose edge case bounds the `BRIEF.md` item to the fenced
+  "Files in this folder" block. Found while working on #41. Severity: documentation, non-blocking.
+- [2026-08-26] `BRIEF.md:222`, immediately below that fence, says "Every file is `{"_meta": {...},
+  "data": ...}`" while the list it describes has always included Markdown files (`SOURCES.md`,
+  `sections.md`, and now `BRIEF.md`, `README.md` and `data-report.md`). The sentence is true of the
+  eight JSON inputs only. Outside the fence, so out of scope for #41. Found while working on #41.
+  Severity: documentation, non-blocking.

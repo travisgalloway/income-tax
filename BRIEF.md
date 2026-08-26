@@ -204,18 +204,19 @@ not support. Do not write "shocking," "staggering," or "crisis."
 ## Files in this folder
 
 ```
-README.md                  this brief
-SOURCES.md                 every source, with vintage and known discrepancies
-content/sections.md        all headings, copy, findings and alt text
-data/
-  budget-fy1995-2025.json      outlays, revenue, deficit, control, 23 laws
-  debt-fy1995-2026.json        total debt and debt-to-GDP
-  debt-holders.json            public vs intragov, domestic vs foreign
-  debt-maturity.json           instrument mix and average maturity
-  revenue-by-source.json       seven revenue lines, 1995 vs 2025
-  income-tax-by-group.json     IRS shares by income percentile
-  income-inequality-rates.json median income, Gini, top statutory rate
-  oecd-tax.json                international comparison
+BRIEF.md                     this brief
+README.md                    how to run the site and the pipeline
+SOURCES.md                   every source, with vintage and known discrepancies
+sections.md                  all headings, copy, findings and alt text
+data-report.md               written by each pipeline run: vintages and figure reconciliation
+budget-fy1995-2025.json      outlays, revenue, deficit, control, 23 laws
+debt-fy1995-2026.json        total debt and debt-to-GDP
+debt-holders.json            public vs intragov, domestic vs foreign
+debt-maturity.json           instrument mix and average maturity
+revenue-by-source.json       seven revenue lines, 1995 vs 2025
+income-tax-by-group.json     IRS shares by income percentile
+income-inequality-rates.json median income, Gini, top statutory rate
+oecd-tax.json                international comparison
 ```
 
 Every file is `{"_meta": {...}, "data": ...}`. The meta block carries title,
