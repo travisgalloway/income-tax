@@ -14,9 +14,11 @@ const OPTIONS: { value: Unit; label: string }[] = [
 
 /** `units` narrows the group to a subset — a series with no real-dollar
  *  denominator (§1's debt) offers nominal and GDP only. Order always comes from
- *  `OPTIONS`, never from the caller, so the same two units sit in the same
- *  places in every group on the page. The generic keeps a narrowed caller's
- *  `onChange` typed to its own union rather than widening it back to `Unit`. */
+ *  `OPTIONS`, never from the caller, so a narrowed group keeps the same
+ *  relative order as the full set — filtering can still shift a remaining
+ *  option's position when an earlier one drops out. The generic keeps a
+ *  narrowed caller's `onChange` typed to its own union rather than widening
+ *  it back to `Unit`. */
 export function UnitToggle<U extends Unit = Unit>({
   value,
   onChange,

@@ -64,7 +64,10 @@ def test_debt_chart_uses_the_shared_unit_toggle() -> None:
 
 def test_section_1_spells_out_its_trillions() -> None:
     if not GOVERNMENT_PAGE.exists():
-        pytest.skip(f"{GOVERNMENT_PAGE} not built. Run `npm run build` first.")
+        pytest.fail(
+            f"{GOVERNMENT_PAGE} not built. Run `npm run build` first — "
+            "a skip here would report green on a tree that was never built."
+        )
     sec = section(GOVERNMENT_PAGE.read_text(encoding="utf-8"), "forty-trillion", "who-holds-it")
 
     # The two annotated marker years — the ten-year doubling the section leads
@@ -79,7 +82,10 @@ def test_section_1_spells_out_its_trillions() -> None:
 
 def test_no_dollar_axis_labels_a_zero_tick_in_billions() -> None:
     if not GOVERNMENT_PAGE.exists():
-        pytest.skip(f"{GOVERNMENT_PAGE} not built. Run `npm run build` first.")
+        pytest.fail(
+            f"{GOVERNMENT_PAGE} not built. Run `npm run build` first — "
+            "a skip here would report green on a tree that was never built."
+        )
 
     # Site-wide, not section 1 only: `tick()` is shared, `niceExtent` anchors
     # every non-negative series at exactly 0, and "$0B" reads as a quantity of
