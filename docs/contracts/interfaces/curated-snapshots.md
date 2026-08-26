@@ -109,6 +109,16 @@ reads `_meta.coverage` off a curated snapshot — it is absent by design, and
 `debt_holders` additionally requires `_meta.deliberate_omissions.federal_reserve_holdings`, so the
 omission documented above cannot be dropped from the payload without failing the build.
 
+One consequence, made explicit by #41. `check_meta_titles` requires every year range in a
+`_meta.title` to be derived from a coverage window, and treats a range with no coverage behind it
+as a **failure**, not a skip — `coverage: null` is unknown, not good news. Four of the curated five
+carry no year range and are unaffected. `cbo_effective_rates` does carry one ("published anchor
+years 1979-2022") and cannot satisfy the rule without acquiring the very `coverage` block this
+section forbids, so it is the single entry in `validate.TITLE_RANGE_EXEMPT`, with that reason
+written into the dict. Its anchor years stay pinned numerically by `check_cbo_effective_rates`
+(1979 and 2022 both present) rather than by the title. Do not add a second entry to that dict for a
+fetched output — give it a coverage block instead.
+
 ### What each schema pins
 
 - **`debt_holders`** — `data` requires `total_debt_t`, `as_of`, `split`, `public_split`,

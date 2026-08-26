@@ -59,6 +59,128 @@ def check_meta(c: Checks, names: list[str]) -> None:
         )
 
 
+# A year range in a title, "FY1962-FY2025" or "1913-2025", either dash. The
+# FY prefix is optional on each end and is NOT part of the captured year.
+TITLE_RANGE = re.compile(r"(?:FY)?(\d{4})\s*[-–—]\s*(?:FY)?(\d{4})")
+# An open-ended title, "FY1950 onward": a start year and no end to assert.
+TITLE_OPEN = re.compile(r"(?:FY)?(\d{4})\s+onward")
+
+# Outputs whose title carries a year range that no _meta.coverage can confirm.
+# An entry is a WRITTEN REASON, never a bare name: an exemption with no reason
+# is how a check turns back into a skip. Keep this dict as small as the facts
+# allow, and delete an entry the moment its output acquires a coverage block.
+TITLE_RANGE_EXEMPT = {
+    "cbo_effective_rates":
+        "published anchor years, not a continuous span, and curated snapshots carry "
+        "_meta.refresh instead of _meta.coverage by contract "
+        "(docs/contracts/interfaces/curated-snapshots.md). The anchor years are pinned "
+        "numerically by check_cbo_effective_rates and test_cbo_effective_rates_are_"
+        "anchor_points_not_a_series instead.",
+}
+
+
+def _coverage_year(v: Any) -> int | None:
+    """A coverage bound as a year. party_splits carries ISO dates, not ints."""
+    if isinstance(v, bool):
+        return None
+    if isinstance(v, int):
+        return v
+    if isinstance(v, str):
+        m = re.match(r"(\d{4})", v)
+        if m:
+            return int(m.group(1))
+    return None
+
+
+def _coverage_windows(coverage: Any) -> list[tuple[int | None, int | None]]:
+    """Every (start, end) pair a coverage block declares, nesting included.
+
+    `start`/`end`, `control_start`/`control_end` and the per-series blocks
+    (`mhi`, `gini`, `top`) are all windows a title is allowed to name.
+    """
+    if not isinstance(coverage, dict):
+        return []
+    starts = {k[: -len("start")]: v for k, v in coverage.items()
+              if isinstance(k, str) and k.endswith("start")}
+    ends = {k[: -len("end")]: v for k, v in coverage.items()
+            if isinstance(k, str) and k.endswith("end")}
+    windows = [(_coverage_year(v), _coverage_year(ends[p]))
+               for p, v in starts.items() if p in ends]
+    for v in coverage.values():
+        windows.extend(_coverage_windows(v))
+    return windows
+
+
+def check_meta_titles(c: Checks, names: list[str]) -> None:
+    """A year range in a title is DERIVED from coverage, never typed by hand.
+
+    The defect this exists for (#41): budget's `_meta.title` read FY1995-FY2025
+    for the length of the build while `_meta.coverage.start` was 1962 and
+    `_meta.notes[3]` said FY1962-FY2025 -- the same file contradicting itself in
+    three places, and a regeneration of `_meta` reproduced it faithfully because
+    the range was hand-curated, not derived. Correcting the string alone would
+    leave the next coverage extension free to do it again.
+
+    Two rules, and the first is the one that bites:
+
+    A. The CURATED title in `curated/notes.yaml` may not carry a literal year.
+       It writes `FY{start}-FY{end}` and `emit.expand_title` fills it, so the
+       range follows the series instead of standing still while it moves. The
+       stale budget title passed rule B on its own -- FY1995-FY2025 is a real
+       window, `control_start`/`control_end`, just not the one the sentence
+       attached it to -- which is exactly why a check on the output alone is
+       not enough.
+    B. Every range in the EMITTED title is a window `_meta.coverage` declares.
+       This catches a published file that has drifted from the curated source
+       (an out-of-tier output, a hand-edit of `src/data/`) and pins which
+       window each templated clause resolved to.
+
+    A title with no year range passes both. A range with no coverage to check it
+    against FAILS unless the output is in TITLE_RANGE_EXEMPT with a reason,
+    because `coverage: null` is unknown, not good news.
+    """
+    for n in names:
+        m = _load(n).get("_meta", {})
+        title = m.get("title") or ""
+        ranges = [(int(a), int(b)) for a, b in TITLE_RANGE.findall(title)]
+        opens = [int(a) for a in TITLE_OPEN.findall(title)]
+        if not ranges and not opens:
+            continue
+        if n in TITLE_RANGE_EXEMPT:
+            c.ok(bool(TITLE_RANGE_EXEMPT[n].strip()),
+                 f"{n}: exempt from the title/coverage check but carries no written reason")
+            continue
+
+        # Rule A, against the curated source the emitted title is built from.
+        try:
+            raw = curated.meta_for(n).get("title") or ""
+        except KeyError as exc:
+            c.ok(False, f"{n}: no curated title to check: {exc}")
+            continue
+        c.ok(not re.search(r"\d{4}", raw),
+             f"{n}: curated/notes.yaml types a literal year into title {raw!r}. Write the range "
+             f"as a coverage placeholder ({{start}}, {{end}}) so it follows the series, or add "
+             f"the output to TITLE_RANGE_EXEMPT with the reason it cannot.")
+
+        # Rule B, against what was actually published.
+        windows = _coverage_windows(m.get("coverage"))
+        if not windows:
+            c.ok(False,
+                 f"{n}: _meta.title claims a year range ({title!r}) but _meta.coverage declares "
+                 f"no start/end window to check it against. Give the output a coverage block, or "
+                 f"add it to TITLE_RANGE_EXEMPT with the reason why it cannot have one.")
+            continue
+        for a, b in ranges:
+            c.ok((a, b) in windows,
+                 f"{n}: _meta.title claims {a}-{b}, which is not a window _meta.coverage "
+                 f"declares ({sorted(w for w in windows if w[0] is not None)}). Template the "
+                 f"title from coverage in curated/notes.yaml rather than typing the range.")
+        for a in opens:
+            c.ok(any(w[0] == a for w in windows),
+                 f"{n}: _meta.title claims {a} onward, but no _meta.coverage window starts "
+                 f"at {a} ({sorted(w for w in windows if w[0] is not None)})")
+
+
 def check_schema(c: Checks, names: list[str]) -> None:
     """Every output build.py emits is schema-validated, with no opt-in. A
     MISSING schema is a FAILURE, not a skip (#37): a validation step that
@@ -759,6 +881,7 @@ def check_states(c: Checks) -> None:
 def run(outputs: list[str]) -> Checks:
     c = Checks()
     check_meta(c, outputs)
+    check_meta_titles(c, outputs)
     check_schema(c, outputs)
     # Unconditional, next to check_meta and check_schema and never behind an
     # `if "x" in outputs:` gate: a check skipped because its output was not in
