@@ -8,12 +8,25 @@ fields here have a convention that silently produces a wrong or misleading cell 
 ## The join
 
 `laws` (`src/data/index.ts`) flattens `budget.data[].L` into one array of 23 `Law` rows.
-`splitByLaw` (same module) is `Map<public_law, PartySplit>` built from `partySplits.data`. Every
-law's `public_law` is a key of this map — all 23 join, 0 unjoined
-(`test_every_law_joins_to_a_counted_split`). `LawExplorer` re-derives this join itself from its
-`laws`/`splits` props (kept as props, not imports, so the island's data entry point stays
-`assertDataset` in `src/data/index.ts`) rather than deriving any vote figure from `Law.vote_character`
-or `Law.legacy_comp` — those two fields are the retired classification and back nothing in this UI.
+`joinLawsToSplits(laws, splits)` in **`src/components/laws/join.ts` is the one and only place in
+`src/` that joins them** to `partySplits.data` on `public_law` (issue #33). Both consumers call it:
+`LawExplorer` with its `laws`/`splits` props, and §9's `aggregate.ts` with the imported datasets.
+Neither builds a map of its own; there is no `splitByLaw` export. All 23 laws join, 0 unjoined
+(`test_every_law_joins_to_a_counted_split`), and
+`test_the_laws_to_splits_join_has_exactly_one_implementation` holds the single-implementation rule
+at the source level.
+
+**Unmatched law: throw, at prerender.** A law whose `public_law` has no matching split — or which
+has no `public_law` at all — fails the build with the law named. It is never dropped: dropping it
+removes a row from the table and shrinks the `N laws · $X.XXT scored` totals line with no signal,
+publishing a wrong number. (Before #33, §8 dropped silently and §9 threw; the throw is what both do
+now.) The throw fires during `astro build`, because Astro server-renders this island even at
+`client:load`. `join.ts` imports **types only** — importing `src/data/index.ts` there would pull
+every dataset JSON into the island's client bundle.
+
+`LawExplorer` takes `laws`/`splits` as props, not imports, so the island's data entry point stays
+`assertDataset` in `src/data/index.ts`. It derives no vote figure from `Law.vote_character` or
+`Law.legacy_comp` — those two fields are the retired classification and back nothing in this UI.
 
 ## `d` vs `d_caucus` — the basis a chart MUST state
 

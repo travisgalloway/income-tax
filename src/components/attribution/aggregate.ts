@@ -1,8 +1,9 @@
 /** Section 9: the same $16.75 trillion, two ways.
  *
  *  Pure derivation, no React and no DOM. Joins `laws` (src/data/index.ts) to
- *  `splitByLaw` (the counted per-party roll-call splits, src/data/party_splits.json)
- *  on `public_law`, drops the two laws that predate the ten-year scoring
+ *  the counted per-party roll-call splits (src/data/party_splits.json) on
+ *  `public_law` — through `../laws/join`, the one implementation of that join,
+ *  shared with §8's law explorer — drops the two laws that predate the ten-year scoring
  *  convention, and buckets the rest two ways: by the counted voting coalition
  *  and by the signing president. Both ways must land on the same total, to the
  *  cent — see the invariant thrown at the bottom of this module.
@@ -12,7 +13,8 @@
  *  This is the same defence-in-depth shape as `assertDataset` in
  *  src/data/index.ts:38.
  */
-import { laws, splitByLaw } from '../../data'
+import { laws, partySplits } from '../../data'
+import { joinLawsToSplits } from '../laws/join'
 import type { PartySplit } from '../../data/types'
 
 export interface Bucket {
@@ -103,12 +105,9 @@ let scoredLaws = 0
 let totalIncThou = 0
 let totalRedThou = 0
 
-for (const law of laws) {
-  const split = splitByLaw.get(law.public_law)
-  if (!split) {
-    throw new Error(`aggregate.ts: ${law.public_law ?? law.name} has no counted split in party_splits.json`)
-  }
-
+// The unmatched-law rule (throw, with the law named) lives in join.ts and is
+// shared with §8 — see docs/contracts/interfaces/attribution.md "## Join key".
+for (const { law, split } of joinLawsToSplits(laws, partySplits.data)) {
   const cKey = coalitionKey(split)
   const cMeta = COALITION_META[cKey]
   if (!coalitionAccum.has(cKey)) coalitionAccum.set(cKey, newAccum(cMeta.detail, law.date))

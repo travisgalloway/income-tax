@@ -6,13 +6,9 @@
  *  reading JSX, and the same functions back the pytest assertions in
  *  `pipeline/tests/test_pipeline.py`. */
 import type { ChamberVote, Law, PartySplit } from '../../data/types'
+import type { Row } from './join'
 
 export type Basis = 'party' | 'caucus'
-
-export interface Row {
-  law: Law
-  split: PartySplit
-}
 
 export interface Filters {
   character: string

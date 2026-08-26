@@ -111,8 +111,8 @@ export function curatedVintage(meta: Meta, asOf: string): string {
 
 export const laws = budget.data.flatMap((y) => y.L)
 
-/** Party split keyed by public law, for joining to the law list. */
-export const splitByLaw = new Map(partySplits.data.map((s) => [s.public_law, s]))
+// The laws-to-splits join lives in src/components/laws/join.ts (issue #33) —
+// the one implementation, shared by §8 and §9. No map is exported from here.
 
 /** _meta.gini_basis, surfaced rather than hardcoded. SOURCES.md: the family
  *  series reads 0.456 for 2024; household series run 0.47-0.49. */

@@ -30,8 +30,8 @@ import {
   totalsOf,
   type Basis,
   type Filters,
-  type Row,
 } from '../laws/derive'
+import { joinLawsToSplits, type Row } from '../laws/join'
 import type { BudgetYear, Law, PartySplit } from '../../data/types'
 
 const FY_START = 1995
@@ -104,15 +104,10 @@ export function LawExplorer({
    *  dataset that defines it. */
   threshold: string
 }) {
-  const splitByLaw = useMemo(() => new Map(splits.map((s) => [s.public_law, s])), [splits])
-  const rows: Row[] = useMemo(() => {
-    const out: Row[] = []
-    for (const law of laws) {
-      const split = law.public_law ? splitByLaw.get(law.public_law) : undefined
-      if (split) out.push({ law, split })
-    }
-    return out
-  }, [laws, splitByLaw])
+  const rows: Row[] = useMemo(() => joinLawsToSplits(laws, splits), [laws, splits])
+  /** The CARES Act's `‡` note. A single-split lookup, not a laws-to-splits
+   *  join, so it does not go through `join.ts`. */
+  const caresNote = useMemo(() => splits.find((s) => s.public_law === '116-136')?.note, [splits])
 
   const [basis, setBasis] = useState<Basis>('caucus')
   const [filters, setFilters] = useState<Filters>({ character: 'all', president: 'all', control: 'all' })
@@ -483,7 +478,7 @@ export function LawExplorer({
         total, and still carry their counted vote.
       </p>
       <p className="prose footnote">
-        <sup>‡</sup> {splitByLaw.get('116-136')?.note}
+        <sup>‡</sup> {caresNote}
       </p>
     </div>
   )
