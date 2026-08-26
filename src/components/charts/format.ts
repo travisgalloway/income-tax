@@ -23,6 +23,15 @@ export function trillions(v: number, digits = 1): string {
   return `$${v.toFixed(digits)}T`
 }
 
+/** The same magnitude as `trillions`, with the word spelled out. Screen-reader
+ *  text and annotations use this because `trillions`' `"T"` suffix is announced
+ *  as a bare letter ("nineteen point five seven T"), which is not a unit a
+ *  listener can act on. Sighted-only surfaces — axis ticks, table cells under a
+ *  unit-bearing header — keep the compact form. */
+export function trillionsLong(v: number, digits = 2): string {
+  return `$${v.toFixed(digits)} trillion`
+}
+
 export function percentGdp(v: number, digits = 1): string {
   return `${v.toFixed(digits)}% of GDP`
 }
@@ -38,6 +47,11 @@ export function dollars(v: number): string {
 /** Axis tick text: compact, but never unitless. */
 export function tick(v: number, unit: Unit): string {
   if (unit === 'gdp') return `${v.toFixed(0)}%`
+  // Zero has no magnitude, so it takes no magnitude suffix: the billions branch
+  // below would render the axis floor as "$0B", which reads as a quantity of
+  // billions rather than as nothing. Every non-negative series is anchored at
+  // exactly 0 by `niceExtent`, so this tick is on most nominal axes on the site.
+  if (v === 0) return '$0'
   return Math.abs(v) < 1 ? `$${(v * 1000).toFixed(0)}B` : `$${v.toFixed(v % 1 === 0 ? 0 : 1)}T`
 }
 

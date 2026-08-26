@@ -52,14 +52,27 @@ The nominal/real/%-of-GDP toggle and its vocabulary:
   (`n_` / `r_` / `g_`, the field-family prefix a dataset carries per unit).
 - `trillions`, `percentGdp`, `percent`, `dollars` — full-value formatters for tables, tooltips and
   screen-reader text.
-- `tick(v, unit)` — compact axis-tick text, always unit-bearing.
+- `trillionsLong(v, digits = 2)` — `$19.57 trillion`, the magnitude spelled out. Use it wherever the
+  text is read aloud (`aria-label`s, the `aria-live` readout, on-chart annotations at wide
+  viewports); `trillions`' `T` suffix is announced as a bare letter, which is not a unit a listener
+  can act on. Sighted-only surfaces keep the compact form.
+- `tick(v, unit)` — compact axis-tick text, always unit-bearing. **Exactly zero renders `$0`, not
+  `$0B`**: zero has no magnitude, so it takes no magnitude suffix, and `niceExtent` puts an
+  exact-zero tick on every non-negative axis on the site.
 - `value(v, unit)` — the standard "full value or `'no data'` if `v == null`" formatter for
   table/inspector text.
 - `fiscalYear(y)` — `FY{y}`.
 
-Any dollar/GDP chart with a unit toggle should read from this module rather than re-deriving
-formatters inline (`DebtChart.tsx` predates this module and inlines its own — a parked
-simplification, not a pattern to copy forward).
+`UnitToggle`'s props are `{ value, onChange, label = 'Units', units? }`. `units` narrows the group
+to a subset of `Unit` for a series with no denominator for every unit — `units={['nominal', 'gdp']}`
+on §1's debt, which has no real-dollar series. Order always comes from the module's own `OPTIONS`,
+never from the caller, so a unit sits in the same place in every group on the page. The component is
+generic in its unit union (`UnitToggle<U extends Unit>`), so a narrowed caller's `onChange` stays
+typed to its own union instead of widening back to `Unit` and needing a cast.
+
+Every unit-toggled chart on the site reads its toggle and its number text from this module; a
+section that re-derives an equivalent formatter inline is a defect, not a local style. The one
+sanctioned bare-number surface is a `TableView` cell, whose unit is carried by the column header.
 
 ## `useChartSize` (`src/components/charts/useChartSize.ts`)
 
