@@ -3,8 +3,11 @@
 Mirrors `docs/feature-matrix.md` row for row, by the same ID. This repository has three automated
 lanes: `cd pipeline && uv run pytest` (in `pipeline/tests/test_pipeline.py`), Astro's build-time
 checks (`npx astro check`, `npm run build`), and — since #34 — `npm run test:unit`, which is
-`node --test` over `src/**/*.test.ts` with no test dependency, relying on Node's native type
-stripping (**Node >= 22.18 / >= 23.6 required**). There is still no e2e or component-rendering
+`node --test` over `src/**/*.test.ts` — no test framework, no runner dependency, relying on Node's
+native type stripping (**Node >= 22.18 / >= 23.6 required**). The one package it did cost is
+`@types/node`, needed so that `npx astro check` can resolve `node:test` and `node:assert/strict`
+and keep typechecking the test files rather than skipping them. There is still no e2e or
+component-rendering
 runner: `test:unit` covers pure TypeScript modules only (today, `src/components/charts/scales.ts`),
 so React island and interaction coverage remains manual and named explicitly rather than left
 implicit. `test:unit` is not wired into CI: `deploy.yml` only builds (on `node-version: 22`, which
