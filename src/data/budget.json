@@ -22,20 +22,20 @@
    "ctl": "D/R if unified, M if split",
    "t": "handoff year",
    "p": "president",
-   "L": "major laws enacted that fiscal year: n name, a public law, v ten-year score $T (positive = adds to deficit), c vote character, comp PLR/PLD/XP, date, pres, cfg control at enactment"
+   "L": "major laws enacted that fiscal year: n name, a public law, v ten-year score $T (positive = adds to deficit), c vote character, rollcall counted per-party split, legacy_comp the retired PLR/PLD/XP classification (never read), date, pres, cfg control at enactment"
   },
   "notes": [
    "Mandatory is gross; add 'or' to get the net figure used in charts, so ma+or+di+ni = ot.",
-   "Vote composition is exact only for PL 115-97 (TCJA). All others are classified party-line or cross-party from published vote character. See SOURCES.md.",
+   "Vote composition is COUNTED, not classified: per-party final-passage splits for all 23 laws come from Voteview roll calls, carried in party_splits.json and joined on public_law. See SOURCES.md.",
    "FY2025 is attributed to Trump II under the June-of-fiscal-year rule.",
    "Series now run FY1962-FY2025. Party control is curated and covers FY1995-FY2025 only; years outside that range carry control: null and must not render a control strip."
   ],
   "provenance": {
    "generator": "monthly/cbo.py",
-   "git_sha": "5920f6f",
-   "generated_at": "2026-08-22T17:51:54Z",
+   "git_sha": "4750a98",
+   "generated_at": "2026-08-26T14:59:26Z",
    "vintage": "2026-02",
-   "retrieved_at": "2026-08-22T17:33:54Z"
+   "retrieved_at": "2026-08-26T14:59:26Z"
   },
   "coverage": {
    "start": 1962,

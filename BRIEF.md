@@ -176,11 +176,15 @@ so they cannot be violated by accident.
    contains at least one trap. The mandatory spending field is gross and needs
    `or` added to it. The Gini is for families, not households. The income tax
    shares exclude payroll tax.
-6. **Vote composition is partly classified, not counted.** Only PL 115-97 (TCJA)
-   has verified per-party splits. Everything else is classified party-line or
-   cross-party from published vote character. Section 8 must say so plainly and
-   section 11 repeats it. Do not render classified data in a way that implies
-   precision it does not have.
+6. **Vote composition is counted, not classified.** All 23 laws carry per-party
+   final-passage splits counted from Voteview roll calls
+   (`src/data/party_splits.json`), cross-checked against House Clerk roll call
+   699 for PL 115-97. Democratic votes are shown on the caucus basis by default
+   and a chart must state which basis it uses. A null chamber means no roll call
+   exists — almost always a voice vote — and is never rendered as unanimity.
+   Section 8 must say so plainly and section 12 repeats it. `legacy_comp` and
+   `vote_character` are the retired classification; never derive a vote figure
+   from them.
 
 ---
 
