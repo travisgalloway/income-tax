@@ -28,7 +28,11 @@ failure. Enforced by `test_every_figure_has_an_accessible_name`.
 **Every `<TableView>` is a native `<details>`/`<summary>` disclosure, present in the
 server-rendered HTML with scripting off.** Not a component that unmounts its content while closed.
 The open/close label swaps via `.tableview[open] .tv-open`/`.tv-close` CSS, never a `useState`
-read. Enforced by `test_every_chart_has_a_real_table_in_the_static_html`.
+read. Enforced by `test_every_chart_has_a_real_table_in_the_static_html`. `open` is **not** restored
+across a history navigation — that is the platform's behaviour, not ours, and it is right: the
+disclosure is a request to see a table now, not a preference. The reader's *position* is preserved
+regardless; see "Scroll restoration is the platform's" below for what absorbs the resulting
+11,854px document shrink, and where it does not.
 
 **Every `Column` names a unit.** A bare-number table column is a bug (`TableView.tsx`'s `Column`
 type has no optional escape hatch).
@@ -83,6 +87,14 @@ Four things follow, and each is load-bearing.
   would collapse the distinction, and `test_section_state_selector_is_scoped_and_not_bare` fails if
   one appears anywhere in `global.css`. The mark is colour-only on purpose, so that changing it
   reflows nothing in a 13rem rail; the non-visual channel is the `aria-current` attribute itself.
+- **After a history restore the spy marks the *restored* section, not the pre-restore one.** The
+  restore emits scroll events like any other scroll; `schedule()` coalesces them into a single
+  `requestAnimationFrame` and `apply()` therefore reads the settled position. Observed on
+  `/government/` across an 11,854px document shrink (all 13 tables open on leaving, none on
+  returning): Chromium marks `the-laws`, matching `#the-laws` at `top 64`, and WebKit marks
+  `where-money-comes-from`, matching *its* restored position — the two engines restore to different
+  places (below) and the spy agrees with each. Exactly 2 anchors carry `aria-current="true"` in both
+  cases, one per list.
 
 **No scripted scrolling exists anywhere in the navigation chrome.** The spy reads scroll position
 and writes an attribute; it moves nothing. The rail is not a scroll container and the panel is never
@@ -132,6 +144,42 @@ links and the page's full contents list, internally scrolled (`overflow-y: auto`
   is the trigger, stop 3 is inside `main`. It skips nothing inside `main` and is therefore not a
   bypass mechanism for #69. Its own height is `--navbar-h`, 52px, which is also the offset
   `section[id]` and `#main` subtract via `scroll-margin-top` below `62rem`.
+
+**Scroll restoration is the platform's, and four declarations would take it away.** Back and
+Forward return the reader to the place they were reading because `history.scrollRestoration` is at
+its `'auto'` default and **nothing in `src/` assigns it**. There is no implementation of ours to go
+wrong, and deliberately so:
+
+- **No storage.** Not `sessionStorage`, not `localStorage`, not `history.state`. The history entry
+  the browser already keeps *is* the storage. So there is no storage read, and therefore no
+  private-mode failure mode, no quota failure, and no second source of truth that can disagree with
+  the browser's own. Reconciling two correct answers is how you get one wrong one.
+- **`'auto'`, never `'manual'`.** Setting `'manual'` opts out of the restore *and* of scroll
+  anchoring's correction of it, replacing a pixel-exact result with a hand-rolled offset.
+- **Position wins over the anchor.** Returning to a URL carrying a hash restores the *position*,
+  not the fragment — a reader who arrived at `/government/#by-state` and read on to `#the-laws`
+  comes back to `#the-laws`. That is the right resolution, because it preserves where they were
+  *within* a section rather than snapping to its top.
+- **Scroll anchoring is what makes the two hard cases work**, and it is invisible: it is a default
+  (`overflow-anchor: auto`) that nothing declares. It absorbs the ~115px of layout change that lands
+  *after* the restore when `useChartSize` swaps its WIDE preset for NARROW on every chart, and the
+  11,854px document shrink when the `<details>` tables come back closed.
+
+Four one-line changes elsewhere in this repo would each remove all of that silently, with every
+other test still green — so five static guards in `pipeline/tests/test_accessibility.py` exist to
+turn red instead:
+
+| Change that would break restoration | Guard |
+|---|---|
+| `history.scrollRestoration = 'manual'` | `test_scroll_restoration_is_left_to_the_browser` |
+| `html { scroll-behavior: smooth }` | `test_no_stylesheet_requests_smooth_scrolling` |
+| `overflow-anchor: none` on `html`/`body`/`main` | `test_scroll_anchoring_is_not_disabled` |
+| an `unload` or `beforeunload` listener (disqualifies the page from bfcache) | `test_the_layout_registers_no_bfcache_disqualifying_listener` |
+| a `scrollIntoView`/`scrollTo`/`behavior:` reaching a built page | `test_no_built_page_scripts_a_scroll` |
+
+Each asserts an absence and is paired with a positive assertion that fails if the file it reads is
+empty, moved or gutted. **WebKit has no scroll anchoring**; what that costs is measured under
+"Scroll restoration and the back button (#46)" below.
 
 **`<main id="main" tabindex="-1">`.** The skip link's target must be programmatically focusable, or
 activating it scrolls the viewport while leaving keyboard focus on the link itself (this was D3 on
@@ -316,6 +364,80 @@ of the eight checks, and it is filed and open.
 | `javaScriptEnabled: false` | **0** `[aria-current="true"]` and **2** `[aria-current="page"]` on all five routes. Paired against the same context with scripting **on**, which shows 2 at load with no scrolling — the difference is the proof that the script, not the server, writes the mark. #36's guard is intact in the same run: 14 of 14 `figure.figure svg.chart` server-render on `/government` with scripting off |
 | Layout shift on a mark change | the rail's contents `<ol>` measures 208 × 314.34 before and after the mark moves — identical |
 | Desktop-unchanged proof | with the stylesheet content-hash normalised, `dist/government/index.html` and `dist/index.html` each differ from their pre-change build by **92 added lines and zero removed lines**, all of them the `sectionSpy()` block. No markup changed |
+
+### Scroll restoration and the back button (#46)
+
+**EXECUTED 2026-08-26**, Playwright against `astro preview`, in **both** engines — Chromium
+**151.0.7922.34** and **WebKit 26.5** — at 390×844 and 1440×900. Nothing in `src/` changed for this
+issue; the numbers below are what the platform does on its own, and they are why.
+
+**bfcache was not in play for a single measurement.** A `window.__marker` set before leaving did not
+survive any back navigation, so every number here is the *harder* full-reload path, not the free
+one. `history.scrollRestoration` read `'auto'` in every context.
+
+Sequence 1 — scroll to a section, navigate to `/sources/`, `history.back()`, wait 2.5s for
+hydration to settle, and compare the section's `getBoundingClientRect().top`:
+
+| Route, anchor | 390×844 Chromium | 390×844 WebKit | 1440×900 Chromium | 1440×900 WebKit |
+|---|---|---|---|---|
+| `/economy/` `#prices-rates` | **+0.3px** | −114.7px | **0.0px** | **0.0px** |
+| `/households/` `#who-pays` | **−0.7px** | −238.7px | **0.0px** | −124.0px |
+| `/government/` `#by-state` | **+0.3px** | −237.7px | **0.0px** | −4.0px |
+
+Chromium is exact, and stays exact through Forward-then-Back-again (`#by-state` at `top 64.58`,
++0.3px, on the second return). The `top 64` is `calc(var(--navbar-h) + 0.75rem)` = 52 + 12 — #42's
+`scroll-margin-top`, honoured by the restore with no accounting of our own.
+
+**WebKit's drift is the missing scroll anchoring, and its size is the charts' hydration growth.**
+WebKit restores the saved `scrollY` faithfully and then does not correct for the ~115–240px the
+document gains above the reader when `useChartSize` swaps WIDE for NARROW. The worst case measured
+is **238.7px against an 844px viewport — 28% of one screen**, which leaves the reader inside the
+section they left. Per #46's plan, drift within one viewport on the plain Back case ships as-is: a
+restore that is within a screen returns the reader to what they were reading, and the alternative —
+a hand-rolled `pageshow` re-scroll — would be a second, worse implementation of a thing the browser
+already does better on the engine where it works at all.
+
+Sequence 2, hash URL — arrive at `/government/#by-state`, read on to `#the-laws`, leave, return:
+**both engines restore the position, not the anchor**, at both viewports. `#the-laws` comes back to
+`top 63.8` (Chromium 390) / `top 63.6` (WebKit 390) / `top 0.27` (both, 1440) — 0.0px drift in every
+case — while `#by-state` sits 9,237px (Chromium) / 9,287px (WebKit) below the viewport top. Nothing
+re-jumps to the fragment. The URL still carries `#by-state`.
+
+Sequence 3, opened tables — open all **13** `main details` on `/government/`, scroll to
+`#the-laws`, leave, return. `open` is not restored by either engine, so the document comes back
+**11,854–11,970px shorter** (37,226 → 25,256px in Chromium at 390):
+
+| | Chromium 390×844 | WebKit 390×844 | Chromium 1440×900 | WebKit 1440×900 |
+|---|---|---|---|---|
+| `#the-laws` drift | **−0.1px** | **−6,826px** | **−0.4px** | **−6,592px** |
+| `aria-current="true"` section | `the-laws` | `where-money-comes-from` | `the-laws` | `where-money-comes-from` |
+| `aria-current="true"` count | 2 | 2 | 2 | 2 |
+
+Chromium's scroll anchoring absorbs the whole 11,970px shrink and lands the reader on the pixel.
+**WebKit does not**: it restores `scrollY 15,287` into a 25,445px document and the reader arrives
+roughly eight screens above where they left. This is a real gap on iOS Safari, it is **open**, and
+it is recorded rather than repaired here: #46's decision procedure keys the repair to the plain Back
+case, which WebKit passes, and the repair — a `pageshow` re-scroll to the nearest section — is the
+manual implementation criterion 1 of that issue exists to keep out. The scroll spy is not part of
+the gap: it marks `where-money-comes-from`, which is where WebKit actually put the reader.
+
+With `javaScriptEnabled: false`, sequence 1 restores `scrollY 6000` to `scrollY 6000` — **0px
+drift** — in both engines at both viewports. Restoration was never ours, so switching scripting off
+changes nothing about it. The disclosure is still a native `<details>` with **18** links and **0**
+`<button>`s, and it still opens on click at 390×844.
+
+**Affordance, measured from `#limits` — the deepest section on each route.** At 390×844 the
+`.navbar-disclosure > summary` is on screen (`top 3.5`, `bottom 47.5`, inside an 844px viewport) and
+clears the tap-target floor on all three routes with a contents list: **83.8 × 44** on `/economy/`,
+**107.0 × 44** on `/households/`, **109.5 × 44** on `/government/` (WebKit; Chromium within 1px). No
+new control was built for #46 — this is #42's trigger, and the folding call is recorded on the
+issue. At 1440×900 no affordance is needed and that is measured too: `.navbar` computes
+`display: none`, `.rail` computes `position: sticky`, and from `#limits` the rail's whole 636px runs
+`top 0` → `bottom 636` inside a 900px viewport with the **twelfth** of twelve contents links on
+screen. Chromium tab stops from load are `.skip-link` → the `<summary>` → inside `main` at 390×844.
+
+*Not executed:* whether a screen reader **reports** the restored position on return — #80. And
+nothing re-runs any of the above; #67 is the browser-driven regression guard that would.
 
 ### Greyscale, per chart
 

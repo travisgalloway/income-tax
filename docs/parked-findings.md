@@ -707,3 +707,48 @@ time. Appended to, never rewritten. None of these have been acted on.
   recorded under `REF-2` in `docs/test-plan.md`. The analogous gap for `check_schema` was closed by
   a guard-bites unit test (DATA-1); this one has no equivalent. Found while working on #45.
   Severity: coverage gap, non-blocking.
+- [2026-08-26] `src/components/charts/useChartSize.ts:9-10` — `WIDE` (720×396, ratio 1.82) and
+  `NARROW` (360×316, ratio 1.14) have different aspect ratios, so every chart changes rendered
+  height when the first client measurement swaps presets. Measured on `/government` at 390×844:
+  the document moves ~115–240px after hydration. Chromium's scroll anchoring hides this from the
+  back button, but the first-paint reflow is real and WebKit does not absorb it (see the next
+  finding). A `min-height`/`aspect-ratio` reservation on the chart container would remove it at
+  source. Found while measuring scroll restoration for #46. Severity: perf/CLS, non-blocking.
+- [2026-08-26] WebKit 26.5 has no scroll anchoring, and iOS Safari is this site's narrow-viewport
+  audience. Measured for #46 on 2026-08-26 against `astro preview`: plain Back drifts up to
+  **238.7px** at 390×844 (`/households#who-pays`), which is inside the section the reader left and
+  therefore ships as-is per #46's decision procedure — but with all 13 `<details>` tables opened
+  before leaving, the return lands **6,826px** short at 390×844 and **6,592px** at 1440×900,
+  because WebKit restores the saved `scrollY` verbatim into a document 11,854px shorter. Chromium
+  is within 0.4px in the same sequence. Numbers and both sequences are recorded in
+  `docs/contracts/accessibility.md` § Scroll restoration and the back button (#46). Not repaired
+  here: the repair is a scripted `pageshow` re-scroll, which is the manual implementation #46's
+  criterion 1 exists to keep out. Severity: engine-specific behaviour gap, user-visible on iOS,
+  non-blocking.
+- [2026-08-26] Under WebKit 26.5 the first Tab stop on `/government/` is the bar's `<summary>`, not
+  `.skip-link` — WebKit does not put `<a>` elements in the keyboard tab order unless macOS full
+  keyboard access is on, so the skip link is unreachable by Tab in that default configuration. A
+  platform setting rather than a repo defect, and document order is unchanged
+  (`test_nav_bar_does_not_precede_the_skip_link` is green), but it means the skip link's benefit
+  does not reach a default-configured Safari user. Found while measuring #46's affordance tab
+  order. Severity: platform behaviour, worth a note in the contract, non-blocking.
+- [2026-08-26] `pipeline/tests/test_accessibility.py` — `narrow_media_block()` and the new
+  `layout_inline_script()` are two "extract from a file or raise" helpers with the same contract
+  and near-identical shape. If a third consumer appears, they should share one base rather than
+  growing a third copy. Found while adding #46's guards. Severity: test maintainability,
+  non-blocking.
+- [2026-08-26] `src/pages/index.astro` passes no `sections` prop and has no `#limits`, unlike
+  `/economy`, `/households` and `/government`. Several issue bodies (including #46's, corrected
+  before planning) assume `/` has a contents list. Whether `/` should get one is a content
+  question, not a bug. Found while validating #46's checklist. Severity: docs/consistency,
+  non-blocking.
+- [2026-08-26] `docs/test-plan.md`, the `A11Y-4` row carries two unescaped `|` characters inside
+  backtick spans, so it renders with two spurious extra columns; every other row in that table has
+  six. Pre-existing — #44's row, not touched by #46. Found while adding the `A11Y-5` row beneath
+  it. Severity: docs rendering, non-blocking.
+- [2026-08-26] No browser-driven regression guard exists for any of this repo's manual passes —
+  every measurement in #42's, #44's and now #46's contract sections is a dated hand observation
+  that nothing re-runs. #67 is the open issue that would add one. Restated here because #46's
+  entire deliverable *is* a guard, and the guard it adds is static only: it can prove no
+  declaration removes scroll restoration, and cannot prove the restoration still lands. Severity:
+  process, non-blocking, already tracked.
