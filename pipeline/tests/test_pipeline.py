@@ -7,6 +7,7 @@ site will actually ship, not what a builder would produce in isolation.
 
 from __future__ import annotations
 
+import base64
 import copy
 import json
 import re
@@ -18,6 +19,7 @@ import jsonschema
 import pytest
 
 from lib import curated, validate
+from lib import fetch as lib_fetch
 from lib.errors import SourceUnavailable
 from lib.fetch import fetch
 
@@ -289,6 +291,99 @@ def test_truncated_body_is_treated_as_failure():
     with pytest.raises(SourceUnavailable):
         fetch("https://fred.stlouisfed.org/graph/fredgraph.csv?id=GINIALLRF",
               source="test", min_bytes=10_000_000, use_cache=False)
+
+
+# ---- the on-disk cache contract ------------------------------------------
+#
+# Offline by construction: each test points CACHE_DIR at a tmp_path, primes it
+# by hand in the exact shape lib/fetch.py writes, and aims the call at an
+# unroutable host. A cache hit therefore returns; a cache miss can only raise.
+# That is what makes them able to prove "no request happened" rather than
+# merely "the right value came back".
+
+UNROUTABLE = "https://no-such-host.invalid/never-resolves.csv"
+
+
+def _prime_cache(cache_dir: Path, key: str, body: dict) -> Path:
+    """Write a cache entry exactly as lib/fetch.py would, under `key`."""
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    path = lib_fetch._cache_path(key)
+    path.write_text(json.dumps(body))
+    return path
+
+
+def test_warm_text_cache_is_served_without_a_request(tmp_path, monkeypatch):
+    """The text cache shape is `{url, text, retrieved_at}`. A change to it
+    would silently invalidate every warm entry on disk and turn a warm run
+    into a full refetch -- which looks like success."""
+    monkeypatch.setattr(lib_fetch, "CACHE_DIR", tmp_path)
+    _prime_cache(tmp_path, UNROUTABLE, {
+        "url": UNROUTABLE,
+        "text": "year,value\n2024,1\n",
+        "retrieved_at": "2026-08-26T00:00:00Z",
+    })
+
+    resp = lib_fetch.fetch(UNROUTABLE, source="test")
+
+    assert resp.from_cache is True
+    assert resp.text == "year,value\n2024,1\n"
+    assert resp.retrieved_at == "2026-08-26T00:00:00Z"
+
+
+def test_binary_cache_round_trips_through_base64(tmp_path, monkeypatch):
+    """The binary cache shape is `{url, b64, retrieved_at}` -- a distinct key
+    from the text shape, and the bytes must come back byte-for-byte."""
+    monkeypatch.setattr(lib_fetch, "CACHE_DIR", tmp_path)
+    payload = b"PK\x03\x04\x00\x01\xff\xfe not utf-8"
+    _prime_cache(tmp_path, UNROUTABLE, {
+        "url": UNROUTABLE,
+        "b64": base64.b64encode(payload).decode("ascii"),
+        "retrieved_at": "2026-08-26T00:00:00Z",
+    })
+
+    resp = lib_fetch.fetch_bytes(UNROUTABLE, source="test")
+
+    assert resp.from_cache is True
+    assert resp.content == payload
+
+
+def test_post_json_cache_key_includes_the_payload(tmp_path, monkeypatch):
+    """USASpending is one URL serving many fiscal-year windows. If the key were
+    the bare URL, window B would be served window A's body."""
+    monkeypatch.setattr(lib_fetch, "CACHE_DIR", tmp_path)
+    payload_a = {"fiscal_year": 2023, "scope": "state"}
+    payload_b = {"fiscal_year": 2024, "scope": "state"}
+    key_a = UNROUTABLE + "|" + json.dumps(payload_a, sort_keys=True)
+    _prime_cache(tmp_path, key_a, {
+        "url": key_a,
+        "text": json.dumps({"results": ["fy2023"]}),
+        "retrieved_at": "2026-08-26T00:00:00Z",
+    })
+
+    # Payload A is served from the cache, so the key derivation is intact...
+    assert lib_fetch.post_json(UNROUTABLE, payload_a, source="test") == {"results": ["fy2023"]}
+
+    # ...and payload B misses it, reaching the (unroutable) network instead of
+    # quietly returning payload A's body.
+    with pytest.raises(SourceUnavailable):
+        lib_fetch.post_json(UNROUTABLE, payload_b, source="test")
+
+
+def test_a_binary_cache_entry_does_not_crash_a_text_fetch(tmp_path, monkeypatch):
+    """The one intentional behaviour change in #40. Both cache shapes share
+    `_cache_path`, so a URL cached as bytes and later fetched as text used to
+    raise KeyError out of `cached["text"]`. It must be a cache miss -- and
+    therefore SourceUnavailable here -- exactly as the reverse case already
+    was."""
+    monkeypatch.setattr(lib_fetch, "CACHE_DIR", tmp_path)
+    _prime_cache(tmp_path, UNROUTABLE, {
+        "url": UNROUTABLE,
+        "b64": base64.b64encode(b"binary body").decode("ascii"),
+        "retrieved_at": "2026-08-26T00:00:00Z",
+    })
+
+    with pytest.raises(SourceUnavailable):
+        lib_fetch.fetch(UNROUTABLE, source="test")
 
 
 # ---- counted party splits ------------------------------------------------
