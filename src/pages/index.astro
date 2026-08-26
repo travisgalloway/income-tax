@@ -9,10 +9,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
 
 /* Page-local, and deliberately NOT an entry in `routeSections`. That map's keys are the domain of
  * a glossary term's `first_used.route`, and a term whose first prose use is the front door is a
- * category error — this page names no term. A `'/'` key would also arm a real landmine:
- * `test_every_first_used_route_carries_its_term_marker` builds `DIST / route / 'index.html'`, and
- * `pathlib` treats an absolute segment as a reset, so `'/'` would silently read the filesystem
- * root. See the header of src/data/sections.ts. */
+ * category error — this page names no term. See the header of src/data/sections.ts. */
 const sections: RouteSection[] = [
   { id: 'what-this-is', label: 'What this site is' },
   { id: 'where-to-start', label: 'Where to start' },

@@ -14,11 +14,11 @@
  *  page-local array declared in its own frontmatter, not an entry here. This map's keys are the
  *  domain of `ContentRoute` below — the routes a glossary term's `first_used.route` may name —
  *  and a term whose first prose use is the front door is a category error; the front door names
- *  no term. A `'/'` key would also arm a landmine:
- *  `test_every_first_used_route_carries_its_term_marker` builds `DIST / route / 'index.html'`,
- *  and `pathlib` treats an absolute segment as a reset, so `'/'` would silently read the
- *  filesystem root. A glossary term whose first prose use is on `/` or `/sources` is a build
- *  failure, which is correct — none is.
+ *  no term. Widening `ContentRoute` would also make the failure mode obscure: a term declaring
+ *  `first_used.route: '/'` would type-check here and then `KeyError` inside
+ *  `test_every_first_used_route_carries_its_term_marker`, which resolves the route through its
+ *  own `_PAGE_FOR_ROUTE` dict of the three content routes. A glossary term whose first prose use
+ *  is on `/` or `/sources` is a build failure, which is correct — none is.
  *
  *  Consumers: the three route pages (each passes its own slice to BaseLayout),
  *  src/pages/glossary.astro, and src/pages/index.astro, which reads only the `.length` of each

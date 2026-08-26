@@ -9,7 +9,7 @@ when the code merges.
 
 | ID | Capability | UI | Data | Status | Issue | Contract |
 |----|-----------|----|------|--------|-------|----------|
-| INTRO-1 | Front door — what the site is, and which route answers which question | placeholder | n/a | In progress | #43, #48 | — |
+| INTRO-1 | Front door — what the site is and what it refuses to do; five cards naming every destination, the three routes carrying `Route N of 3` and a section count derived from `routeSections`; how to read a figure (the ladder, the caption's Units/Note/Source, view-as-table, the unit toggle); and the data-integrity promise stated as four build-time failures. Static HTML, no island, no chart, no term marker | done | n/a | Shipped | #43, #48 | contracts/accessibility.md |
 
 ## Economy route (`src/pages/economy/index.astro`)
 
