@@ -363,9 +363,10 @@ time. Appended to, never rewritten. None of these have been acted on.
   swatches become the same grey. Direction survives only because every tile carries a `+`/`−` glyph;
   magnitude survives only in the table below.
   **(3)** `src/components/islands/StateTaxMix.tsx` — the figure renders **no legend and no in-plot
-  label at either viewport**, and its segments carry neither a `class` nor an `aria-label`. Its
-  three categories (1.44:1 apart in greyscale) are named nowhere inside the figure; only the
-  disclosure table names them. Every other chart on the site labels its series in-plot.
+  visible label at either viewport**. Each segment does carry an `aria-label` (`role="img"` on the
+  segment `<g>`), so the categories are named in the accessibility tree, but not in a `class` and
+  not visually on screen; only the disclosure table names them for a sighted reader. Every other
+  chart on the site labels its series in-plot.
   **(4)** `src/components/islands/PricesAndRates.tsx` — the rates panel puts `--ink-soft`
   (`#5A6268`) and `--rev-ci` (`#55606B`) in the same plot at **1.03:1**, the tightest pair on the
   Economy route. Three of the five lines cross repeatedly; only the end-of-line labels tell them
