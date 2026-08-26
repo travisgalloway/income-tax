@@ -286,13 +286,19 @@ def _shape(source: str, keys: list[str], registry: dict[str, Any]) -> str:
     return out
 
 
+_FRONTMATTER_RE = re.compile(r"\A---\r?\n(.*?\r?\n)---\r?\n?", re.DOTALL)
+
+
 def _glossary_frontmatter() -> list[tuple[str, dict[str, Any]]]:
     """(term id, parsed frontmatter) for every src/content/glossary/*.md, sorted.
 
     The term id is the filename stem, which is what Astro's glob loader derives the
     entry id from -- see docs/contracts/interfaces/glossary.md. Frontmatter is the text
-    between the first two `---` fences; nothing calls render() on these entries, so the
-    body is empty by contract and is not read here.
+    between the opening `---` fence and the next line that is exactly `---`; nothing
+    calls render() on these entries, so the body is empty by contract and is not read
+    here. Matching fences by line position (not `str.split("---")`) means a `---` inside
+    a YAML string -- e.g. a source title containing an em dash written as `---` -- can't
+    be mistaken for a fence.
 
     Returns [] for an absent or empty directory. That is NOT treated as clean: the
     caller turns it into a named failure, the #37 rule.
@@ -301,8 +307,8 @@ def _glossary_frontmatter() -> list[tuple[str, dict[str, Any]]]:
         return []
     out: list[tuple[str, dict[str, Any]]] = []
     for path in sorted(GLOSSARY_DIR.glob("*.md")):
-        parts = path.read_text().split("---")
-        data = yaml.safe_load(parts[1]) if len(parts) >= 3 else None
+        match = _FRONTMATTER_RE.match(path.read_text())
+        data = yaml.safe_load(match.group(1)) if match else None
         out.append((path.stem, data if isinstance(data, dict) else {}))
     return out
 

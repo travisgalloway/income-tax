@@ -36,6 +36,20 @@ function loadRegistry(): Record<string, RegistryEntry> {
         `Every glossary term cites a register key; refusing to build against an empty register.`,
     )
   }
+  // A malformed entry (missing/empty `registered_as`) must fail the build, not render a blank
+  // source line — a silently empty citation is worse than a missing one, because it looks green.
+  for (const [key, entry] of Object.entries(registry)) {
+    if (
+      typeof entry?.registered_as !== 'string' ||
+      entry.registered_as.trim().length === 0
+    ) {
+      throw new Error(
+        `pipeline/curated/sources.yaml registry entry '${key}' has no non-empty registered_as ` +
+          `(looked in ${REGISTER_PATH}). Refusing to build against a register entry that would ` +
+          `render a blank source line.`,
+      )
+    }
+  }
   return registry
 }
 
