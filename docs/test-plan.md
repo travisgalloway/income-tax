@@ -17,6 +17,12 @@ Wiring the lanes into a per-push check is #67; until then, the pytest source-lev
 `test_nice_extent_zero_anchors_a_non_negative_series` is what holds the `niceExtent` rule
 unattended.
 
+## Introduction route
+
+| ID | Pipeline (pytest) | Build-time | Manual | Gaps |
+|----|--------------------|-----------|--------|------|
+| INTRO-1 | the generic conformance suite in `tests/test_accessibility.py`, which picks up `dist/index.html` from its `dist/**/index.html` glob | `npx astro check`, `npm run build`, `grep -o 'href="/income-tax/economy"' dist/index.html` | none — no chart, no interaction | the page is #43's placeholder, not the front door; #48 replaces it wholesale and rewrites this row |
+
 ## Economy route
 
 | ID | Pipeline (pytest) | Build-time | Manual | Gaps |

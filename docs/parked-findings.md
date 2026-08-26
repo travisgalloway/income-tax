@@ -611,3 +611,17 @@ time. Appended to, never rewritten. None of these have been acted on.
   `sections.md`, and now `BRIEF.md`, `README.md` and `data-report.md`). The sentence is true of the
   eight JSON inputs only. Outside the fence, so out of scope for #41. Found while working on #41.
   Severity: documentation, non-blocking.
+- [2026-08-26] The base-prefix idiom is now hand-rolled in four places:
+  `src/layouts/BaseLayout.astro:15`, `src/pages/government/index.astro:32`,
+  `src/pages/economy/index.astro:10` and `src/pages/index.astro:4`. A shared `src/lib/href.ts`
+  would collapse them. Found while moving the economy route for #43. Severity: maintainability,
+  non-blocking.
+- [2026-08-26] The repository has no `CLAUDE.md`, so the stack's coding norms and the shared
+  definition of done live nowhere a fresh agent reads. Found while working on #43. Severity:
+  process, non-blocking.
+- [2026-08-26] `.claude/plans/issue-43.md` criterion 9 states its proof as
+  `grep -c 'dist/index.html' docs/test-plan.md` returning `0`, but the plan's own step 6 mandates
+  an `INTRO-1` test-plan row that deliberately names `dist/index.html` twice. The two cannot both
+  hold literally. The Verification block's inline comment scopes the intent correctly — "0 in the
+  ECO-* rows" — and that is how #43 satisfied it: 0 within the Economy-route section, 1 across the
+  whole file. Found while working on #43. Severity: plan defect, resolved in place, non-blocking.

@@ -1,0 +1,23 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '')
+---
+
+<BaseLayout
+  title="Income & Tax | US federal finance"
+  description="The American economy and government in numbers."
+>
+  <p class="kicker">Introduction</p>
+  <h1>Income &amp; Tax</h1>
+  <p class="standfirst">the American economy and government in numbers</p>
+  <section id="routes">
+    <p class="prose">Three routes, meant to be read in order.</p>
+    <ol class="prose">
+      <li><a href={`${base}/economy`}>The economy</a> — growth, work, prices, and the split between labor and capital.</li>
+      <li><a href={`${base}/households`}>Households</a> — what a household earns, and what it actually pays.</li>
+      <li><a href={`${base}/government`}>Government</a> — the debt, the budget, and the laws that made them.</li>
+    </ol>
+    <p class="prose">Every figure's source is listed in <a href={`${base}/sources`}>Sources</a>.</p>
+  </section>
+</BaseLayout>
