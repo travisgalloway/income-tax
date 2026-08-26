@@ -157,7 +157,7 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
         /* A same-page anchor does not reload, so without this the panel stays
          * open covering the section it just scrolled to. */
         panel.addEventListener('click', function (e) {
-          if (e.target.closest('a')) close(false)
+          if (e.target instanceof Element && e.target.closest('a')) close(false)
         })
         document.addEventListener('click', function (e) {
           if (!d.contains(e.target)) close(false)
