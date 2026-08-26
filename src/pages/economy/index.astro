@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import Figure from '../../components/Figure.astro'
+import Term from '../../components/Term.astro'
 import { RealGdpLogScale } from '../../components/islands/RealGdpLogScale'
 import { GrowthAndShadow } from '../../components/islands/GrowthAndShadow'
 import { WhoWorks } from '../../components/islands/WhoWorks'
@@ -27,9 +28,9 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
     <p class="kicker"><span class="section-no">Section 1</span></p>
     <h2>Seventy-five years, ten times the output</h2>
     <p class="standfirst">
-      Real GDP was $2.38 trillion in fiscal 1950 and $23.72 trillion in fiscal 2025, both in
-      FY2025 chained dollars. That is 9.95 times as much output, an average of 3.1% a year over
-      75 years.
+      <Term id="real">Real</Term> GDP was $2.38 trillion in fiscal 1950 and $23.72 trillion in
+      fiscal 2025, both in FY2025 <Term id="chained-dollars">chained dollars</Term>. That is 9.95
+      times as much output, an average of 3.1% a year over 75 years.
     </p>
     <p class="finding">
       Real GDP grew 895% between FY1950 and FY2025, from $2.383T to $23.718T in FY2025 chained
@@ -60,9 +61,10 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
       2020 dip read as bends in a line whose slope is otherwise close to constant.
     </p>
     <p class="prose">
-      Fiscal years, not calendar years. FY2025 ran October 2024 to September 2025. The CBO file
-      runs to FY2036, and everything after FY2025 is a baseline projection, drawn as a dashed
-      line beyond the marked boundary. Nominal GDP in FY1995 was $7.56 trillion, the same
+      <Term id="fiscal-year">Fiscal years</Term>, not calendar years. FY2025 ran October 2024 to
+      September 2025. The CBO file runs to FY2036, and everything after FY2025 is a baseline
+      projection, drawn as a dashed line beyond the marked boundary.
+      <Term id="nominal">Nominal</Term> GDP in FY1995 was $7.56 trillion, the same
       denominator the government route divides by.
     </p>
   </section>
@@ -72,7 +74,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
     <h2>Output per hour, and what a household got</h2>
     <p class="standfirst">
       Between 1984 and 2024, output per hour in the nonfarm business sector rose 116.5%. Real
-      median household income rose 38.6%. Both are indexed to 1984 = 100.
+      <Term id="median">median</Term> household income rose 38.6%. Both are indexed to 1984 = 100.
     </p>
     <p class="finding">
       Indexed to 1984 = 100, output per hour reached 216.5 by 2024 and real median household
@@ -304,7 +306,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
     <p class="prose">
       The <a href={`${base}/households/`}>households route</a> picks up from here: what a household
       actually earns, how far the spread between households runs, and what is actually paid in
-      tax once payroll tax is counted.
+      tax once <Term id="payroll-tax">payroll tax</Term> is counted.
     </p>
   </section>
 </BaseLayout>

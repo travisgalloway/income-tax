@@ -145,6 +145,52 @@ links and the page's full contents list, internally scrolled (`overflow-y: auto`
   bypass mechanism for #69. Its own height is `--navbar-h`, 52px, which is also the offset
   `section[id]` and `#main` subtract via `scroll-margin-top` below `62rem`.
 
+**An in-prose glossary marker is a link that also discloses, and it is native (#47).** Each marked
+term is `src/components/Term.astro`: a `<span class="term" data-term="<slug>">` wrapper holding a
+real `<a class="term-trigger" href="/income-tax/glossary#<slug>">` around the prose word, and,
+**as a DOM descendant of that same wrapper**, a `<span class="term-pop" id="def-<slug>" hidden>`
+carrying the term's `short` and a link to the full entry. `termPopovers()` in `BaseLayout.astro`
+is the only script; there is no island and no `client:` directive. Five things about that shape
+are load-bearing and each is easy to undo while "improving" it:
+
+- **No Radix primitive, for the third time.** `TableView`'s original `Collapsible` left every
+  disclosure unreachable with scripting off because `Collapsible.Content` is not in the DOM while
+  closed (#15); #42 evaluated `Dialog` for the nav panel and chose native again. A Radix `Popover`
+  here would portal the definition, unmount it while closed, make every marked term a React island
+  (~25 on `/government/`), and inherit the positioning machinery that clips the filter menus at
+  390px (#62). `@radix-ui/react-popover` is not a dependency and must not become one. Radix
+  `Tooltip` is rejected separately: it is not focusable, it dismisses on pointer-out, and a link
+  inside it is unreachable.
+- **The popover is a DOM descendant of the wrapper.** `pointerleave` on the wrapper does not fire
+  when the pointer travels from the trigger onto the popover, so WCAG 1.4.13 *hoverable* is met by
+  the DOM shape; the 150ms close delay is redundancy, not the mechanism. Portalling it, or
+  absolutely positioning it against anything but its own paragraph, breaks the criterion
+  structurally and no delay recovers it.
+- **Nothing closes on a timer** — 1.4.13 *persistent*. Only Escape, a Tab out of the wrapper, a
+  click outside, or another term opening. Do not add an auto-close "for tidiness".
+- **`left: 0; right: 0` against the paragraph**, whose `max-width` is `--measure`. The popover is
+  exactly as wide as the prose it interrupts, so it cannot overflow any viewport the prose fits —
+  no collision detection, no width clamp, and #62's defect out of reach by construction.
+- **`preventDefault()` on click is uniform across pointer types**, never branched on
+  `pointerType`: hover emulation is where phone support goes wrong, and a branch is a second path
+  nobody tests on a phone. One tap opens and never navigates first; navigation is the popover's own
+  link. Modifier-, middle- and shift-clicks are left to the platform, so open-in-new-tab still
+  reaches `/glossary`.
+
+**With scripting off** each marker is a plain, followable link — never a `<button>`, never an inert
+element — and the definition is still in the served bytes as the trigger's `aria-describedby`
+target, which every major AT includes in the accessible description even while `hidden`. **There is
+no live region**: no `aria-live`, no `aria-atomic`, no `role="status"` in the added markup or
+script. #44 established that this layout deliberately has none, and a popover announcing on every
+hover would be the same defect class, louder. **And no transition and no animation exists on any
+`.term*` rule**, so `prefers-reduced-motion` is satisfied vacuously and greppably here too.
+Enforced by the five `test_*term*` checks in `pipeline/tests/test_accessibility.py`.
+
+The triggers are inline text inside sentences, so their hit area is the line box (~29px at
+17px/1.7) and they fall under WCAG 2.2 SC 2.5.8's explicit **Inline exception** — a genuinely
+different case from #73's 3.3px chart data points, which have no such exception. #73 is neither
+fixed nor worsened here.
+
 **Scroll restoration is the platform's, and four declarations would take it away.** Back and
 Forward return the reader to the place they were reading because `history.scrollRestoration` is at
 its `'auto'` default and **nothing in `src/` assigns it**. There is no implementation of ours to go
@@ -345,6 +391,33 @@ wrong), and the site renders **zero `<input>` and zero `<select>` elements**. Co
 on all four routes at both viewports: 0 errors, 0 warnings. #70 (three in-prose links skip the base
 path and 404 in production) came out of the same review; it is a link-target defect rather than one
 of the eight checks, and it is filed and open.
+
+### In-prose glossary term markers (#47)
+
+**EXECUTED 2026-08-26**, Chromium **151.0.7922.174** (Playwright MCP, `Chrome/151.0.0.0` UA),
+against `astro preview` at 390×844 and 1280×900. Console clean throughout: **0 errors, 0 warnings**,
+scripting on and off. 26 markers: 6 on `/economy`, 8 on `/households`, 12 on `/government`. `/`,
+`/sources` and `/glossary` carry **0** and the IIFE returns on its first line there — verified,
+with no console error (E9).
+
+| Check | Route | Result | Tool | Evidence |
+|---|---|---|---|---|
+| M9 390px clipping, longest `short` | all three | PASS | Chromium 151, 390×844 | Every one of the 26 popovers opened in turn. `documentElement.scrollWidth` **390** at every open; every `getBoundingClientRect()` fully inside the viewport; every popover **350px** wide — one value on all three routes, because the width is the paragraph's, not the content's. Longest `short` per route: `real` 137 chars (`/economy`), `marginal-rate` 148 (`/households`), `debt-held-by-the-public` 152 (`/government`) — all inside. `offsetParent` is `P.standfirst` or `P.prose` in every case, never a higher ancestor (E4 holds). Exactly **1** popover open at a time across all 26 (E3), and 0 after the sweep. |
+| M9 line-break case (E5) | `/households` | PASS | Chromium 151, 390×844 | `marginal-rate` wraps two line boxes at 390px; its popover's top sits **0px** below the trigger's `getBoundingClientRect().bottom`, i.e. below the *whole* trigger rather than through it. Every single-line marker measures 0–1px. |
+| M10 keyboard, 1280 and 390 | `/households`, `/government` | PASS | Chromium 151, 1280×900 and 390×844 | Full expected/actual table in checklist item 8. Tab in opens; Tab reaches `.term-more` with the popover open; Tab again closes it and continues; Shift-Tab from `.term-more` returns to the trigger with it still open; Escape closes with `activeElement` on the trigger and `window.scrollY` **0** before and after, from both positions. No trap in either direction. Contention re-check in the same session: the first `/government/` filter dropdown still closes on Escape and restores focus to its own trigger, and `#navbar-disclosure` still closes on Escape and returns focus to its `<summary>`. |
+| M11 touch and pointer, 1.4.13 | `/government` | PASS | Chromium 151, 390×844 | One `pointerType: 'touch'` tap on `outlays` opened the popover and `location.href` was **unchanged**; a second tap did not navigate either. A real mouse move from the trigger onto the popover left it open (`:hover` on the popover confirmed) — **hoverable**, met by the DOM shape. Held open **3s** with no pointer or key input — **persistent**, no auto-close timer exists. **Dismissable** is Escape (M10) and an outside click, both verified. Clicking `.term-more` navigated to `/income-tax/glossary#outlays` with the `<dt>` at **64px**, clear of the 52px bar (E6). Platform affordances intact: `metaKey` and middle-click clicks were **not** `preventDefault`ed and opened real new tabs on `/glossary#real`; a plain left click **was**. |
+| M12 JavaScript disabled | all three | PASS | Chromium 151, `javaScriptEnabled: false`, 390×844 and 1280×900 | All 26 triggers are `<a>` — **0** `<button>`, 0 inert elements. Every `href` starts `/income-tax/glossary#`, so no unbased link reaches a reader. **0** triggers carry `aria-expanded` (nothing advertises a state it does not have). **0** popovers have any rendered height, and every `short` is nonetheless in the DOM as the trigger's `aria-describedby` target. Following a marker landed on `/glossary#real`, `<dt>` at 64px at 390 and at the top at 1280. `scrollWidth` equals the viewport at both. Console: 0 errors, 0 warnings. |
+
+The `<button>` count is **unchanged** from the pre-change build — `/government/` 57, `/households/`
+2, everything else 0 — which is the form criterion 5 takes here, because islands server-render real
+buttons and the right assertion is "unchanged", not "zero".
+
+**Not executed, and not executable here.** Whether the definition announces as the trigger's
+*description* under VoiceOver + Safari and NVDA + Firefox. No assistive technology exists in this
+environment and none can be driven from an exec agent — **NOT EXECUTED, human required, #80**, the
+same disposition as items 2, 9, 10 and 13. The machine-provable half is `aria-describedby` resolving
+to an in-DOM element inside the same wrapper carrying the term's `short` verbatim, with no portal
+and no live region, and it is asserted by the five `test_*term*` checks.
 
 ### Reading position in the contents list (#44)
 
@@ -565,6 +638,62 @@ say so.
      decision and its four reasons are recorded in Conventions above, so a later reader does not
      re-litigate it. Whether the native disclosure *announces* its state correctly is a
      screen-reader question and is **NOT EXECUTED** — #80.
+
+   - **In-prose glossary term markers** (`.term`, `src/components/Term.astro`, #47) — the fourth
+     control shape, and the first that is a **link which also discloses**: 26 of them, 6 on
+     `/economy`, 8 on `/households`, 12 on `/government`. Not a Radix `Popover` and not a
+     `Tooltip`; the reasoning is in Conventions above. Keyboard model **EXECUTED 2026-08-26**,
+     Chromium **151.0.7922.174** (Playwright MCP) against `astro preview` at 1280×900 and 390×844.
+     **PASS on every line**, expected and actual:
+
+     | Key | On the trigger | In the open popover |
+     |---|---|---|
+     | Tab (to it) | opens; `aria-expanded` goes `false` → `true`. **Actual**: arriving on `.term[data-term="payroll-tax"]` from the rail's last contents link opened it, `aria-expanded="true"`, 1 popover open | — |
+     | Tab (from it) | moves to `.term-more`, the popover's own link; **popover stays open**. **Actual**: `.term-more`, `href="/income-tax/glossary#payroll-tax"`, still open | moves to the next focusable and the popover closes. **Actual**: landed on the next marked term's trigger, the first term's `aria-expanded` back to `false`, exactly 1 popover open (the new one) |
+     | Shift-Tab | closes, moves to the previous element | moves back to the trigger; **popover stays open**. **Actual**: `aria-expanded="true"`, 1 open |
+     | Enter / Space | opens; **does not navigate** | `.term-more` navigates to `/glossary#<slug>` |
+
+     **Re-verified 2026-08-26**, Chromium 151 (Playwright MCP), `/economy`: an `<a>` synthesizes a
+     click on Enter but not on Space, so Space had no handler and fell through to its native
+     default — scrolling the page — until this pass added an explicit `keydown` intercept in
+     `termPopovers()`. **Actual**, after the fix: focusing `.term-trigger[data-term="real"]`,
+     closing with Escape, then pressing Space — `aria-expanded` `false` → `true`, `activeElement`
+     unchanged (still the trigger), `location.href` unchanged, `window.scrollY` **0** before and
+     after. The row above previously carried no **Actual** line, unlike its neighbors; this is
+     that gap closed, not a re-statement of an old result.
+     | Escape | closes; **focus stays exactly where it is**. **Actual**: `activeElement` still the trigger, `window.scrollY` 0 before and after | closes; focus returns to the trigger. **Actual**: `activeElement` the trigger, `scrollY` unchanged |
+
+     **The refinement, recorded rather than silently implemented.** #47's checklist says "Tab again
+     moves on and closes it", which describes a one-tab-stop trigger. The same issue also — and
+     correctly, as its own reason for rejecting `Tooltip` — requires a `/glossary` link *inside* the
+     popover, and a link inside an open popover is a focusable node in DOM order. So a marked term
+     is **one tab stop while closed and two while open**, and "Tab moves on" happens one stop later
+     than that sentence implies. That satisfies the criterion's actual requirement — in the natural
+     focus order, not skipped and not a tab trap — in both directions, which the Shift-Tab row
+     above verifies.
+
+     **No focus trap and no focus move on open, so no focus return is owed.** Opening moves nothing
+     (unlike the nav panel, which focuses its container); the only scripted focus call in the whole
+     IIFE is Escape's return from inside the popover, and it is guarded so it cannot re-enter the
+     trigger's own focus handler and reopen what Escape just dismissed.
+
+     **The Escape listener is bound to the wrapper `<span class="term">`, not `document`** — the
+     same decision the nav panel made, for the same reason. Re-checked in the same session at
+     390×844: the first `/government/` filter dropdown still opens, still closes on Escape, and
+     still restores focus to its own trigger (`aria-expanded` `false,false,false`, `activeElement`
+     the trigger), and `#navbar-disclosure` still closes on Escape and returns focus to its
+     `<summary>`.
+
+     **What scripting off costs, stated rather than implied.** Verified at 390×844 and 1280×900
+     with `javaScriptEnabled: false`, all three routes: all 26 markers are `<a>` elements with a
+     base-path-joined `href`, **zero** carry `aria-expanded`, **zero** popovers have any rendered
+     height, every `short` is in the DOM as the trigger's `aria-describedby` target, and clicking a
+     marker lands on `/glossary#<slug>` with the `<dt>` at 64px, clear of the 52px bar. Console
+     clean, 0 errors and 0 warnings. What is lost is exactly the disclosure: no hover, no
+     focus-open, no Escape, no dismissal. Nothing becomes inert and nothing becomes a `<button>`.
+
+     Whether the definition *announces* as the trigger's description is a screen-reader question
+     and is **NOT EXECUTED** — #80.
 
    Any PR that introduces the first consumer of a further primitive adds its keyboard-model check
    here, with expected and actual key behaviour, before this item can be marked anything but blocked

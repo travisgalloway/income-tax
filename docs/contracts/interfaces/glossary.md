@@ -153,15 +153,82 @@ Three first-pass candidates are **deliberately absent**, each confirmed by grep 
 
 A term is added here when the prose uses it, not in anticipation of prose that might.
 
+## In-prose markers — the `<Term>` consumer seam (#47)
+
+`src/components/Term.astro` is the collection's first in-prose consumer. It is the reason `short`
+is capped at 180 characters: that text is now **rendered inside a sentence's paragraph**, not only
+on `/glossary`, so lengthening the cap widens a popover in three routes' prose.
+
+```astro
+<Term id="net-interest">net interest</Term>
+```
+
+| Seam | Rule |
+|---|---|
+| **Id resolution** | `await getEntry('glossary', id)`, never a direct `.md` import — `content-sources.md` records that an import passes `astro check` and fails `npm run build` under rolldown. A `id` naming no entry is a **named build-time throw**, the sixth in the collection's set: a marker left behind by a rename fails the build rather than rendering a dead link. |
+| **Display text** | A `<slot>`, never `entry.data.term`. Prose says "net interest" mid-sentence and the entry says "Net interest"; the anchor is filename-derived, so display text is free. This is what keeps "#47 rewords no prose" true — a word is wrapped, the sentence is untouched. |
+| **`href`** | `${BASE_URL without trailing slash}/glossary#${id}`, the same `join()` idiom `BaseLayout.astro:14-15` defines, re-derived rather than exported (exporting it would mean a second `---` block there and a re-export surface four call sites could drift from). Both the trigger and the popover's "Full entry" link carry it. `test_every_term_marker_is_a_real_link` asserts the joined form positively; an unbased `/glossary#…` never reaches production. |
+| **Popover id** | `def-<slug>`, never the bare slug. `net-interest` is *both* a glossary slug and a Government section id, and a page carrying both would repeat an id. |
+| **`short` is load-bearing twice** | It is the `/glossary` entry's opening sentence *and* the popover's whole body, referenced by the trigger's `aria-describedby` — so it is in the accessible description of a link in running prose, with scripting on or off. |
+| **Zero islands** | No `client:` directive, no component `<script>`. The disclosure is `termPopovers()`, one `is:inline` IIFE in `BaseLayout.astro` shared by every marked term on the page. |
+
+### One marker per term per page, and which occurrence gets it
+
+**First use is per page, not per site.** A reader arriving directly at `/households` has not read
+`/economy`, so `first_used` is *not* the marking list — it is the site-wide first use, a strict
+subset. `nominal` is `first_used` on `/economy` and is marked independently on `/households` and
+`/government` too.
+
+> On each of the three route pages, for each glossary term, wrap the **first occurrence in
+> rendered prose** — text inside `<p class="prose">`, `<p class="standfirst">`, `<h2>` or `<li>` —
+> where the term is used *as the term*. Nothing else.
+
+Four exclusions, each for its own reason:
+
+- **`<Figure>` props.** `ariaLabel`, `title`, `source`, `note` and `vintage` are `string` props
+  validated at `Figure.astro:37-41`. They cannot carry markup — captions are not merely out of
+  scope, they are impossible.
+- **Island props.** Same reason.
+- **`<p class="finding">`.** The single-sentence assertion restating each figure is deliberately
+  terse and number-dense; the marked set belongs in the explanatory prose a reader is reading.
+- **Second and subsequent uses**, and an occurrence that is already the text of an `<a>` — an
+  anchor cannot nest, so `net interest` on `/economy` (its only occurrence there is the cross-route
+  link in §4) is marked on `/government` instead.
+
+`test_no_page_marks_a_term_twice` is the machine-checkable half. Whether a marker sits on the
+genuinely *first* occurrence is a reading check, named as such rather than pretended into a test.
+
+### Terms whose `first_used` route carries no marker
+
+`test_every_first_used_route_carries_its_term_marker` ties this collection's data to #47's markup:
+a rename, or a new term nobody marked, fails there. Six terms are exceptions, listed explicitly in
+that test so growing the list is a visible diff rather than drift, and each is there because the
+route's prose does not name the term:
+
+| Term | Why its `first_used` route carries no marker |
+|---|---|
+| `cyclical-deficit` | The phrase occurs in no route's prose. §5 says "structural rather than circumstantial" and never names the cyclical half. |
+| `gdp-deflator` | Occurs in no route's prose; `/households` §1 says "a different deflator" only inside a `<Figure note>`. |
+| `gross-debt` | `/government` §1 is entirely about it and never names it; "gross debt" appears only in `<Figure>` props. |
+| `incidence` | Occurs only inside `/households` §6's `<Figure note>`. |
+| `vintage` | On `/economy` it appears only as the `vintage={vintageOf(…)}` prop. Marked on `/government` §11, where the prose says "vintages". |
+| `net-interest` | On `/economy` its only occurrence is already the text of a cross-route `<a>`. Marked on `/government` §6. |
+
+The right fix for the first four is a prose edit that names the term, which is a content change and
+not #47's scope. Until then the reader reaches them through `/glossary` and the nav.
+
 ## What the four downstream issues attach to
 
 Recorded so none of them needs this design reopened.
 
 **#47 — terms explain themselves in place, on hover and on focus.** Attaches to the `short` field
 (already capped at 180, so #47 inherits a fit guarantee rather than discovering a misfit), the
-entry id as anchor, and `/glossary#<slug>` as the popover's "full entry" target. #47 supplies the
-in-prose `<dfn>`/`<abbr>` wrapper and the hover-plus-focus behaviour, and it is the issue that
-makes prose edits — #45 makes none.
+entry id as anchor, and `/glossary#<slug>` as the popover's "full entry" target. **Shipped** — the
+wrapper is `src/components/Term.astro` and the behaviour is `termPopovers()` in `BaseLayout.astro`;
+see "In-prose markers" above for the seam it actually uses. It is neither `<dfn>` nor `<abbr>`: the
+trigger has to be a real `<a href>` so the marker survives scripting off, and `<dfn>` marks the
+*defining* instance of a term, which the `/glossary` entry is and a prose mention is not. #47
+wraps words and rewords no sentence — #45 makes no prose edits at all.
 
 **#49 — an index: every term, every section, every figure.** Attaches to
 `getCollection('glossary')` for terms, **`routeSections`** for sections, and `<Figure>`'s optional
