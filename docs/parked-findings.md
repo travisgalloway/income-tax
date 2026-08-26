@@ -728,10 +728,10 @@ time. Appended to, never rewritten. None of these have been acted on.
 - [2026-08-26] Under WebKit 26.5 the first Tab stop on `/government/` is the bar's `<summary>`, not
   `.skip-link` — WebKit does not put `<a>` elements in the keyboard tab order unless macOS full
   keyboard access is on, so the skip link is unreachable by Tab in that default configuration. A
-  platform setting rather than a repo defect, and document order is unchanged (`test_nav_bar_does_
-  not_precede_the_skip_link` is green), but it means the skip link's benefit does not reach a
-  default-configured Safari user. Found while measuring #46's affordance tab order. Severity:
-  platform behaviour, worth a note in the contract, non-blocking.
+  platform setting rather than a repo defect, and document order is unchanged
+  (`test_nav_bar_does_not_precede_the_skip_link` is green), but it means the skip link's benefit
+  does not reach a default-configured Safari user. Found while measuring #46's affordance tab
+  order. Severity: platform behaviour, worth a note in the contract, non-blocking.
 - [2026-08-26] `pipeline/tests/test_accessibility.py` — `narrow_media_block()` and the new
   `layout_inline_script()` are two "extract from a file or raise" helpers with the same contract
   and near-identical shape. If a third consumer appears, they should share one base rather than

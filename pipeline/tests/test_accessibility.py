@@ -1115,7 +1115,7 @@ def test_scroll_restoration_is_left_to_the_browser():
     Setting it to `'manual'` opts out of the browser's restore *and* of scroll
     anchoring's correction of it, replacing a pixel-exact result with a
     hand-rolled offset — which the `<details>` case, where the document is
-    11,689px shorter on return, would put thousands of pixels wrong. Reading it
+    11,854–11,970px shorter on return, would put thousands of pixels wrong. Reading it
     is harmless, but there is no reason to and no way to tell the two apart by
     grep, so the string is barred outright.
 
@@ -1174,7 +1174,7 @@ def test_scroll_anchoring_is_not_disabled():
     Scroll anchoring is the single mechanism that absorbs layout change landing
     *after* a history restore: Government's charts grow by ~123px when
     `useChartSize` swaps the WIDE preset for NARROW, and the document is
-    11,689px shorter on return because `<details>` `open` is not restored. Both
+    11,854–11,970px shorter on return because `<details>` `open` is not restored. Both
     self-correct to the pixel with anchoring on (default `auto`), and neither
     would with `overflow-anchor: none` on `html`, `body` or `main`. Nobody
     would think to look for a declaration that is not there, so this test looks
