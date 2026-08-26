@@ -1078,3 +1078,66 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   fill: var(--ink-soft);
   font-style: italic;
 }
+
+/* ---- In-prose glossary markers (#47) --------------------------------------
+ * A marked term's one-sentence definition, opened on hover, on keyboard focus
+ * and on a tap. Two structural decisions carry the accessibility here and are
+ * easy to undo by accident:
+ *
+ * 1. The popover is a DOM descendant of `.term`, so `pointerleave` on the
+ *    wrapper does not fire when the pointer travels from the trigger onto the
+ *    popover. That is WCAG 1.4.13 *hoverable*, met by the DOM shape rather
+ *    than by a timer. Do not portal it, and do not position it against the
+ *    viewport.
+ * 2. `left: 0; right: 0` sizes it to the paragraph, whose `max-width` is the
+ *    measure. It is therefore exactly as wide as the prose it interrupts and
+ *    cannot overflow any viewport the prose fits — no collision detection and
+ *    no width clamp, which is what keeps the Radix Select clipping of #62 out
+ *    of reach here.
+ *
+ * Deliberately without a transition or an animation anywhere: that is how
+ * prefers-reduced-motion is satisfied here, vacuously and greppably, the same
+ * way the nav bar satisfies it.
+ */
+
+p:has(.term), li:has(.term), .standfirst:has(.term) { position: relative; }
+
+/* Not a colour-only distinction: the underline is the affordance and --ink is
+ * the body colour, so nothing here depends on hue. */
+.term-trigger {
+  text-decoration: underline dotted;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  color: var(--ink);
+}
+
+.term-pop {
+  position: absolute;
+  left: 0;
+  right: 0;
+  max-width: var(--measure);
+  z-index: 20;
+  display: block;
+  padding: 0.7rem 0.85rem;
+  background: var(--panel);
+  border: var(--rule-width) solid var(--ink);
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: 0.9375rem;
+  font-style: normal;
+  line-height: 1.45;
+  text-indent: 0;
+}
+/* The UA `[hidden] { display: none }` rule loses to the class selector above,
+ * so the closed state has to be stated. Without this the popover is open on
+ * every marked term, on every page, with scripting off. */
+.term-pop[hidden] { display: none; }
+
+.term-short { display: block; }
+.term-more {
+  display: block;
+  margin-top: 0.5rem;
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  color: var(--ink);
+}

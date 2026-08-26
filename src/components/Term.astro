@@ -1,0 +1,58 @@
+---
+import { getEntry } from 'astro:content'
+
+/** An in-prose glossary marker: the term's one-sentence `short` arrives where the reader is
+ *  standing, on hover, on keyboard focus and on a tap, without losing their place.
+ *
+ *  Zero islands, no `client:` directive and no script of its own — the disclosure is driven by
+ *  `termPopovers()`, one `is:inline` IIFE in `BaseLayout.astro` shared by every marked term on
+ *  the page. With scripting off the trigger is a plain, followable link to the term's `/glossary`
+ *  anchor and the definition is still in the served bytes, referenced by `aria-describedby`.
+ *
+ *  See docs/contracts/interfaces/glossary.md, "In-prose markers".
+ */
+interface Props {
+  /** A glossary entry id, which is its filename slug under src/content/glossary/. */
+  id: string
+}
+
+const { id } = Astro.props
+
+/* `getEntry`, not a direct `.md` import: content-sources.md records that an import passes
+ * `astro check` and then fails `npm run build` under rolldown. The throw makes a typo'd id a
+ * build failure, in the spirit of /glossary's five throws. */
+const entry = await getEntry('glossary', id)
+if (!entry) {
+  throw new Error(
+    `<Term id="${id}"> names no glossary term. The id is a filename slug under src/content/glossary/ — check the spelling, or the term was renamed and this marker was left behind.`
+  )
+}
+
+/* `BaseLayout.astro:14-15` defines the same idiom as a page-local const inside its frontmatter.
+ * Re-derived rather than exported: exporting it would mean a second `---` block there and a
+ * re-export surface four other call sites could drift from. Two lines, and the built output is
+ * grepped for the joined form. */
+const base = import.meta.env.BASE_URL
+const href = `${base.replace(/\/$/, '')}/glossary#${id}`
+
+/* `def-` prefixed, never the bare slug: `net-interest` is both a glossary slug and a Government
+ * section id, and a page carrying both would repeat an id. */
+const popId = `def-${id}`
+---
+
+{/* No `role` on the popover: not `role="tooltip"` (Windows AT treats tooltip content as
+ * non-interactive, and this one contains a link), not `role="note"` (a role on an
+ * aria-describedby target risks a double announcement). The description mechanism is
+ * `aria-describedby` itself, which flattens the referenced subtree to text — including while
+ * `hidden`, which is what gets the definition to a screen reader with scripting off.
+ *
+ * No `aria-expanded` server-side either: `termPopovers()` writes it at init. With scripting off
+ * there is no disclosure, so advertising a collapsed state would be a lie — the same reasoning
+ * `sectionSpy()` uses for writing no aria-current server-side. */}
+<span class="term" data-term={id}>
+  <a class="term-trigger" href={href} aria-describedby={popId}><slot /></a>
+  <span class="term-pop" id={popId} hidden>
+    <span class="term-short">{entry.data.short}</span>
+    <a class="term-more" href={href}>Full entry in the glossary</a>
+  </span>
+</span>

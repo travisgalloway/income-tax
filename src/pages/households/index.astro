@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import Figure from '../../components/Figure.astro'
+import Term from '../../components/Term.astro'
 import { MedianIncome } from '../../components/islands/MedianIncome'
 import { HouseholdSpread } from '../../components/islands/HouseholdSpread'
 import { BracketHistory } from '../../components/islands/BracketHistory'
@@ -26,15 +27,16 @@ const cbo = cboEffectiveRatesData()
   <h1>Households</h1>
   <p class="standfirst">
     What a household earns, how far the spread runs, and what the tax bill actually looks
-    like once payroll tax is counted.
+    like once <Term id="payroll-tax">payroll tax</Term> is counted.
   </p>
 
   <section id="what-a-household-earns">
     <p class="kicker"><span class="section-no">Section 1</span></p>
     <h2>What a household earns</h2>
     <p class="standfirst">
-      Real median household income rose 28.1% in three decades, but the series only runs
-      back to 1984 — before that, this measure was not yet collected.
+      <Term id="real">Real</Term> <Term id="median">median</Term> household income rose 28.1%
+      in three decades, but the series only runs back to 1984 — before that, this measure was not
+      yet collected.
     </p>
     <p class="finding">
       Real median household income was $65,380 in 1995 and $83,730 in 2024, in constant
@@ -56,8 +58,8 @@ const cbo = cboEffectiveRatesData()
     <p class="prose">
       The series begins in 1984 because that is where the Census/FRED constant-dollar
       measure of household income begins. The years before it are not flat — they are
-      unobserved by this particular measure. The family Gini index, in the next section,
-      does run back to 1947.
+      unobserved by this particular measure. The family <Term id="gini-index">Gini index</Term>,
+      in the next section, does run back to 1947.
     </p>
   </section>
 
@@ -121,7 +123,8 @@ const cbo = cboEffectiveRatesData()
     <p class="prose">
       Two things move independently here. The bracket COUNT is a policy choice: Congress ran
       56 brackets in 1918 to fund the First World War and cut back to just two, 15% and 28%,
-      in the 1986 reform. The threshold is a different story -- it is set in nominal dollars
+      in the 1986 reform. The threshold is a different story -- it is set in
+      <Term id="nominal">nominal</Term> dollars
       and, unless deliberately re-indexed, inflation erodes it every year it is left alone.
       1913's top bracket applied only to income that would be about $16 million today; almost
       nobody was ever going to pay the top rate. Today's threshold, in real terms, is a
@@ -142,7 +145,8 @@ const cbo = cboEffectiveRatesData()
     <p class="standfirst">
       Nobody pays the top rate on their whole income. The top bracket only taxes the slice of
       income above its threshold, and CBO's own measure of what people actually pay -- the
-      average federal tax rate -- has moved far less than the statutory rate above it.
+      average federal tax rate -- has moved far less than the
+      <Term id="statutory-rate">statutory rate</Term> above it.
     </p>
     <p class="finding">
       The top statutory rate fell from 70% in 1979 to 37% in 2022. Over the same span, the
@@ -214,7 +218,8 @@ const cbo = cboEffectiveRatesData()
       CBO's longer series has the top 1% share of income before transfers and taxes going from 9% in 1979 to 18% in 2022, shown in <a href="#the-spread">the spread</a> above.
     </p>
     <p class="prose">
-      Refundable credits are excluded from the IRS series, which overstates the effective rate at the bottom.
+      Refundable credits are excluded from the IRS series, which overstates the
+      <Term id="effective-rate">effective rate</Term> at the bottom.
       Tax year 2023 is the latest IRS year, and it breaks this site's FY1995 to FY2025 convention.
     </p>
   </section>
@@ -260,7 +265,7 @@ const cbo = cboEffectiveRatesData()
       <strong>2. The Gini index here is for families, not households.</strong> The household series runs higher, about 0.47 to 0.49. The family series is used because it runs cleanly back to 1947.
     </p>
     <p class="prose">
-      <strong>3. Statutory is not effective.</strong> A top marginal rate applies only to the slice of income above its threshold. Deductions, credits and separately-taxed capital gains all sit between the statutory rate and what anyone pays.
+      <strong>3. Statutory is not effective.</strong> A top <Term id="marginal-rate">marginal rate</Term> applies only to the slice of income above its threshold. Deductions, credits and separately-taxed capital gains all sit between the statutory rate and what anyone pays.
     </p>
     <p class="prose">
       <strong>4. Distributional data is by tax unit, not by person or by household</strong> — and not consistently across sources. The IRS counts returns filed, CBO counts households, and Census counts families. A married couple filing jointly is one tax unit, one household and one family, but a household of unrelated adults is several tax units. The shares on this route cannot be added across those sources.

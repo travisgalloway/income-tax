@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import Figure from '../../components/Figure.astro'
+import Term from '../../components/Term.astro'
 import { DebtChart } from '../../components/islands/DebtChart'
 import { StateGiveGet } from '../../components/islands/StateGiveGet'
 import { StateTaxMix } from '../../components/islands/StateTaxMix'
@@ -48,8 +49,8 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
     <p class="kicker"><span class="section-no">Section 1</span></p>
     <h2>Ten years, twice the debt</h2>
     <p class="standfirst">
-      The US crossed $40 trillion in August 2026. Ten fiscal years ago it was $19.6
-      trillion. Measured against the economy, though, the same decade moved the debt from
+      The US crossed $40 trillion in August 2026. Ten <Term id="fiscal-year">fiscal years</Term>
+      ago it was $19.6 trillion. Measured against the economy, though, the same decade moved the debt from
       105% of GDP to 124%.
     </p>
     <p class="finding">
@@ -84,8 +85,8 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
     <p class="kicker"><span class="section-no">Section 2</span></p>
     <h2>Most of it is owed to us</h2>
     <p class="standfirst">
-      About 80% is held by the public: investors, pension funds, banks, the Federal Reserve
-      and foreign governments. The other 20% the government owes itself, mostly the Social
+      About 80% is <Term id="debt-held-by-the-public">held by the public</Term>: investors,
+      pension funds, banks, the Federal Reserve and foreign governments. The other 20% the government owes itself, mostly the Social
       Security and Medicare trust funds.
     </p>
     <p class="finding">
@@ -113,8 +114,9 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
       the country.
     </p>
     <p class="prose">
-      The intragovernmental piece is real money owed to future retirees, but it does not
-      trade in bond markets and does not set interest rates.
+      The <Term id="intragovernmental-holdings">intragovernmental</Term> piece is real money
+      owed to future retirees, but it does not trade in bond markets and does not set interest
+      rates.
     </p>
   </section>
 
@@ -155,7 +157,8 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
     <p class="kicker"><span class="section-no">Section 4</span></p>
     <h2>One axis, everything on it</h2>
     <p class="standfirst">
-      Above the line, outlays stacked by category with revenue drawn across. Below it, the
+      Above the line, <Term id="outlays">outlays</Term> stacked by category with revenue drawn
+      across. Below it, the
       deficit that gap produces. Colour marks who held all three levers.
     </p>
     <p class="finding">
@@ -207,7 +210,7 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
 
     <p class="prose">
       That gap shows up in years with no recession and no major tax bill, which is what
-      makes it structural rather than circumstantial. The only four years it closed were
+      makes it <Term id="structural-deficit">structural</Term> rather than circumstantial. The only four years it closed were
       1998 to 2001.
     </p>
   </section>
@@ -216,7 +219,8 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
     <p class="kicker"><span class="section-no">Section 6</span></p>
     <h2>The part they vote on is the part that shrank</h2>
     <p class="standfirst">
-      Discretionary spending is the only category set by an annual appropriation. It is
+      <Term id="discretionary-spending">Discretionary spending</Term> is the only category set
+      by an annual appropriation. It is
       also the only one smaller today, relative to GDP, than in 1995.
     </p>
     <p class="finding">
@@ -237,10 +241,11 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
     </Figure>
 
     <p class="prose">
-      In real terms mandatory spending — net of offsetting receipts, the basis used
-      throughout this section — grew 194% over this span and discretionary grew 79%.
-      Mandatory runs on permanent law and net interest is set by past borrowing; neither
-      requires an annual vote.
+      In <Term id="real">real</Term> terms <Term id="mandatory-spending">mandatory spending</Term>
+      — net of offsetting receipts, the basis used throughout this section — grew 194% over this
+      span and discretionary grew 79%. Mandatory runs on permanent law and
+      <Term id="net-interest">net interest</Term> is set by past borrowing; neither requires an
+      annual vote.
     </p>
     <p class="prose">
       Net interest looks flat endpoint to endpoint, 3.1% to 3.2%. It is not. It fell to
@@ -325,7 +330,7 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
     <p class="prose">
       Scored laws net to $16.75 trillion against $24.15 trillion of deficits actually recorded over
       the same span. The gap is mandatory growth, demographics, revenue drift, recessions and
-      compounding interest, none of which involves a roll call.
+      compounding interest, none of which involves a <Term id="roll-call-vote">roll call</Term>.
     </p>
   </section>
 
@@ -393,8 +398,8 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
     <p class="prose">
       The individual income tax now raises more than half of all federal revenue, up from
       43.7% in 1995. The corporate share fell from 11.6% to 8.6%. Customs duties went from
-      $19 billion to $195 billion, more than a tenfold nominal rise, and are the fastest
-      growing revenue line in the federal government.
+      $19 billion to $195 billion, more than a tenfold <Term id="nominal">nominal</Term> rise,
+      and are the fastest growing revenue line in the federal government.
     </p>
 
     <p class="prose">
@@ -497,7 +502,7 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
 
     <p class="prose">
       Give (IRS), get (USASpending) and this state tax mix (Census) are three separately
-      discovered vintages, not one dataset: the IRS and USASpending figures above are both
+      discovered <Term id="vintage">vintages</Term>, not one dataset: the IRS and USASpending figures above are both
       FY2025 by construction, and this Census survey is also its FY2025 vintage — none of the
       three shares a publication schedule, and a future run of this pipeline may find them out
       of step again. Territories (Puerto Rico, Guam, the US Virgin Islands, the Northern

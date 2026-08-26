@@ -256,6 +256,134 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
         window.addEventListener('hashchange', schedule)
         apply()
       })()
+
+      /* In-prose glossary markers (#47). One IIFE shared by every marked term
+       * on the page, for the same reason as the two above: layout chrome, not
+       * an island — no bundle, no hydration, correct on first paint. An
+       * `is:inline` block inside Term.astro would emit this once per marked
+       * term, and a component <script> would add a module the page then has to
+       * fetch, for ~25 instances of it.
+       *
+       * With scripting off nothing below runs and the markup is already
+       * correct: each trigger is a real <a href> to the term's /glossary
+       * anchor, and the definition is in the served bytes as the trigger's
+       * aria-describedby target.
+       *
+       * Two invariants the rest of this reads as given. The popover is a DOM
+       * descendant of its wrapper, so a pointer travelling from the trigger
+       * onto the popover never leaves the wrapper and never fires
+       * `pointerleave` — WCAG 1.4.13 hoverable is the DOM shape, and the
+       * 150ms close delay is redundancy. And nothing here closes on a timer:
+       * only Escape, a Tab out of the wrapper, a click outside, or another
+       * term opening. That is 1.4.13 persistent.
+       *
+       * Nothing here moves the viewport and nothing here is a live region:
+       * the definition reaches assistive technology as the trigger's
+       * description, announced on arrival at the trigger rather than on every
+       * hover. */
+      ;(function termPopovers() {
+        var terms = document.querySelectorAll('.term')
+        if (terms.length === 0) return          /* /, /sources, /glossary */
+
+        var open = null
+        var enterTimer = null
+        var leaveTimer = null
+        /* Set only across the focus() call in close(), which would otherwise
+         * re-enter show() through the trigger's own focus handler and reopen
+         * what Escape just dismissed. */
+        var refocusing = false
+
+        function popOf(t) { return t.querySelector('.term-pop') }
+        function triggerOf(t) { return t.querySelector('.term-trigger') }
+
+        function close(t, refocus) {
+          if (!t) return
+          popOf(t).hidden = true
+          triggerOf(t).setAttribute('aria-expanded', 'false')
+          if (open === t) open = null
+          if (refocus) {
+            refocusing = true
+            triggerOf(t).focus()
+            refocusing = false
+          }
+        }
+
+        function show(t) {
+          if (open && open !== t) close(open)   /* one at a time, so two marked
+                                                 * terms in one sentence cannot
+                                                 * overlap */
+          var trigger = triggerOf(t)
+          var pop = popOf(t)
+          /* The only number script supplies. `offsetParent` is the paragraph,
+           * guaranteed by the `p:has(.term)` rule, and offsetHeight spans both
+           * line boxes when the trigger wraps, so the popover lands below the
+           * whole trigger rather than through it. Recomputed on every open, so
+           * a resize between opens needs no listener. */
+          pop.style.top = (trigger.offsetTop + trigger.offsetHeight) + 'px'
+          pop.hidden = false
+          trigger.setAttribute('aria-expanded', 'true')
+          open = t
+        }
+
+        function wire(t) {
+          var trigger = triggerOf(t)
+          if (!trigger || !popOf(t)) return
+          trigger.setAttribute('aria-expanded', 'false')
+
+          t.addEventListener('pointerenter', function () {
+            window.clearTimeout(leaveTimer)
+            window.clearTimeout(enterTimer)
+            /* Long enough not to flash at a reader skimming past. */
+            enterTimer = window.setTimeout(function () { show(t) }, 120)
+          })
+          t.addEventListener('pointerleave', function () {
+            window.clearTimeout(enterTimer)
+            window.clearTimeout(leaveTimer)
+            /* A keyboard reader who happens to move the mouse keeps their
+             * popover: focus, not the pointer, owns it while it is inside. */
+            if (t.contains(document.activeElement)) return
+            leaveTimer = window.setTimeout(function () { close(t) }, 150)
+          })
+          /* Uniform across pointer types, deliberately not branched on
+           * `pointerType`: hover emulation is where phone support goes wrong,
+           * and a branch is a second path nobody tests on a phone. One tap
+           * opens and never navigates first; navigation is the popover's own
+           * link, one deliberate action away, for everyone. The platform's
+           * affordances are left alone, so open-in-new-tab, middle-click and
+           * shift-click still reach /glossary. */
+          trigger.addEventListener('click', function (e) {
+            if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+            e.preventDefault()
+            show(t)
+          })
+          trigger.addEventListener('focus', function () {
+            if (!refocusing) show(t)
+          })
+          /* On `t`, not on `document`: focus is inside the wrapper whenever
+           * the popover is open, and a document-level handler would contend
+           * with the nav panel and the three /government/ filter dropdowns
+           * that already own Escape. Focus stays exactly where it is unless it
+           * was inside the popover about to be hidden, so nothing here moves
+           * the reader. */
+          t.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') return
+            e.preventDefault()
+            var inside = t.contains(document.activeElement) && document.activeElement !== trigger
+            close(t, inside)
+          })
+          /* What makes "Tab past the popover's link closes it" true without a
+           * blur race, and Shift-Tab off the trigger the same. */
+          t.addEventListener('focusout', function (e) {
+            if (!e.relatedTarget || !t.contains(e.relatedTarget)) close(t)
+          })
+        }
+
+        for (var i = 0; i < terms.length; i++) wire(terms[i])
+
+        document.addEventListener('click', function (e) {
+          if (open && !open.contains(e.target)) close(open)
+        })
+      })()
     </script>
   </body>
 </html>
