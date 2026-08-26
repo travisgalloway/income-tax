@@ -782,3 +782,20 @@ time. Appended to, never rewritten. None of these have been acted on.
   `_PAGE_FOR_ROUTE.values()` alone; a term declaring the new route fails loudly with a `KeyError`
   at line 1411, but a route with no such term is silently unchecked. Found while deciding whether
   `/` should become a `routeSections` key for #48. Severity: test coverage, non-blocking.
+- [2026-08-26] `pipeline/tests/test_accessibility.py:654`, `_TEXT_SELECTORS` does not name
+  `.figure-no` or any of the new `.index-*` selectors, so the low-contrast-token check does not see
+  them. `.figure-no` paints `var(--ink)` and `.index-source` / `.index-term-first` paint
+  `var(--ink-soft)`, both already covered elsewhere in the list, so nothing is currently wrong — the
+  gap is that a future edit to either rule is unchecked. Found while retiring the CSS figure counter
+  for #49. Severity: test coverage, non-blocking.
+- [2026-08-26] `src/data/sections.ts` now exports `join`, `siteRoutes` and `introSections` alongside
+  `routeSections`, so its filename names a third of what it holds. It is the site's one declaration
+  of routes, sections and base-path joining and reads as one thing; the name is what is stale.
+  Found while lifting the route list out of `BaseLayout.astro` for #49. Severity: naming,
+  non-blocking.
+- [2026-08-26] `src/pages/index.astro:7` and `src/pages/glossary.astro:6` both write the literal
+  `client:` inside the frontmatter comment that asserts the page carries no hydration directive, so
+  the greppable proof those comments claim to offer does not hold for the two pages that make it —
+  `grep -o 'client:' src/pages/index.astro` returns 1. `src/pages/contents.astro` states the same
+  thing without naming the directive, which is the form that greps clean. Found while satisfying
+  #49's criterion 1. Severity: verification hygiene, non-blocking.
