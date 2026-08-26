@@ -163,6 +163,98 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
           if (!d.contains(e.target)) close(false)
         })
       })()
+
+      /* Marks the section containing the viewport midpoint with
+       * `aria-current='true'` — single-quoted throughout this comment on
+       * purpose, because the built page must carry zero double-quoted literal
+       * of that attribute and a comment is served verbatim. Both contents
+       * lists at once: the rail's anchors and the panel's carry the same
+       * `data-section` value, so one `querySelectorAll` writes both and they
+       * cannot drift.
+       *
+       * Nothing is marked with scripting off, and that is correct: marking
+       * section 1 server-side would be wrong for every reader who is not at the
+       * top. Neither list is a live region, so changing this attribute on an
+       * unfocused link announces nothing while scrolling — see
+       * docs/contracts/accessibility.md. No scripted scrolling exists here at
+       * all, which is how prefers-reduced-motion is satisfied: vacuously, and
+       * greppably, the same way the bar above satisfies it. */
+      ;(function sectionSpy() {
+        var sections = Array.prototype.slice.call(
+          document.querySelectorAll('main section[id]')
+        )
+        var links = document.querySelectorAll('a[data-section]')
+        if (sections.length === 0 || links.length === 0) return  /* / and /sources */
+
+        var visible = {}
+        var last = 0
+        var applied = -1
+
+        function pick() {
+          var doc = document.documentElement
+          /* `limits` is short on every route and may never reach the band, so
+           * the document bottom is decided by scroll position, not by the
+           * observer. */
+          if (window.scrollY + window.innerHeight >= doc.scrollHeight - 2) {
+            return sections.length - 1
+          }
+          for (var i = 0; i < sections.length; i++) {
+            if (visible[sections[i].id]) return i    /* document order, first wins */
+          }
+          /* Above section 1's top edge: the kicker/h1/standfirst block owns the
+           * midpoint. */
+          if (sections[0].getBoundingClientRect().top > window.innerHeight / 2) return 0
+          return last                                /* hold; never un-mark */
+        }
+
+        function apply() {
+          var i = pick()
+          last = i
+          if (i === applied) return                  /* no DOM write per frame */
+          applied = i
+          for (var j = 0; j < links.length; j++) links[j].removeAttribute('aria-current')
+          var marked = document.querySelectorAll(
+            'a[data-section="' + sections[i].id + '"]'
+          )
+          for (var k = 0; k < marked.length; k++) {
+            marked[k].setAttribute('aria-current', 'true')
+          }
+        }
+
+        var pending = false
+        function schedule() {
+          if (pending) return
+          pending = true
+          window.requestAnimationFrame(function () {
+            pending = false
+            apply()
+          })
+        }
+
+        /* A band ~0.5% of the viewport tall across the midpoint. Deliberately
+         * not `-50% 0px -50% 0px`: that collapses the root rect to zero height,
+         * and whether a zero-area intersection reports `isIntersecting` at
+         * threshold 0 differs between engines. Sections tile contiguously
+         * inside <main>, so the band is inside exactly one of them everywhere
+         * between the first section's top and the last section's bottom — band
+         * containment is the midpoint rule. Where two straddle the ~4px window
+         * at a boundary, `pick()` takes the earlier in document order, in both
+         * scroll directions, so the mark cannot oscillate. */
+        var io = new IntersectionObserver(function (entries) {
+          for (var i = 0; i < entries.length; i++) {
+            visible[entries[i].target.id] = entries[i].isIntersecting
+          }
+          apply()
+        }, { rootMargin: '-50% 0px -49.5% 0px', threshold: 0 })
+        for (var s = 0; s < sections.length; s++) io.observe(sections[s])
+
+        window.addEventListener('scroll', schedule, { passive: true })
+        window.addEventListener('resize', schedule, { passive: true })
+        /* The jump produces a scroll event too, but this makes the post-jump
+         * state deterministic rather than dependent on that. */
+        window.addEventListener('hashchange', schedule)
+        apply()
+      })()
     </script>
   </body>
 </html>

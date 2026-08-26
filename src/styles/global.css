@@ -163,6 +163,16 @@ section[id]:first-of-type { border-top: 0; padding-top: 1.5rem; }
 .rail .toc li { display: grid; grid-template-columns: 1.6rem 1fr; }
 .rail .toc .n { color: var(--ink-soft); font-variant-numeric: var(--num-table); padding-top: 0.22rem; }
 
+/* Reading position, set by `sectionSpy()` at runtime and by nothing at build
+ * time. `[aria-current='true']` explicitly, never a bare `[aria-current]`,
+ * which would also catch the route links above: those are `page`, and they mark
+ * with ink *plus an underline*. This is ink alone, whole row including the
+ * numeral — a different mark, in a different list. Colour only, so a mark
+ * change reflows nothing in a 13rem rail. `:has()` is progressive: without it
+ * the numeral stays soft and the link still lifts. */
+.rail .toc a[aria-current='true'] { color: var(--ink); }
+.rail .toc li:has(a[aria-current='true']) .n { color: var(--ink); }
+
 /* ---- Narrow-viewport nav bar --------------------------------------------
  * Below 62rem the rail is replaced by a bar fixed to the top of the viewport:
  * site title, current route name, and a native <details> disclosure holding
@@ -266,6 +276,11 @@ section[id]:first-of-type { border-top: 0; padding-top: 1.5rem; }
   }
   .navbar-toc li { display: grid; grid-template-columns: 1.6rem 1fr; align-items: center; }
   .navbar-toc .n { color: var(--ink-soft); font-variant-numeric: var(--num-table); }
+  /* The rail's reading-position mark, in the panel. Same attribute, same single
+   * `querySelectorAll` writes both. `.navbar a` is already `--ink`, so here the
+   * lift is carried by the numeral joining it. */
+  .navbar-toc a[aria-current='true'] { color: var(--ink); }
+  .navbar-toc li:has(a[aria-current='true']) .n { color: var(--ink); }
 
   /* The bar is fixed, so an anchor landing at scroll offset 0 would sit under
    * it. `#main` needs this too: the skip link targets it. */

@@ -657,3 +657,27 @@ time. Appended to, never rewritten. None of these have been acted on.
   `.navbar` block, the inline `<script>` and the `data-section` attributes are removed and the
   hash normalised, the built HTML is byte-identical to the pre-change build. Found while working on
   #42. Severity: plan defect, non-blocking.
+- [2026-08-26] `src/styles/global.css:132`, `.rail` is `position: sticky; top: 0` with no
+  `max-height` and no `overflow`, so on `/government` a 5-route + 12-section rail can extend past
+  the viewport with no way to reach the overflow — the desktop analogue of what `.navbar-panel`'s
+  `overflow-y: auto` solves below 62rem. Pre-existing; predates #42 and #44. Found while working on
+  #44. Severity: usability, non-blocking.
+- [2026-08-26] `src/styles/global.css:282-283` (inside `@media (max-width: 62rem)`), the panel's
+  reading-position mark is carried by its numeral alone, because `.navbar a` already paints every
+  panel link `--ink` and the new rule lifts only the `.n`. The rail's mark lifts the whole row from
+  `--ink-soft`, which reads much more strongly. As planned in `.claude/plans/issue-44.md` § 2 and
+  inside contract (`aria-current` is the non-visual channel and criterion 7 asks only that the mark
+  differ from a route link's and cause no reflow), so not changed here. Found while working on #44.
+  Severity: visual salience, non-blocking.
+- [2026-08-26] `.claude/plans/issue-44.md` § Verification expects
+  `grep -o "aria-current=.true." dist/_astro/*.css | wc -l` to return `>= 1`; it returns **0**,
+  because the CSS minifier strips the attribute-value quotes and emits `[aria-current=true]`. The
+  intended claim holds and was proved with `grep -o "aria-current=.\?true"`, which returns 4.
+  Found while working on #44. Severity: plan defect, worked around in place, non-blocking.
+- [2026-08-26] `.claude/plans/issue-44.md` § Verification expects
+  `grep -o 'IntersectionObserver' dist/_astro/*.js | wc -l` to return `0` as evidence that an
+  `is:inline` script is not bundled; it returns **3**, all in the React vendor chunk
+  `dist/_astro/dist.D7FF9YBJ.js`, which predates this issue and has no relation to it. The
+  intended claim was proved structurally instead: the script appears verbatim in
+  `dist/government/index.html`, and the 92-line HTML diff against the pre-change build is exactly
+  that block. Found while working on #44. Severity: plan defect, non-blocking.

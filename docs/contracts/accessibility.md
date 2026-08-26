@@ -51,6 +51,46 @@ resolution against a duplicated id is undefined. Enforced by
 `test_route_nav_and_contents_nav_are_separate_landmarks`,
 `test_every_nav_landmark_has_an_accessible_name` and `test_no_page_repeats_an_id`.
 
+**Two `aria-current` values, two lists.** The route lists carry
+`aria-current="page"`, server-rendered by `BaseLayout.astro` on whichever of the five routes is
+open. The contents lists carry `aria-current="true"`, written at runtime by the `sectionSpy()` IIFE
+in the layout's one `<script is:inline>` block, on whichever section contains the **viewport
+midpoint** — the lowest section in document order whose top edge is at or above it, decided by one
+`IntersectionObserver` whose `rootMargin` collapses the root to a thin band across that midpoint.
+Four things follow, and each is load-bearing.
+
+- **The counts are 2 in the DOM and 1 in the accessibility tree, for each value**, the same
+  `.rail`/`.navbar` mutual-`display: none` reason the four-`<nav>` paragraph above gives: both lists
+  exist on every page, and the marked anchors are addressed by one `querySelectorAll` over
+  `a[data-section="<id>"]`, so the rail and the panel cannot disagree. Enforced by
+  `test_no_built_page_ships_a_section_level_aria_current` (which also pins `page` at exactly 2, so
+  it cannot go green by the route markers vanishing) and
+  `test_every_contents_anchor_is_addressable_by_the_spy`.
+- **With scripting off, nothing is marked, and that is the correct behaviour** — not a degradation
+  to paper over. Reading position is derived from scroll position; server-rendering a mark on
+  section 1 would be wrong for every reader who is not at the top. The built HTML therefore carries
+  zero `aria-current="true"`, and `/` and `/sources`, which pass no `sections` prop, make the IIFE
+  return before it observes anything.
+- **Nothing is announced while scrolling.** An `aria-current` change on an element that is neither
+  focused nor inside a live region is not announced, so a fast scroll down `/government`'s twelve
+  sections produces no stream of speech; the state is there, silently, for a reader who navigates
+  into the list and asks for it. That holds only while neither contents list — nor any ancestor of
+  one — is a live region, which is what `test_contents_lists_are_not_live_regions` checks. Never add
+  `aria-live`, `aria-atomic`, `role="status"` or `role="alert"` to `.toc` or `.navbar-toc`.
+- **The two values are styled apart, and the selector is never bare.** A route link marks as ink
+  **plus an underline**; a section marks as ink **alone**, the whole row including its numeral. Both
+  section rules match `[aria-current='true']` scoped to the contents list — a bare `[aria-current]`
+  would collapse the distinction, and `test_section_state_selector_is_scoped_and_not_bare` fails if
+  one appears anywhere in `global.css`. The mark is colour-only on purpose, so that changing it
+  reflows nothing in a 13rem rail; the non-visual channel is the `aria-current` attribute itself.
+
+**No scripted scrolling exists anywhere in the navigation chrome.** The spy reads scroll position
+and writes an attribute; it moves nothing. The rail is not a scroll container and the panel is never
+auto-scrolled, so `prefers-reduced-motion` is satisfied here the same way the bar satisfies it —
+vacuously and greppably, rather than by relying on the global reduce block to zero out a motion that
+was written anyway. Enforced by `test_the_section_spy_introduces_no_scripted_scrolling`, which also
+asserts the `IntersectionObserver` is still there so it cannot pass by finding no script at all.
+
 **Narrow-viewport navigation is a native disclosure, not a modal.** Below `62rem` the rail is
 replaced by a bar fixed to the top of the viewport carrying the site title, the current route name
 and a `<details>`/`<summary>` trigger; behind the trigger, `#navbar-panel` holds all five route
@@ -250,6 +290,25 @@ on all four routes at both viewports: 0 errors, 0 warnings. #70 (three in-prose 
 path and 404 in production) came out of the same review; it is a link-target defect rather than one
 of the eight checks, and it is filed and open.
 
+### Reading position in the contents list (#44)
+
+**EXECUTED 2026-08-26**, Chromium **151.0.7922.174** (Playwright), against `astro preview` at
+1440×900 and 390×844. Console output clean on all five routes: 0 errors, 0 warnings.
+
+| Check | Result |
+|---|---|
+| Top of page, `scrollTo(0, 0)` | `#forty-trillion` / `#one-picture` / `#what-a-household-earns` on `/government`, `/economy`, `/households`. Never a JS-running state with nothing marked |
+| Bottom of document, `scrollTo(0, body.scrollHeight)` | `#limits` on all three, at both viewports |
+| Counts, at every sampled position | `[aria-current="true"]` **2** in the DOM, **1** in the rail list, **1** in the panel list; `[aria-current="page"]` stays **2** |
+| Monotonicity, 200px steps | `/government` at 1440×900: 112 samples, **0** decreases, all **12** sections visited. At 390×844: 128 samples, 0 decreases, 12 visited. `/economy` 49 samples, 0 decreases, 6 of 6. `/households` 53 samples (the exact document bottom appended), 0 decreases, **7 of 7** — its `limits` is 1058px against an 844px viewport and the midpoint never enters it before the bottom, which is precisely what the bottom-of-document rule is for |
+| Taller than the viewport | `#the-laws` (5.38 × viewport) marked across all 24 samples inside its bounds and `#by-state` (4.99 ×) across all 22, with no other id appearing |
+| Anchor jump, 390×844 | all **12** panel links clicked in turn: the marked href equals the clicked one every time, including §12 `#limits`; the panel closes on each; the target's top lands at 64px, clearing the 52px bar |
+| Panel open while the page scrolls behind it | rail and panel agree at every sampled offset (0 → 19,000px) with the disclosure held open |
+| Routes with no contents list | `/` and `/sources` — **0** marks with JavaScript **on** at top, middle and bottom, 0 `a[data-section]`, and no console error: the IIFE returns before observing |
+| `javaScriptEnabled: false` | **0** `[aria-current="true"]` and **2** `[aria-current="page"]` on all five routes. Paired against the same context with scripting **on**, which shows 2 at load with no scrolling — the difference is the proof that the script, not the server, writes the mark. #36's guard is intact in the same run: 14 of 14 `figure.figure svg.chart` server-render on `/government` with scripting off |
+| Layout shift on a mark change | the rail's contents `<ol>` measures 208 × 314.34 before and after the mark moves — identical |
+| Desktop-unchanged proof | with the stylesheet content-hash normalised, `dist/government/index.html` and `dist/index.html` each differ from their pre-change build by **92 added lines and zero removed lines**, all of them the `sectionSpy()` block. No markup changed |
+
 ### Greyscale, per chart
 
 Computed from the rendered DOM: the `fill` and `stroke` of every category mark, per plot panel,
@@ -389,3 +448,10 @@ say so.
     counted per route: `/` 408 (389 data points), `/government/` 471 (380), `/households/` 356. Row
     `M1`. `A11Y-2` nevertheless stays at `In progress` until #80 closes, because the row's own
     definition of done includes the screen-reader half.
+13. **Section-level `aria-current` under a screen reader** (feature-matrix `A11Y-4`): navigating into
+    either contents list reports the current section on demand, **and** scrolling the page rapidly
+    announces nothing at all. Both halves matter — a mark nobody can find is useless, and a mark
+    that speaks on every section boundary is worse than none. The silence half is argued statically
+    (`test_contents_lists_are_not_live_regions` plus the ARIA rule that an attribute change on an
+    unfocused, non-live element is not announced) and the reporting half is not observable without
+    an assistive technology. — **NOT EXECUTED.** Human required: **#80**.
