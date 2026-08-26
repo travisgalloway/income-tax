@@ -1,0 +1,207 @@
+_comment: |
+  Curated. NEVER machine-written.
+
+  Every source CITED in a published output's _meta.source, mapped to the entry that
+  REGISTERS it in SOURCES.md -- the document /sources renders in full. check_sources
+  in pipeline/lib/validate.py reconciles the two on every build (#39).
+
+  Why a curated file rather than a scrape: SOURCES.md uses **bold** for ordinary
+  emphasis as well as for source lead-ins ("**Rejected.**", "**This is "give."**"),
+  so anything that scraped bold spans as "the register" would quietly count prose
+  emphasis as a source and report a full register while a real source was missing.
+  registered_as is matched INTO SOURCES.md; SOURCES.md is never parsed OUT of.
+
+  registry
+    key                  stable id, used in source_shape below
+    registered_as        a string that must appear in SOURCES.md
+    cited_as             a string, or several, that may appear in an _meta.source.
+                         Several because two outputs legitimately name one source
+                         differently -- debt.json writes the Treasury series out in
+                         full, debt_holders.json uses the short form.
+    cited_in_prose_only  named in body copy, ingested by nothing. Exempt from the
+                         "every entry is cited by some output" rule and from shape
+                         checking, NOT from having to be registered in SOURCES.md.
+
+  outputs
+    cites                the register keys that output's _meta.source names
+    source_shape         that _meta.source, vintage-normalized, with every citation
+                         replaced by its {key}. This is what makes a source ADDED to
+                         a source line and never registered fail the build, rather
+                         than pass unnoticed: the leftover free text will not match.
+
+  Vintages are stripped from both sides before comparison, so a CBO February-2026 ->
+  February-2027 refresh passes and only a real change to WHICH sources are cited
+  fails. DATES only, never arbitrary digits: "Table 5", "Table 23", "MEHOINUSA672N"
+  and "PL 115-97" identify a document rather than date it, so they survive
+  normalization and appear in the shapes below. See _normalize_source in
+  pipeline/lib/validate.py.
+
+registry:
+  cbo_historical_budget:
+    registered_as: "Congressional Budget Office, Historical Budget Data, February 2026"
+    cited_as: "CBO Historical Budget Data"
+
+  cbo_historical_economic:
+    registered_as: "Congressional Budget Office, Historical Economic Data, February 2026"
+    cited_as: "CBO Historical Economic Data"
+
+  cbo_jct_scores:
+    registered_as: "CBO and Joint Committee on Taxation cost estimates"
+    cited_as: "CBO and JCT cost estimates"
+
+  crs_party_control:
+    registered_as: "Congressional Research Service and House/Senate historical records"
+    cited_as: "CRS and chamber records"
+
+  cbo_household_income_distribution:
+    registered_as: "CBO, The Distribution of Household Income, 2022"
+    cited_as:
+      - "CBO, The Distribution of Household Income"
+      - "CBO Distribution of Household Income"
+
+  treasury_debt_to_the_penny:
+    registered_as: "US Treasury, Historical Debt Outstanding and Debt to the Penny"
+    cited_as:
+      - "US Treasury, Historical Debt Outstanding and Debt to the Penny"
+      - "US Treasury Debt to the Penny"
+
+  treasury_mspd:
+    registered_as: "US Treasury, Monthly Statement of the Public Debt"
+    cited_as: "Treasury Monthly Statement of the Public Debt"
+
+  treasury_tic:
+    registered_as: "US Treasury, Treasury International Capital"
+    cited_as: "Treasury International Capital"
+
+  jec_debt_update:
+    registered_as: "Joint Economic Committee, monthly debt update, August 2026"
+    cited_as: "Joint Economic Committee monthly debt update"
+
+  peterson_foundation:
+    registered_as: "Peter G Peterson Foundation"
+    cited_as: "Peter G Peterson Foundation"
+
+  oecd_revenue_statistics:
+    registered_as: "OECD, Revenue Statistics 2025, United States country note"
+    cited_as: "OECD Revenue Statistics"
+
+  irs_soi_individual:
+    registered_as: "IRS, Statistics of Income, individual tables by tax rate and income percentile, tax year 2023"
+    cited_as: "IRS Statistics of Income, individual tables by tax rate and income percentile"
+
+  irs_soi_table_5:
+    registered_as: "IRS Statistics of Income, SOI Data Book Table 5, Gross Collections by Type of Tax and State"
+    cited_as: "IRS Statistics of Income, SOI Data Book Table 5, Gross Collections by Type of Tax and State"
+
+  usaspending_geography:
+    registered_as: "USASpending.gov"
+    cited_as: "USASpending.gov spending_by_geography"
+
+  census_stc:
+    registered_as: "US Census Bureau, Annual Survey of State Government Tax Collections (STC)"
+    cited_as: "US Census Bureau, Annual Survey of State Government Tax Collections (STC)"
+
+  census_via_fred:
+    registered_as: "Census Bureau, via FRED"
+    cited_as: "Census Bureau via FRED"
+
+  statutory_rate_schedules:
+    registered_as: "Statutory rate schedules"
+    cited_as: "Statutory rate schedules"
+
+  tax_foundation_rates:
+    registered_as: "Tax Foundation income-tax-rates dataset"
+    cited_as: "Tax Foundation income-tax-rates dataset"
+
+  irs_soi_table_23:
+    registered_as: "IRS SOI Historical Table 23"
+    cited_as: "IRS SOI Historical Table 23"
+
+  irs_revenue_procedures:
+    registered_as: "IRS Revenue Procedures"
+    cited_as: "IRS Revenue Procedures"
+
+  tax_policy_center:
+    registered_as: "Tax Policy Center"
+    cited_as: "Tax Policy Center"
+
+  fred_cpiaucns:
+    registered_as: "FRED CPIAUCNS"
+    cited_as: "FRED CPIAUCNS"
+
+  voteview:
+    registered_as: "Voteview roll-call records"
+    cited_as: "Voteview"
+
+  house_clerk:
+    registered_as: "House Clerk record"
+    cited_as: "House Clerk roll call"
+
+  rockefeller_bop:
+    registered_as: "Rockefeller Institute of Government, state balance-of-payments studies"
+    # Government section 11 names it in body copy as the authoritative balance-of-payments
+    # comparison; its series ends at FY2022 with no machine-readable feed, so it is cited
+    # and never ingested. A named exemption, not a weakened assertion.
+    cited_in_prose_only: true
+
+outputs:
+  bracket_history:
+    cites:
+      - tax_foundation_rates
+      - irs_soi_table_23
+      - irs_revenue_procedures
+      - tax_policy_center
+      - fred_cpiaucns
+    source_shape: "{tax_foundation_rates} (-, from {irs_soi_table_23} and {irs_revenue_procedures}); {irs_revenue_procedures} through (-, curated); {irs_soi_table_23} / {tax_policy_center} for the published top rate; {fred_cpiaucns} for the constant-dollar deflator"
+
+  budget:
+    cites: [cbo_historical_budget, cbo_historical_economic, cbo_jct_scores, crs_party_control]
+    source_shape: "{cbo_historical_budget} ( ); {cbo_historical_economic} ( ) for the GDP price index; {cbo_jct_scores}; {crs_party_control} for party control"
+
+  cbo_effective_rates:
+    cites: [cbo_household_income_distribution]
+    source_shape: "{cbo_household_income_distribution}, ( ), Supplemental Data Table 9, Average Federal Tax Rates by Income Group, to"
+
+  debt:
+    cites: [treasury_debt_to_the_penny, cbo_historical_budget]
+    source_shape: "{treasury_debt_to_the_penny}. GDP denominator from {cbo_historical_budget},"
+
+  debt_holders:
+    cites: [treasury_debt_to_the_penny, treasury_tic]
+    source_shape: "{treasury_debt_to_the_penny} (public vs intragovernmental, ); {treasury_tic} (foreign holdings, )"
+
+  debt_maturity:
+    cites: [treasury_mspd, jec_debt_update, peterson_foundation]
+    source_shape: "{treasury_mspd}; {jec_debt_update} ( average maturity); {peterson_foundation} for instrument shares"
+
+  economy:
+    cites: [cbo_historical_economic]
+    source_shape: "{cbo_historical_economic}, vintage"
+
+  income_inequality:
+    cites: [census_via_fred, statutory_rate_schedules]
+    source_shape: "{census_via_fred}: MEHOINUSA672N (income), GINIALLRF (Gini). {statutory_rate_schedules}"
+
+  income_tax_by_group:
+    cites: [irs_soi_individual, cbo_household_income_distribution]
+    source_shape: "{irs_soi_individual}, tax year . {cbo_household_income_distribution} for the top 1% income share"
+
+  oecd:
+    cites: [oecd_revenue_statistics]
+    source_shape: "{oecd_revenue_statistics} , United States country note, preliminary data"
+
+  party_splits:
+    cites: [voteview, house_clerk]
+    source_shape: "{voteview} (voteview.com/data): HSall_members.csv joined to per-congress roll-call and vote files. Final-passage roll call per law curated by hand. PL 115-97 cross-checked against {house_clerk} 699."
+
+  revenue_sources:
+    cites: [cbo_historical_budget]
+    source_shape: "{cbo_historical_budget}, vintage"
+
+  states_balance:
+    cites: [irs_soi_table_5, usaspending_geography]
+    source_shape: "{irs_soi_table_5} (vintage discovered per run); {usaspending_geography}, place of performance basis, same fiscal year window as the IRS vintage"
+
+  states_tax_mix:
+    cites: [census_stc]
+    source_shape: "{census_stc}, detailed table, transposed (vintage discovered per run)"

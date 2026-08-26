@@ -224,11 +224,21 @@ time. Appended to, never rewritten. None of these have been acted on.
   rendered verbatim in each `<Figure>`'s Source line instead. Once #22 replaces `sources.astro`
   with a reference content collection, port these two entries into it. Found while working on #14.
   Severity: cross-reference completeness, non-blocking.
+  **Resolved before #39 opened** — #22 (`9d2772b`) replaced `sources.astro` with a 15-line render of
+  `SOURCES.md` through the `reference` content collection, and #28 (`2e15e59`) added both entries to
+  `SOURCES.md` § State give-and-get. #39 confirmed both ship in `dist/sources/index.html` and did not
+  re-add them; a second prose copy is what `contracts/interfaces/content-sources.md` § "No second
+  copy of `SOURCES.md`" forbids. What #39 closed instead is the *class*: nothing had ever
+  reconciled a cited source against the register, so the next omission would have been just as
+  silent. See `check_sources` and `pipeline/curated/sources.yaml`.
 - [2026-08-23] `sections.md` §12 ("what this cannot tell you", owned by #22) is a natural home for
   a sixth limit: place of payment (IRS filer address / USASpending place of performance) is not
   place of burden or benefit. §11's own body copy states this trap in full already, so nothing is
   lost if #22 never adds it, but it would strengthen that section's list. Found while working on
   #14; #22's branch was not edited. Severity: cross-section completeness, non-blocking.
+  **Resolved 2026-08-26 by #39** — §12 now carries a sixth limit, "Where a dollar is recorded is not
+  where it is borne," naming both bases. §11 keeps its worked examples and links to it rather than
+  restating the principle, so neither section is a copy of the other.
 - [2026-08-23] `pipeline/lib/fetch.py` now carries three near-parallel request functions (`fetch`,
   `fetch_bytes`, `post_json`) that duplicate the same cache/retry/failure-discipline boilerplate
   three times rather than sharing one core. Worth collapsing once a fourth request shape appears.
@@ -507,3 +517,31 @@ time. Appended to, never rewritten. None of these have been acted on.
   year/status ladder twice — once for the hi/rhi-nullness checks and once for the new strictly
   increasing floor check. Found while adding the duplicate-bracket-floor guard for #38.
   Severity: cosmetic, non-blocking.
+- [2026-08-26] `pipeline/tests/test_pipeline.py:1160` `test_limits_section_does_not_call_the_votes_classified`
+  slices `src/pages/government/index.astro` from `id="limits"` to **end of file** and bans the bare
+  `classif` stem across all of it, though its docstring scopes it to limit 4. Its sibling
+  `test_no_document_still_calls_vote_composition_classified:960` deliberately matches phrases rather
+  than the stem, precisely so that "classified by the filer's address" — the IRS's own wording —
+  survives; the two disagree about the same word. #39's limit 6 was written around the stem rather
+  than narrowing the test. Found while adding §12's sixth limit for #39. Severity: latent trap for a
+  future editor, non-blocking.
+- [2026-08-26] `docs/test-plan.md`'s DATA-2 row names `check_prose_figures` as a
+  `pipeline/lib/validate.py` function reconciling 118 figures. No such function exists —
+  `grep -rn check_prose_figures pipeline/` returns nothing, and the reconciliation lives in
+  `pipeline/lib/report.py`'s `build_report`. Found while adding the DATA-3 row for #39. Severity:
+  wrong document, low.
+- [2026-08-26] `SOURCES.md:114` still reads *"Four limits remain, and section 11 states all four."*
+  The limits section has been §12 since #8. Already parked on 2026-08-26 under #31 (see the entry
+  above); re-noted because #39 edited both §11 and §12 and deliberately did not fix it — it is
+  outside #39's fixed scope. Severity: low, cosmetic.
+- [2026-08-26] `SOURCES.md:21` registers **CBO, Estimates of Automatic Stabilizers, November 2024**,
+  which no published output's `_meta.source` cites. `check_sources` gates the cited -> registered
+  direction only, so a registered source that nothing uses is simply absent from
+  `pipeline/curated/sources.yaml` and is never reported. Whether it is stale or is consumed
+  somewhere off the `_meta.source` path was not established. Found while building the register for
+  #39. Severity: possible stale registration, non-blocking.
+- [2026-08-26] `.claude/plans/issue-39.md` states "There are **15 published outputs** under
+  `src/data/`" in two places (Task checklist item 4, and criterion 5's rationale). There are 14.
+  Criterion 5's own proving command globs `src/data/*.json` rather than hard-coding the number, so
+  it self-corrected and nothing downstream was wrong. Found while writing
+  `pipeline/curated/sources.yaml` for #39. Severity: plan defect, resolved by the glob, non-blocking.

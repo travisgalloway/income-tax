@@ -374,13 +374,14 @@ name is the authoritative version, and its series ends at FY2022. What is drawn 
 collected in a state against federal award spending performed in it, both for FY2025, and the two
 are not opposite sides of one ledger.
 
-**Where the money is counted is not where it lands.** The IRS classifies collections by the
-filer's address, so a corporation's tax is booked to its principal office and withholding is booked
-to the employer's location, which for a border employer may sit in a different state from the
-people it withholds from. Federal spending is counted where the work is performed, which sends
-money to the state hosting a military base rather than the state its personnel came from, and to a
-federal retiree's former duty station rather than where they now live. Medicaid dollars are
-recorded against the state that passes them through to providers.
+**Where the money is counted is not where it lands.** The two sides are booked to different
+places, and neither location is a claim about who bore the cost or got the benefit; section 12's
+limit 6 states the principle in full. What it means for these two charts: a corporation's tax
+follows its principal office and withholding follows the employer's location, which for a border
+employer may sit in a different state from the people it withholds from. Award spending goes to
+the state hosting a military base rather than the state its personnel came from, and to a federal
+retiree's former duty station rather than where they now live. Medicaid dollars are recorded
+against the state that passes them through to providers.
 
 **Neither side is complete.** Award spending excludes most direct benefit payments, so the "get"
 side is smaller than what a state actually receives; gross collections include penalties and
@@ -404,7 +405,7 @@ FY2022, not ingested).
 
 ## 12 / What this cannot tell you
 
-**Heading:** Five things this data cannot tell you
+**Heading:** Six things this data cannot tell you
 
 **Standfirst:** These limits are load bearing, not decorative. Read them before
 arguing with anyone about the charts above.
@@ -442,6 +443,15 @@ so a tally on one basis will not match a tally on the other.
 unprecedented, because prices roughly doubled over this span. Share of GDP scales
 to the economy carrying the burden. Every chart on this site can be flipped
 between them, and readers should.
+
+**6. Where a dollar is recorded is not where it is borne.** Federal tax is recorded
+against the address on the filer's return. Federal award spending is recorded against
+the place of performance, meaning the location where the work is done. Neither base is
+a statement about who ultimately paid or who ultimately benefited: a company's tax
+follows its headquarters rather than the people whose work produced it, and a contract's
+spending follows the site rather than the taxpayers who funded it. Section 11 sets one
+against the other, and what it draws is a comparison of two accounting locations, not a
+balance of payments.
 
 **Two more worth knowing.** Four years out of thirty-one, FY2008 to FY2009 and
 FY2020 to FY2021, produced $7.78 trillion of borrowing, 32% of the total, against

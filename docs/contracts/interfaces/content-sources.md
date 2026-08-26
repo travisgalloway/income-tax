@@ -48,6 +48,73 @@ prose. If a page needs to say what a source is, it either links to `/sources` or
 `_meta.source` from the relevant dataset (see `budget-data.md`). Two prose copies of the same
 source list is how one of them goes stale while the other is edited.
 
+## Every cited source is registered, and the build enforces it
+
+**A source named in any published output's `_meta.source` must be findable in `SOURCES.md`.**
+`/sources` renders that document in full, so a source that is cited but not registered is one the
+reader cannot trace — and until #39 nothing observed it. `check_meta` asserts only that
+`_meta.source` is non-empty and is not the summary string `"CBO data"`; nothing related a citation
+to the register.
+
+The register lives at **`pipeline/curated/sources.yaml`** and is enforced by
+**`check_sources`** in `pipeline/lib/validate.py`, called from `run()` **unconditionally**,
+alongside `check_meta` and `check_schema` and never behind an `if "x" in outputs:` gate — a check
+skipped because its output was not in the tier reads exactly like a check that passed (#37).
+
+The file has two blocks:
+
+- `registry` — one entry per cited source: `registered_as` (a string that must appear in
+  `SOURCES.md`), `cited_as` (one string, or several, that may appear in an `_meta.source`), and
+  the optional `cited_in_prose_only: true`.
+- `outputs` — one entry per published output: `cites` (register keys) and `source_shape`, that
+  output's `_meta.source` vintage-normalized with every citation replaced by its `{key}`.
+
+Four rules, each a named failure:
+
+| | Rule | Catches |
+|---|---|---|
+| **A** | every declared `cited_as` appears in that output's `_meta.source` | a citation renamed or dropped out from under the register |
+| **B** | every `registered_as` appears in `SOURCES.md` | **the #39 defect** — a cited source absent from `/sources` |
+| **C** | every register entry is cited by some output, or is `cited_in_prose_only` | an orphan entry left behind by a rename |
+| **D** | the recomputed shape equals the stored `source_shape` exactly | a source **added** to `_meta.source` and never registered — the case B cannot see, because the register does not know the new source exists |
+
+Three rules that are not negotiable when editing any of this:
+
+- **The register is curated YAML, never scraped from `SOURCES.md`.** The document uses `**bold**`
+  for ordinary emphasis as well as for source lead-ins (`**Rejected.**`, `**This is "give."**`),
+  so a scraper would count prose emphasis as a source and report a full register while a real
+  source was missing. `registered_as` is matched **into** `SOURCES.md`; `SOURCES.md` is never
+  parsed **out of**.
+- **Both sides are vintage-normalized by the same function**, `_normalize_source`, which strips
+  **dates and only dates**: years, month names, a day-of-month attached to a month name, and the
+  `-NN` serial that numbers a Revenue Procedure within its year (`2018-57`). `SOURCES.md` carries
+  the same vintages the `_meta.source` strings do, so an ordinary CBO February-2026 →
+  February-2027 refresh moves both and must pass. This is loose on purpose, the same balance the
+  schema bounds strike (`docs/test-plan.md`, DATA-1): a check that turns every upstream
+  republication red is a check that gets disabled.
+- **Digits that identify a document are never stripped.** `Table 5` and `Table 23` are different
+  tables, `MEHOINUSA672N` and `MEHOINUSA646N` are different FRED series, `PL 115-97` is a specific
+  law. Erasing arbitrary numbers would let B match a registered source against some *other*
+  table's line in `SOURCES.md`, and let D's shape hold while the cited document changed underneath
+  it — the same silent pass this check exists to close. Identifying numbers therefore appear
+  verbatim in the stored `source_shape` values.
+- **A source that is cited but genuinely never ingested is an explicit named exemption**, not a
+  weakened assertion. `rockefeller_bop` carries `cited_in_prose_only: true` because §11 names the
+  Rockefeller Institute's balance-of-payments series in body copy and the pipeline ingests
+  nothing from it. That exempts it from C and D, **never from B**.
+
+Adding an output without adding its `outputs` entry fails the build.
+`test_source_register_covers_every_published_output` asserts both directions against
+`src/data/*.json`, so neither an unregistered new output nor an orphan entry left by a rename can
+keep the count whole.
+
+**What this register is not (#57).** It makes the register **complete** — every cited source is
+in `SOURCES.md`. It does not make it **navigable**. Source *tiers* (primary / derived /
+cited-never-ingested) as a reader-facing taxonomy, the format of a `<Figure>`'s "Source:" line,
+and anchor links from that line into `/sources` are #57's scope and are deliberately absent here.
+`cited_in_prose_only` is a build-gate exemption flag, not a tier: do not read it as one, and do
+not grow it into one without #57.
+
 ## §12 — "What this cannot tell you" (`id="limits"`, `src/pages/government/index.astro`)
 
 Structural rules, load-bearing per `BRIEF.md`'s "section 11 is not optional and does not get
@@ -55,12 +122,31 @@ collapsed behind a disclosure":
 
 - **No `<details>`, no collapsible, no tab, no "read more."** The whole section renders in the
   static HTML with no island and no `client:` directive — it carries no chart, so it needs none.
+- **The section carries six numbered limits**, not five. Limits 1–5 keep their numbering:
+  `content-sources.md` pins "Limit 5 links to a chart the reader can immediately flip" below, and
+  the grep-pinned phrases in `.claude/plans/issue-8.md` and `.claude/plans/issue-11.md` are
+  positional, so a new limit is **appended** after limit 5 and before `<h3>Two more worth
+  knowing</h3>`, never inserted. The heading's count word and the `<li>` count move together, and
+  `sections.md` §12 mirrors both — nothing automated relates the two, so a change to one is a
+  change to all three.
+- **Limit 6 owns the place-of-payment principle.** Federal tax is recorded against the filer's
+  address, federal award spending against the place of performance, and neither base says who
+  bore the cost or got the benefit. §11 states the *worked examples* (border employer, military
+  base, federal retiree, Medicaid pass-through — the ones that matter to the reader of that
+  chart) and links to `#limits` for the principle. Neither is a copy of the other, and neither
+  may become one: the general statement lives in §12, the chart-specific cases in §11.
 - **No stem of "classif" appears in the section.** The dataset counts per-party splits from
   Voteview roll-call records (`src/data/party_splits.json`); the old "classified from published
   vote character" language describes a state that no longer exists. See
   `budget-data.md`-adjacent data: `party_splits.json` `_meta` names the four limits that remain
   (hand-picked final-passage roll call, the CARES Act's missing House roll call, the 10%
   cross-party threshold, and party-vs-caucus membership).
+  **The trap, for anyone writing new copy here.** `test_limits_section_does_not_call_the_votes_classified`
+  slices from `id="limits"` to the end of the file and bans the bare stem across all of it, though
+  its docstring scopes it to limit 4. The natural wording for limit 6's subject is "the IRS
+  **classif**ies collections by the filer's address" — §11's own former phrasing — and it turns
+  the build red. Use *records / booked / recorded against*. **Do not narrow the test to make room
+  for the copy**: a guard is not weakened to fit new prose.
 - **Limit 5 links to a chart the reader can immediately flip** (currently `#forty-trillion`,
   nominal ↔ % of GDP). If a future section replaces or removes that chart's unit toggle, this
   link's target must move with it or the claim "every dollar chart on this site can be flipped"

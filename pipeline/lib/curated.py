@@ -35,6 +35,12 @@ def law_totals() -> dict[str, Any]:
     return _load("laws")["totals"]
 
 
+def source_register() -> dict[str, Any]:
+    """The cited-source -> SOURCES.md registration map (#39). Read by
+    validate.check_sources; nothing writes it."""
+    return _load("sources")
+
+
 def discrepancies() -> dict[str, Any]:
     return _load("discrepancies")["resolutions"]
 

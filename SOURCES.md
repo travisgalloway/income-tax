@@ -47,6 +47,34 @@ Counts all levels of government.
 **IRS, Statistics of Income, individual tables by tax rate and income percentile, tax year 2023**
 Shares of AGI and of income tax paid by percentile group.
 
+**Tax Foundation income-tax-rates dataset**
+`github.com/TaxFoundation/data` → `income-tax-rates/income-tax-rates.csv`
+The statutory bracket ladder by filing status, 1913–2019, itself compiled from
+IRS SOI Historical Table 23 and the IRS Revenue Procedures. The CSV ends at 2019.
+
+**IRS SOI Historical Table 23** and the **IRS Revenue Procedures**
+Table 23 is the published top marginal rate. Revenue Procedures 2018-57 through
+2024-40 carry the 2019–2025 schedules, hand-transcribed into
+`pipeline/curated/brackets_modern.yaml` because no machine-readable feed
+publishes them; 2019 is transcribed too but used only as a regression check
+against the fetched CSV, which stays authoritative for that year.
+
+**Statutory rate schedules**
+The bracket ladder above, read as a top-rate series. The statute's nominal top
+bracket and the published top rate disagree in twelve years, where a credit,
+surtax or part-year rate change moved the published figure; both numbers are
+kept, and the reconciliation is in `pipeline/curated/bracket_adjustments.yaml`.
+
+**Tax Policy Center**
+Published top marginal rate, used alongside SOI Historical Table 23 for the
+twelve years above.
+
+**FRED CPIAUCNS**
+`fred.stlouisfed.org` CPI-U, all urban consumers, not seasonally adjusted,
+averaged to a calendar year. The deflator behind every constant-dollar bracket
+threshold. Averaged, not sampled: taking a December observation for the year is
+a different series and would move every real threshold.
+
 **Census Bureau, via FRED**
 `MEHOINUSA672N` real median household income in 2024 dollars, 1984–2024.
 `GINIALLRF` family Gini index, 1947–2024.
@@ -59,6 +87,12 @@ Ten-year scores for each of the 23 laws, as estimated at enactment.
 
 **Joint Economic Committee, monthly debt update, August 2026**
 Average maturity of marketable debt, 71 months as of June 2026.
+
+**Peter G Peterson Foundation**
+Instrument shares of marketable debt — the split between bills, notes and bonds.
+Secondary to the Monthly Statement of the Public Debt above, and used only for
+the share breakdown; see "Federal Reserve holdings" under Known discrepancies
+for a figure where this source and TIC disagree.
 
 **Congressional Research Service and House/Senate historical records**
 Party control of the presidency, House and Senate by Congress.
