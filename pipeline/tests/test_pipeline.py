@@ -1938,6 +1938,135 @@ def test_check_sources_fails_when_a_cited_document_number_changes(monkeypatch, t
     assert "Table 4" in c.failures[0]
 
 
+# ---- #50: a glossary definition cites the register, not free text ---------
+
+GLOSSARY = ROOT.parent / "src" / "content" / "glossary"
+
+
+def _glossary_copy(tmp_path: Path) -> Path:
+    """A writable copy of the term files, for pointing validate at."""
+    copy_dir = tmp_path / "glossary"
+    shutil.copytree(GLOSSARY, copy_dir)
+    return copy_dir
+
+
+def _set_source(glossary_dir: Path, term: str, keys: list[str] | None) -> None:
+    """Rewrite one term's `source` block. `None` removes the field entirely."""
+    path = glossary_dir / f"{term}.md"
+    block = "" if keys is None else "source:\n" + "".join(f'  - "{k}"\n' for k in keys)
+    text, n = re.subn(r"^source:\n(?:  - .*\n)+", block, path.read_text(), count=1, flags=re.M)
+    assert n == 1, f"{term}: no source block to rewrite; the mutation is a no-op"
+    path.write_text(text)
+
+
+def test_check_glossary_sources_is_clean_against_the_real_tree():
+    """The inverse, asserted first so nothing below can pass by failing for an
+    unrelated reason. Every term's citation resolves to a register entry, which rule B
+    in turn pins to SOURCES.md."""
+    c = validate.Checks()
+    validate.check_glossary_sources(c)
+    assert c.failures == [], c.failures
+    assert c.passed > 0
+
+
+def test_every_glossary_term_cites_only_registered_keys():
+    """#50 criterion 1. The population is `src/content/glossary/*.md`, not the terms
+    that happen to appear in the register, so term twenty-four cannot ship with an
+    unchecked citation. The file count is asserted too: a term added without a source
+    would otherwise leave this passing over a smaller population."""
+    registry = curated.source_register()["registry"]
+    entries = validate._glossary_entries()
+
+    assert len(entries) == len(list(GLOSSARY.glob("*.md"))) == 23
+
+    for term, keys in entries:
+        assert keys, f"{term}: source is missing or empty"
+        unknown = [k for k in keys if k not in registry]
+        assert not unknown, f"{term}: cites unregistered key(s) {unknown}"
+
+
+def test_check_glossary_sources_fails_on_an_unresolvable_key(monkeypatch, tmp_path):
+    """#50 criterion 3, the guard-bites proof. Two terms are mutated in one test so
+    the guard is proven generic over the glossary rather than special-cased to
+    whichever term happened to be wrong."""
+    cases = {"net-interest": "cbo_histrical_budget", "median": "census_by_fred"}
+
+    for term, typo in cases.items():
+        glossary = _glossary_copy(tmp_path / term)
+        _set_source(glossary, term, [typo])
+
+        monkeypatch.setattr(validate, "GLOSSARY_DIR", glossary)
+        c = validate.Checks()
+        validate.check_glossary_sources(c)
+
+        assert len(c.failures) == 1, f"{term}: expected exactly one failure, got {c.failures}"
+        assert term in c.failures[0]
+        assert typo in c.failures[0]
+        assert "/sources" in c.failures[0]
+
+
+def test_check_glossary_sources_fails_on_a_missing_source(monkeypatch, tmp_path):
+    """#50 criterion 2. Missing and empty are the same refusal: a term whose citation
+    the reader cannot trace does not ship."""
+    for term, keys in (("outlays", None), ("vintage", [])):
+        glossary = _glossary_copy(tmp_path / term)
+        _set_source(glossary, term, keys)
+
+        monkeypatch.setattr(validate, "GLOSSARY_DIR", glossary)
+        c = validate.Checks()
+        validate.check_glossary_sources(c)
+
+        assert len(c.failures) == 1, f"{term}: expected exactly one failure, got {c.failures}"
+        assert term in c.failures[0]
+        assert "missing or empty" in c.failures[0]
+
+
+def test_check_glossary_sources_fails_when_the_glossary_directory_is_empty(monkeypatch, tmp_path):
+    """The #37 rule: nothing to check is a FAILURE, not a pass. A check that reads no
+    files reports exactly like a check that read them all and found nothing wrong."""
+    empty = tmp_path / "empty"
+    empty.mkdir()
+
+    monkeypatch.setattr(validate, "GLOSSARY_DIR", empty)
+    c = validate.Checks()
+    validate.check_glossary_sources(c)
+
+    assert len(c.failures) == 1, c.failures
+    assert "no glossary terms found" in c.failures[0]
+    assert c.passed == 0
+
+
+def test_check_sources_rule_c_accepts_a_glossary_only_citation(monkeypatch, tmp_path):
+    """#50's widening of #39 rule C, proved in both directions. Rule C used to fail any
+    register entry cited by no OUTPUT, so the first definitional-only source would have
+    landed as an orphan. It now spans outputs and glossary terms -- and the converse
+    still bites: delete the sole term that cites such a key and the entry is orphaned,
+    which is the answer to "may deleting a term orphan its source"."""
+    register = copy.deepcopy(curated.source_register())
+    # Registered in SOURCES.md (it is tax_policy_center's own registered_as, so rule B
+    # passes) but named by no output's cites -- a definitional-only source.
+    register["registry"]["tax_policy_center_definitional"] = {
+        "registered_as": "Tax Policy Center",
+        "cited_as": "Tax Policy Center",
+    }
+    monkeypatch.setattr(curated, "source_register", lambda: register)
+
+    cited = _glossary_copy(tmp_path / "cited")
+    _set_source(cited, "marginal-rate", ["tax_policy_center_definitional"])
+    monkeypatch.setattr(validate, "GLOSSARY_DIR", cited)
+    c = validate.Checks()
+    validate.check_sources(c, OUTPUTS)
+    assert c.failures == [], c.failures
+
+    # The same key with no term citing it: an orphan, and rule C says so by name.
+    monkeypatch.setattr(validate, "GLOSSARY_DIR", _glossary_copy(tmp_path / "uncited"))
+    c = validate.Checks()
+    validate.check_sources(c, OUTPUTS)
+    assert len(c.failures) == 1, c.failures
+    assert "tax_policy_center_definitional" in c.failures[0]
+    assert "no glossary term" in c.failures[0]
+
+
 # ---- #41: a title's year range is derived from coverage, never typed -------
 
 

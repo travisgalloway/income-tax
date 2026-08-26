@@ -799,3 +799,19 @@ time. Appended to, never rewritten. None of these have been acted on.
   `grep -o 'client:' src/pages/index.astro` returns 1. `src/pages/contents.astro` states the same
   thing without naming the directive, which is the form that greps clean. Found while satisfying
   #49's criterion 1. Severity: verification hygiene, non-blocking.
+- [2026-08-26] `src/content/glossary/{gini-index,median,effective-rate,incidence,marginal-rate,roll-call-vote}.md`,
+  six terms' citation qualifiers (`MEHOINUSA672N, GINIALLRF`; `published January 2026`; `published
+  top marginal rate`; the `voteview.com/data` file list) are dropped from the rendered term line by
+  #50 and now live only in that source's `SOURCES.md` block. Whether a term's line should reach
+  them — as a followable link rather than a second copy of the text — is #57's question. Found
+  while converting `source` to register keys for #50. Severity: content detail, non-blocking.
+- [2026-08-26] `src/content/glossary/fiscal-year.md:5` and `chained-dollars.md:5`, several
+  definitions would be more precisely attributed to a statute or an agency methodology note than to
+  the dataset that uses them — `fiscal-year` to 31 U.S.C. §1102, `chained-dollars` to a BEA
+  methodology note. Both currently cite the CBO series the site ingests, which resolves cleanly and
+  is not wrong, just not the definitional origin. Substantive re-attribution, not a gate. Found
+  while writing #50's register mapping. Severity: editorial, non-blocking.
+- [2026-08-26] `.github/workflows/deploy.yml` and `refresh-data.yml`, neither `npm run build` nor
+  `uv run pytest` runs on a pull request — deploy is push-to-`main`, refresh-data is scheduled — so
+  both gates #50 adds are unenforced at review time and were proved locally instead. That is #67.
+  Found while planning #50's verification. Severity: CI coverage, non-blocking.

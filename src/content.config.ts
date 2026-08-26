@@ -36,8 +36,23 @@ export const collections = {
        *  bundle. `text` is the register's `registered_as` verbatim, joined by "; " — the one
        *  prose copy of a source stays in `SOURCES.md`. */
       source: z
-        .array(z.enum(REGISTER_KEYS as [string, ...string[]]))
-        .min(1)
+        .array(
+          z.enum(REGISTER_KEYS as [string, ...string[]], {
+            // Zod's own wording lists the valid set but not the value it rejected, and the
+            // rejected value is the whole diagnosis. Name it, name the rule, refuse.
+            error: (issue) =>
+              `source key ${JSON.stringify(issue.input)} is in no ` +
+              `pipeline/curated/sources.yaml registry entry. A definition is a claim; refusing ` +
+              `to ship a term whose citation the reader cannot trace to /sources (#50). ` +
+              `Valid keys: ${REGISTER_KEYS.join(', ')}`,
+          }),
+        )
+        .min(1, {
+          error:
+            'source is missing or empty. A definition is a claim; refusing to ship a term ' +
+            'whose citation the reader cannot trace to /sources (#50). source is a list of ' +
+            'pipeline/curated/sources.yaml registry keys.',
+        })
         .transform((keys) => ({ keys, text: sourceLine(keys) })),
       /** Sibling term ids. Zod cannot see sibling entries, so a dangling value is caught by a
        *  build-time throw on the page, not here. */

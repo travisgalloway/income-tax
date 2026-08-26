@@ -54,8 +54,10 @@ it. Editing `src/content.config.ts` means reading both.
 
 Nothing under `src/` may contain a paraphrase or excerpt of `SOURCES.md`'s content as static
 prose. If a page needs to say what a source is, it either links to `/sources` or quotes
-`_meta.source` from the relevant dataset (see `budget-data.md`). Two prose copies of the same
-source list is how one of them goes stale while the other is edited.
+`_meta.source` from the relevant dataset (see `budget-data.md`), or — for a glossary term — cites a
+register key that resolves to `SOURCES.md`'s own text at build time (see §"A glossary term's
+`source` is a reference into the register" below). Two prose copies of the same source list is how
+one of them goes stale while the other is edited.
 
 ## Every cited source is registered, and the build enforces it
 
@@ -84,7 +86,7 @@ Four rules, each a named failure:
 |---|---|---|
 | **A** | every declared `cited_as` appears in that output's `_meta.source` | a citation renamed or dropped out from under the register |
 | **B** | every `registered_as` appears in `SOURCES.md` | **the #39 defect** — a cited source absent from `/sources` |
-| **C** | every register entry is cited by some output, or is `cited_in_prose_only` | an orphan entry left behind by a rename |
+| **C** | every register entry is cited by some output **or by some glossary term**, or is `cited_in_prose_only` | an orphan entry left behind by a rename, or by the deletion of the last term citing a definitional-only source |
 | **D** | the recomputed shape equals the stored `source_shape` exactly | a source **added** to `_meta.source` and never registered — the case B cannot see, because the register does not know the new source exists |
 
 Three rules that are not negotiable when editing any of this:
@@ -123,6 +125,61 @@ cited-never-ingested) as a reader-facing taxonomy, the format of a `<Figure>`'s 
 and anchor links from that line into `/sources` are #57's scope and are deliberately absent here.
 `cited_in_prose_only` is a build-gate exemption flag, not a tier: do not read it as one, and do
 not grow it into one without #57.
+
+## A glossary term's `source` is a reference into the register (#50)
+
+**A glossary term cites register KEYS, never prose.** `src/content/glossary/*.md` carries
+`source:` as a non-empty YAML block sequence of `pipeline/curated/sources.yaml` `registry:` keys,
+and the rendered line on `/glossary` is each key's `registered_as`, **verbatim**, joined by `"; "`.
+That text is produced at build time by `src/data/source-register.ts` and is **never stored under
+`src/`**.
+
+**The no-second-copy rule above is SATISFIED here, not excepted.** Before #50 a term's `source` was
+a hand-typed sentence restating a line already in `SOURCES.md` — the second copy §"No second copy
+of `SOURCES.md`" forbids — and nothing related either copy to the other, so a vintage bump in
+`SOURCES.md` left 23 stale citations with every check green. Now there is one prose copy of every
+source, in `SOURCES.md`, which rule B pins the register to; a vintage bump moves the glossary in the
+same build with **no glossary edit**. Summarisation — the failure `check_meta` catches for a
+dataset's `_meta.source` — is not merely checked for here, it is **not expressible**: nothing but
+the register's own string is ever printed.
+
+**Where the gate lives, and why two layers are enough.** Every write path is covered:
+
+- **Layer 1 — Zod, `src/content.config.ts`** (`astro check`, `npm run build`). `source` is
+  `z.array(z.enum(REGISTER_KEYS)).min(1)` with a `.transform` that resolves each key to its
+  `registered_as`. An unknown key is a schema failure naming the term, the key and the valid set,
+  so **the raw key has no code path to the page** — there is no degraded render. The `.transform`
+  also keeps `content.config.ts` the only module that touches the register, so `glossary.astro`
+  stays register-unaware and no React island can pull `node:fs` into a bundle.
+- **Layer 2 — `check_glossary_sources`, `pipeline/lib/validate.py`** (`build.py --dry-run`,
+  `pytest`), called from `run()` **unconditionally**, next to `check_sources`, for the reason that
+  gate gives. It exists because layer 1 is blind to the workflow that runs unattended:
+  `refresh-data.yml` runs the pipeline and `pytest`, never a site build. An empty or unreadable
+  `src/content/glossary/` is a **named failure**, never a skip (#37).
+
+No third layer. `src/data/index.ts`'s `assertDataset` guards `src/data/*.json` and the glossary is
+not one — see `glossary.md`'s "not a pipeline output" paragraph, which stays true: layer 2 reads the
+term files directly and adds no `outputs:` entry.
+
+**A deleted term may orphan its source, and that is a build failure**, by rule C as widened above.
+A key cited only by a definitional source becomes an entry cited by nothing the moment its last
+term is deleted, and rule C names it. No new machinery.
+
+**No new `SOURCES.md` entry was added, and that is a decision.** All eight keys the glossary cites
+were already registered and already passing rule B, so #50 was a check to write rather than 23
+citations to backfill. Re-attributing a definition to a statute or an agency methodology note —
+`fiscal-year` to 31 U.S.C. §1102, `chained-dollars` to a BEA methodology note — would change *which*
+source a term cites. That is a substantive editorial claim, not a gate, and it is parked in
+`docs/parked-findings.md`.
+
+**Six terms lost a citation qualifier, deliberately.** `(MEHOINUSA672N, GINIALLRF)` on `gini-index`
+and `median`, `(published January 2026)` on `effective-rate` and `incidence`, `published top
+marginal rate` on `marginal-rate`, and the `voteview.com/data` file list on `roll-call-vote` no
+longer appear on the term's line. Every one of them is in that source's `SOURCES.md` block. Keeping
+them would have meant a free-text field beside the key — the second copy, reintroduced through a
+side door. Making the line **followable**, so a reader reaches the qualifier in one click, is #57's
+job and is deliberately not half-done here: `/glossary` still carries zero external hyperlinks and
+no source-tier vocabulary.
 
 ## §12 — "What this cannot tell you" (`id="limits"`, `src/pages/government/index.astro`)
 
