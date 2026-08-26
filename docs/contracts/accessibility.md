@@ -157,7 +157,7 @@ assistive technology and no Safari.app exist in this environment; every row that
 The greyscale pass is **JavaScript on**, because that is the state a sighted reader is in. It is not
 because the charts are missing without it: every section island server-renders its full `<svg>`,
 `DebtChart` included — measured in #36 across all three routes, 25 of 25 figures, and held there
-since by `test_every_figure_server_renders_its_chart_svg`. `client:visible` defers *hydration*, not
+by `test_every_figure_server_renders_its_chart_svg`. `client:visible` defers *hydration*, not
 rendering. The JavaScript-off state is checked by `M5` instead, on its own terms.
 
 | Check | Route | Result | Tool | Evidence / issue |
