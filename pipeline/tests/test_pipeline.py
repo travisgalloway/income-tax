@@ -1628,3 +1628,36 @@ def test_check_bracket_history_rejects_a_duplicate_bracket_floor(monkeypatch, tm
     # The inverse: the real published data yields zero failures.
     clean = run_against(real)
     assert clean.failures == [], clean.failures
+
+
+# ---- #38: the two CBO price series -----------------------------------------
+
+def test_chained_and_core_cpi_start_at_their_own_first_year():
+    """#38 criterion 1. Each series is emitted over exactly the span CBO
+    publishes it, and the years before that are a GAP, never a zero. Asserted
+    with `is None` rather than falsiness, because 0 is falsy and 0 is the bug."""
+    rows = {r["y"]: r for r in load("economy")["data"]}
+    years = sorted(rows)
+
+    for field, first_year in (("chained_cpiu", 2002), ("core_cpiu", 1958)):
+        assert rows[first_year][field] is not None, f"{field} must be present at FY{first_year}"
+        for y in years:
+            if y < first_year:
+                assert rows[y][field] is None, f"{field} FY{y} is {rows[y][field]!r}, expected null"
+            else:
+                assert rows[y][field] is not None, f"{field} FY{y} is null inside its published span"
+        assert rows[years[-1]][field] is not None, f"{field} must run to the last projected row"
+
+
+def test_chained_and_core_cpi_are_index_levels_not_rates():
+    """#38 criterion 1. Pinning the first observation of each series fixes it as
+    an index LEVEL: a year-over-year rate would be single digits. It also fails
+    loudly if a future CBO vintage rebases either index."""
+    rows = {r["y"]: r for r in load("economy")["data"]}
+
+    assert rows[2002]["chained_cpiu"] == 105.132
+    assert rows[1958]["core_cpiu"] == 29.458
+
+    # A level compounds; a year-over-year rate would stay in single digits.
+    assert rows[2024]["chained_cpiu"] > rows[2002]["chained_cpiu"] > 20
+    assert rows[2024]["core_cpiu"] > 5 * rows[1958]["core_cpiu"]

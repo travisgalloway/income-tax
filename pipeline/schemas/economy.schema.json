@@ -44,7 +44,8 @@
         "type": "object",
         "required": [
           "y", "actual", "gdp", "rgdp", "potential_rgdp", "output_gap",
-          "unemp", "nairu", "lfpr", "cpi", "core_pce", "gdp_deflator",
+          "unemp", "nairu", "lfpr", "cpi", "chained_cpiu", "core_cpiu",
+          "core_pce", "gdp_deflator",
           "ff", "t3m", "t10", "prod", "wage_share", "profit_share"
         ],
         "properties": {
@@ -63,6 +64,8 @@
           "prod": { "type": "number" },
           "wage_share": { "type": "number", "minimum": 0, "maximum": 100 },
           "profit_share": { "type": "number", "minimum": 0, "maximum": 100 },
+          "chained_cpiu": { "type": ["number", "null"], "not": { "const": 0 } },
+          "core_cpiu": { "type": ["number", "null"], "not": { "const": 0 } },
           "core_pce": { "type": ["number", "null"], "not": { "const": 0 } },
           "ff": { "type": ["number", "null"], "not": { "const": 0 } },
           "t10": { "type": ["number", "null"], "not": { "const": 0 } }

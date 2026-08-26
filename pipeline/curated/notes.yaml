@@ -153,6 +153,8 @@ outputs:
       nairu: percent
       lfpr: percent of civilian population 16+
       cpi: index
+      chained_cpiu: index
+      core_cpiu: index
       core_pce: index
       gdp_deflator: index, FY2025 = 100
       ff: percent
@@ -170,6 +172,12 @@ outputs:
       100 with anything. They are comparable to each other over time, not to a factor-share decomposition.
     - The GDP deflator here is the series used to deflate every nominal dollar figure elsewhere on
       the site, rebased so FY2025 = 100.
+    - cpi, chained_cpiu, core_cpiu and core_pce are INDEX LEVELS, not inflation rates. A rate is a
+      year-over-year change computed from them; nothing here is pre-differenced.
+    - The price series start in different years, and the gap before each start is null, never zero.
+      core_cpiu begins FY1958 and chained_cpiu begins FY2002 (CBO does not carry the chained CPI-U
+      before then). Each is on its own base, so levels are comparable within a series over time,
+      never across two of them.
   bracket_history:
     title: Statutory federal income tax bracket schedules, 1913-2025
     source: Tax Foundation income-tax-rates dataset (1913-2019, from IRS SOI Historical Table 23

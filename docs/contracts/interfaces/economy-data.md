@@ -13,6 +13,10 @@ FY2025 ran October 2024 to September 2025.
 Fields the Economy route's §§1-3 read: `rgdp`, `gdp`, `prod`, `unemp`, `nairu`, `lfpr`. All six are
 non-null in all 87 rows (there is no `mhi`-style coverage gap on this file).
 
+`EconomyYear` also carries `chained_cpiu` and `core_cpiu` (`number | null`), the chained CPI-U and
+core CPI-U index levels. They are emitted so the file holds every CBO price series the sections
+need; **no component reads them yet** (#38 emits, it does not rewire §4).
+
 ## Actuals versus projections (`actual`, `_meta.estimate_boundary`)
 
 CBO publishes actuals and its baseline projection in one series running to FY2036.
@@ -95,14 +99,18 @@ outside a spot-checked year.
 - `income._meta.provenance` carries neither `vintage` nor `retrieved_at`, so `vintageOf(income._meta)`
   returns `null`. Section 2's `Figure` uses `vintageOf(economy._meta)` only, for that reason.
 
-## `cpi` and `core_pce` are index levels, not rates (Section 4)
+## `cpi`, `chained_cpiu`, `core_cpiu` and `core_pce` are index levels, not rates (Section 4)
 
-`_meta.units.cpi` and `_meta.units.core_pce` both say `"index"`. Neither is a percent, and neither
-may be labelled "inflation" directly: `PricesAndRates.tsx` derives the year-over-year percent
+`_meta.units.cpi`, `.chained_cpiu`, `.core_cpiu` and `.core_pce` all say `"index"`. None is a
+percent, and none may be labelled "inflation" directly: `PricesAndRates.tsx` derives the year-over-year percent
 change once (`100 * (cur - prev) / prev`) and charts, tables and axis titles all name that
 transform. Coverage: `cpi` is non-null from FY1950 (so the derived rate is derivable from FY1951,
 one year later, since the first index year has no predecessor); `core_pce` is non-null from FY1960
-(derived rate from FY1961). `ff` is non-null from FY1955, `t3m` from FY1950, `t10` from FY1954 —
+(derived rate from FY1961); `core_cpiu` is non-null from FY1958 (derived rate from FY1959); and
+`chained_cpiu` is non-null from FY2002 (derived rate from FY2003), which is simply where CBO's
+series begins. Each of the four sits on its own base, so levels are comparable within a series
+over time and never across two of them — chart derived rates, or re-index, but do not overlay raw
+levels. `ff` is non-null from FY1955, `t3m` from FY1950, `t10` from FY1954 —
 these three are already percentages and are charted at their native level, not derived.
 
 No rate in this file goes negative: the minima are `ff` FY2021 `0.083` and `t3m` FY2015 `0.028`,
@@ -143,11 +151,12 @@ joined series has its own schema, `pipeline/schemas/income_inequality.schema.jso
 
 A consumer may rely on:
 
-- `data` is an array of at least 80 rows, each carrying all 18 keys. `y` is an integer, `actual`
+- `data` is an array of at least 80 rows, each carrying all 20 keys. `y` is an integer, `actual`
   is a boolean.
-- **The three nullable series are `core_pce`, `ff` and `t10`**, typed `["number", "null"]` with
-  `not: {"const": 0}`. Absence is `null` and can never arrive as `0`; a pre-1959 core-PCE year
-  written as zero fails the build rather than plotting as deflation. Every other numeric field is
+- **The five nullable series are `core_pce`, `chained_cpiu`, `core_cpiu`, `ff` and `t10`**, typed
+  `["number", "null"]` with `not: {"const": 0}`. Absence is `null` and can never arrive as `0`; a
+  pre-1959 core-PCE year, or a pre-FY2002 chained-CPI-U year, written as zero fails the build
+  rather than plotting as deflation. Every other numeric field is
   a plain `number` and is always present.
 - `unemp`, `nairu`, `lfpr`, `wage_share` and `profit_share` are bounded `0 … 100`. `gdp`, `rgdp`,
   `potential_rgdp`, `cpi` and `gdp_deflator` are `exclusiveMinimum: 0`.

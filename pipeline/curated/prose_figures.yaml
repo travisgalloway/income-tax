@@ -25,6 +25,7 @@ figures:
   - {section: 2, text: "held by the public $32.14T", output: debt_holders, path: data.split.0.amount_t, quoted: 32.14, tol: 0.02}
   - {section: 2, text: "intragovernmental $7.74T", output: debt_holders, path: data.split.1.amount_t, quoted: 7.74, tol: 0.02}
   - {section: 2, text: "public share 80.6%", output: debt_holders, path: data.split.0.share_pct, quoted: 80.6, tol: 0.1}
+  - {section: 2, text: "intragovernmental share 19.4%", output: debt_holders, path: data.split.1.share_pct, quoted: 19.4, tol: 0.1}
   - {section: 2, text: "foreign share of publicly held debt 30%", output: debt_holders, path: data.public_split.1.share_of_public_pct, quoted: 30, tol: 0}
   - {section: 2, text: "foreign share of gross debt (2025) 24%", output: debt_holders, path: data.foreign_share_history.1.share_of_gross_pct, quoted: 24, tol: 0}
   - {section: 2, text: "Japan holds $1.20T", output: debt_holders, path: data.top_foreign.0.amount_t, quoted: 1.203, tol: 0.01}
