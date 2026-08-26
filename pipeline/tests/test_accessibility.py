@@ -652,7 +652,8 @@ def test_series_tokens_below_3_to_1_are_documented_as_needing_redundant_encoding
 
 _TEXT_SELECTORS = [
     ".axis-label", ".axis-title", ".annotation", ".readout", ".kicker",
-    ".standfirst", "figcaption", ".tableview .unit", ".rail a", "body",
+    ".standfirst", "figcaption", ".tableview .unit", ".rail a", ".navbar a",
+    "body",
 ]
 
 _COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
@@ -698,6 +699,169 @@ def test_no_text_selector_paints_with_a_low_contrast_token():
                 f"scores {vg:.2f}:1 vs --ground and {vp:.2f}:1 vs --panel — "
                 "below the 4.5:1 text threshold"
             )
+
+
+# ---------------------------------------------------------------------------
+# Narrow-viewport nav bar (#42). Below 62rem the rail is replaced by a bar
+# fixed to the top of the viewport whose <details> disclosure carries the route
+# links and the page's contents list. The rail keeps its own markup; the two are
+# mutually `display: none`, so four <nav> elements are in the DOM and exactly
+# two are in the accessibility tree at any viewport.
+# ---------------------------------------------------------------------------
+
+_NARROW_MEDIA_RE = re.compile(
+    r"@media\s*\(\s*max-width:\s*62rem\s*\)\s*\{((?:[^{}]|\{[^{}]*\})*)\}", re.DOTALL
+)
+
+
+def narrow_media_block() -> str:
+    """The raw body of `@media (max-width: 62rem){…}` in global.css.
+
+    `iter_css_rules` flattens every @-rule and discards its condition, so it
+    cannot tell a narrow-viewport rule from a desktop one — and "the bar is
+    fixed" and "anchors clear the bar" are claims about the narrow block
+    specifically. Raises rather than returning "" if the block moves or is
+    renamed: a helper that finds nothing to check reads exactly like one whose
+    checks passed.
+    """
+    text = _COMMENT_RE.sub("", GLOBAL_CSS.read_text())
+    matches = _NARROW_MEDIA_RE.findall(text)
+    if len(matches) != 1:
+        raise AssertionError(
+            f"expected exactly one `@media (max-width: 62rem)` block in "
+            f"{GLOBAL_CSS}, found {len(matches)} — the narrow-viewport nav bar "
+            "checks below have nothing to read"
+        )
+    return matches[0]
+
+
+def _hrefs(root: Node, ol_class: str, exclude: str | None = None) -> set[str]:
+    out: set[str] = set()
+    for ol in root.iter_descendants():
+        if ol.tag != "ol" or ol_class not in ol.classes():
+            continue
+        if exclude and exclude in ol.classes():
+            continue
+        for a in ol.iter_descendants():
+            if a.tag == "a" and a.get("href"):
+                out.add(a.get("href"))
+    return out
+
+
+def test_nav_bar_mirrors_every_route_and_section(page):
+    path, root = page
+    rail_routes = _hrefs(root, "route-links")
+    bar_routes = _hrefs(root, "navbar-routes")
+    assert rail_routes, f"{path}: no .rail .route-links anchors found"
+    assert bar_routes == rail_routes, (
+        f"{path}: the nav bar's route list does not mirror the rail's — "
+        f"bar {sorted(bar_routes)} vs rail {sorted(rail_routes)}"
+    )
+    rail_toc = _hrefs(root, "toc", exclude="navbar-toc")
+    bar_toc = _hrefs(root, "navbar-toc")
+    assert bar_toc == rail_toc, (
+        f"{path}: the nav bar's contents list does not mirror the rail's — "
+        f"bar {sorted(bar_toc)} vs rail {sorted(rail_toc)}"
+    )
+
+
+def test_nav_bar_does_not_precede_the_skip_link(page):
+    path, root = page
+    order = {id(n): i for i, n in enumerate(root.iter_descendants())}
+    skip = [n for n in root.iter_descendants() if n.tag == "a" and "skip-link" in n.classes()]
+    assert skip, f"{path}: no .skip-link element found"
+    triggers = [
+        n for n in root.iter_descendants()
+        if n.tag == "summary" and "navbar-trigger" in n.classes()
+    ]
+    assert triggers, f"{path}: no .navbar-trigger <summary> found"
+    assert order[id(skip[0])] < order[id(triggers[0])], (
+        f"{path}: the nav bar's trigger precedes the skip link in document "
+        "order, so the skip link is no longer the first focusable node"
+    )
+
+
+def test_no_page_repeats_an_id(page):
+    path, root = page
+    seen: dict[str, int] = {}
+    for n in root.iter_descendants():
+        ident = n.get("id")
+        if ident:
+            seen[ident] = seen.get(ident, 0) + 1
+    dupes = {k: v for k, v in seen.items() if v > 1}
+    # `id_map` builds a dict and silently keeps the last element of a duplicated
+    # id, so every aria-labelledby check above would still pass with two
+    # `id="toc-heading"` on the page. This counts instead.
+    assert not dupes, f"{path}: duplicate id(s) {dupes} — aria-labelledby resolution is undefined"
+
+
+def test_nav_bar_panel_scrolls_internally():
+    block = narrow_media_block()
+    bodies = [
+        body for selectors, body in iter_css_rules(block)
+        if ".navbar-panel" in selectors
+    ]
+    assert bodies, "no `.navbar-panel` rule inside @media (max-width: 62rem)"
+    joined = " ".join(bodies)
+    assert "max-height" in joined, (
+        "`.navbar-panel` sets no max-height, so a 12-entry panel grows the page "
+        "instead of scrolling inside itself"
+    )
+    assert re.search(r"overflow-y\s*:\s*auto", joined), (
+        "`.navbar-panel` does not set `overflow-y: auto`"
+    )
+
+
+def test_sticky_nav_bar_offsets_its_anchor_targets():
+    block = narrow_media_block()
+    offset = {
+        selector
+        for selectors, body in iter_css_rules(block)
+        if "scroll-margin-top" in body
+        for selector in selectors
+    }
+    for required in ("section[id]", "#main"):
+        assert required in offset, (
+            f"{required} has no `scroll-margin-top` inside "
+            "@media (max-width: 62rem), so the fixed bar covers the top of "
+            "whatever an anchor — or the skip link — lands on"
+        )
+
+
+_MOTION_RE = re.compile(r"(?:^|;)\s*(?:transition|animation)[\w-]*\s*:", re.MULTILINE)
+
+
+def test_nav_bar_open_close_is_not_animated():
+    for selectors, body in iter_css_rules(GLOBAL_CSS.read_text()):
+        if not any("navbar" in s for s in selectors):
+            continue
+        assert not _MOTION_RE.search(body), (
+            f"rule {selectors} declares a transition or animation — the nav "
+            "bar satisfies prefers-reduced-motion by having no motion at all, "
+            "not by relying on the global reduce block to zero one out"
+        )
+
+
+def test_nav_bar_tap_targets_clear_44px():
+    block = narrow_media_block()
+    _MIN_HEIGHT_RE = re.compile(r"min-height\s*:\s*([\d.]+)rem")
+    setters: set[str] = set()
+    for selectors, body in iter_css_rules(block):
+        if not any("navbar" in s for s in selectors):
+            continue
+        m = _MIN_HEIGHT_RE.search(body)
+        if not m:
+            continue
+        assert float(m.group(1)) >= 2.75, (
+            f"rule {selectors} sets min-height {m.group(1)}rem, below the "
+            "2.75rem (44px) tap-target floor"
+        )
+        setters.update(selectors)
+    for required in (".navbar-trigger", ".navbar a"):
+        assert required in setters, (
+            f"{required} sets no min-height inside @media (max-width: 62rem), "
+            "so nothing holds it to the 44px tap-target floor"
+        )
 
 
 # ---------------------------------------------------------------------------
