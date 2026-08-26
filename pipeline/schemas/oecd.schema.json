@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "oecd",
+  "type": "object",
+  "required": ["_meta", "data"],
+  "properties": {
+    "_meta": {
+      "type": "object",
+      "required": ["source", "title", "provenance", "refresh"],
+      "properties": {
+        "source": { "type": "string", "minLength": 12 },
+        "title": { "type": "string", "minLength": 1 },
+        "provenance": {
+          "type": "object",
+          "required": ["generator", "git_sha", "generated_at"],
+          "properties": {
+            "generator": { "type": "string", "minLength": 1 },
+            "git_sha": { "type": "string", "minLength": 7 },
+            "generated_at": { "type": "string", "minLength": 1 }
+          }
+        },
+        "refresh": {
+          "type": "object",
+          "required": ["mode", "reason"],
+          "properties": {
+            "mode": { "const": "curated" },
+            "reason": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "data": {
+      "type": "object",
+      "required": ["year", "us_pct_gdp", "oecd_average_pct_gdp", "us_rank", "of_countries", "countries", "us_history"],
+      "properties": {
+        "year": { "type": "integer", "minimum": 1900, "maximum": 2100 },
+        "us_pct_gdp": { "type": "number", "minimum": 0, "maximum": 100 },
+        "oecd_average_pct_gdp": { "type": "number", "minimum": 0, "maximum": 100 },
+        "us_rank": { "type": "integer", "minimum": 1 },
+        "of_countries": { "type": "integer", "minimum": 1 },
+        "countries": {
+          "type": "array",
+          "minItems": 10,
+          "items": {
+            "type": "object",
+            "required": ["c", "v"],
+            "properties": {
+              "c": { "type": "string", "minLength": 1 },
+              "v": { "type": "number", "minimum": 0, "maximum": 100 },
+              "is_us": { "type": "boolean" },
+              "is_average": { "type": "boolean" }
+            }
+          }
+        },
+        "us_history": {
+          "type": "array",
+          "minItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["year", "v"],
+            "properties": {
+              "year": { "type": "integer", "minimum": 1900, "maximum": 2100 },
+              "v": { "type": "number", "minimum": 0, "maximum": 100 }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -104,3 +104,10 @@ document, not a machine-readable feed, so it is hand-maintained rather than re-f
 Render **verbatim** wherever this dataset backs a `Figure` (`BRIEF.md` rule 1): "IRS Statistics of
 Income, individual tables by tax rate and income percentile, tax year 2023. CBO Distribution of
 Household Income 2022 for the top 1% income share." Do not summarise it to "IRS data."
+
+## Schema
+
+`pipeline/schemas/income_tax_by_group.schema.json`, enforced on every build by `check_schema`
+(#37). This is a curated snapshot, so its `_meta` requires `refresh` and carries **no** `coverage`;
+the full constraint list, including why `income_share_pct` and `avg_rate_pct` are optional rather
+than nullable, is in `curated-snapshots.md` § Schema.

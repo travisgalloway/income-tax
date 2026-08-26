@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "income_tax_by_group",
+  "type": "object",
+  "required": ["_meta", "data"],
+  "$defs": {
+    "year_point": {
+      "type": "object",
+      "required": ["year", "v"],
+      "properties": {
+        "year": { "type": "integer", "minimum": 1900, "maximum": 2100 },
+        "v": { "type": "number", "minimum": 0, "maximum": 100 }
+      }
+    }
+  },
+  "properties": {
+    "_meta": {
+      "type": "object",
+      "required": ["source", "title", "provenance", "refresh"],
+      "properties": {
+        "source": { "type": "string", "minLength": 12 },
+        "title": { "type": "string", "minLength": 1 },
+        "provenance": {
+          "type": "object",
+          "required": ["generator", "git_sha", "generated_at"],
+          "properties": {
+            "generator": { "type": "string", "minLength": 1 },
+            "git_sha": { "type": "string", "minLength": 7 },
+            "generated_at": { "type": "string", "minLength": 1 }
+          }
+        },
+        "refresh": {
+          "type": "object",
+          "required": ["mode", "reason"],
+          "properties": {
+            "mode": { "const": "curated" },
+            "reason": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "data": {
+      "type": "object",
+      "required": ["tax_year", "groups", "top1_tax_share_history", "cbo_top1_income_share"],
+      "properties": {
+        "tax_year": { "type": "integer", "minimum": 1900, "maximum": 2100 },
+        "groups": {
+          "type": "array",
+          "minItems": 6,
+          "items": {
+            "type": "object",
+            "required": ["g", "tax_share_pct"],
+            "properties": {
+              "g": { "type": "string", "minLength": 1 },
+              "tax_share_pct": { "type": "number", "minimum": 0, "maximum": 100 },
+              "income_share_pct": { "type": "number", "minimum": 0, "maximum": 100 },
+              "avg_rate_pct": { "type": "number", "minimum": 0, "maximum": 100 }
+            }
+          }
+        },
+        "top1_tax_share_history": {
+          "type": "array",
+          "minItems": 5,
+          "items": { "$ref": "#/$defs/year_point" }
+        },
+        "cbo_top1_income_share": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/year_point" }
+        }
+      }
+    }
+  }
+}

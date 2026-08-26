@@ -75,3 +75,26 @@ discrete, directly-labelled marker (see `StatutoryVsEffective.tsx`).
 narrowing accessor through `unknown` — `astro check` rejected a single assertion for
 `CboEffectiveRates`'s non-tabular shape, the same situation issue #9's `debtHolders` /
 `incomeGroups` already document.
+
+## Schema
+
+`pipeline/schemas/bracket_history.schema.json`, enforced on every build by `check_schema` (#37).
+The effective-rate companion, `cbo_effective_rates.json`, is a curated snapshot — its schema is
+described in `curated-snapshots.md`.
+
+A consumer may rely on:
+
+- `data` is an array of at least 110 rows, each carrying `y`, `top`, `sched_top`, `nb`, `s` and
+  `adj`. `nb` is an integer `minimum: 1`; `top` and `sched_top` are bounded `0 … 100`.
+- `adj` is `["object", "null"]`; when present it requires `schedule`, `published`, `why` and
+  `source`, so an undocumented adjustment year cannot ship.
+- `s` requires all four filing statuses (`single`, `mfj`, `mfs`, `hoh`), each `["array", "null"]`.
+  **`null` means the status did not exist that year** — 1913–1948 for `mfj`/`mfs`, 1913–1951 for
+  `hoh` — and is never an empty array.
+- Each bracket requires `r`, `lo`, `hi`, `rlo`, `rhi`. `lo` and `rlo` are plain numbers
+  `minimum: 0` (a bottom bracket legitimately starts at zero). **`hi` and `rhi` are
+  `["number", "null"]` with `not: {"const": 0}`** — the top bracket's open ceiling is `null`, and a
+  ceiling written as `0` fails the build. This is the same rule
+  `test_bracket_history_absent_values_are_null_not_zero` guards in Python.
+- `_meta` requires `source` (`minLength: 12`), `title`, `provenance`, `coverage`, `deflator`
+  (`series_id`, `basis`, `base_year`), `adjustments` and `bracket_count`.

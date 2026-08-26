@@ -111,3 +111,29 @@ point per fiscal year at its FY number and a date needs to sit *within* the year
 Every law's enactment fiscal year has a non-null `g_de` in `budget.data`
 (`test_deficit_share_exists_for_every_enactment_fiscal_year`), so no marker lands on a gap in the
 series.
+
+## Schema
+
+`pipeline/schemas/party_splits.schema.json`, enforced on every build by `check_schema` (#37).
+The law rows carried inside `budget.json`'s `L` array are pinned by `budget.schema.json` — see
+`budget-data.md`.
+
+A consumer may rely on:
+
+- `data` is an array of at least 23 laws, each requiring `name`, `public_law`, `date`, `congress`,
+  `character`, `legacy_classification`, `senate` and `house`. `note` is genuinely optional.
+- `character` is an `enum` of exactly `"cross-party"` / `"party-line"`, and
+  `legacy_classification` an `enum` of `"XP"` / `"PLR"` / `"PLD"`. A third vocabulary term cannot
+  reach the site without failing the build.
+- `date` matches `^[0-9]{4}-[0-9]{2}-[0-9]{2}$`.
+- `senate` is a required object; **`house` is `["object", "null"]`** — a null chamber means no roll
+  call exists (a voice vote), and that asymmetry is in the schema, not a convention.
+- Each chamber requires `r`, `d`, `i`, `d_caucus`, `yea`, `nay` and `rollnumber`. Each of the four
+  party tallies requires `yea`, `nay` and `other`, all integers `minimum: 0`, so a dropped
+  independent tally fails rather than silently reading as zero.
+- `_meta` requires `source` (`minLength: 12`), `title`, `provenance`, `coverage`,
+  `cross_party_threshold`, `party_vs_caucus` and `missing_votes` — the three prose rules a reader
+  needs are contract, not commentary.
+
+Shape and range only; that the counted splits reproduce the published record stays in
+`validate.py`'s `check_party_splits` and the pytest suite.

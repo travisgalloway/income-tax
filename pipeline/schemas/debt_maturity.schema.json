@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "debt_maturity",
+  "type": "object",
+  "required": ["_meta", "data"],
+  "properties": {
+    "_meta": {
+      "type": "object",
+      "required": ["source", "title", "provenance", "refresh"],
+      "properties": {
+        "source": { "type": "string", "minLength": 12 },
+        "title": { "type": "string", "minLength": 1 },
+        "provenance": {
+          "type": "object",
+          "required": ["generator", "git_sha", "generated_at"],
+          "properties": {
+            "generator": { "type": "string", "minLength": 1 },
+            "git_sha": { "type": "string", "minLength": 7 },
+            "generated_at": { "type": "string", "minLength": 1 }
+          }
+        },
+        "refresh": {
+          "type": "object",
+          "required": ["mode", "reason"],
+          "properties": {
+            "mode": { "const": "curated" },
+            "reason": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "data": {
+      "type": "object",
+      "required": [
+        "avg_maturity_months", "avg_maturity_as_of", "longest_instrument_years",
+        "marketable_total_t", "composition", "history_months"
+      ],
+      "properties": {
+        "avg_maturity_months": { "type": "integer", "minimum": 1 },
+        "avg_maturity_as_of": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}$" },
+        "longest_instrument_years": { "type": "integer", "minimum": 1 },
+        "marketable_total_t": { "type": "number", "exclusiveMinimum": 0 },
+        "composition": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "object",
+            "required": ["k", "label", "maturity", "amount_t"],
+            "properties": {
+              "k": { "type": "string", "minLength": 1 },
+              "label": { "type": "string", "minLength": 1 },
+              "maturity": { "type": "string", "minLength": 1 },
+              "amount_t": { "type": "number", "exclusiveMinimum": 0 },
+              "share_pct": { "type": "number", "minimum": 0, "maximum": 100 }
+            }
+          }
+        },
+        "history_months": {
+          "type": "array",
+          "minItems": 4,
+          "items": {
+            "type": "object",
+            "required": ["date", "v"],
+            "properties": {
+              "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}$" },
+              "v": { "type": "number", "exclusiveMinimum": 0 }
+            }
+          }
+        }
+      }
+    }
+  }
+}

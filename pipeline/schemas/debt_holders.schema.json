@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "debt_holders",
+  "type": "object",
+  "required": ["_meta", "data"],
+  "properties": {
+    "_meta": {
+      "type": "object",
+      "required": ["source", "title", "provenance", "refresh", "deliberate_omissions"],
+      "properties": {
+        "source": { "type": "string", "minLength": 12 },
+        "title": { "type": "string", "minLength": 1 },
+        "provenance": {
+          "type": "object",
+          "required": ["generator", "git_sha", "generated_at"],
+          "properties": {
+            "generator": { "type": "string", "minLength": 1 },
+            "git_sha": { "type": "string", "minLength": 7 },
+            "generated_at": { "type": "string", "minLength": 1 }
+          }
+        },
+        "refresh": {
+          "type": "object",
+          "required": ["mode", "reason"],
+          "properties": {
+            "mode": { "const": "curated" },
+            "reason": { "type": "string", "minLength": 1 }
+          }
+        },
+        "deliberate_omissions": {
+          "type": "object",
+          "required": ["federal_reserve_holdings"],
+          "properties": {
+            "federal_reserve_holdings": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "data": {
+      "type": "object",
+      "required": ["total_debt_t", "as_of", "split", "public_split", "top_foreign", "foreign_share_history"],
+      "properties": {
+        "total_debt_t": { "type": "number", "exclusiveMinimum": 0 },
+        "as_of": { "type": "string", "format": "date", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+        "split": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["k", "label", "amount_t", "share_pct"],
+            "properties": {
+              "k": { "type": "string", "minLength": 1 },
+              "label": { "type": "string", "minLength": 1 },
+              "amount_t": { "type": "number", "exclusiveMinimum": 0 },
+              "share_pct": { "type": "number", "minimum": 0, "maximum": 100 }
+            }
+          }
+        },
+        "public_split": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["k", "label", "share_of_public_pct"],
+            "properties": {
+              "k": { "type": "string", "minLength": 1 },
+              "label": { "type": "string", "minLength": 1 },
+              "share_of_public_pct": { "type": "number", "minimum": 0, "maximum": 100 }
+            }
+          }
+        },
+        "top_foreign": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "object",
+            "required": ["country", "amount_t"],
+            "properties": {
+              "country": { "type": "string", "minLength": 1 },
+              "amount_t": { "type": "number", "exclusiveMinimum": 0 }
+            }
+          }
+        },
+        "foreign_share_history": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["year", "share_of_gross_pct"],
+            "properties": {
+              "year": { "type": "integer", "minimum": 1900, "maximum": 2100 },
+              "share_of_gross_pct": { "type": "number", "minimum": 0, "maximum": 100 }
+            }
+          }
+        }
+      }
+    }
+  }
+}

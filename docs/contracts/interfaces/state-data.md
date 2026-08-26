@@ -123,8 +123,12 @@ column, and whether it does is a property of the specific vintage fetched.
 
 ## JSON Schema
 
-`pipeline/schemas/states_balance.schema.json` and `states_tax_mix.schema.json` are the first two
-schemas in what was an empty `pipeline/schemas/` directory. `lib/validate.py`'s `check_schema` is
-generic and **opt-in**: an output is schema-validated iff `schemas/<name>.schema.json` exists, so
-the other nine pre-existing outputs are not retrofitted by this issue (see
-`docs/parked-findings.md`).
+`pipeline/schemas/states_balance.schema.json` and `states_tax_mix.schema.json` were the first two
+schemas in what was an empty `pipeline/schemas/` directory. Since #37 the coverage is **universal
+and mandatory**: `lib/validate.py`'s `check_schema` validates every output `build.py` emits, and an
+output with no `schemas/<name>.schema.json` is a recorded build failure naming the output and the
+expected path — never a skip. `test_every_published_output_has_a_schema` holds the population
+whole, and `test_every_schema_rejects_a_realistic_corruption` proves both of these two schemas
+bite: a jurisdiction's `ratio` written as `0` and a `shares` value over `100` are each rejected.
+
+These two schemas are unchanged by #37 — they are the reference form the other twelve follow.
