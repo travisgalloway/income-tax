@@ -752,3 +752,25 @@ time. Appended to, never rewritten. None of these have been acted on.
   entire deliverable *is* a guard, and the guard it adds is static only: it can prove no
   declaration removes scroll restoration, and cannot prove the restoration still lands. Severity:
   process, non-blocking, already tracked.
+- [2026-08-26] `pipeline/build.py --tier monthly --dry-run` prints "dry run: 12 output(s) built and
+  validated, **nothing written**" and then writes `data-report.md` anyway — its `Generated …` line
+  changes on every run. Reproduced twice from a clean tree: `git checkout -- data-report.md`, run
+  the dry run, `git status` shows it modified again. Either the report should be inside the dry-run
+  suppression or the message should stop claiming nothing was written; as it stands the command
+  every issue's verification section runs leaves the tree dirty. Found while running #47's
+  Verification §B. Severity: build hygiene, misleading output, non-blocking.
+- [2026-08-26] `src/layouts/BaseLayout.astro:15` and `src/components/Term.astro` now hold two copies
+  of the base-path `join()` idiom. #47's plan (D2) chose to re-derive it rather than export a
+  page-local `const` from the layout's frontmatter, and that was the right call for one consumer —
+  but a third copy would be the point to extract it to `src/lib/`, with the built-output grep for
+  `href="/glossary#` staying as the net. Severity: duplication, non-blocking.
+- [2026-08-26] Four glossary terms are never named in any route's prose — `cyclical-deficit`,
+  `gdp-deflator`, `gross-debt` and `incidence` — so #47 could give none of them an in-prose marker,
+  and `/government` §1 in particular is entirely about gross debt without ever using the phrase.
+  The fix is a prose edit naming each term once at the point a reader meets the concept, which is a
+  content change and was outside #47's scope. They are listed with reasons in
+  `docs/contracts/interfaces/glossary.md` and pinned by `UNMARKED_AT_FIRST_USE` in
+  `test_accessibility.py`, so the gap is recorded rather than silent. Related: `vintage`'s
+  `first_used` says `/economy`, where it appears only as a `<Figure vintage={…}>` prop, and
+  `net-interest`'s `/economy` occurrence is already the text of a cross-route `<a>` that cannot
+  nest another. Found while marking first uses for #47. Severity: content, non-blocking.

@@ -1253,3 +1253,228 @@ def test_no_built_page_scripts_a_scroll(page):
         "spy reads position and writes an attribute, and the back button's "
         "restore is the browser's"
     )
+
+
+# ---------------------------------------------------------------------------
+# In-prose glossary markers (#47). `src/components/Term.astro` wraps a term's
+# first use per page in a real <a href> to its /glossary anchor, with the
+# term's `short` as a `hidden` sibling inside the same wrapper — the popover
+# `termPopovers()` discloses. Everything below is provable from the built HTML
+# and the stylesheet; the hover, focus, touch and Escape behaviour is a browser
+# question and is recorded as manual rows M9-M12 in
+# docs/contracts/accessibility.md.
+# ---------------------------------------------------------------------------
+
+GLOSSARY_DIR = SRC / "content" / "glossary"
+_FIRST_USED_RE = re.compile(
+    r"^first_used:\s*$\s*^\s*route:\s*[\"']([^\"']+)[\"']\s*$", re.MULTILINE
+)
+
+
+_SHORT_RE = re.compile(r'^short:\s*"(.*)"\s*$', re.MULTILINE)
+_UNICODE_ESCAPE_RE = re.compile(r"\\u([0-9a-fA-F]{4})")
+
+
+def _short_of(path: Path) -> str:
+    """The `short` field of a glossary file, with its JSON-style `\\uXXXX`
+    escapes resolved — several entries write an em dash that way."""
+    m = _SHORT_RE.search(path.read_text())
+    assert m, f"{path}: no `short` field in the frontmatter"
+    return _UNICODE_ESCAPE_RE.sub(lambda x: chr(int(x.group(1), 16)), m.group(1))
+
+
+def glossary_terms() -> dict[str, str]:
+    """Every glossary entry id mapped to the route its `first_used` names.
+
+    The ids are filenames, which is the collection's durability guarantee —
+    `docs/contracts/interfaces/glossary.md`, "The filename is the slug".
+    """
+    entries: dict[str, str] = {}
+    for path in sorted(GLOSSARY_DIR.glob("*.md")):
+        m = _FIRST_USED_RE.search(path.read_text())
+        assert m, f"{path}: no `first_used.route` in the frontmatter"
+        entries[path.stem] = m.group(1)
+    assert entries, f"no glossary terms found under {GLOSSARY_DIR}"
+    return entries
+
+
+def term_wrappers(root: Node) -> list[Node]:
+    return [n for n in root.iter_descendants() if "term" in n.classes()]
+
+
+def marked_terms(root: Node) -> list[str]:
+    return [w.get("data-term") or "" for w in term_wrappers(root)]
+
+
+# Terms whose `first_used` route carries no in-prose marker, each because that
+# route's prose does not name the term in a place a marker can go. Explicit so
+# that growing this list is a visible diff rather than drift; the reasons are
+# in docs/contracts/interfaces/glossary.md, "Terms whose first_used route
+# carries no marker". Fixing any of the first four is a prose edit, which is a
+# content change and was out of #47's scope.
+UNMARKED_AT_FIRST_USE = {
+    "cyclical-deficit": "the phrase occurs in no route's prose",
+    "gdp-deflator": "occurs in no route's prose; only 'deflator' in a <Figure note>",
+    "gross-debt": "/government section 1 is about it and never names it",
+    "incidence": "occurs only inside a <Figure note>",
+    "vintage": "on /economy only as the vintage={…} prop; marked on /government",
+    "net-interest": "on /economy only as the text of a cross-route <a>; marked on /government",
+}
+
+_PAGE_FOR_ROUTE = {"/economy": "economy", "/households": "households", "/government": "government"}
+
+
+def test_every_term_marker_is_a_real_link(page):
+    """Every marker is an `<a href>` to its own base-path-joined anchor.
+
+    Fails if a trigger becomes a `<button>`, loses its `href`, or emits an
+    unbased `/glossary#…` — #70's failure mode, which 404s in production.
+    """
+    path, root = page
+    # `/`, `/sources` and `/glossary` carry no marked term, by design. That
+    # this check cannot pass vacuously across the whole site is
+    # `test_every_first_used_route_carries_its_term_marker`'s job.
+    for w in term_wrappers(root):
+        slug = w.get("data-term")
+        assert slug, f"{path}: a .term wrapper carries no data-term"
+        triggers = [n for n in w.iter_descendants() if "term-trigger" in n.classes()]
+        assert len(triggers) == 1, (
+            f"{path}: .term[data-term={slug!r}] holds {len(triggers)} "
+            ".term-trigger elements, expected exactly 1"
+        )
+        trigger = triggers[0]
+        assert trigger.tag == "a", (
+            f"{path}: the trigger for {slug!r} is a <{trigger.tag}>, not an <a> — "
+            "with scripting off it would be inert"
+        )
+        assert trigger.get("href") == f"/income-tax/glossary#{slug}", (
+            f"{path}: the trigger for {slug!r} points at "
+            f"{trigger.get('href')!r}, not the base-path-joined "
+            f"'/income-tax/glossary#{slug}'"
+        )
+        assert trigger.get("aria-describedby") == f"def-{slug}", (
+            f"{path}: the trigger for {slug!r} does not describe itself by "
+            f"'def-{slug}' — the definition would not reach assistive technology"
+        )
+
+
+def test_every_term_marker_names_a_real_glossary_entry(page):
+    path, root = page
+    terms = glossary_terms()
+    for slug in marked_terms(root):
+        assert slug in terms, (
+            f"{path}: marks {slug!r}, which is not a file under {GLOSSARY_DIR}"
+        )
+
+
+def test_no_page_marks_a_term_twice(page):
+    """The machine-checkable half of "only the first use is marked".
+
+    Whether a marker sits on the genuinely first occurrence is a reading check
+    and is named as such in the interface contract rather than pretended into a
+    test. A duplicate would also repeat a `def-<slug>` id.
+    """
+    path, root = page
+    slugs = marked_terms(root)
+    duplicated = sorted({s for s in slugs if slugs.count(s) > 1})
+    assert not duplicated, (
+        f"{path}: marks {duplicated} more than once — only a term's first use "
+        "on a page is marked, and a second marker repeats its def-<slug> id"
+    )
+
+
+def test_every_first_used_route_carries_its_term_marker():
+    """Ties #45's `first_used` data to #47's markup, in both directions.
+
+    A term renamed, or added without a marker, fails here rather than rotting
+    quietly. The exception list is asserted too: every id in it must still be a
+    real term, and none of them may be marked on the route it names — so a
+    later prose edit that makes one markable forces the list to shrink instead
+    of leaving a stale entry behind.
+    """
+    terms = glossary_terms()
+    marks = {
+        name: set(marked_terms(parse_html(DIST / name / "index.html")))
+        for name in _PAGE_FOR_ROUTE.values()
+    }
+    assert any(marks.values()), (
+        "no built route page carries a single .term marker — every assertion "
+        "below would pass by reading nothing"
+    )
+    for slug, reason in UNMARKED_AT_FIRST_USE.items():
+        assert slug in terms, (
+            f"UNMARKED_AT_FIRST_USE names {slug!r} ({reason}), which is no "
+            f"longer a term under {GLOSSARY_DIR} — the exception is stale"
+        )
+    for slug, route in sorted(terms.items()):
+        page_name = _PAGE_FOR_ROUTE[route]
+        if slug in UNMARKED_AT_FIRST_USE:
+            assert slug not in marks[page_name], (
+                f"{slug!r} is now marked on {route}, its first_used route, but "
+                "is still listed in UNMARKED_AT_FIRST_USE — delete the entry"
+            )
+            continue
+        assert slug in marks[page_name], (
+            f"{slug!r} declares first_used {route} and dist/{page_name}/"
+            "index.html carries no marker for it. Either mark its first prose "
+            "use there, or record why it cannot be marked in "
+            "UNMARKED_AT_FIRST_USE and in docs/contracts/interfaces/glossary.md"
+        )
+
+
+def test_term_popovers_are_not_animated(page):
+    """Reduced motion, and the no-JS guarantee, in one check.
+
+    No `.term*` rule declares a transition or an animation, so
+    `prefers-reduced-motion` is satisfied vacuously and greppably — the same
+    way `test_nav_bar_open_close_is_not_animated` proves it for the nav bar,
+    rather than by relying on the global reduce block to zero out a motion that
+    was written anyway.
+
+    The second half asserts the definition text itself is in the served bytes
+    while the popover is `hidden`: that is what an `aria-describedby` target
+    has to be for a screen reader to reach the definition with scripting off,
+    and it is what a portal would take away.
+    """
+    css = GLOBAL_CSS.read_text()
+    for selectors, body in iter_css_rules(css):
+        if not any("term" in s for s in selectors):
+            continue
+        assert not _MOTION_RE.search(body), (
+            f"rule {selectors} declares a transition or animation — the term "
+            "popover satisfies prefers-reduced-motion by having no motion at "
+            "all"
+        )
+    assert "@keyframes" not in css.split("In-prose glossary markers")[-1], (
+        "the in-prose marker block in global.css declares @keyframes"
+    )
+
+    path, root = page
+    shorts = {p.stem: _short_of(p) for p in sorted(GLOSSARY_DIR.glob("*.md"))}
+    for w in term_wrappers(root):
+        slug = w.get("data-term")
+        pops = [n for n in w.iter_descendants() if "term-pop" in n.classes()]
+        assert len(pops) == 1, (
+            f"{path}: .term[data-term={slug!r}] holds {len(pops)} .term-pop "
+            "elements, expected exactly 1 — and it must be a descendant of the "
+            "wrapper, which is what satisfies WCAG 1.4.13 hoverable"
+        )
+        pop = pops[0]
+        assert "hidden" in pop.attrs, (
+            f"{path}: the popover for {slug!r} is not `hidden` in the served "
+            "HTML — with scripting off it would be open on every marked term"
+        )
+        assert pop.get("id") == f"def-{slug}", (
+            f"{path}: the popover for {slug!r} has id {pop.get('id')!r}, not "
+            f"'def-{slug}' — the bare slug would collide with a section id"
+        )
+        body = [n for n in pop.iter_descendants() if "term-short" in n.classes()]
+        assert len(body) == 1, (
+            f"{path}: the popover for {slug!r} holds {len(body)} .term-short "
+            "elements, expected exactly 1"
+        )
+        assert body[0].text().strip() == shorts[slug], (
+            f"{path}: the popover for {slug!r} does not carry the term's "
+            "`short` verbatim, so the aria-describedby target does not hold "
+            f"the definition. Served: {body[0].text().strip()!r}"
+        )
