@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from lib import curated
+from lib import curated, validate
 from lib.errors import SourceUnavailable
 from lib.fetch import fetch
 
@@ -328,7 +328,7 @@ def test_counted_character_matches_the_hand_classification(splits):
 
 
 def test_cross_party_and_party_line_totals(splits):
-    """sections.md section 8: 16 cross-party laws at $9.24T against 7 at $7.52T."""
+    """sections.md section 8: 16 cross-party laws at $9.24T against 7 at $7.51T."""
     laws = [l for r in load("budget")["data"] for l in r["L"]]
     cost = {"cross-party": 0.0, "party-line": 0.0}
     count = {"cross-party": 0, "party-line": 0}
@@ -338,7 +338,31 @@ def test_cross_party_and_party_line_totals(splits):
         cost[ch] += l["score_t"] or 0
     assert count["cross-party"] == 16 and count["party-line"] == 7
     assert abs(cost["cross-party"] - 9.24) <= 0.02
-    assert abs(cost["party-line"] - 7.52) <= 0.02
+    assert abs(cost["party-line"] - 7.51) <= 0.02
+
+
+def test_law_split_totals_round_the_sum_not_the_displays():
+    """E1: half-up on the summed thousandths. Rounding the per-law displays first
+    (5.21 + 2.31) gives 7.52; the sum 5.206 + 2.306 = 7.512 gives 7.51."""
+    laws = [l for r in load("budget")["data"] for l in r["L"]]
+    assert validate._composition_total_t(laws, ("PLR", "PLD")) == 7.51
+    assert validate._composition_total_t(laws, ("XP",)) == 9.24
+    assert round(5.21 + 2.31, 2) == 7.52  # the wrong order, for the record
+
+
+def test_check_laws_rejects_a_drifted_split_total(monkeypatch):
+    """#32: the constant was 7.52 against a true 7.512 and NOTHING failed.
+    Perturb each curated split total and see check_laws fail."""
+    good = curated.law_totals()
+    clean = validate.Checks()
+    validate.check_laws(clean)
+    assert clean.failures == [], clean.failures
+    for key, bad, needle in (("party_line_t", 7.52, "party-line"),
+                             ("cross_party_t", 9.23, "cross-party")):
+        monkeypatch.setattr(curated, "law_totals", lambda k=key, b=bad: {**good, k: b})
+        c = validate.Checks()
+        validate.check_laws(c)
+        assert any(needle in f for f in c.failures), (key, c.failures)
 
 
 def test_every_mapped_rollcall_passed(splits):

@@ -8,6 +8,7 @@ cannot quietly violate one.
 from __future__ import annotations
 
 import json
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 from typing import Any
 
@@ -115,6 +116,24 @@ def check_budget(c: Checks) -> None:
          f"party control covers FY{min(with_ctl)}-FY{max(with_ctl)}, expected FY1995-FY2025")
 
 
+_COMPS = ("XP", "PLR", "PLD")
+_PARTY_LINE = ("PLR", "PLD")
+
+
+def _composition_total_t(laws: list[dict[str, Any]], comps: tuple[str, ...]) -> float:
+    """Sum the ten-year scores of one vote composition in exact decimal and round
+    ONCE, half-up, at the end. Summing the per-law DISPLAYED values instead is what
+    put 7.52 in laws.yaml against a true 5.206 + 2.306 = 7.512 (#32).
+
+    Decimal(str(v)) is deliberate: float's round() is banker's, not half-up, and a
+    binary float sum of the at-most-3dp score_t values only lands on the right side
+    of a .005 boundary by luck.
+    """
+    total = sum((Decimal(str(l["score_t"])) for l in laws
+                 if l["score_t"] is not None and l["legacy_comp"] in comps), Decimal(0))
+    return float(total.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+
+
 def check_laws(c: Checks) -> None:
     rows = _load("budget")["data"]
     laws = [l for r in rows for l in r["L"]]
@@ -128,6 +147,26 @@ def check_laws(c: Checks) -> None:
     c.close(sum(scored), totals["net_scored_t"], 0.02, "net scored legislative cost $T")
     c.close(sum(s for s in scored if s > 0), totals["gross_increases_t"], 0.02,
             "gross legislative increases $T")
+
+    # #32: the split totals are curated by hand and were NOT gated at all, which is how
+    # party_line_t sat at 7.52 against a true 7.512 with every downstream reader on 7.51.
+    # legacy_comp, not party_splits.json's counted character: check_laws runs under
+    # `if "budget" in outputs` and party_splits need not be in the same run. The two
+    # classifications are proved equal for all 23 laws by
+    # test_counted_character_matches_the_hand_classification.
+    for l in laws:
+        c.ok(l.get("legacy_comp") in _COMPS,
+             f"law {l['name']!r} has vote composition {l.get('legacy_comp')!r}, not one of "
+             f"{_COMPS}; an unknown value would silently drop it from both split totals")
+
+    # Equality, not c.close: a tolerance is exactly what let this drift through, so the
+    # curated constant must BE the half-up rounding of the summed scores.
+    for label, comps, key in (("party-line", _PARTY_LINE, "party_line_t"),
+                              ("cross-party", ("XP",), "cross_party_t")):
+        got = _composition_total_t(laws, comps)
+        c.ok(got == totals[key],
+             f"{label} legislative cost $T: laws.yaml {key} is {totals[key]}, the per-law "
+             f"scores sum to {got} (round the sum half-up, never the displayed values)")
 
     for l in laws:
         c.ok(bool(l.get("date")), f"law {l['name']!r} has no enactment date")

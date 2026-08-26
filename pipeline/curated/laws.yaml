@@ -21,7 +21,7 @@ totals:
   net_scored_t: 16.75
   gross_increases_t: 20.73
   cross_party_t: 9.24
-  party_line_t: 7.52
+  party_line_t: 7.51
   comment: Reconciliation targets asserted by the validation gate.
 laws:
 - fy: 1997
