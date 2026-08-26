@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "economy",
+  "type": "object",
+  "required": ["_meta", "data"],
+  "properties": {
+    "_meta": {
+      "type": "object",
+      "required": ["source", "title", "provenance", "coverage", "estimate_boundary"],
+      "properties": {
+        "source": { "type": "string", "minLength": 12 },
+        "title": { "type": "string", "minLength": 1 },
+        "provenance": {
+          "type": "object",
+          "required": ["generator", "git_sha", "generated_at"],
+          "properties": {
+            "generator": { "type": "string", "minLength": 1 },
+            "git_sha": { "type": "string", "minLength": 7 },
+            "generated_at": { "type": "string", "minLength": 1 }
+          }
+        },
+        "coverage": {
+          "type": "object",
+          "required": ["start", "end"],
+          "properties": {
+            "start": { "type": "integer" },
+            "end": { "type": "integer" }
+          }
+        },
+        "estimate_boundary": {
+          "type": "object",
+          "required": ["last_actual_fy", "note"],
+          "properties": {
+            "last_actual_fy": { "type": "integer" },
+            "note": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "data": {
+      "type": "array",
+      "minItems": 80,
+      "items": {
+        "type": "object",
+        "required": [
+          "y", "actual", "gdp", "rgdp", "potential_rgdp", "output_gap",
+          "unemp", "nairu", "lfpr", "cpi", "core_pce", "gdp_deflator",
+          "ff", "t3m", "t10", "prod", "wage_share", "profit_share"
+        ],
+        "properties": {
+          "y": { "type": "integer", "minimum": 1900, "maximum": 2100 },
+          "actual": { "type": "boolean" },
+          "gdp": { "type": "number", "exclusiveMinimum": 0 },
+          "rgdp": { "type": "number", "exclusiveMinimum": 0 },
+          "potential_rgdp": { "type": "number", "exclusiveMinimum": 0 },
+          "output_gap": { "type": "number" },
+          "unemp": { "type": "number", "minimum": 0, "maximum": 100 },
+          "nairu": { "type": "number", "minimum": 0, "maximum": 100 },
+          "lfpr": { "type": "number", "minimum": 0, "maximum": 100 },
+          "cpi": { "type": "number", "exclusiveMinimum": 0 },
+          "gdp_deflator": { "type": "number", "exclusiveMinimum": 0 },
+          "t3m": { "type": "number" },
+          "prod": { "type": "number" },
+          "wage_share": { "type": "number", "minimum": 0, "maximum": 100 },
+          "profit_share": { "type": "number", "minimum": 0, "maximum": 100 },
+          "core_pce": { "type": ["number", "null"], "not": { "const": 0 } },
+          "ff": { "type": ["number", "null"], "not": { "const": 0 } },
+          "t10": { "type": ["number", "null"], "not": { "const": 0 } }
+        }
+      }
+    }
+  }
+}

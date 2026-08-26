@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "income_inequality",
+  "type": "object",
+  "required": ["_meta", "data"],
+  "properties": {
+    "_meta": {
+      "type": "object",
+      "required": ["source", "title", "provenance", "coverage", "gini_basis"],
+      "properties": {
+        "source": { "type": "string", "minLength": 12 },
+        "title": { "type": "string", "minLength": 1 },
+        "provenance": {
+          "type": "object",
+          "required": ["generator", "git_sha", "generated_at"],
+          "properties": {
+            "generator": { "type": "string", "minLength": 1 },
+            "git_sha": { "type": "string", "minLength": 7 },
+            "generated_at": { "type": "string", "minLength": 1 }
+          }
+        },
+        "coverage": {
+          "type": "object",
+          "required": ["start", "end", "mhi", "gini", "top"],
+          "properties": {
+            "start": { "type": "integer" },
+            "end": { "type": "integer" },
+            "mhi": {
+              "type": "object",
+              "required": ["start", "end"],
+              "properties": {
+                "start": { "type": "integer" },
+                "end": { "type": "integer" }
+              }
+            },
+            "gini": {
+              "type": "object",
+              "required": ["start", "end"],
+              "properties": {
+                "start": { "type": "integer" },
+                "end": { "type": "integer" }
+              }
+            },
+            "top": {
+              "type": "object",
+              "required": ["start", "end"],
+              "properties": {
+                "start": { "type": "integer" },
+                "end": { "type": "integer" }
+              }
+            }
+          }
+        },
+        "gini_basis": { "const": "families" }
+      }
+    },
+    "data": {
+      "type": "array",
+      "minItems": 100,
+      "items": {
+        "type": "object",
+        "required": ["y", "top", "mhi", "gini"],
+        "properties": {
+          "y": { "type": "integer", "minimum": 1900, "maximum": 2100 },
+          "top": { "type": "number", "minimum": 0, "maximum": 100 },
+          "mhi": { "type": ["number", "null"], "minimum": 0, "not": { "const": 0 } },
+          "gini": { "type": ["number", "null"], "minimum": 0, "maximum": 1, "not": { "const": 0 } }
+        }
+      }
+    }
+  }
+}

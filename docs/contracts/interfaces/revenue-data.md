@@ -105,3 +105,19 @@ wide / 96 narrow }`) rather than the `useChartSize` presets, because country nam
 gutter than either preset's `left` provides. It still reads its `narrow` flag and breakpoint from
 `useChartSize`; only the margin values themselves are overridden. See
 `docs/contracts/interfaces/charts.md`'s `useChartSize` section.
+
+## Schema
+
+`pipeline/schemas/revenue_sources.schema.json`, enforced on every build by `check_schema`
+(#37). A consumer may rely on:
+
+- `data` is an array of at least 60 rows, each carrying all 25 keys with none optional: `y`
+  (integer) plus the three families `n_` / `g_` / `s_` × `ii`, `pr`, `ci`, `ex`, `cu`, `eg`, `mi`,
+  `tot`.
+- The `s_*` share family is bounded `0 … 100`, as is `g_*` (percent of GDP). `n_*` is
+  `minimum: 0`. Nothing here is nullable — a missing component is a build failure, never a hole.
+- `_meta` requires `source` (`minLength: 12`), `title`, `provenance` and `coverage`
+  (`start`, `end`).
+
+Shape and range only. That `s_tot` is exactly 100 and that the components reconcile to `tot` stay
+in `validate.py`'s `check_revenue`.

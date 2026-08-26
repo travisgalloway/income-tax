@@ -103,3 +103,29 @@ never by hand-editing the output.
 - `_meta.title` currently reads "…FY1995-FY2025" even though `_meta.coverage` and `_meta.notes[3]`
   correctly state the series now runs FY1962–FY2025. This is a known stale field — see
   `docs/parked-findings.md`. No component reads `_meta.title`; do not start.
+
+## Schema
+
+`pipeline/schemas/budget.schema.json`, enforced on **every** build by `check_schema` in
+`pipeline/lib/validate.py` — an output with no schema is a build failure, not a skip (#37).
+
+A consumer may rely on:
+
+- `data` is an array of at least 60 rows. Every row carries all 24 keys: `y` (integer), `L`, `ctl`,
+  and the three unit families `n_` / `r_` / `g_` × `ma`, `or`, `di`, `ni`, `re`, `de`, `ot`, each a
+  `number`. There are no per-row optional keys — `ctl` is present on every row and **null** outside
+  FY1995–FY2025, and `L` is present on every row as a possibly-empty array.
+- `n_or` / `r_or` / `g_or` are `maximum: 0`. Offsetting receipts are negative by construction; a
+  positive value fails the build (`check_budget` asserts the same rule numerically).
+- `ctl`, when non-null, requires `p`, `pp`, `h`, `s`, `ctl`, `t`; the party fields are `D`/`R` and
+  `ctl` is `D`/`R`/`M`.
+- Each `L[]` entry requires `name`, `public_law`, `date`, `score_t`, `vote_character`, `president`,
+  `president_party`, `control_at_enactment`, `control_year`, `legacy_comp`, `rollcall`. `score_t` is
+  `["number", "null"]` and never exactly `0` — an unscored law is `null`, not zero.
+  `verified_house` / `verified_senate` / `verified_source` are genuinely optional (one law carries
+  them).
+- `_meta` requires `source` (`minLength: 12`, the `BRIEF.md` rule-1 anti-summarisation floor),
+  `title`, `provenance` (`generator`, `git_sha`, `generated_at`) and `coverage`.
+
+The schema pins **shape and range only**. Cross-field reconciliation — components summing to
+totals, the FY2003 series low, the surplus band — stays in `validate.py`'s `check_budget`.

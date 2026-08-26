@@ -1,0 +1,365 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "budget",
+  "type": "object",
+  "required": [
+    "_meta",
+    "data"
+  ],
+  "properties": {
+    "_meta": {
+      "type": "object",
+      "required": [
+        "source",
+        "title",
+        "provenance",
+        "coverage"
+      ],
+      "properties": {
+        "source": {
+          "type": "string",
+          "minLength": 12
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provenance": {
+          "type": "object",
+          "required": [
+            "generator",
+            "git_sha",
+            "generated_at"
+          ],
+          "properties": {
+            "generator": {
+              "type": "string",
+              "minLength": 1
+            },
+            "git_sha": {
+              "type": "string",
+              "minLength": 7
+            },
+            "generated_at": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "coverage": {
+          "type": "object",
+          "required": [
+            "start",
+            "end",
+            "control_start",
+            "control_end"
+          ],
+          "properties": {
+            "start": {
+              "type": "integer"
+            },
+            "end": {
+              "type": "integer"
+            },
+            "control_start": {
+              "type": "integer"
+            },
+            "control_end": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    },
+    "data": {
+      "type": "array",
+      "minItems": 60,
+      "items": {
+        "type": "object",
+        "required": [
+          "y",
+          "L",
+          "ctl",
+          "n_ma",
+          "n_or",
+          "n_di",
+          "n_ni",
+          "n_re",
+          "n_de",
+          "n_ot",
+          "r_ma",
+          "r_or",
+          "r_di",
+          "r_ni",
+          "r_re",
+          "r_de",
+          "r_ot",
+          "g_ma",
+          "g_or",
+          "g_di",
+          "g_ni",
+          "g_re",
+          "g_de",
+          "g_ot"
+        ],
+        "properties": {
+          "y": {
+            "type": "integer",
+            "minimum": 1900,
+            "maximum": 2100
+          },
+          "n_ma": {
+            "type": "number"
+          },
+          "n_or": {
+            "type": "number",
+            "maximum": 0
+          },
+          "n_di": {
+            "type": "number"
+          },
+          "n_ni": {
+            "type": "number"
+          },
+          "n_re": {
+            "type": "number"
+          },
+          "n_de": {
+            "type": "number"
+          },
+          "n_ot": {
+            "type": "number"
+          },
+          "r_ma": {
+            "type": "number"
+          },
+          "r_or": {
+            "type": "number",
+            "maximum": 0
+          },
+          "r_di": {
+            "type": "number"
+          },
+          "r_ni": {
+            "type": "number"
+          },
+          "r_re": {
+            "type": "number"
+          },
+          "r_de": {
+            "type": "number"
+          },
+          "r_ot": {
+            "type": "number"
+          },
+          "g_ma": {
+            "type": "number"
+          },
+          "g_or": {
+            "type": "number",
+            "maximum": 0
+          },
+          "g_di": {
+            "type": "number"
+          },
+          "g_ni": {
+            "type": "number"
+          },
+          "g_re": {
+            "type": "number"
+          },
+          "g_de": {
+            "type": "number"
+          },
+          "g_ot": {
+            "type": "number"
+          },
+          "ctl": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "required": [
+              "p",
+              "pp",
+              "h",
+              "s",
+              "ctl",
+              "t"
+            ],
+            "properties": {
+              "p": {
+                "type": "string",
+                "minLength": 1
+              },
+              "pp": {
+                "type": "string",
+                "enum": [
+                  "D",
+                  "R"
+                ]
+              },
+              "h": {
+                "type": "string",
+                "enum": [
+                  "D",
+                  "R"
+                ]
+              },
+              "s": {
+                "type": "string",
+                "enum": [
+                  "D",
+                  "R"
+                ]
+              },
+              "ctl": {
+                "type": "string",
+                "enum": [
+                  "D",
+                  "R",
+                  "M"
+                ]
+              },
+              "t": {
+                "type": "boolean"
+              }
+            }
+          },
+          "L": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name",
+                "public_law",
+                "date",
+                "score_t",
+                "vote_character",
+                "president",
+                "president_party",
+                "control_at_enactment",
+                "control_year",
+                "legacy_comp",
+                "rollcall"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "public_law": {
+                  "type": "string",
+                  "minLength": 3
+                },
+                "date": {
+                  "type": "string",
+                  "format": "date",
+                  "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+                },
+                "score_t": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "not": {
+                    "const": 0
+                  }
+                },
+                "vote_character": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "president": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "president_party": {
+                  "type": "string",
+                  "enum": [
+                    "D",
+                    "R"
+                  ]
+                },
+                "control_at_enactment": {
+                  "type": "string",
+                  "pattern": "^[DR]{3}$"
+                },
+                "control_year": {
+                  "type": "string",
+                  "enum": [
+                    "D",
+                    "R",
+                    "M"
+                  ]
+                },
+                "legacy_comp": {
+                  "type": "string",
+                  "enum": [
+                    "XP",
+                    "PLR",
+                    "PLD"
+                  ]
+                },
+                "rollcall": {
+                  "type": "object",
+                  "required": [
+                    "congress",
+                    "house",
+                    "senate"
+                  ],
+                  "properties": {
+                    "congress": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "house": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "senate": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "note": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "verified_house": {
+                  "type": "array",
+                  "minItems": 4,
+                  "maxItems": 4,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "verified_senate": {
+                  "type": "array",
+                  "minItems": 4,
+                  "maxItems": 4,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "verified_source": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

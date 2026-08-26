@@ -134,3 +134,26 @@ relative to a shrinking denominator without anything newly earned — while `pro
 these years must name the denominator explicitly, not describe the moves as a change in who is
 paid what. `test_fy2020_share_moves_are_denominator_artefacts` pins the direction of all three
 moves.
+
+## Schema
+
+`pipeline/schemas/economy.schema.json`, enforced on every build by `check_schema` (#37). The
+joined series has its own schema, `pipeline/schemas/income_inequality.schema.json` — see
+`income-inequality-data.md`.
+
+A consumer may rely on:
+
+- `data` is an array of at least 80 rows, each carrying all 18 keys. `y` is an integer, `actual`
+  is a boolean.
+- **The three nullable series are `core_pce`, `ff` and `t10`**, typed `["number", "null"]` with
+  `not: {"const": 0}`. Absence is `null` and can never arrive as `0`; a pre-1959 core-PCE year
+  written as zero fails the build rather than plotting as deflation. Every other numeric field is
+  a plain `number` and is always present.
+- `unemp`, `nairu`, `lfpr`, `wage_share` and `profit_share` are bounded `0 … 100`. `gdp`, `rgdp`,
+  `potential_rgdp`, `cpi` and `gdp_deflator` are `exclusiveMinimum: 0`.
+- `_meta` requires `source` (`minLength: 12`), `title`, `provenance`, `coverage` and
+  `estimate_boundary` (`last_actual_fy`, `note`) — the projections boundary is part of the
+  contract, not a convention.
+
+Shape and range only; the actual/projection split and the index-base checks stay in
+`validate.py`'s `check_economy`.

@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "revenue_sources",
+  "type": "object",
+  "required": ["_meta", "data"],
+  "properties": {
+    "_meta": {
+      "type": "object",
+      "required": ["source", "title", "provenance", "coverage"],
+      "properties": {
+        "source": { "type": "string", "minLength": 12 },
+        "title": { "type": "string", "minLength": 1 },
+        "provenance": {
+          "type": "object",
+          "required": ["generator", "git_sha", "generated_at"],
+          "properties": {
+            "generator": { "type": "string", "minLength": 1 },
+            "git_sha": { "type": "string", "minLength": 7 },
+            "generated_at": { "type": "string", "minLength": 1 }
+          }
+        },
+        "coverage": {
+          "type": "object",
+          "required": ["start", "end"],
+          "properties": {
+            "start": { "type": "integer" },
+            "end": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "data": {
+      "type": "array",
+      "minItems": 60,
+      "items": {
+        "type": "object",
+        "required": [
+          "y",
+          "n_ii", "n_pr", "n_ci", "n_ex", "n_cu", "n_eg", "n_mi", "n_tot",
+          "g_ii", "g_pr", "g_ci", "g_ex", "g_cu", "g_eg", "g_mi", "g_tot",
+          "s_ii", "s_pr", "s_ci", "s_ex", "s_cu", "s_eg", "s_mi", "s_tot"
+        ],
+        "properties": {
+          "y": { "type": "integer", "minimum": 1900, "maximum": 2100 },
+          "n_ii": { "type": "number", "minimum": 0 },
+          "n_pr": { "type": "number", "minimum": 0 },
+          "n_ci": { "type": "number", "minimum": 0 },
+          "n_ex": { "type": "number", "minimum": 0 },
+          "n_cu": { "type": "number", "minimum": 0 },
+          "n_eg": { "type": "number", "minimum": 0 },
+          "n_mi": { "type": "number", "minimum": 0 },
+          "n_tot": { "type": "number", "minimum": 0 },
+          "g_ii": { "type": "number", "minimum": 0, "maximum": 100 },
+          "g_pr": { "type": "number", "minimum": 0, "maximum": 100 },
+          "g_ci": { "type": "number", "minimum": 0, "maximum": 100 },
+          "g_ex": { "type": "number", "minimum": 0, "maximum": 100 },
+          "g_cu": { "type": "number", "minimum": 0, "maximum": 100 },
+          "g_eg": { "type": "number", "minimum": 0, "maximum": 100 },
+          "g_mi": { "type": "number", "minimum": 0, "maximum": 100 },
+          "g_tot": { "type": "number", "minimum": 0, "maximum": 100 },
+          "s_ii": { "type": "number", "minimum": 0, "maximum": 100 },
+          "s_pr": { "type": "number", "minimum": 0, "maximum": 100 },
+          "s_ci": { "type": "number", "minimum": 0, "maximum": 100 },
+          "s_ex": { "type": "number", "minimum": 0, "maximum": 100 },
+          "s_cu": { "type": "number", "minimum": 0, "maximum": 100 },
+          "s_eg": { "type": "number", "minimum": 0, "maximum": 100 },
+          "s_mi": { "type": "number", "minimum": 0, "maximum": 100 },
+          "s_tot": { "type": "number", "minimum": 0, "maximum": 100 }
+        }
+      }
+    }
+  }
+}

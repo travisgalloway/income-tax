@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "party_splits",
+  "type": "object",
+  "required": ["_meta", "data"],
+  "$defs": {
+    "tally": {
+      "type": "object",
+      "required": ["yea", "nay", "other"],
+      "properties": {
+        "yea": { "type": "integer", "minimum": 0 },
+        "nay": { "type": "integer", "minimum": 0 },
+        "other": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "chamber": {
+      "type": "object",
+      "required": ["r", "d", "i", "d_caucus", "yea", "nay", "rollnumber"],
+      "properties": {
+        "r": { "$ref": "#/$defs/tally" },
+        "d": { "$ref": "#/$defs/tally" },
+        "i": { "$ref": "#/$defs/tally" },
+        "d_caucus": { "$ref": "#/$defs/tally" },
+        "yea": { "type": "integer", "minimum": 0 },
+        "nay": { "type": "integer", "minimum": 0 },
+        "rollnumber": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "properties": {
+    "_meta": {
+      "type": "object",
+      "required": ["source", "title", "provenance", "coverage", "cross_party_threshold", "party_vs_caucus", "missing_votes"],
+      "properties": {
+        "source": { "type": "string", "minLength": 12 },
+        "title": { "type": "string", "minLength": 1 },
+        "provenance": {
+          "type": "object",
+          "required": ["generator", "git_sha", "generated_at"],
+          "properties": {
+            "generator": { "type": "string", "minLength": 1 },
+            "git_sha": { "type": "string", "minLength": 7 },
+            "generated_at": { "type": "string", "minLength": 1 }
+          }
+        },
+        "coverage": {
+          "type": "object",
+          "required": ["laws", "start", "end"],
+          "properties": {
+            "laws": { "type": "integer", "minimum": 1 },
+            "start": { "type": "string", "format": "date", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+            "end": { "type": "string", "format": "date", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+          }
+        },
+        "cross_party_threshold": { "type": "string", "minLength": 1 },
+        "party_vs_caucus": { "type": "string", "minLength": 1 },
+        "missing_votes": { "type": "string", "minLength": 1 }
+      }
+    },
+    "data": {
+      "type": "array",
+      "minItems": 23,
+      "items": {
+        "type": "object",
+        "required": ["name", "public_law", "date", "congress", "character", "legacy_classification", "senate", "house"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "public_law": { "type": "string", "minLength": 1 },
+          "date": { "type": "string", "format": "date", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+          "congress": { "type": "integer", "minimum": 1 },
+          "character": { "type": "string", "enum": ["cross-party", "party-line"] },
+          "legacy_classification": { "type": "string", "enum": ["XP", "PLR", "PLD"] },
+          "senate": { "$ref": "#/$defs/chamber" },
+          "house": {
+            "oneOf": [
+              { "type": "null" },
+              { "$ref": "#/$defs/chamber" }
+            ]
+          },
+          "note": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

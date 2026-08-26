@@ -78,3 +78,20 @@ branch's to add.
 A chart driven by a shared year-range control can be scrolled to a window containing neither 1979
 nor 2022. That must render an explicit "no published observation in this range" state — never an
 empty axis (which could read as zero) and never a hidden panel.
+
+## Schema
+
+`pipeline/schemas/income_inequality.schema.json`, enforced on every build by `check_schema`
+(#37). A consumer may rely on:
+
+- `data` is an array of at least 100 rows; every row carries `y`, `top`, `mhi` and `gini` — the
+  sparse years are present with `null` values, never absent keys.
+- `mhi` and `gini` are `["number", "null"]` with `not: {"const": 0}`. **A year with no observation
+  is `null` and can never be `0`**; the schema rejects a zero-filled Gini before it reaches a
+  chart. `gini` is additionally bounded `0 … 1` (it is a ratio, not a percent), `top` `0 … 100`.
+- `_meta` requires `source` (`minLength: 12`), `title`, `provenance`, `coverage` (with per-series
+  `mhi` / `gini` / `top` spans) and `gini_basis`, which is pinned to the literal `"families"` —
+  the basis is a schema constant, so a switch to the household series fails the build.
+
+Shape and range only; reproduction of the published figures stays in `validate.py`'s
+`check_income` and the pytest suite.

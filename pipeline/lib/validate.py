@@ -57,18 +57,42 @@ def check_meta(c: Checks, names: list[str]) -> None:
 
 
 def check_schema(c: Checks, names: list[str]) -> None:
-    """Generic, opt-in JSON Schema check: an output is validated iff
-    `schemas/<name>.schema.json` exists. Nothing retrofits the nine outputs
-    that predate this gate; a new output opts in by adding its schema file."""
+    """Every output build.py emits is schema-validated, with no opt-in. A
+    MISSING schema is a FAILURE, not a skip (#37): a validation step that
+    passes because it had nothing to check reads exactly like one that passed
+    because the data was good, and that is the state this gate exists to
+    prevent. A schema file that is not valid JSON, or that does not conform
+    to the JSON Schema metaschema, is a named failure too. Note this does
+    NOT cover a typo'd or unknown keyword within an otherwise well-formed
+    schema (e.g. "requred" instead of "required") — jsonschema silently
+    ignores unrecognized keywords per the spec, so that class of mistake
+    still validates cleanly and is caught only by review or by the schema
+    actually asserting the wrong thing."""
     for n in names:
         path = SCHEMA_DIR / f"{n}.schema.json"
         if not path.exists():
+            c.ok(
+                False,
+                f"{n}: no schema at schemas/{n}.schema.json. Every output build.py "
+                f"emits must be schema-validated; add the schema rather than letting "
+                f"the output ship unchecked (#37).",
+            )
             continue
         try:
-            jsonschema.validate(_load(n), json.loads(path.read_text()))
+            schema = json.loads(path.read_text())
+        except json.JSONDecodeError as exc:
+            c.ok(False, f"{n}: schemas/{n}.schema.json is not valid JSON: {exc}")
+            continue
+        try:
+            jsonschema.validate(_load(n), schema)
             c.ok(True, f"{n}: schema ok")
         except jsonschema.ValidationError as exc:
             c.ok(False, f"{n}: schema violation at {list(exc.absolute_path)}: {exc.message}")
+        except jsonschema.SchemaError as exc:
+            c.ok(
+                False,
+                f"{n}: schemas/{n}.schema.json is not a valid JSON Schema: {exc.message}",
+            )
 
 
 def check_budget(c: Checks) -> None:

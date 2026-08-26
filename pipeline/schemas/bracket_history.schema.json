@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "bracket_history",
+  "type": "object",
+  "required": ["_meta", "data"],
+  "$defs": {
+    "bracket": {
+      "type": "object",
+      "required": ["r", "lo", "hi", "rlo", "rhi"],
+      "properties": {
+        "r": { "type": "number", "minimum": 0, "maximum": 100 },
+        "lo": { "type": "number", "minimum": 0 },
+        "rlo": { "type": "number", "minimum": 0 },
+        "hi": { "type": ["number", "null"], "minimum": 0, "not": { "const": 0 } },
+        "rhi": { "type": ["number", "null"], "minimum": 0, "not": { "const": 0 } }
+      }
+    }
+  },
+  "properties": {
+    "_meta": {
+      "type": "object",
+      "required": ["source", "title", "provenance", "coverage", "deflator", "adjustments", "bracket_count"],
+      "properties": {
+        "source": { "type": "string", "minLength": 12 },
+        "title": { "type": "string", "minLength": 1 },
+        "provenance": {
+          "type": "object",
+          "required": ["generator", "git_sha", "generated_at"],
+          "properties": {
+            "generator": { "type": "string", "minLength": 1 },
+            "git_sha": { "type": "string", "minLength": 7 },
+            "generated_at": { "type": "string", "minLength": 1 }
+          }
+        },
+        "coverage": {
+          "type": "object",
+          "required": ["start", "end", "filing_status"],
+          "properties": {
+            "start": { "type": "integer" },
+            "end": { "type": "integer" },
+            "filing_status": {
+              "type": "object",
+              "required": ["single", "mfj", "mfs", "hoh"]
+            }
+          }
+        },
+        "deflator": {
+          "type": "object",
+          "required": ["series_id", "basis", "base_year"],
+          "properties": {
+            "series_id": { "type": "string", "minLength": 1 },
+            "basis": { "type": "string", "minLength": 1 },
+            "base_year": { "type": "integer" }
+          }
+        },
+        "adjustments": { "type": "object" },
+        "bracket_count": {
+          "type": "object",
+          "required": ["min", "min_year", "max", "max_year"],
+          "properties": {
+            "min": { "type": "integer", "minimum": 1 },
+            "min_year": { "type": "integer" },
+            "max": { "type": "integer", "minimum": 1 },
+            "max_year": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "data": {
+      "type": "array",
+      "minItems": 110,
+      "items": {
+        "type": "object",
+        "required": ["y", "top", "sched_top", "nb", "s", "adj"],
+        "properties": {
+          "y": { "type": "integer", "minimum": 1900, "maximum": 2100 },
+          "top": { "type": "number", "minimum": 0, "maximum": 100 },
+          "sched_top": { "type": "number", "minimum": 0, "maximum": 100 },
+          "nb": { "type": "integer", "minimum": 1 },
+          "adj": {
+            "type": ["object", "null"],
+            "required": ["schedule", "published", "why", "source"],
+            "properties": {
+              "schedule": { "type": "number", "minimum": 0, "maximum": 100 },
+              "published": { "type": "number", "minimum": 0, "maximum": 100 },
+              "why": { "type": "string", "minLength": 1 },
+              "source": { "type": "string", "minLength": 1 }
+            }
+          },
+          "s": {
+            "type": "object",
+            "required": ["single", "mfj", "mfs", "hoh"],
+            "properties": {
+              "single": { "type": ["array", "null"], "minItems": 1, "items": { "$ref": "#/$defs/bracket" } },
+              "mfj": { "type": ["array", "null"], "minItems": 1, "items": { "$ref": "#/$defs/bracket" } },
+              "mfs": { "type": ["array", "null"], "minItems": 1, "items": { "$ref": "#/$defs/bracket" } },
+              "hoh": { "type": ["array", "null"], "minItems": 1, "items": { "$ref": "#/$defs/bracket" } }
+            }
+          }
+        }
+      }
+    }
+  }
+}

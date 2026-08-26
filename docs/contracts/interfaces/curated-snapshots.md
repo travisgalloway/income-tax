@@ -83,3 +83,56 @@ Both are now typed (`src/data/types.ts`), replacing the earlier
 `Dataset<Record<string, unknown>>` placeholder. See the interfaces themselves for field-level
 comments — the two traps above (denominator, non-partition) are documented inline at the fields
 they apply to, not just here.
+
+## Schema
+
+All five curated snapshots carry a schema, enforced on every build by `check_schema` in
+`pipeline/lib/validate.py` — an output with no schema is a build failure, not a skip (#37):
+
+| Output | Schema |
+|---|---|
+| `debt_holders.json` | `pipeline/schemas/debt_holders.schema.json` |
+| `debt_maturity.json` | `pipeline/schemas/debt_maturity.schema.json` |
+| `income_tax_by_group.json` | `pipeline/schemas/income_tax_by_group.schema.json` |
+| `oecd.json` | `pipeline/schemas/oecd.schema.json` |
+| `cbo_effective_rates.json` | `pipeline/schemas/cbo_effective_rates.schema.json` |
+
+### The `_meta` asymmetry — `refresh`, and **no** `coverage`
+
+The fetched outputs (`budget`, `revenue_sources`, `economy`, `debt`, `income_inequality`,
+`bracket_history`, `party_splits`, and both states outputs) require `_meta.coverage`. **The curated
+five do not have it and must not acquire it.** Their schemas require `_meta.refresh` instead, with
+`mode` pinned to the constant `"curated"` and a non-empty `reason`. Do not write a consumer that
+reads `_meta.coverage` off a curated snapshot — it is absent by design, and
+`curatedVintage()` is what answers the freshness question here.
+
+`debt_holders` additionally requires `_meta.deliberate_omissions.federal_reserve_holdings`, so the
+omission documented above cannot be dropped from the payload without failing the build.
+
+### What each schema pins
+
+- **`debt_holders`** — `data` requires `total_debt_t`, `as_of`, `split`, `public_split`,
+  `top_foreign`, `foreign_share_history`. Every percentage field is bounded `0 … 100`, and the
+  denominator distinction is carried in the key names the schema requires: `split[].share_pct`
+  (of gross), `public_split[].share_of_public_pct`, `foreign_share_history[].share_of_gross_pct`.
+  `split` has `minItems: 2` — the public/intragovernmental pair is not optional.
+- **`debt_maturity`** — `avg_maturity_months` is an integer `minimum: 1`;
+  `composition[]` requires `k`, `label`, `maturity`, `amount_t` (`share_pct` is genuinely optional,
+  present on one row only); `history_months[]` requires a `date` matching `^[0-9]{4}-[0-9]{2}$`
+  and a numeric `v`, so a value arriving as a string fails the build.
+- **`income_tax_by_group`** — `tax_year` integer; `groups` has `minItems: 6` and each group
+  requires `g` and `tax_share_pct`. `income_share_pct` and `avg_rate_pct` are **optional**: an
+  unpublished cell is an absent key, never a zero, which is the non-partition rule above expressed
+  in the schema. Both history arrays require an integer `year` and a numeric `v`.
+- **`oecd`** — `data` requires `year`, `us_pct_gdp`, `oecd_average_pct_gdp`, `us_rank`,
+  `of_countries`, `countries`, `us_history`. `us_rank` is an integer `minimum: 1` and is
+  deliberately **not** bounded above by a hard-coded country count. `countries` has `minItems: 10`,
+  each entry requiring `c` and `v`.
+- **`cbo_effective_rates`** — `data` requires `as_of`, `basis`, `not_an_annual_series`, `groups`,
+  `rows`. `groups` has `minItems: 6`; each row requires an integer `year`, a `source_table` string
+  and a `v` object whose **six group keys are all required numbers**. That is the constraint that
+  catches a dropped quintile, which would otherwise render as a gap in the chart.
+
+Shape and range only. The cross-field rules — the non-partition check, the denominator check, the
+anchor-years-not-a-series check — stay in `validate.py`'s `check_snapshots`,
+`check_cbo_effective_rates` and the pytest suite.
