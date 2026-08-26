@@ -114,12 +114,31 @@ collapsed behind a disclosure":
 
 - **No `<details>`, no collapsible, no tab, no "read more."** The whole section renders in the
   static HTML with no island and no `client:` directive — it carries no chart, so it needs none.
+- **The section carries six numbered limits**, not five. Limits 1–5 keep their numbering:
+  `content-sources.md` pins "Limit 5 links to a chart the reader can immediately flip" below, and
+  the grep-pinned phrases in `.claude/plans/issue-8.md` and `.claude/plans/issue-11.md` are
+  positional, so a new limit is **appended** after limit 5 and before `<h3>Two more worth
+  knowing</h3>`, never inserted. The heading's count word and the `<li>` count move together, and
+  `sections.md` §12 mirrors both — nothing automated relates the two, so a change to one is a
+  change to all three.
+- **Limit 6 owns the place-of-payment principle.** Federal tax is recorded against the filer's
+  address, federal award spending against the place of performance, and neither base says who
+  bore the cost or got the benefit. §11 states the *worked examples* (border employer, military
+  base, federal retiree, Medicaid pass-through — the ones that matter to the reader of that
+  chart) and links to `#limits` for the principle. Neither is a copy of the other, and neither
+  may become one: the general statement lives in §12, the chart-specific cases in §11.
 - **No stem of "classif" appears in the section.** The dataset counts per-party splits from
   Voteview roll-call records (`src/data/party_splits.json`); the old "classified from published
   vote character" language describes a state that no longer exists. See
   `budget-data.md`-adjacent data: `party_splits.json` `_meta` names the four limits that remain
   (hand-picked final-passage roll call, the CARES Act's missing House roll call, the 10%
   cross-party threshold, and party-vs-caucus membership).
+  **The trap, for anyone writing new copy here.** `test_limits_section_does_not_call_the_votes_classified`
+  slices from `id="limits"` to the end of the file and bans the bare stem across all of it, though
+  its docstring scopes it to limit 4. The natural wording for limit 6's subject is "the IRS
+  **classif**ies collections by the filer's address" — §11's own former phrasing — and it turns
+  the build red. Use *records / booked / recorded against*. **Do not narrow the test to make room
+  for the copy**: a guard is not weakened to fit new prose.
 - **Limit 5 links to a chart the reader can immediately flip** (currently `#forty-trillion`,
   nominal ↔ % of GDP). If a future section replaces or removes that chart's unit toggle, this
   link's target must move with it or the claim "every dollar chart on this site can be flipped"

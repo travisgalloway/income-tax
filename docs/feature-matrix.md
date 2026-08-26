@@ -31,7 +31,7 @@ when the code merges.
 | GOV-9 | Who passed it, who signed it — the same $16.75T by voting coalition and by signing president, Radix Tabs | done | done | Shipped | #4, #33 | contracts/interfaces/attribution.md, contracts/interfaces/budget-data.md |
 | GOV-10 | Where the money comes from — revenue by source (nominal/%GDP/%share toggle), OECD comparison | done | done | Shipped | #7, #34 | contracts/interfaces/revenue-data.md, contracts/interfaces/charts.md |
 | GOV-11 | By state, and which states give more than they get — IRS gross collections vs USASpending award spending, tile-grid cartogram, sortable table, state tax mix | done | done | Shipped | #14 | contracts/interfaces/state-data.md, contracts/interfaces/charts.md |
-| GOV-12 | What this cannot tell you — five limits in full, no disclosure wrapper, plus the concentration and deficit-vs-debt items | done | n/a (prose) | Shipped | #8 | contracts/interfaces/content-sources.md |
+| GOV-12 | What this cannot tell you — six limits in full, no disclosure wrapper, plus the concentration and deficit-vs-debt items. Limit 6 owns the place-of-payment principle (filer address vs place of performance) that §11 used to restate locally; §11 now links to it and keeps only its worked examples | done | n/a (prose) | Shipped | #8, #39 | contracts/interfaces/content-sources.md |
 
 ## Households route (`src/pages/households/index.astro`)
 
