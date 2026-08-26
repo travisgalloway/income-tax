@@ -5,7 +5,7 @@ reader encounters the sections. Status vocabulary is fixed: `Planned`, `In progr
 `Deprecated`. A row moves to `Shipped` only when its issue's full definition of done passes, not
 when the code merges.
 
-## Economy route (`src/pages/index.astro`)
+## Economy route (`src/pages/economy/index.astro`)
 
 | ID | Capability | UI | Data | Status | Issue | Contract |
 |----|-----------|----|------|--------|-------|----------|

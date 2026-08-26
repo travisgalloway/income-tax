@@ -15,7 +15,8 @@ const base = import.meta.env.BASE_URL
 const join = (p: string) => `${base.replace(/\/$/, '')}/${p.replace(/^\//, '')}`.replace(/\/$/, '') || '/'
 
 const routes = [
-  { href: join(''), label: 'Economy' },
+  { href: join(''), label: 'Introduction' },
+  { href: join('economy'), label: 'Economy' },
   { href: join('households'), label: 'Households' },
   { href: join('government'), label: 'Government' },
   { href: join('sources'), label: 'Sources' },
