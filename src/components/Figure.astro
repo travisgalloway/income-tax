@@ -6,44 +6,50 @@
  * the graphic, then Source and Note lines beneath. The apparatus is not
  * decoration. It is how BRIEF.md's data-integrity rules become structural:
  * rule 1 (every chart renders its source, verbatim, never summarised) and
- * rule 2 (both axes carry units) are REQUIRED props, so a figure that omits
- * either cannot build.
+ * rule 2 (both axes carry units) are REQUIRED, so a figure that omits either
+ * cannot build.
+ *
+ * The number, the title and the source come from `src/data/figures.ts` as one
+ * `fig` entry rather than from three props typed here (#49). Two consequences.
+ * The number is a real build-time value rendered as text, not the CSS counter
+ * it used to be — so `/contents` can name "Government, Figure 13" and mean the
+ * same figure this page numbers 13. And the manifest is the one place a
+ * figure's provenance is written, read both by this component and by the index,
+ * so the two cannot disagree.
  */
+import type { FigureEntry } from '../data/figures'
+
 interface Props {
   /** The finding, in a sentence. Not a description of the shape. */
   ariaLabel: string
-  /** Short italic title beside the figure number. */
-  title: string
-  /** _meta.source, VERBATIM. Never summarise it to "CBO data". */
-  source: string
+  /** The manifest entry: number, title, source and composed source line. */
+  fig: FigureEntry
   /** Unit for the horizontal axis, e.g. "Fiscal year". */
   xUnit: string
   /** Unit for the vertical axis, e.g. "$ trillions". */
   yUnit: string
-  /** Optional vintage or retrieval stamp, appended to the source line. */
-  vintage?: string | null
   /** Scope or method warning. Belongs here in the apparatus, never in a tooltip. */
   note?: string
   id?: string
 }
 
-const { ariaLabel, title, source, xUnit, yUnit, vintage, note, id } = Astro.props
-
-/** The source string is rendered verbatim, so the vintage is appended as its
- *  own sentence rather than run onto the end of it. */
-const sourceLine = vintage
-  ? `${source.replace(/[.\s]*$/, '')}. ${vintage}`
-  : source
+const { ariaLabel, fig, xUnit, yUnit, note, id } = Astro.props
 
 if (!ariaLabel?.trim()) throw new Error('Figure: ariaLabel is required and must state the finding')
-if (!title?.trim()) throw new Error('Figure: title is required')
-if (!source?.trim()) throw new Error('Figure: source is required and is rendered verbatim')
+if (!fig || typeof fig.n !== 'number' || fig.n < 1) {
+  throw new Error(
+    'Figure: fig is required and must come from src/data/figures.ts — `figuresOf(route)(key)`. Without it the figure has no number, no title and no source.'
+  )
+}
+if (!fig.title?.trim()) throw new Error('Figure: fig.title is required')
+if (!fig.sourceLine?.trim()) throw new Error('Figure: fig.source is required and is rendered verbatim')
 if (!xUnit?.trim() || !yUnit?.trim()) throw new Error('Figure: both axes must name their units')
 ---
 
 <figure class="figure" aria-label={ariaLabel} id={id}>
   <div class="figure-head">
-    <span class="figure-title">{title}</span>
+    <span class="figure-no">Figure {fig.n}</span>
+    <span class="figure-title">{fig.title}</span>
   </div>
 
   <slot />
@@ -51,6 +57,6 @@ if (!xUnit?.trim() || !yUnit?.trim()) throw new Error('Figure: both axes must na
   <figcaption>
     <span><span class="lead">Units.</span> {xUnit} against {yUnit}.</span>
     {note && <span class="figure-caveat"><span class="lead">Note.</span> {note}</span>}
-    <span><span class="lead">Source.</span> {sourceLine}</span>
+    <span><span class="lead">Source.</span> {fig.sourceLine}</span>
   </figcaption>
 </figure>
