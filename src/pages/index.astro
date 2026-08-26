@@ -1,23 +1,223 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro'
+import { routeSections, type RouteSection } from '../data/sections'
+
+/* Static Astro, no island, no `client:` directive and no chart: the front door is prose, so
+ * #36's server-render rule is satisfied vacuously and greppably. */
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '')
+
+/* Page-local, and deliberately NOT an entry in `routeSections`. That map's keys are the domain of
+ * a glossary term's `first_used.route`, and a term whose first prose use is the front door is a
+ * category error — this page names no term. A `'/'` key would also arm a real landmine:
+ * `test_every_first_used_route_carries_its_term_marker` builds `DIST / route / 'index.html'`, and
+ * `pathlib` treats an absolute segment as a reset, so `'/'` would silently read the filesystem
+ * root. See the header of src/data/sections.ts. */
+const sections: RouteSection[] = [
+  { id: 'what-this-is', label: 'What this site is' },
+  { id: 'where-to-start', label: 'Where to start' },
+  { id: 'how-to-read-a-figure', label: 'How to read a figure' },
+  { id: 'where-the-numbers-come-from', label: 'Where the numbers come from' },
+]
+
+/* Section counts are read from the same arrays the routes render their own contents lists from,
+ * never typed here: a route that gains or loses a section updates this page in the same build,
+ * so the two cannot drift. */
+const cards = [
+  {
+    href: `${base}/economy`,
+    name: 'Economy',
+    answers:
+      'What the country produces, who works, what things cost, and how the proceeds divide between labor and capital.',
+    meta: `Route 1 of 3 · ${routeSections['/economy'].length} sections`,
+  },
+  {
+    href: `${base}/households`,
+    name: 'Households',
+    answers:
+      'What a household earns, what the tax code says it owes, and what it actually pays once every federal tax is counted.',
+    meta: `Route 2 of 3 · ${routeSections['/households'].length} sections`,
+  },
+  {
+    href: `${base}/government`,
+    name: 'Government',
+    answers:
+      'The debt, who holds it, the whole budget behind it, and the laws that moved it — each with its cost and its recorded vote.',
+    meta: `Route 3 of 3 · ${routeSections['/government'].length} sections`,
+  },
+  {
+    href: `${base}/sources`,
+    name: 'Sources',
+    answers:
+      'Where every number on the site came from, named in full, and where two official series disagree with each other.',
+    meta: 'Reference · every source, with vintage and known discrepancies',
+  },
+  {
+    href: `${base}/glossary`,
+    name: 'Glossary',
+    answers:
+      'What a technical term means here, in one sentence, with the fuller entry underneath it.',
+    meta: 'Reference · every technical term the routes use, defined once',
+  },
+]
 ---
 
 <BaseLayout
   title="Income & Tax | US federal finance"
   description="The American economy and government in numbers."
+  sections={sections}
 >
   <p class="kicker">Introduction</p>
   <h1>Income &amp; Tax</h1>
   <p class="standfirst">the American economy and government in numbers</p>
-  <section id="routes">
-    <p class="prose">Three routes, meant to be read in order.</p>
-    <ol class="prose">
-      <li><a href={`${base}/economy`}>The economy</a> — growth, work, prices, and the split between labor and capital.</li>
-      <li><a href={`${base}/households`}>Households</a> — what a household earns, and what it actually pays.</li>
-      <li><a href={`${base}/government`}>Government</a> — the debt, the budget, and the laws that made them.</li>
+
+  <section id="what-this-is">
+    <p class="kicker"><span class="section-no">Section 1</span></p>
+    <h2>What this site is, and what it refuses to do</h2>
+    <p class="prose">
+      This is an account of where the federal balance sheet came from, told only from primary
+      data: decades of federal budget figures, every major deficit-moving law with its cost and
+      its recorded vote, who holds the debt, where the revenue comes from, and how American taxes
+      compare with those of other rich countries.
+    </p>
+    <p class="prose">
+      Its through-line is that the popular story — that one party did this — does not survive
+      contact with the data. Divided control covers most of the period. Most of the largest
+      deficit-moving laws passed with votes from both parties. And a large share of the
+      accumulated deficits is net interest, a line nobody votes on at all. Each of those claims is
+      made on a route, with the evidence for it and the source beside it; none of it is quoted
+      here.
+    </p>
+    <p class="prose">
+      Which is the refusal. Every figure here is built to be argued with rather than agreed with:
+      its source is named in full, both of its axes state their units, and the numbers behind the
+      picture are in the page for anyone who wants to check the drawing against them. Where the
+      data cannot answer a question, the route says so instead of estimating.
+    </p>
+    <blockquote class="brief-quote">
+      <p>
+        The site's job is to let a reader check that for themselves, not to be persuaded of it.
+      </p>
+    </blockquote>
+    <p class="brief-attrib">— the site's design brief</p>
+  </section>
+
+  <section id="where-to-start">
+    <p class="kicker"><span class="section-no">Section 2</span></p>
+    <h2>Where to start</h2>
+    <p class="prose">
+      Five destinations, in two kinds. The routes carry the argument; the reference pages carry
+      the apparatus behind it.
+    </p>
+    <ol class="cards">
+      {cards.map((c) => (
+        <li>
+          <h3><a href={c.href}>{c.name}</a></h3>
+          <p class="prose">{c.answers}</p>
+          <p class="card-meta">{c.meta}</p>
+        </li>
+      ))}
     </ol>
-    <p class="prose">Every figure's source is listed in <a href={`${base}/sources`}>Sources</a>.</p>
+    <p class="prose">
+      The three routes are meant to be read in order — the economy sets the denominators the other
+      two are measured against, and households is where the tax code meets a person. The two
+      reference pages are for looking something up, at any point, and neither of them assumes you
+      have read anything else.
+    </p>
+  </section>
+
+  <section id="how-to-read-a-figure">
+    <p class="kicker"><span class="section-no">Section 3</span></p>
+    <h2>How to read a figure</h2>
+    <p class="prose">
+      Every figure on this site is wrapped in the same apparatus, in the same order, on every
+      route. It is worth a minute up front, because the apparatus is what makes a figure checkable
+      rather than merely convincing.
+    </p>
+
+    <h3>The ladder above the chart</h3>
+    <p class="prose">
+      Each section opens the same way: a section number, a heading, a standfirst saying what the
+      section is about, and then a finding — one sentence, ruled off above and below, stating the
+      single claim the chart is there to support. The finding comes before the picture on purpose.
+      Read it, then look at the chart, and check whether the picture says what the sentence says.
+      If the two disagree, the sentence is wrong, and that is worth knowing.
+    </p>
+
+    <h3>The caption beneath it</h3>
+    <p class="prose">
+      Under the chart sit up to three lines, always in this order.
+    </p>
+    <dl class="apparatus">
+      <dt><span class="lead">Units.</span></dt>
+      <dd>What each axis measures, the horizontal one first, in the units the numbers are in.</dd>
+      <dt><span class="lead">Note.</span></dt>
+      <dd>
+        A scope or method warning — a projection drawn beyond the last actual year, a series that
+        changes definition partway. Present only when there is one to give.
+      </dd>
+      <dt><span class="lead">Source.</span></dt>
+      <dd>The agency, the dataset and its vintage, as the dataset itself states them.</dd>
+    </dl>
+    <p class="prose">
+      Units come first because a number without its unit is not checkable, and because the choice
+      of unit is where this particular subject is most often distorted. The source line is
+      rendered verbatim and is never summarised down to the name of an agency; a figure whose
+      source is missing, or whose axes do not both name a unit, fails the build instead of
+      rendering without it.
+    </p>
+
+    <h3>View as table</h3>
+    <p class="prose">
+      Beneath each chart is a closed disclosure holding the same numbers the chart draws. It is a
+      real table in the served HTML, present whether or not scripting is enabled, and it is not a
+      screen-reader-only copy: anyone can open it, read the values, and check the drawing against
+      them.
+    </p>
+
+    <h3>The unit toggle</h3>
+    <p class="prose">
+      Where a series can honestly be shown in more than one unit, the figure carries a toggle:
+      Nominal, Real FY2025, and % of GDP. The same series tells three different stories in the
+      three. A line that climbs steeply in nominal dollars can be close to flat once inflation is
+      taken out, and falling once it is set against the size of the economy — all three of those
+      true at once. Choosing one silently is the commonest way this subject gets distorted, so the
+      choice stays yours, and the caption always states which one is showing.
+    </p>
+  </section>
+
+  <section id="where-the-numbers-come-from">
+    <p class="kicker"><span class="section-no">Section 4</span></p>
+    <h2>Where the numbers come from</h2>
+    <p class="prose">
+      Every figure on this site traces to a named source with a vintage. That is not a statement of
+      intent about how carefully the pages were written. It is four separate places where the build
+      stops.
+    </p>
+    <ol class="prose">
+      <li>
+        A dataset with no source is never published. The step that writes the site's data files
+        refuses to write one that does not name where it came from.
+      </li>
+      <li>
+        The same omission fails validation. A separate check re-reads every published file and
+        fails it if the source is missing, or if it has been shortened to something naming an
+        agency but no dataset.
+      </li>
+      <li>
+        The site refuses to load an unsourced dataset. Every data file is asserted as the site
+        starts building, and one missing its source throws before a single page is rendered.
+      </li>
+      <li>
+        A figure that omits its source, or either axis unit, cannot build. The figure component
+        itself throws, so a chart cannot reach a reader without its apparatus attached.
+      </li>
+    </ol>
+    <p class="prose">
+      The register itself is on <a href={`${base}/sources`}>Sources</a>, where each entry carries
+      its vintage and any known discrepancy between official series. The vocabulary is on
+      <a href={`${base}/glossary`}>Glossary</a>, where every technical term the routes use is
+      defined once.
+    </p>
   </section>
 </BaseLayout>
