@@ -1,6 +1,6 @@
 {
  "_meta": {
-  "title": "Real median household income, family Gini index and top statutory marginal rate, 1995-2024",
+  "title": "Real median household income 1984-2024, family Gini index 1947-2024 and top statutory marginal rate 1913-2025",
   "source": "Census Bureau via FRED: MEHOINUSA672N (income), GINIALLRF (Gini). Statutory rate schedules",
   "units": {
    "mhi": "real median household income, 2024 dollars",
@@ -14,8 +14,8 @@
   ],
   "provenance": {
    "generator": "monthly/fred.py",
-   "git_sha": "5920f6f",
-   "generated_at": "2026-08-22T17:51:54Z"
+   "git_sha": "7f3445c",
+   "generated_at": "2026-08-26T19:14:10Z"
   },
   "coverage": {
    "start": 1913,

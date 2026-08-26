@@ -18,7 +18,7 @@ from pathlib import Path
 import jsonschema
 import pytest
 
-from lib import curated, validate
+from lib import curated, emit, validate
 from lib import fetch as lib_fetch
 from lib.errors import SourceUnavailable
 from lib.fetch import fetch
@@ -1930,3 +1930,176 @@ def test_check_sources_fails_when_a_cited_document_number_changes(monkeypatch, t
     assert len(c.failures) == 1, f"expected exactly one failure, got {c.failures}"
     assert "cbo_effective_rates" in c.failures[0]
     assert "Table 4" in c.failures[0]
+
+
+# ---- #41: a title's year range is derived from coverage, never typed -------
+
+
+def _data_copy(tmp_path: Path) -> Path:
+    """A writable copy of the published outputs, for pointing validate at."""
+    copy_dir = tmp_path / "data"
+    shutil.copytree(DATA, copy_dir)
+    return copy_dir
+
+
+def _retitle(data_dir: Path, name: str, title: str) -> None:
+    path = data_dir / f"{name}.json"
+    doc = json.loads(path.read_text())
+    doc["_meta"]["title"] = title
+    path.write_text(json.dumps(doc))
+
+
+def test_check_meta_titles_is_clean_against_the_real_tree():
+    """The inverse, asserted first, so nothing below can pass by failing for an
+    unrelated reason: every published title agrees with its own coverage."""
+    c = validate.Checks()
+    validate.check_meta_titles(c, OUTPUTS)
+    assert c.failures == []
+    assert c.passed > 0
+
+
+def test_no_curated_title_types_a_literal_year():
+    """#41 criterion 1, at the source rather than the output. A hand-typed range
+    in curated/notes.yaml does not follow the series when it is extended -- that
+    is the whole defect -- so the curated title carries a placeholder and
+    emit.expand_title fills it from coverage."""
+    typed = {
+        n: curated.meta_for(n)["title"]
+        for n in OUTPUTS
+        if re.search(r"\d{4}", curated.meta_for(n).get("title", ""))
+        and n not in validate.TITLE_RANGE_EXEMPT
+    }
+    assert typed == {}, f"literal years typed into curated titles: {typed}"
+
+
+def test_curated_titles_render_to_their_published_form():
+    """Templating must not have quietly reworded the thirteen outputs it was not
+    aimed at: only budget and income_inequality change text under #41."""
+    changed = set()
+    for n in OUTPUTS:
+        published = load(n)["_meta"]
+        rendered = emit.expand_title(n, curated.meta_for(n)["title"], published.get("coverage"))
+        if rendered != published["title"]:
+            changed.add(n)
+    assert changed == set(), f"published titles out of sync with curated/notes.yaml: {changed}"
+
+
+def test_check_meta_titles_bites_on_the_defect_it_was_filed_for(monkeypatch):
+    """The guard-bites proof. Restore the exact pre-#41 curated budget title and
+    the check must go red. It is worth being precise about why this needs rule A
+    at all: the stale string, FY1995-FY2025, IS a window budget's coverage
+    declares (control_start/control_end), so a check that only compared the
+    emitted title against coverage passed it for the length of the build. What
+    was wrong was the clause it attached to."""
+    stale = "Federal outlays, revenue, deficit, party control and major legislation, FY1995-FY2025"
+    real = curated.meta_for
+
+    def fake(output: str):
+        m = dict(real(output))
+        if output == "budget":
+            m["title"] = stale
+        return m
+
+    monkeypatch.setattr(curated, "meta_for", fake)
+    c = validate.Checks()
+    validate.check_meta_titles(c, OUTPUTS)
+
+    assert len(c.failures) == 1, f"expected exactly one failure, got {c.failures}"
+    assert "budget" in c.failures[0]
+    assert "curated/notes.yaml" in c.failures[0]
+
+
+def test_check_meta_titles_fails_a_range_coverage_does_not_declare(monkeypatch, tmp_path):
+    """Rule B: the published file has drifted from the curated source -- an
+    out-of-tier output, or a hand-edit of src/data."""
+    copy_dir = _data_copy(tmp_path)
+    _retitle(copy_dir, "budget",
+             "Federal outlays, revenue, deficit and major legislation, FY1900-FY2025")
+    monkeypatch.setattr(validate, "DATA_DIR", copy_dir)
+
+    c = validate.Checks()
+    validate.check_meta_titles(c, OUTPUTS)
+    assert len(c.failures) == 1, f"expected exactly one failure, got {c.failures}"
+    assert "budget" in c.failures[0]
+    assert "1900-2025" in c.failures[0]
+
+
+def test_check_meta_titles_fails_a_range_with_no_coverage_at_all(monkeypatch, tmp_path):
+    """`coverage: null` is UNKNOWN, not pass. Six curated snapshots carry no
+    coverage and no year range, which is fine; a range appearing on one of them
+    has nothing to prove it against and must fail rather than skip."""
+    copy_dir = _data_copy(tmp_path)
+    _retitle(copy_dir, "income_tax_by_group",
+             "Share of federal individual income tax paid, by income group, 2001-2023")
+    monkeypatch.setattr(validate, "DATA_DIR", copy_dir)
+
+    c = validate.Checks()
+    validate.check_meta_titles(c, OUTPUTS)
+    assert len(c.failures) == 1, f"expected exactly one failure, got {c.failures}"
+    assert "income_tax_by_group" in c.failures[0]
+    assert "TITLE_RANGE_EXEMPT" in c.failures[0]
+
+
+def test_the_only_exemption_carries_a_written_reason_and_is_not_a_silent_skip(monkeypatch):
+    """An exemption with no reason is how a check turns back into a skip. Both
+    halves are asserted: the entry names why, and with the dict emptied the same
+    output goes red -- so the exemption is what is holding it, not an accident of
+    the regex failing to see the range."""
+    reason = validate.TITLE_RANGE_EXEMPT["cbo_effective_rates"]
+    assert "anchor years" in reason
+    assert "curated-snapshots.md" in reason
+    assert set(validate.TITLE_RANGE_EXEMPT) == {"cbo_effective_rates"}
+
+    monkeypatch.setattr(validate, "TITLE_RANGE_EXEMPT", {})
+    c = validate.Checks()
+    validate.check_meta_titles(c, OUTPUTS)
+    assert len(c.failures) == 2, f"expected exactly two failures, got {c.failures}"
+    assert all("cbo_effective_rates" in f for f in c.failures)
+    assert "curated/notes.yaml" in c.failures[0]          # rule A: the typed range
+    assert "declares no start/end window" in c.failures[1]  # rule B: nothing to check it against
+
+
+def test_open_ended_titles_assert_a_start_and_not_an_end(monkeypatch, tmp_path):
+    """economy.coverage.end is 2036, a projection horizon, while its title says
+    "FY1950 onward". An open-ended title asserts its start year only -- and the
+    start still has to be right."""
+    assert "FY1950 onward" in load("economy")["_meta"]["title"]
+
+    copy_dir = _data_copy(tmp_path)
+    _retitle(copy_dir, "economy", "US macroeconomic series, FY1949 onward")
+    monkeypatch.setattr(validate, "DATA_DIR", copy_dir)
+
+    c = validate.Checks()
+    validate.check_meta_titles(c, OUTPUTS)
+    assert len(c.failures) == 1, f"expected exactly one failure, got {c.failures}"
+    assert "economy" in c.failures[0]
+    assert "1949 onward" in c.failures[0]
+
+
+def test_iso_date_coverage_bounds_compare_as_years():
+    """party_splits.coverage holds ISO date strings, not integers. The year
+    comparison must read the year part rather than crashing or silently
+    declining to check."""
+    coverage = load("party_splits")["_meta"]["coverage"]
+    assert isinstance(coverage["start"], str)
+    assert (1997, 2025) in validate._coverage_windows(coverage)
+
+
+def test_nested_per_series_coverage_blocks_are_windows_a_title_may_name():
+    """income_inequality's title names three different spans, one per series.
+    Each has to resolve to a declared window, not to the file's outer envelope."""
+    windows = validate._coverage_windows(load("income_inequality")["_meta"]["coverage"])
+    assert {(1984, 2024), (1947, 2024), (1913, 2025)} <= set(windows)
+
+
+def test_expand_title_raises_rather_than_publishing_a_placeholder():
+    """A `{start}` written into a JSON file is worse than the stale range it
+    replaced. Unknown is unknown: emit refuses, the same posture write() takes on
+    a missing _meta.source."""
+    with pytest.raises(ValueError, match="no coverage"):
+        emit.expand_title("budget", "Outlays, FY{start}-FY{end}", None)
+    with pytest.raises(ValueError, match="no matching key"):
+        emit.expand_title("budget", "Outlays, FY{first_year}", {"start": 1962})
+
+    verbatim = "Who holds the federal debt"
+    assert emit.expand_title("debt_holders", verbatim, None) == verbatim

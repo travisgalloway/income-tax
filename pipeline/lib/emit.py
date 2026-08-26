@@ -31,6 +31,33 @@ def git_sha() -> str:
         return "unknown"
 
 
+def expand_title(output: str, title: str, coverage: dict[str, Any] | None) -> str:
+    """Fill a curated title's `{...}` placeholders from the emitted coverage.
+
+    A year range written by hand into curated/notes.yaml is a claim nothing
+    re-checks when the underlying series is extended, and it went wrong exactly
+    that way: budget's title said FY1995-FY2025 for the length of the build
+    while coverage said 1962 (#41). Titles that carry no placeholder pass
+    through untouched, so `source` and the thirteen other outputs are
+    unaffected. A placeholder with nothing to fill it from RAISES rather than
+    writing a literal `{start}` into a published file -- unknown is unknown,
+    the same posture write() takes on a missing _meta.source.
+    """
+    if "{" not in title:
+        return title
+    if not coverage:
+        raise ValueError(
+            f"{output}: _meta.title carries a placeholder but no coverage was "
+            f"passed to build_meta to fill it from"
+        )
+    try:
+        return title.format_map(coverage)
+    except (KeyError, IndexError, TypeError) as exc:
+        raise ValueError(
+            f"{output}: _meta.title placeholder has no matching key in _meta.coverage: {exc!r}"
+        ) from exc
+
+
 def build_meta(
     output: str,
     *,
@@ -51,6 +78,8 @@ def build_meta(
     }
     if coverage:
         m["coverage"] = coverage
+    if m.get("title"):
+        m["title"] = expand_title(output, m["title"], m.get("coverage"))
     if estimate_boundary is not None:
         # Charts must not draw actuals and projections as one continuous line.
         m["estimate_boundary"] = estimate_boundary

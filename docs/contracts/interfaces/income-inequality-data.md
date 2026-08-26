@@ -92,6 +92,12 @@ empty axis (which could read as zero) and never a hidden panel.
 - `_meta` requires `source` (`minLength: 12`), `title`, `provenance`, `coverage` (with per-series
   `mhi` / `gini` / `top` spans) and `gini_basis`, which is pinned to the literal `"families"` —
   the basis is a schema constant, so a switch to the household series fails the build.
+- `_meta.title` names **one span per series**, derived from those per-series coverage blocks
+  (#41): "Real median household income 1984-2024, family Gini index 1947-2024 and top statutory
+  marginal rate 1913-2025". It previously read a single "1995-2024" that matched no series and no
+  chart window — `MedianIncome` takes its domain from `seriesSpan(rows, 'mhi')`, never from a
+  year in the title. `check_meta_titles` fails the build if a curated title types a year rather
+  than templating it.
 
 Shape and range only; reproduction of the published figures stays in `validate.py`'s
 `check_income` and the pytest suite.

@@ -6,10 +6,20 @@ _comment: 'Curated editorial metadata, lifted verbatim from the hand-checked JSO
 
   income-tax shares exclude payroll tax. `source` is rendered VERBATIM in the UI
 
-  per BRIEF.md rule 1 and must never be summarised to "CBO data".'
+  per BRIEF.md rule 1 and must never be summarised to "CBO data".
+
+
+  `title` may carry `{key}` placeholders, which emit.expand_title fills from the
+
+  emitted `_meta.coverage` (`{start}`, `{control_start}`, `{mhi[start]}`). Write a year
+
+  range as a placeholder, never as a literal: a hand-typed range does not follow the
+
+  series when it is extended, and check_meta_titles fails the build if one drifts (#41).'
 outputs:
   budget:
-    title: Federal outlays, revenue, deficit, party control and major legislation, FY1995-FY2025
+    title: Federal outlays, revenue, deficit and major legislation, FY{start}-FY{end}, with party
+      control FY{control_start}-FY{control_end}
     source: CBO Historical Budget Data (Feb 2026); CBO Historical Economic Data (Feb 2026) for the
       GDP price index; CBO and JCT cost estimates; CRS and chamber records for party control
     units:
@@ -43,7 +53,7 @@ outputs:
     - 'Series now run FY1962-FY2025. Party control is curated and covers FY1995-FY2025 only; years
       outside that range carry control: null and must not render a control strip.'
   debt:
-    title: Total public debt outstanding at fiscal year end, FY1995-FY2026
+    title: Total public debt outstanding at fiscal year end, FY{start}-FY{end}
     source: US Treasury, Historical Debt Outstanding and Debt to the Penny. GDP denominator from
       CBO Historical Budget Data, Feb 2026
     units:
@@ -86,7 +96,7 @@ outputs:
       sections.md is explicit that this section is not built as a time series; the field is kept
       in the data for reference but no component may reference it.
   revenue_sources:
-    title: Federal revenue by source, FY1962 onward
+    title: Federal revenue by source, FY{start} onward
     source: CBO Historical Budget Data, February 2026 vintage
     units:
       n_*: nominal $ trillions
@@ -120,7 +130,8 @@ outputs:
       is the earliest verified anchor.
     - Concentration of tax paid tracks concentration of income. Show both columns or the chart misleads.
   income_inequality:
-    title: Real median household income, family Gini index and top statutory marginal rate, 1995-2024
+    title: Real median household income {mhi[start]}-{mhi[end]}, family Gini index
+      {gini[start]}-{gini[end]} and top statutory marginal rate {top[start]}-{top[end]}
     source: 'Census Bureau via FRED: MEHOINUSA672N (income), GINIALLRF (Gini). Statutory rate schedules'
     units:
       mhi: real median household income, 2024 dollars
@@ -142,7 +153,7 @@ outputs:
     - The US is the only OECD member with no value-added tax, which accounts for most of the gap.
     - 2024 is the latest OECD year. It breaks the 1995/2025 convention used elsewhere; say so.
   economy:
-    title: US macroeconomic series, FY1950 onward
+    title: US macroeconomic series, FY{start} onward
     source: CBO Historical Economic Data, February 2026 vintage
     units:
       gdp: nominal $ trillions
@@ -179,7 +190,7 @@ outputs:
       before then). Each is on its own base, so levels are comparable within a series over time,
       never across two of them.
   bracket_history:
-    title: Statutory federal income tax bracket schedules, 1913-2025
+    title: Statutory federal income tax bracket schedules, {start}-{end}
     source: Tax Foundation income-tax-rates dataset (1913-2019, from IRS SOI Historical Table 23
       and IRS Revenue Procedures); IRS Revenue Procedures 2018-57 through 2024-40 (2019-2025,
       curated); IRS SOI Historical Table 23 / Tax Policy Center for the published top rate;
@@ -227,7 +238,8 @@ outputs:
     - The lowest quintile's average rate fell to near zero (0.6% in 2019, 1.4% in 2022) as
       refundable credits grew; it was 9.3% in 1979.
   party_splits:
-    title: Counted per-party roll-call splits for 23 major deficit-moving laws, 1997-2025
+    title: Counted per-party roll-call splits for {laws} major deficit-moving laws,
+      {start:.4}-{end:.4}
     source: 'Voteview (voteview.com/data): HSall_members.csv joined to per-congress roll-call and
       vote files. Final-passage roll call per law curated by hand. PL 115-97 cross-checked against
       House Clerk roll call 699.'

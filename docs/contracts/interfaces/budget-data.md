@@ -100,9 +100,13 @@ never by hand-editing the output.
   read before charting under `BRIEF.md` rule 5, so it must never re-acquire the retired claim that
   composition is classified from published vote character
   (`test_no_document_still_calls_vote_composition_classified`).
-- `_meta.title` currently reads "…FY1995-FY2025" even though `_meta.coverage` and `_meta.notes[3]`
-  correctly state the series now runs FY1962–FY2025. This is a known stale field — see
-  `docs/parked-findings.md`. No component reads `_meta.title`; do not start.
+- `_meta.title` is **derived, not typed** (#41). `pipeline/curated/notes.yaml` carries
+  `…, FY{start}-FY{end}, with party control FY{control_start}-FY{control_end}` and
+  `emit.expand_title` fills it from the coverage block emitted alongside it, so the title now reads
+  FY1962-FY2025 for the series and FY1995-FY2025 for control, agreeing with `_meta.coverage` and
+  `_meta.notes[3]` rather than contradicting both. Writing a literal year range back into the
+  curated title fails the build (`check_meta_titles`). No component reads `_meta.title`; do not
+  start.
 
 ## Schema
 

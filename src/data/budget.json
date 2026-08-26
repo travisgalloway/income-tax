@@ -1,6 +1,6 @@
 {
  "_meta": {
-  "title": "Federal outlays, revenue, deficit, party control and major legislation, FY1995-FY2025",
+  "title": "Federal outlays, revenue, deficit and major legislation, FY1962-FY2025, with party control FY1995-FY2025",
   "source": "CBO Historical Budget Data (Feb 2026); CBO Historical Economic Data (Feb 2026) for the GDP price index; CBO and JCT cost estimates; CRS and chamber records for party control",
   "units": {
    "n_*": "nominal $ trillions",
@@ -32,8 +32,8 @@
   ],
   "provenance": {
    "generator": "monthly/cbo.py",
-   "git_sha": "4750a98",
-   "generated_at": "2026-08-26T14:59:26Z",
+   "git_sha": "7f3445c",
+   "generated_at": "2026-08-26T19:14:10Z",
    "vintage": "2026-02",
    "retrieved_at": "2026-08-26T14:59:26Z"
   },
