@@ -41,6 +41,15 @@ The rendered markdown supplies its own `<h1 id="sources">` and standfirst paragr
 hand-written `<h1>` — that produces a duplicate visual heading. The wrapper section uses
 `id="reference"`, not `id="sources"`, so it never collides with the markdown's own heading anchor.
 
+### The other content collection
+
+`src/content.config.ts` exports two collections. The second, `glossary`, backs `/glossary` and has
+its own contract at **`glossary.md`** beside this file — the term shape, the filename-is-the-slug
+rule, the five build-time throws, and the `routeSections` map in `src/data/sections.ts`. The two
+are documented apart because they share nothing but the config file: `reference` renders one
+root-level document through `render()`, `glossary` loads 23 frontmatter-only files and never calls
+it. Editing `src/content.config.ts` means reading both.
+
 ## No second copy of `SOURCES.md`
 
 Nothing under `src/` may contain a paraphrase or excerpt of `SOURCES.md`'s content as static
