@@ -499,3 +499,11 @@ time. Appended to, never rewritten. None of these have been acted on.
   typed `number` in TS and `["number", "null"]` in the schema would ship. Named as out of scope in
   `.claude/plans/issue-37.md` and left untouched. Found while working on #37. Severity: latent
   correctness gap, non-blocking.
+- [2026-08-26] `pipeline/build.py:115` writes `data-report.md` unconditionally, before the
+  `--dry-run` early return at `:122`. A dry run therefore leaves a tracked file modified in the
+  working tree while printing "nothing written", which is true only of `src/data`. Found while
+  running the #38 verification gate. Severity: minor surprise, non-blocking.
+- [2026-08-26] `pipeline/lib/validate.py:397-446`, `check_bracket_history` now walks every
+  year/status ladder twice — once for the hi/rhi-nullness checks and once for the new strictly
+  increasing floor check. Found while adding the duplicate-bracket-floor guard for #38.
+  Severity: cosmetic, non-blocking.
