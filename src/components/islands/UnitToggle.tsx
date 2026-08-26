@@ -12,24 +12,34 @@ const OPTIONS: { value: Unit; label: string }[] = [
   { value: 'gdp', label: '% of GDP' },
 ]
 
-export function UnitToggle({
+/** `units` narrows the group to a subset — a series with no real-dollar
+ *  denominator (§1's debt) offers nominal and GDP only. Order always comes from
+ *  `OPTIONS`, never from the caller, so a narrowed group keeps the same
+ *  relative order as the full set — filtering can still shift a remaining
+ *  option's position when an earlier one drops out. The generic keeps a
+ *  narrowed caller's `onChange` typed to its own union rather than widening
+ *  it back to `Unit`. */
+export function UnitToggle<U extends Unit = Unit>({
   value,
   onChange,
   label = 'Units',
+  units,
 }: {
-  value: Unit
-  onChange: (u: Unit) => void
+  value: U
+  onChange: (u: U) => void
   label?: string
+  units?: readonly U[]
 }) {
+  const options = units ? OPTIONS.filter((o) => units.includes(o.value as U)) : OPTIONS
   return (
     <ToggleGroup.Root
       type="single"
       value={value}
-      onValueChange={(v) => v && onChange(v as Unit)}
+      onValueChange={(v) => v && onChange(v as U)}
       aria-label={label}
       className="unit-toggle"
     >
-      {OPTIONS.map((o) => (
+      {options.map((o) => (
         <ToggleGroup.Item key={o.value} value={o.value} className="unit-toggle-item">
           {o.label}
         </ToggleGroup.Item>

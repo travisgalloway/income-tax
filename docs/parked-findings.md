@@ -443,3 +443,24 @@ time. Appended to, never rewritten. None of these have been acted on.
   guard `test_nice_extent_zero_anchors_a_non_negative_series`. Deferred to **#67**, which already
   covers wiring the test lanes into a per-push check. Severity: medium, coverage. Found while
   working on #34; explicitly outside its criteria.
+- [2026-08-26] **Two entries above are closed by #35, which shipped them rather than parking them
+  again.** The `[2026-08-23]` finding at the head of this file ("`DebtChart.tsx:35–100`
+  re-implements the unit toggle and the number formatters inline") and its restatement further down
+  ("`DebtChart.tsx` inlines its own number formatters instead of `charts/format.ts`", found while
+  working on #15) both describe the same duplication. §1 now imports `UnitToggle` and
+  `charts/format.ts` like every other unit-toggled section, and `pipeline/tests/test_chart_vocabulary.py`
+  holds it there. Recorded here rather than by editing those entries: this file is appended to,
+  never rewritten.
+- [2026-08-26] `src/components/islands/StructuralGap.tsx:129` and
+  `src/components/islands/VotedAndNot.tsx:101` render a visible
+  `<span class="controls-label">Measured in</span>` beside a radiogroup whose accessible name is
+  `"Structural gap units"` / `"What Congress votes on units"` (the `label` prop passed to
+  `UnitToggle`). The visible text is therefore not contained in the accessible name — WCAG 2.5.3
+  Label in Name — and each span's `id` is referenced by nothing. §1 now has the same shape, kept
+  deliberately so #72 stays reproducible. Found while working on #35, which #72's body already
+  anticipates. Severity: accessibility, non-blocking; belongs to #72.
+- [2026-08-26] `src/components/islands/DebtChart.tsx:118` — at widths under 500px the FY2026
+  annotation reads `$40.0T`, not `$40.1T`: `40.05` is stored just below its decimal value, so
+  `toFixed(1)` rounds down. Pre-existing and unchanged by #35 (the deleted inline formatter used
+  the same `toFixed(1)`), and noted only because the plan's manual-check expectation named
+  `$40.1T`. Found while working on #35. Severity: cosmetic, non-blocking.
