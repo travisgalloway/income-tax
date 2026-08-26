@@ -290,6 +290,25 @@ on all four routes at both viewports: 0 errors, 0 warnings. #70 (three in-prose 
 path and 404 in production) came out of the same review; it is a link-target defect rather than one
 of the eight checks, and it is filed and open.
 
+### Reading position in the contents list (#44)
+
+**EXECUTED 2026-08-26**, Chromium **151.0.7922.174** (Playwright), against `astro preview` at
+1440×900 and 390×844. Console output clean on all five routes: 0 errors, 0 warnings.
+
+| Check | Result |
+|---|---|
+| Top of page, `scrollTo(0, 0)` | `#forty-trillion` / `#one-picture` / `#what-a-household-earns` on `/government`, `/economy`, `/households`. Never a JS-running state with nothing marked |
+| Bottom of document, `scrollTo(0, body.scrollHeight)` | `#limits` on all three, at both viewports |
+| Counts, at every sampled position | `[aria-current="true"]` **2** in the DOM, **1** in the rail list, **1** in the panel list; `[aria-current="page"]` stays **2** |
+| Monotonicity, 200px steps | `/government` at 1440×900: 112 samples, **0** decreases, all **12** sections visited. At 390×844: 128 samples, 0 decreases, 12 visited. `/economy` 49 samples, 0 decreases, 6 of 6. `/households` 53 samples (the exact document bottom appended), 0 decreases, **7 of 7** — its `limits` is 1058px against an 844px viewport and the midpoint never enters it before the bottom, which is precisely what the bottom-of-document rule is for |
+| Taller than the viewport | `#the-laws` (5.38 × viewport) marked across all 24 samples inside its bounds and `#by-state` (4.99 ×) across all 22, with no other id appearing |
+| Anchor jump, 390×844 | all **12** panel links clicked in turn: the marked href equals the clicked one every time, including §12 `#limits`; the panel closes on each; the target's top lands at 64px, clearing the 52px bar |
+| Panel open while the page scrolls behind it | rail and panel agree at every sampled offset (0 → 19,000px) with the disclosure held open |
+| Routes with no contents list | `/` and `/sources` — **0** marks with JavaScript **on** at top, middle and bottom, 0 `a[data-section]`, and no console error: the IIFE returns before observing |
+| `javaScriptEnabled: false` | **0** `[aria-current="true"]` and **2** `[aria-current="page"]` on all five routes. Paired against the same context with scripting **on**, which shows 2 at load with no scrolling — the difference is the proof that the script, not the server, writes the mark. #36's guard is intact in the same run: 14 of 14 `figure.figure svg.chart` server-render on `/government` with scripting off |
+| Layout shift on a mark change | the rail's contents `<ol>` measures 208 × 314.34 before and after the mark moves — identical |
+| Desktop-unchanged proof | with the stylesheet content-hash normalised, `dist/government/index.html` and `dist/index.html` each differ from their pre-change build by **92 added lines and zero removed lines**, all of them the `sectionSpy()` block. No markup changed |
+
 ### Greyscale, per chart
 
 Computed from the rendered DOM: the `fill` and `stroke` of every category mark, per plot panel,
