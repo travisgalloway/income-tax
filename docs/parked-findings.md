@@ -381,3 +381,24 @@ time. Appended to, never rewritten. None of these have been acted on.
   table above measures each token against the ground rather than against its co-occurring sibling —
   a good ratio against `--panel` says nothing about the ratio against the other party. Severity:
   none, observation. Found while working on #30.
+- [2026-08-26] **`SOURCES.md:114` still points the reader at "section 11" for the four remaining
+  vote-split limits.** Verbatim: *"Four limits remain, and section 11 states all four."* The limits
+  section has been `## 12 / What this cannot tell you` (`sections.md:405`) since #8 rewrote it;
+  `sections.md:362` §11 is now the by-state section shipped by #28. Same class of stale pointer as
+  the one #31 fixed inside `BRIEF.md` rule 6, but `SOURCES.md` is outside #31's fixed scope (the
+  issue names four locations, none of them this line) and the sentence asserts nothing false about
+  composition, so it fails no #31 criterion. One-line fix: 11 -> 12. Severity: low, cosmetic but
+  reader-visible. Found while working on #31 (V10's cross-read of the three counted-position
+  statements).
+- [2026-08-26] **A `--tier monthly` run on 2026-08-26 pulled newer upstream vintages into
+  `src/data/debt.json` and `src/data/states_balance.json`.** `debt.json` `as_of` moves 2026-08-20 ->
+  2026-08-24 (`total_t` 40.033 -> 40.035, `held_by_public_t` 32.279 -> 32.275,
+  `intragovernmental_t` 7.754 -> 7.761); `states_balance.json` moves `get_b` and every derived
+  `get_pc`/`balance_*`/`ratio` for ~10 states by a USASpending award revision (national `get_b`
+  5235.962 -> 5236.028). Both revalidate clean (13214 checks, prose drift none), so this is an
+  ordinary upstream refresh, not a defect. #31 restored both files (`git checkout --`) and committed
+  only `budget.json`, because a data revision must not ride into a copy correction where no reviewer
+  would look for it. Whoever runs the next real monthly build will pick these up; the site currently
+  ships the 2026-08-22 vintage for those two outputs. Severity: low, but it is a standing divergence
+  between `src/data/` and what a fresh build produces, and it grows with every copy-only branch that
+  has to refetch. Worth its own data-refresh issue. Found while working on #31.
