@@ -803,6 +803,7 @@ def test_crossing_date_is_reconciled_not_competing():
 
 ISLANDS = LEGACY / "src" / "components" / "islands"
 GOV_PAGE = LEGACY / "src" / "pages" / "government" / "index.astro"
+FIGURES_MANIFEST = LEGACY / "src" / "data" / "figures.ts"
 
 
 def _rendered_section(section_id: str) -> str:
@@ -909,14 +910,19 @@ def test_maturity_history_is_not_charted():
 def test_curated_snapshots_expose_their_as_of():
     """E1: a curated snapshot carries no vintage/retrieved_at, so vintageOf()
     returns null and a figure could ship with no freshness stamp at all.
-    curatedVintage() must be used instead, and the page must call it."""
+    curatedVintage() must be used instead, wherever the figure's source line is
+    composed. Since #49 that place is the figure manifest, not the page: the
+    call sites take `title`/`source`/`vintage` from `src/data/figures.ts`, which
+    /contents reads too."""
     for name in ("debt_holders", "debt_maturity"):
         meta = load(name)["_meta"]
         assert meta.get("refresh", {}).get("mode") == "curated"
 
-    page = GOV_PAGE.read_text()
-    assert page.count("curatedVintage(") >= 2, \
-        "index.astro should call curatedVintage() for both debtHolders and debtMaturity"
+    manifest = FIGURES_MANIFEST.read_text()
+    assert manifest.count("curatedVintage(") >= 2, \
+        "figures.ts should call curatedVintage() for both debtHolders and debtMaturity"
+    assert GOV_PAGE.read_text().count("curatedVintage(") == 0, \
+        "the government page should take its vintages from the manifest, not compose its own"
 # ---- section 8: the law explorer ----
 
 def _laws() -> list[dict]:

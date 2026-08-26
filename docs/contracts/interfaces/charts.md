@@ -12,13 +12,58 @@ figcaption. Four props are **required and throw at build time** if omitted or em
 | Prop | Contract |
 |---|---|
 | `ariaLabel` | The finding, as a sentence — not a description of the chart's shape. Rendered as the `<figure>`'s own `aria-label`, so the figure carries an accessible name distinct from "figure"; the inner `<svg>` carries the same sentence as its own label. |
-| `title` | Short italic title beside the figure number. |
-| `source` | `_meta.source`, **verbatim**. Never a summary. |
+| `fig` | The figure's entry in the manifest (below), obtained as `figuresOf('/route')('key')`. Carries the number, the italic title and the composed source line. A missing or malformed entry throws. |
 | `xUnit` / `yUnit` | Unit label for each axis. No bare-number axis is permitted. |
 
-Optional: `vintage` (appended to the source line as its own sentence — never spliced into the
-verbatim source text) and `note` (scope/method caveats; this is where a gross-vs-net or
-coverage-boundary warning belongs, never in a tooltip).
+Optional: `note` (scope/method caveats; this is where a gross-vs-net or coverage-boundary warning
+belongs, never in a tooltip) and `id`.
+
+`ariaLabel`, `xUnit`, `yUnit` and `note` stay at the call site: they belong beside the chart and no
+consumer outside the page reads them.
+
+## The figure manifest (`src/data/figures.ts`)
+
+**Where a figure's number, title and source live** (#49). Declared per route, in the order the
+route renders them:
+
+```ts
+{ key: string; section: string; title: string; source: string; vintage?: string | null }
+```
+
+`routeFigures[route]` adds `route`, `n` (the array index + 1) and `sourceLine` (`sourceLineOf`,
+which appends the vintage as its own sentence rather than splicing it into the verbatim source).
+`figure(route, key)` / `figuresOf(route)` look one up and **throw** on an unknown key.
+
+Two consumers, and that is the point: the page renders each figure *from* the entry, and
+`/contents` lists *the same* entry. A manifest only the index read would be a hand-maintained
+second list that drifts the first time a figure is added.
+
+`source` is written as the same expression the call site used (`debt._meta.source`,
+`vintageOf(economy._meta)`, `curatedVintage(debtHolders._meta, …)`), so "rendered verbatim" holds
+by construction and `assertDataset` still stands behind it. This is also why the manifest is not
+derived by parsing the `.astro` call sites: `source` is an expression, not a literal, and a parser
+would recover `{debt._meta.source}` rather than the sentence a reader must see.
+
+Four throws at module load:
+
+1. a duplicate `key` within a route;
+2. a `section` that is not an id in `routeSections[route]`;
+3. a declared order whose section indices are not non-decreasing — the manifest may not claim a
+   figure order that contradicts the order the route renders its sections in;
+4. an empty `title` or `source`.
+
+**Numbering.** `n` is the array index + 1, so a duplicated or skipped number is not expressible,
+and numbers restart per route — which is why `/contents` qualifies every one by route label
+(`Government, Figure 13.`). The number is rendered as real text in `.figure-no`; it was a CSS
+counter (`counter(figure)` on `.figure-head::before`) until #49, which meant it existed only in
+the rendered layout and no other page could read it.
+
+**Moving a figure between sections** means changing its `section` *and* moving its declaration to
+the matching position in the array. Change one without the other and throw 3 fires at build time.
+Change both and every downstream number shifts automatically, on the route and on `/contents`
+alike, because both read `n` from the same array. The one thing not prevented structurally is two
+figures *within one section* rendered in the opposite order to their declaration; that is caught by
+`test_contents_lists_every_figure_in_route_document_order`, which reads the built HTML.
 
 ## `Chart` (`src/components/charts/Chart.tsx`)
 

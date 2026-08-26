@@ -26,12 +26,14 @@ import {
   revenue,
   statesBalance,
   statesTaxMix,
-  curatedVintage,
-  vintageOf,
 } from '../../data'
-import { routeSections } from '../../data/sections'
+import { join, routeSections } from '../../data/sections'
+import { figuresOf } from '../../data/figures'
 
-const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
+/* Figure number, title and source come from the manifest, which /contents reads too. */
+const fig = figuresOf('/government')
+
+const sourcesHref = join('/sources')
 ---
 
 <BaseLayout
@@ -60,9 +62,7 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
 
     <Figure
       ariaLabel="Debt doubled in ten fiscal years, from $19.57 trillion at the close of FY2016 to $40 trillion at the close of 18 August 2026, reported the following day."
-      title="Total public debt outstanding at fiscal year end, 1995 to 2026"
-      source={debt._meta.source}
-      vintage={vintageOf(debt._meta)}
+      fig={fig('debt')}
       xUnit="Fiscal year"
       yUnit="gross debt in nominal $ trillions, or percent of GDP"
       note="The final point is a daily close, not a fiscal year-end value, and carries no share of GDP because FY2026 GDP is not final."
@@ -96,9 +96,7 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
 
     <Figure
       ariaLabel="$32.14 trillion of the federal debt is held by the public and $7.74 trillion is held intragovernmentally by federal trust funds; about 30% of the publicly held part, 24% of gross, is held abroad."
-      title="Who holds the federal debt, 7 August 2026"
-      source={debtHolders._meta.source}
-      vintage={curatedVintage(debtHolders._meta, debtHolders.data.as_of)}
+      fig={fig('debt-holders')}
       xUnit="Share of gross debt, and share of publicly held debt"
       yUnit="holder category"
       note="Foreign holders are about 30% of publicly held debt, which is about 24% of gross debt; the two are not interchangeable. Treasury International Capital is revised monthly and China has been reported between $683 billion and $760 billion depending on vintage."
@@ -135,9 +133,7 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
 
     <Figure
       ariaLabel="Chart showing US marketable Treasury debt split by instrument type, with bills under one year, notes of two to ten years and bonds of twenty to thirty years, above a scale marking the average maturity at about six years against the thirty-year maximum."
-      title="Maturity structure of marketable Treasury debt, June 2026"
-      source={debtMaturity._meta.source}
-      vintage={curatedVintage(debtMaturity._meta, debtMaturity.data.avg_maturity_as_of)}
+      fig={fig('debt-maturity')}
       xUnit="Years to maturity"
       yUnit="amount outstanding, $ trillions"
       note="Bills, notes and bonds are the three instrument families and their amounts do not sum exactly to the $28.0 trillion marketable total; they are not presented as an exhaustive partition. The 22% bills figure is the curated share and is not derived from the amounts beside it. Savings bonds (Series EE and I) are non-marketable and excluded throughout."
@@ -167,9 +163,7 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
 
     <Figure
       ariaLabel="Federal outlays from fiscal 1962 to 2025 stacked into mandatory, discretionary and net interest as a share of GDP, with a revenue line across them and the deficit drawn below zero. A three-row strip along the top shows which party held the presidency, House and Senate each year. Shaded bands mark the 2008 to 2009 financial crisis and the 2020 to 2021 pandemic."
-      title="Federal outlays, revenue and the deficit, fiscal 1962 to 2025"
-      source={budget._meta.source}
-      vintage={vintageOf(budget._meta)}
+      fig={fig('whole-budget')}
       xUnit="Fiscal year"
       yUnit="outlays, revenue and deficit in nominal $ trillions, real FY2025 $ trillions, or percent of GDP"
       note="Mandatory outlays are charted net of offsetting receipts, so the three stacked segments sum to total outlays. Party control is curated for FY1995 onward only; earlier years show no control strip."
@@ -199,9 +193,7 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
 
     <Figure
       ariaLabel="Revenue averaged 17.2% of GDP against outlays at 21.1% across FY1995-FY2025, a four-point gap that closed only in FY1998-FY2001."
-      title="Federal revenue and outlays by fiscal year, FY1995 to FY2025"
-      source={budget._meta.source}
-      vintage={vintageOf(budget._meta)}
+      fig={fig('structural-gap')}
       xUnit="Fiscal year"
       yUnit="revenue and outlays in nominal $ trillions, real $ trillions FY2025, or percent of GDP"
     >
@@ -230,9 +222,7 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
 
     <Figure
       ariaLabel="Share of GDP from FY1995 to FY2025: mandatory rose from 9.8% to 13.7%, discretionary fell from 7.2% to 6.2%, and net interest moved from 3.1% to 3.2%, dipping to 1.2% in FY2015 before nearly tripling."
-      title="Mandatory, discretionary and net interest spending by fiscal year, FY1995 to FY2025"
-      source={budget._meta.source}
-      vintage={vintageOf(budget._meta)}
+      fig={fig('voted-and-not')}
       xUnit="Fiscal year"
       yUnit="mandatory, discretionary and net interest spending in nominal $ trillions, real $ trillions FY2025, or percent of GDP"
       note="Mandatory is net of offsetting receipts, the basis used throughout this section."
@@ -268,9 +258,7 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
 
     <Figure
       ariaLabel="Net interest rose from $232 billion in FY1995 to $970 billion in FY2025, totaling $9.4 trillion across the 31 years, 39% of all deficits."
-      title="Net interest payments by fiscal year, FY1995 to FY2025"
-      source={budget._meta.source}
-      vintage={vintageOf(budget._meta)}
+      fig={fig('net-interest')}
       xUnit="Fiscal year"
       yUnit="net interest in nominal $ trillions, or real $ trillions FY2025"
     >
@@ -302,9 +290,7 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
 
     <Figure
       ariaLabel="Sixteen of the twenty-three major deficit-moving laws since 1995 passed with cross-party majorities, totalling $9.24 trillion against $7.51 trillion for the seven party-line laws."
-      title="Major deficit-moving laws, 1997 to 2025, against the annual deficit"
-      source={budget._meta.source}
-      vintage={vintageOf(budget._meta)}
+      fig={fig('law-explorer')}
       xUnit="Fiscal year"
       yUnit="deficit or surplus as percent of GDP; ten-year score in $ trillions at enactment"
       note={`The chart window is FY1995 to FY2025; the underlying deficit series runs from FY1962. Each law's marker sits at its date's position within its enactment fiscal year, not on the year's tick. The two 1997 laws (Balanced Budget Act, Taxpayer Relief Act) predate the ten-year scoring convention and carry no score, so they are excluded from the cost totals. The CARES Act's House vote was a voice vote with no roll call. Three Senate votes (JGTRRA, the Inflation Reduction Act, and the One Big Beautiful Bill Act) tied 50-50 and passed on the Vice President's tiebreak, which does not appear in a roll call. Vote splits: ${partySplits._meta.source}`}
@@ -350,9 +336,7 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
 
     <Figure
       ariaLabel="Two summary columns, each totalling $16.75 trillion in net ten-year legislative costs. The left column breaks the total down by the voting coalition that passed each law; the right column by the president who signed it."
-      title="Net ten-year legislative cost by voting coalition and by signing president, laws enacted 1995 to 2025"
-      source={budget._meta.source}
-      vintage={vintageOf(budget._meta)}
+      fig={fig('attribution')}
       xUnit="$ trillions, ten-year score at enactment"
       yUnit="voting coalition, or signing president"
       note="Clinton's two 1997 laws are excluded: both predate the ten-year scoring convention and carry no comparable figure. The cross-party coalition passed 16 laws; 14 carry a score, and both counts are shown. Bars and totals are net figures, increases less reductions; gross increases alone total $20.73 trillion."
@@ -386,9 +370,7 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
 
     <Figure
       ariaLabel="Federal revenue by source held near 17 to 18 percent of GDP from FY1995 to FY2025 while the mix shifted toward the individual income tax and customs duties."
-      title="Federal revenue by source, fiscal 1962 to fiscal 2025"
-      source={revenue._meta.source}
-      vintage={vintageOf(revenue._meta)}
+      fig={fig('revenue')}
       xUnit="Fiscal year"
       yUnit="nominal $ trillions, percent of GDP, or percent of total revenue"
     >
@@ -411,9 +393,7 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
 
     <Figure
       ariaLabel="The United States collected 25.6% of GDP in tax in 2024, 31st of 38 OECD members and below the 34.1% OECD average."
-      title="Total tax revenue as a share of GDP, OECD comparison, 2024"
-      source={oecd._meta.source}
-      vintage={vintageOf(oecd._meta)}
+      fig={fig('oecd')}
       xUnit="Percent of GDP"
       yUnit="Country or OECD average"
       note="Counts federal, state and local government together; not comparable to the federal-only revenue figure above. Shows ten selected members of 38; 2024 is preliminary."
@@ -451,9 +431,7 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
 
     <Figure
       ariaLabel={`Federal gross tax collections against federal award spending by state, FY${statesBalance.data.fy_give}. ${statesBalance.data.summary.n_get_more} states and DC receive more than they pay; ${statesBalance.data.summary.n_give_more} pay more than they receive.`}
-      title="What each state gives the federal government and gets back, FY2025"
-      source={statesBalance._meta.source}
-      vintage={vintageOf(statesBalance._meta)}
+      fig={fig('state-give-get')}
       xUnit="State or territory"
       yUnit="federal gross tax collections against federal award spending, per person or in total"
       note="Give is gross IRS collections by filer address; get is USASpending award spending by place of performance. This is narrower than a balance of payments on both sides — read the paragraphs below before comparing states."
@@ -490,9 +468,7 @@ const sourcesHref = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/sources`
 
     <Figure
       ariaLabel={`Each state's own tax collections by category as a share of its total, FY${statesTaxMix.data.fy}.`}
-      title="State tax collections by category, as a share of each state's own total"
-      source={statesTaxMix._meta.source}
-      vintage={vintageOf(statesTaxMix._meta)}
+      fig={fig('state-tax-mix')}
       xUnit="Tax category"
       yUnit="percent of that state's own total tax collections"
       note="A category can be genuinely not levied by a state (Alaska has no general sales tax) rather than merely unreported; the two are shown differently, never both as a dash."

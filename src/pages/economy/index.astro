@@ -7,10 +7,12 @@ import { GrowthAndShadow } from '../../components/islands/GrowthAndShadow'
 import { WhoWorks } from '../../components/islands/WhoWorks'
 import { PricesAndRates } from '../../components/islands/PricesAndRates'
 import { LaborAndCapital } from '../../components/islands/LaborAndCapital'
-import { economy, income, vintageOf } from '../../data'
-import { routeSections } from '../../data/sections'
+import { economy, income } from '../../data'
+import { join, routeSections } from '../../data/sections'
+import { figuresOf } from '../../data/figures'
 
-const base = import.meta.env.BASE_URL.replace(/\/$/, '')
+/* Figure number, title and source come from the manifest, which /contents reads too. */
+const fig = figuresOf('/economy')
 ---
 
 <BaseLayout
@@ -39,9 +41,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
 
     <Figure
       ariaLabel="Real GDP grew 895% between fiscal 1950 and fiscal 2025, from $2.38 trillion to $23.72 trillion in FY2025 chained dollars, tracing a near-straight line on a log scale with visible bends at the 2008 to 2009 recession and in fiscal 2020."
-      title="Real GDP, fiscal 1950 to 2036, log scale"
-      source={economy._meta.source}
-      vintage={vintageOf(economy._meta)}
+      fig={fig('real-gdp')}
       xUnit="Fiscal year"
       yUnit="real GDP in $ trillions, FY2025 chained, on a base-10 log scale"
       note="The series continues to FY2036 as a CBO baseline projection. Projected years are drawn as a separate dashed line beyond the marked FY2025 boundary and are not actuals."
@@ -83,9 +83,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
 
     <Figure
       ariaLabel="Indexed to 1984 = 100, output per hour reached 216.5 by 2024 while real median household income reached 138.6, the two lines separating over the period."
-      title="Output per hour and real median household income, 1984 to 2024, indexed"
-      source={`Output per hour: ${economy._meta.source}. Median household income: ${income._meta.source}`}
-      vintage={vintageOf(economy._meta)}
+      fig={fig('growth-shadow')}
       xUnit="Year (fiscal for output per hour, calendar for median household income)"
       yUnit="index, 1984 = 100"
       note="Two sources on two calendars. Output per hour is CBO, fiscal years; real median household income is Census via FRED, calendar years in 2024 dollars. The two use different price indexes and different units of observation, so the vertical gap between the indexed lines is not itself a measurable quantity."
@@ -127,9 +125,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
 
     <Figure
       ariaLabel="Unemployment was 4.2% in fiscal 2025 against a noncyclical rate of 4.4%, while labour force participation was 62.4%, 4.7 points below its fiscal 2000 peak."
-      title="Unemployment, the noncyclical rate and labour force participation, fiscal 1950 to 2036"
-      source={economy._meta.source}
-      vintage={vintageOf(economy._meta)}
+      fig={fig('who-works')}
       xUnit="Fiscal year"
       yUnit="percent of the labour force (unemployment and the noncyclical rate) and percent of the civilian population 16 and over (participation)"
       note="Fiscal year averages. FY2020 averages 7.3% over October 2019 to September 2020; the monthly peak of spring 2020 is not in this file and is not shown. The noncyclical rate is a CBO estimate, not an observation. The series continues to FY2036 as a CBO baseline projection, drawn as a separate dashed line beyond the marked FY2025 boundary."
@@ -180,9 +176,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
 
     <Figure
       ariaLabel="CPI-U inflation peaked at 13.6% in fiscal 1980 and the fed funds rate at 16.9% in fiscal 1981; both fell to near zero between 2009 and 2021 before rising again, with CPI-U inflation at 2.7% and the fed funds rate at 4.4% in fiscal 2025."
-      title="Inflation and interest rates, fiscal 1950 to 2036"
-      source={economy._meta.source}
-      vintage={vintageOf(economy._meta)}
+      fig={fig('prices-rates')}
       xUnit="Fiscal year"
       yUnit="percent change in the price index from the previous fiscal year (CPI-U and core PCE) and percent per year (the fed funds rate, the 3-month bill and the 10-year note)"
       note="CPI-U and core PCE are published as index levels. The inflation panel plots the year-over-year percent change in each index, not the index itself. CPI-U inflation is derivable from fiscal 1951 and core PCE inflation from fiscal 1961, one year after each index itself starts, because the first index year has no prior year to compare against. The fed funds rate starts fiscal 1955, the 3-month bill fiscal 1950, and the 10-year note fiscal 1954. The series continue to FY2036 as a CBO baseline projection, drawn as a separate dashed branch past the marked FY2025 boundary."
@@ -216,8 +210,8 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
     </p>
     <p class="prose">
       Rates are the mechanism that reprices the debt. The government route shows what that
-      costs, in <a href={`${base}/government/#net-interest`}>net interest</a>, and how fast it feeds
-      through, in <a href={`${base}/government/#how-old`}>how old the debt is</a>.
+      costs, in <a href={`${join('/government')}/#net-interest`}>net interest</a>, and how fast it feeds
+      through, in <a href={`${join('/government')}/#how-old`}>how old the debt is</a>.
     </p>
   </section>
 
@@ -237,9 +231,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
 
     <Figure
       ariaLabel="Wages and salaries fell from a fiscal 1970 peak of 51.5% of GDP to a fiscal 2024 low of 42.2%, while corporate profits rose from a fiscal 1982 low of 7.0% of GDP to a fiscal 2025 peak of 13.1%, both shares of GDP rather than of national income."
-      title="Wages and salaries against corporate profits, fiscal 1950 to 2036"
-      source={economy._meta.source}
-      vintage={vintageOf(economy._meta)}
+      fig={fig('labor-capital')}
       xUnit="Fiscal year"
       yUnit="percent of GDP"
       note="Wages and salaries and corporate profits here are shares of GDP, not of national income, so they do not sum to 100 with anything. They are comparable to each other over time, not to a factor-share decomposition. The fiscal 2020 moves in both series follow a fall in the nominal GDP denominator, not a change in who was paid what. The series continue to FY2036 as a CBO baseline projection, drawn as a separate dashed branch past the marked FY2025 boundary."
@@ -304,7 +296,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '')
       not a complete accounting of who gets paid out of what the economy produces.
     </p>
     <p class="prose">
-      The <a href={`${base}/households/`}>households route</a> picks up from here: what a household
+      The <a href={`${join('/households')}/`}>households route</a> picks up from here: what a household
       actually earns, how far the spread between households runs, and what is actually paid in
       tax once <Term id="payroll-tax">payroll tax</Term> is counted.
     </p>

@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css'
+import { join, siteRoutes } from '../data/sections'
 
 interface NavItem { id: string; label: string }
 interface Props {
@@ -12,16 +13,11 @@ interface Props {
 const { title, description, sections = [] } = Astro.props
 
 const base = import.meta.env.BASE_URL
-const join = (p: string) => `${base.replace(/\/$/, '')}/${p.replace(/^\//, '')}`.replace(/\/$/, '') || '/'
 
-const routes = [
-  { href: join(''), label: 'Introduction' },
-  { href: join('economy'), label: 'Economy' },
-  { href: join('households'), label: 'Households' },
-  { href: join('government'), label: 'Government' },
-  { href: join('sources'), label: 'Sources' },
-  { href: join('glossary'), label: 'Glossary' },
-]
+/* One list of destinations, one base-path join, both in src/data/sections.ts. The rail below and
+ * the narrow-viewport navbar above it map this same array, so a route added there appears in
+ * both — and /contents derives its whole outline from it rather than from a copy of its own. */
+const routes = siteRoutes.map((r) => ({ href: join(r.path), label: r.label }))
 
 const current = Astro.url.pathname.replace(/\/$/, '')
 const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)

@@ -116,7 +116,6 @@ a { color: inherit; text-underline-offset: 0.16em; text-decoration-thickness: 0.
 .page { max-width: 74rem; margin: 0 auto; padding: 0 2rem 7rem; }
 .shell { display: grid; grid-template-columns: 13rem minmax(0, 1fr); gap: 3rem; }
 
-main { counter-reset: figure; }
 
 section[id] {
   padding: 3.4rem 0;
@@ -300,7 +299,6 @@ section[id]:first-of-type { border-top: 0; padding-top: 1.5rem; }
  */
 
 .figure {
-  counter-increment: figure;
   margin: 0 0 2.8rem;
   max-width: var(--measure-wide);
 }
@@ -313,8 +311,11 @@ section[id]:first-of-type { border-top: 0; padding-top: 1.5rem; }
   gap: 0.6rem;
   align-items: baseline;
 }
-.figure-head::before {
-  content: 'Figure ' counter(figure);
+/* The figure number, as real text rather than as generated content (#49). It used to be a CSS
+   counter on this pseudo-element, which meant the number existed only in the rendered layout —
+   absent from the DOM, from `dist/`, and from anything /contents could read. Same typography,
+   now in the served bytes. */
+.figure-no {
   font-variant-caps: all-small-caps;
   font-variant-numeric: var(--num-table);
   letter-spacing: 0.08em;
@@ -1014,6 +1015,88 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   letter-spacing: 0.07em;
   color: var(--ink);
 }
+
+/* ---- /contents: the index of the whole site (#49) --------------------------
+ * A contents page, set as one. Nothing here is a new ornament: the route
+ * headings are the page's own `h2`s, the section list is a numbered list in the
+ * same face as `.toc`, and a figure's line beneath its section carries the same
+ * small-caps `.lead` and the same italic title the figure apparatus itself
+ * uses, so an entry here reads as the thing it points at.
+ *
+ * The one constraint that is not aesthetic: every derived string on this page
+ * is long — a source line runs to a full sentence with a vintage on it — and
+ * `/sources` already overflows a 390px viewport on unbreakable text (#79).
+ * Hence `overflow-wrap: anywhere` on the source line, and no `nowrap` anywhere
+ * except the short figure number.
+ */
+
+.index-sections {
+  list-style: none;
+  margin: 0 0 1.6rem;
+  padding: 0;
+  counter-reset: index-section;
+  max-width: var(--measure);
+}
+.index-section {
+  counter-increment: index-section;
+  padding-top: 0.55rem;
+  margin: 0 0 0.9rem;
+  border-top: var(--rule-hair) solid var(--rule);
+}
+.index-section > a {
+  font-variant-numeric: var(--num-table);
+}
+.index-section > a::before {
+  content: counter(index-section) '. ';
+  color: var(--ink-soft);
+}
+.index-empty {
+  margin: 0 0 1.6rem;
+  max-width: var(--measure);
+  color: var(--ink-soft);
+}
+
+/* A figure's entry: number, title, source. A grid rather than three inline
+   spans, so the source line wraps under the title instead of beside it. */
+.index-figure {
+  display: grid;
+  gap: 0.15rem;
+  margin: 0.5rem 0 0 1.1rem;
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}
+.index-figure-no {
+  font-variant-caps: all-small-caps;
+  font-variant-numeric: var(--num-table);
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.index-figure-title { font-style: italic; }
+.index-source {
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+}
+.index-source .lead,
+.index-term-first .lead {
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.07em;
+  color: var(--ink);
+}
+
+.index-terms { list-style: none; margin: 0; padding: 0; max-width: var(--measure); }
+.index-term {
+  display: grid;
+  gap: 0.15rem;
+  padding-top: 0.55rem;
+  margin: 0 0 0.9rem;
+  border-top: var(--rule-hair) solid var(--rule);
+  overflow-wrap: anywhere;
+}
+.index-term-name { font-weight: 600; justify-self: start; }
+.index-term-short { color: var(--ink); }
+.index-term-first { font-size: 0.9375rem; color: var(--ink-soft); }
 
 /* ---- Households route: brushable year range and multi-panel figures -----
  * The shared timeline (`YearRange.tsx`) and the sub-heads/empty-state used by
