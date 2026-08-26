@@ -1541,3 +1541,90 @@ def test_every_schema_rejects_a_realistic_corruption(name):
     corrupt(broken)
     with pytest.raises(jsonschema.ValidationError):
         jsonschema.validate(broken, schema)
+
+
+# ---- #38: the 1985 bracket corruption, guarded at ingest and on the output --
+
+def test_phantom_zero_row_guard_rejects_a_duplicate_in_any_other_year():
+    """#38 criterion 4. `_drop_phantom_zero_row` is a NAMED check, not a silent
+    filter: it drops the one known (1985, "single") phantom row and refuses to
+    guess anywhere else. Three cases in one test so it cannot pass by failing
+    for an unrelated reason."""
+    from oneshot import bracket_history
+
+    def phantom_shape() -> list[dict]:
+        # The real 1985 single head: a 0% zero bracket up to $2,390, then 11%
+        # from $2,390 -- plus the corrupt duplicate 0% row with an open-ended
+        # top that contradicts the 50% row already present.
+        return [
+            {"r": 0.0, "lo": 0, "hi": 2390},
+            {"r": 0.0, "lo": 0, "hi": None},
+            {"r": 11.0, "lo": 2390, "hi": 3540},
+            {"r": 50.0, "lo": 85130, "hi": None},
+        ]
+
+    # (i) The same shape in any OTHER year/status is a new corruption: fail loud.
+    other = phantom_shape()
+    with pytest.raises(SourceUnavailable) as exc:
+        bracket_history._drop_phantom_zero_row((1986, "single"), other)
+    assert "duplicate 'incomeGreaterThan'" in str(exc.value)
+    assert "[0]" in str(exc.value), f"message must name the duplicated floor: {exc.value}"
+    assert "refusing to guess" in str(exc.value)
+    assert len(other) == 4, "a rejected ladder must not be mutated on the way out"
+
+    # (ii) The one known case drops the PHANTOM, not the real zero bracket.
+    known = phantom_shape()
+    bracket_history._drop_phantom_zero_row((1985, "single"), known)
+    at_zero = [b for b in known if b["lo"] == 0]
+    assert len(at_zero) == 1, f"expected one bracket at floor 0, got {at_zero}"
+    assert at_zero[0]["hi"] == 2390, "the surviving zero bracket must be the real $2,390 row"
+    assert {"r": 0.0, "lo": 0, "hi": None} not in known
+
+    # (iii) A clean ladder passes through untouched.
+    clean = [{"r": 0.0, "lo": 0, "hi": 2390}, {"r": 11.0, "lo": 2390, "hi": None}]
+    before = copy.deepcopy(clean)
+    bracket_history._drop_phantom_zero_row((1985, "single"), clean)
+    assert clean == before
+
+
+def test_check_bracket_history_rejects_a_duplicate_bracket_floor(monkeypatch, tmp_path):
+    """#38 criterion 3. The published-output half of the guard. `check_schema`
+    cannot express "strictly increasing", so this is a validate.py invariant --
+    and it must BITE, in any year, not only 1985."""
+    real = load("bracket_history")
+
+    def run_against(doc: dict) -> validate.Checks:
+        (tmp_path / "bracket_history.json").write_text(json.dumps(doc))
+        monkeypatch.setattr(validate, "DATA_DIR", tmp_path)
+        c = validate.Checks()
+        validate.check_bracket_history(c)
+        return c
+
+    # A duplicated floor, and nothing else wrong: exactly the one named failure.
+    dup = copy.deepcopy(real)
+    ladder = {r["y"]: r for r in dup["data"]}[1985]["s"]["single"]
+    ladder[3]["lo"] = ladder[2]["lo"]
+    c = run_against(dup)
+    assert len(c.failures) == 1, f"expected exactly one failure, got {c.failures}"
+    assert "duplicate bracket floor" in c.failures[0]
+    assert "1985" in c.failures[0] and "single" in c.failures[0]
+    assert str(ladder[2]["lo"]) in c.failures[0]
+
+    # The generic check covers every year, not only the one known to be corrupt.
+    other = copy.deepcopy(real)
+    l1994 = {r["y"]: r for r in other["data"]}[1994]["s"]["mfj"]
+    l1994[2]["lo"] = l1994[1]["lo"]
+    c = run_against(other)
+    assert any("1994 mfj duplicate bracket floor" in f for f in c.failures), c.failures
+
+    # The full phantom shape back in the published data trips the fingerprint too.
+    phantom = copy.deepcopy(real)
+    l85 = {r["y"]: r for r in phantom["data"]}[1985]["s"]["single"]
+    l85.insert(1, {"r": 0.0, "lo": 0, "hi": None, "rlo": 0.0, "rhi": None})
+    c = run_against(phantom)
+    assert any("1985 single duplicate bracket floor" in f for f in c.failures), c.failures
+    assert any("phantom row" in f for f in c.failures), c.failures
+
+    # The inverse: the real published data yields zero failures.
+    clean = run_against(real)
+    assert clean.failures == [], clean.failures

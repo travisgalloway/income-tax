@@ -40,6 +40,23 @@ alongside the real 0%-to-$2,390 "zero bracket amount" row). `bracket_history.py`
 `SourceUnavailable` on any other duplicate `lo` it has not already accounted for, rather than
 guessing how to resolve an unfamiliar corruption.
 
+The **published** 1985 single ladder is therefore correct and is asserted positively, not merely
+parsed: 16 brackets — a 0% zero bracket `$0–$2,390`, then 11/12/14/15/16/18/20/23/26/30/34/38/42/
+48/50 %, the top 50% bracket open-ended above `$85,130`. Primary source: IRS 1985 Form 1040 Tax
+Rate Schedule X (1985 was the first indexed year under ERTA'81; the single-filer zero bracket
+amount was $2,390), reproduced in IRS SOI Historical Table 23.
+
+Both halves of the guard are proven to bite:
+
+| Guard | Where | Proven by |
+|---|---|---|
+| Ingest: drop the one known phantom row, raise on any other duplicate `lo` | `oneshot/bracket_history.py` `_drop_phantom_zero_row` | `test_phantom_zero_row_guard_rejects_a_duplicate_in_any_other_year` |
+| Published output: bracket floors strictly increase in **every** year/status ladder, plus the 1985-single fingerprint above | `lib/validate.py` `check_bracket_history` | `test_check_bracket_history_rejects_a_duplicate_bracket_floor` |
+
+The output-side check is a `validate.py` invariant, not a JSON-Schema one — JSON Schema cannot
+express "strictly increasing across array items". A duplicate floor in any year fails the build
+with a message naming the year, the status and the duplicated floor.
+
 **Known upstream data gap, dated, not invented:** the October 2025 CPI-U was never collected (2025
 government shutdown; BLS stated it could not retroactively gather it — the first gap in this
 monthly series since 1921). `bracket_history.py` accepts 11 monthly observations for calendar year
