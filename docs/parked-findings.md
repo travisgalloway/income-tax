@@ -243,6 +243,12 @@ time. Appended to, never rewritten. None of these have been acted on.
   `fetch_bytes`, `post_json`) that duplicate the same cache/retry/failure-discipline boilerplate
   three times rather than sharing one core. Worth collapsing once a fourth request shape appears.
   Found while working on #14. Severity: duplication, non-blocking.
+  **Resolved 2026-08-26 by #40** — one private `_retrieve` now carries the cache, timeout, status
+  and truncated-body discipline, and there is exactly one `httpx.Client` construction in the module.
+  Two corrections to this finding as written: there was never any *retry* boilerplate to collapse
+  (`grep -cin 'retry\|backoff\|time.sleep'` was `0` before the change and is `0` after — the
+  absence is now a stated design rule), and the fourth request shape it was waiting for already
+  exists at `pipeline/lib/sources.py:145`, outside `fetch.py`, and is re-parked below.
 - [2026-08-23] `TableView` (`src/components/islands/TableView.tsx`) wraps its table in a Radix
   `Collapsible` that starts closed, and Radix does not render `Collapsible.Content` into the DOM
   while closed — confirmed by building the site and finding no `<table>` tag anywhere in
@@ -281,6 +287,9 @@ time. Appended to, never rewritten. None of these have been acted on.
   because removing a dependency changes the lockfile, and thirteen other open PRs (#16–#28) branch
   from a `main` that still has it. Found while working on #15. Severity: dead dependency,
   non-blocking; remove once those PRs have merged.
+  **Resolved 2026-08-26 by #40** — removed from `package.json` with the lockfile regenerated from a
+  cold `node_modules` in the same commit. Re-proved before removing: no importer in `src/`, and the
+  root package was its only dependent anywhere in the lockfile.
 - [2026-08-23] `src/components/islands/DebtChart.tsx` inlines its own number formatters instead of
   `charts/format.ts` (same finding as the `UnitToggle` one above, restated here because #15's
   accessibility work touches the same file's focus/labelling code without touching this). Found
@@ -293,6 +302,8 @@ time. Appended to, never rewritten. None of these have been acted on.
   merged — but removing a dependency and regenerating the lockfile is out of scope for a
   conflict-resolution merge, so it was left as-is here. Found while resolving #29's merge. Severity:
   both non-blocking; the dependency removal is a good candidate for a small standalone follow-up.
+  **Resolved 2026-08-26 by #40**, which is that standalone follow-up. Point (2) is closed; point (1)
+  was already true when written.
 - [2026-08-24] **Backlog created, #42-#68.** Twenty-seven issues filed in one pass covering six
   areas the first build never reached: a root intro route (`/` becomes "Income & Tax"; Economy moves
   to `/economy`), a real mobile navigation with section-level position, a seven-issue prose-craft
@@ -545,3 +556,21 @@ time. Appended to, never rewritten. None of these have been acted on.
   Criterion 5's own proving command globs `src/data/*.json` rather than hard-coding the number, so
   it self-corrected and nothing downstream was wrong. Found while writing
   `pipeline/curated/sources.yaml` for #39. Severity: plan defect, resolved by the glob, non-blocking.
+- [2026-08-26] Three further Radix packages have no importer in `src/`:
+  `@radix-ui/react-dialog`, `@radix-ui/react-tooltip`, `@radix-ui/react-visually-hidden`
+  (`grep -rl '@radix-ui/react-<name>' src/` → 0 files each; in use: react-toggle-group 6,
+  react-select 2, react-tabs 1, react-slider 1). Out of scope for #40, whose scope and criterion
+  name `react-collapsible` alone. Found while working on #40. Severity: dead dependencies,
+  non-blocking.
+- [2026-08-26] `pipeline/lib/sources.py:145` builds its own `httpx.Client` for a `HEAD` probe
+  rather than going through `lib/fetch.py` — a fourth request shape outside the unified core, with
+  its own (deliberately silent) failure handling. Out of scope for #40, which names the three
+  functions inside `fetch.py`. Found while working on #40. Severity: duplication, non-blocking.
+- [2026-08-26] `.claude/plans/issue-40.md` asks for two things that cannot both hold literally: the
+  implementation section says to add a fourth module-docstring rule "stating that there is no retry
+  by design", while V12 requires `grep -cin 'retry\|backoff\|time.sleep' pipeline/lib/fetch.py` to
+  return `0` — the docstring line is itself a match. Resolved in #40 by stating the rule in the
+  docstring without the greppable words and carrying the word "retry" in
+  `docs/contracts/interfaces/pipeline-http.md`, where criterion 12 places it; both V12 and criterion
+  12 then pass as written. Found while working on #40. Severity: plan defect, resolved in place,
+  non-blocking.

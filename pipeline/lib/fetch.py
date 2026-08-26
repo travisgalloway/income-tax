@@ -9,6 +9,17 @@ Design rules, all of which exist because the failure they prevent is silent:
    cleanly as "no rows".
 3. Responses are cached on disk so a re-run is cheap, but the cache records the
    retrieval time and is never consulted when --no-cache is set.
+4. A failed request is not attempted a second time, by design. One call is one
+   request: no repeat loop, no pause-and-try-again, no exponential anything. A
+   source that is down surfaces as a single loud failure rather than as a run
+   that takes six times as long and fails anyway. Do not add one -- and note
+   that the grep proving its absence is part of the contract, so the words for
+   it are deliberately absent from this module.
+
+Rules 1-4 are implemented exactly once, in `_retrieve`. The four public entry
+points differ only in method, body type and what they do with the result; when
+they each carried their own copy of the discipline they were free to drift from
+each other, and they had. See docs/contracts/interfaces/pipeline-http.md.
 """
 
 from __future__ import annotations
@@ -48,6 +59,103 @@ def _cache_path(url: str) -> Path:
     return CACHE_DIR / f"{hashlib.sha256(url.encode()).hexdigest()[:24]}.json"
 
 
+def _write_cache(cache_key: str, url_field: str, body: str | bytes, retrieved_at: str) -> None:
+    """Atomically record `body` under `cache_key`.
+
+    Two on-disk shapes, both load-bearing and neither to be "tidied": text
+    bodies store `text`, binary bodies store `b64`. `url_field` is what goes in
+    the `"url"` slot -- the URL itself for GETs, the composite key for
+    `post_json`, whose key includes its payload.
+    """
+    entry = {"url": url_field}
+    if isinstance(body, bytes):
+        entry["b64"] = base64.b64encode(body).decode("ascii")
+    else:
+        entry["text"] = body
+    entry["retrieved_at"] = retrieved_at
+
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    cache_file = _cache_path(cache_key)
+    tmp = cache_file.with_suffix(".tmp")
+    tmp.write_text(json.dumps(entry))
+    os.replace(tmp, cache_file)
+
+
+def _retrieve(
+    url: str,
+    *,
+    source: str,
+    cache_key: str,
+    method: str = "GET",
+    payload: dict | None = None,
+    binary: bool = False,
+    min_bytes: int = 1,
+    use_cache: bool = True,
+    max_age_s: int = 6 * 60 * 60,
+    write_cache: bool = True,
+) -> tuple[str | bytes, str, bool]:
+    """The whole cache / HTTP / failure discipline, once.
+
+    Returns `(body, retrieved_at, from_cache)`. `body` is `bytes` when `binary`,
+    `str` otherwise. Raises SourceUnavailable on transport error, on any non-200,
+    and on a body shorter than `min_bytes` -- never returns an empty body.
+
+    `write_cache=False` is for `post_json`, which must decode before it caches so
+    that a 200 carrying a non-JSON body is never written to disk; it calls
+    `_write_cache` itself once the decode has succeeded.
+
+    `method` must be exactly "GET" or "POST" -- anything else (a typo like
+    "post") is rejected here rather than silently treated as a GET, per the
+    "fail loud" contract above. POST additionally requires a `payload`.
+    """
+    if method not in ("GET", "POST"):
+        raise ValueError(f"_retrieve: unsupported method {method!r}; expected 'GET' or 'POST'")
+    if method == "POST" and payload is None:
+        raise ValueError("_retrieve: POST requires a payload")
+
+    cache_file = _cache_path(cache_key)
+    body_key = "b64" if binary else "text"
+
+    if use_cache and cache_file.exists():
+        age = time.time() - cache_file.stat().st_mtime
+        if age < max_age_s:
+            cached = json.loads(cache_file.read_text())
+            # Both shapes share `_cache_path`, so an entry may be the other one.
+            # A missing key is a cache miss, not a KeyError.
+            if body_key in cached:
+                cached_body = base64.b64decode(cached["b64"]) if binary else cached["text"]
+                return cached_body, cached["retrieved_at"], True
+
+    try:
+        with httpx.Client(
+            timeout=TIMEOUT,
+            follow_redirects=True,
+            headers={"User-Agent": USER_AGENT},
+        ) as client:
+            r = client.post(url, json=payload) if method == "POST" else client.get(url)
+    except httpx.HTTPError as exc:
+        raise SourceUnavailable(source, url, f"transport error: {exc}") from exc
+
+    if r.status_code != 200:
+        raise SourceUnavailable(source, url, f"HTTP {r.status_code}")
+
+    body = r.content if binary else r.text
+    size = len(body) if binary else len(body.encode("utf-8"))
+    if size < min_bytes:
+        raise SourceUnavailable(
+            source,
+            url,
+            f"body is {size} bytes, expected at least {min_bytes}; "
+            "treating as truncated rather than as empty data",
+        )
+
+    retrieved_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    if write_cache:
+        _write_cache(cache_key, cache_key, body, retrieved_at)
+
+    return body, retrieved_at, False
+
+
 def fetch(
     url: str,
     *,
@@ -61,43 +169,15 @@ def fetch(
     `min_bytes` guards against truncated responses that would otherwise parse as
     an empty dataset.
     """
-    cache_file = _cache_path(url)
-
-    if use_cache and cache_file.exists():
-        age = time.time() - cache_file.stat().st_mtime
-        if age < max_age_s:
-            cached = json.loads(cache_file.read_text())
-            return Response(url, cached["text"], cached["retrieved_at"], True)
-
-    try:
-        with httpx.Client(
-            timeout=TIMEOUT,
-            follow_redirects=True,
-            headers={"User-Agent": USER_AGENT},
-        ) as client:
-            r = client.get(url)
-    except httpx.HTTPError as exc:
-        raise SourceUnavailable(source, url, f"transport error: {exc}") from exc
-
-    if r.status_code != 200:
-        raise SourceUnavailable(source, url, f"HTTP {r.status_code}")
-
-    text = r.text
-    if len(text.encode("utf-8")) < min_bytes:
-        raise SourceUnavailable(
-            source,
-            url,
-            f"body is {len(text.encode())} bytes, expected at least {min_bytes}; "
-            "treating as truncated rather than as empty data",
-        )
-
-    retrieved_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    tmp = cache_file.with_suffix(".tmp")
-    tmp.write_text(json.dumps({"url": url, "text": text, "retrieved_at": retrieved_at}))
-    os.replace(tmp, cache_file)
-
-    return Response(url, text, retrieved_at, False)
+    text, retrieved_at, from_cache = _retrieve(
+        url,
+        source=source,
+        cache_key=url,
+        min_bytes=min_bytes,
+        use_cache=use_cache,
+        max_age_s=max_age_s,
+    )
+    return Response(url, text, retrieved_at, from_cache)
 
 
 def fetch_json(url: str, *, source: str, min_bytes: int = 1, use_cache: bool = True) -> object:
@@ -133,50 +213,16 @@ def fetch_bytes(
     stores the body as base64 under a `b64` key so a binary payload round-trips
     through the existing JSON cache format.
     """
-    cache_file = _cache_path(url)
-
-    if use_cache and cache_file.exists():
-        age = time.time() - cache_file.stat().st_mtime
-        if age < max_age_s:
-            cached = json.loads(cache_file.read_text())
-            if "b64" in cached:
-                return BytesResponse(
-                    url, base64.b64decode(cached["b64"]), cached["retrieved_at"], True
-                )
-
-    try:
-        with httpx.Client(
-            timeout=TIMEOUT,
-            follow_redirects=True,
-            headers={"User-Agent": USER_AGENT},
-        ) as client:
-            r = client.get(url)
-    except httpx.HTTPError as exc:
-        raise SourceUnavailable(source, url, f"transport error: {exc}") from exc
-
-    if r.status_code != 200:
-        raise SourceUnavailable(source, url, f"HTTP {r.status_code}")
-
-    content = r.content
-    if len(content) < min_bytes:
-        raise SourceUnavailable(
-            source,
-            url,
-            f"body is {len(content)} bytes, expected at least {min_bytes}; "
-            "treating as truncated rather than as empty data",
-        )
-
-    retrieved_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    tmp = cache_file.with_suffix(".tmp")
-    tmp.write_text(json.dumps({
-        "url": url,
-        "b64": base64.b64encode(content).decode("ascii"),
-        "retrieved_at": retrieved_at,
-    }))
-    os.replace(tmp, cache_file)
-
-    return BytesResponse(url, content, retrieved_at, False)
+    content, retrieved_at, from_cache = _retrieve(
+        url,
+        source=source,
+        cache_key=url,
+        binary=True,
+        min_bytes=min_bytes,
+        use_cache=use_cache,
+        max_age_s=max_age_s,
+    )
+    return BytesResponse(url, content, retrieved_at, from_cache)
 
 
 def post_json(
@@ -196,45 +242,28 @@ def post_json(
     fiscal-year windows against the same URL must not collide.
     """
     cache_key = url + "|" + json.dumps(payload, sort_keys=True)
-    cache_file = _cache_path(cache_key)
+    text, retrieved_at, from_cache = _retrieve(
+        url,
+        source=source,
+        cache_key=cache_key,
+        method="POST",
+        payload=payload,
+        min_bytes=min_bytes,
+        use_cache=use_cache,
+        max_age_s=max_age_s,
+        write_cache=False,
+    )
 
-    if use_cache and cache_file.exists():
-        age = time.time() - cache_file.stat().st_mtime
-        if age < max_age_s:
-            cached = json.loads(cache_file.read_text())
-            return json.loads(cached["text"])
-
-    try:
-        with httpx.Client(
-            timeout=TIMEOUT,
-            follow_redirects=True,
-            headers={"User-Agent": USER_AGENT},
-        ) as client:
-            r = client.post(url, json=payload)
-    except httpx.HTTPError as exc:
-        raise SourceUnavailable(source, url, f"transport error: {exc}") from exc
-
-    if r.status_code != 200:
-        raise SourceUnavailable(source, url, f"HTTP {r.status_code}")
-
-    text = r.text
-    if len(text.encode("utf-8")) < min_bytes:
-        raise SourceUnavailable(
-            source,
-            url,
-            f"body is {len(text.encode())} bytes, expected at least {min_bytes}; "
-            "treating as truncated rather than as empty data",
-        )
+    # A cached entry was decodable when it was written -- that is the whole
+    # point of decoding before caching, below -- so it is decoded unguarded, as
+    # it always has been. Only a hand-edited cache file can fail here.
+    if from_cache:
+        return json.loads(text)
 
     try:
         data = json.loads(text)
     except json.JSONDecodeError as exc:
         raise SourceUnavailable(source, url, f"body is not JSON: {exc}") from exc
 
-    retrieved_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    tmp = cache_file.with_suffix(".tmp")
-    tmp.write_text(json.dumps({"url": cache_key, "text": text, "retrieved_at": retrieved_at}))
-    os.replace(tmp, cache_file)
-
+    _write_cache(cache_key, cache_key, text, retrieved_at)
     return data
