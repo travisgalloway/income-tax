@@ -218,10 +218,7 @@ time. Appended to, never rewritten. None of these have been acted on.
   deliberately generic and opt-in (validates iff `schemas/<name>.schema.json` exists) rather than
   a mandate retrofitted onto them. Found while working on #14. Severity: coverage gap, non-blocking,
   candidate for a dedicated follow-up issue.
-  **RESOLVED 2026-08-26 by #37.** The count was recorded here as nine and measured at **twelve**
-  when #37 was planned — the population had grown and nothing noticed, which is the argument the
-  issue was closed on. All 14 outputs now carry a schema and `check_schema` fails loudly on an
-  output that has none.
+  **Resolved 2026-08-26 by #37** — see the closing entry at the end of this file.
 - [2026-08-23] `src/pages/sources.astro` does not list the IRS SOI Table 5 or Census STC (Annual
   Survey of State Government Tax Collections) sources; both are documented in `SOURCES.md` and
   rendered verbatim in each `<Figure>`'s Source line instead. Once #22 replaces `sources.astro`
@@ -479,3 +476,26 @@ time. Appended to, never rewritten. None of these have been acted on.
   instead (`test_every_figure_server_renders_its_chart_svg`), since the conformance suite iterated
   the SVGs it found and would have stayed green had one actually vanished. Recorded here rather than
   by editing that entry: this file is appended to, never rewritten.
+
+- [2026-08-26] **Closes the 2026-08-23 `pipeline/schemas/` entry above.** #37 shipped: all 14
+  published outputs now carry a JSON Schema, and `lib/validate.py`'s `check_schema` fails the build
+  on an output that has none rather than skipping it. Two corrections to the record that entry
+  kept. Its count was **wrong**: it said nine, and the measurement against `main` @ `071fab5` was
+  **twelve** — the population had grown since #14 and nothing noticed, which is the argument #37
+  was closed on. That one word is the only in-place edit made to the entry, and it is disclosed
+  here rather than left silent. Its framing was also superseded: `check_schema` being "deliberately
+  generic and opt-in" was the defect, not the design — a validation step that passes because it had
+  nothing to check reads exactly like one that passed because the data was good. Found while
+  working on #37.
+- [2026-08-26] `src/data/debt.json` is the only published output with no interface contract in
+  `docs/contracts/interfaces/`. Every other output has its own file or is covered by
+  `curated-snapshots.md`, so a consumer of the debt series has `SOURCES.md` and
+  `pipeline/schemas/debt.schema.json` and nothing describing the gross-vs-public denominator trap
+  in the contract layer. Found while adding the `## Schema` subsections for #37. Severity: docs
+  coverage gap, non-blocking.
+- [2026-08-26] `src/data/types.ts` is hand-maintained and nothing checks it against
+  `pipeline/schemas/*.schema.json`. Now that every output has a schema, the two are parallel
+  descriptions of the same 14 payloads that can drift apart without any test noticing — a field
+  typed `number` in TS and `["number", "null"]` in the schema would ship. Named as out of scope in
+  `.claude/plans/issue-37.md` and left untouched. Found while working on #37. Severity: latent
+  correctness gap, non-blocking.
