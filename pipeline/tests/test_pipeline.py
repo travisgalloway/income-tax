@@ -1761,3 +1761,51 @@ def test_check_sources_tolerates_a_vintage_refresh(monkeypatch, tmp_path):
     validate.check_sources(c, OUTPUTS)
 
     assert c.failures == [], c.failures
+
+
+def test_normalize_source_strips_dates_but_keeps_identifying_numbers():
+    """The counterweight to the test above. Vintage tolerance must not be bought
+    by erasing every digit: a number is as often a document's identity as its
+    date. An all-digit strip collapsed "Table 5" and "Table 23" onto the same
+    text, at which point rule B would match a registered source against some
+    OTHER table's line in SOURCES.md and rule D's shape would hold while the
+    cited document changed underneath it -- the silent pass #39 exists to close.
+    """
+    n = validate._normalize_source
+
+    # Dates go, in every form the real source lines use.
+    assert n("CBO Historical Budget Data (Feb 2026)") == "CBO Historical Budget Data ( )"
+    assert n("Debt to the Penny, 7 Aug 2026") == "Debt to the Penny,"
+    assert n("The Distribution of Household Income, 2022 (January 2026)") == (
+        "The Distribution of Household Income, ( )"
+    )
+    # A Revenue Procedure's "-NN" serial advances with its year, so it is vintage.
+    assert n("IRS Revenue Procedures 2018-57 through 2024-40") == "IRS Revenue Procedures through"
+
+    # Identities stay, and stay DISTINCT.
+    assert n("SOI Data Book Table 5") != n("SOI Data Book Table 23")
+    assert n("MEHOINUSA672N") == "MEHOINUSA672N"
+    assert n("PL 115-97") == "PL 115-97"
+    assert n("Supplemental Data Table 9") == "Supplemental Data Table 9"
+
+
+def test_check_sources_fails_when_a_cited_document_number_changes(monkeypatch, tmp_path):
+    """#39 criterion 7, the third direction: the source is registered and the
+    source line's wording is unchanged, but the specific document it names is
+    not the one the register accounts for. Only a normalizer that keeps
+    identifying digits can see this."""
+    for name in OUTPUTS:
+        shutil.copy2(DATA / f"{name}.json", tmp_path / f"{name}.json")
+    doc = json.loads((tmp_path / "cbo_effective_rates.json").read_text())
+    swapped = doc["_meta"]["source"].replace("Supplemental Data Table 9", "Supplemental Data Table 4")
+    assert swapped != doc["_meta"]["source"], "cbo_effective_rates no longer cites Table 9"
+    doc["_meta"]["source"] = swapped
+    (tmp_path / "cbo_effective_rates.json").write_text(json.dumps(doc))
+
+    monkeypatch.setattr(validate, "DATA_DIR", tmp_path)
+    c = validate.Checks()
+    validate.check_sources(c, OUTPUTS)
+
+    assert len(c.failures) == 1, f"expected exactly one failure, got {c.failures}"
+    assert "cbo_effective_rates" in c.failures[0]
+    assert "Table 4" in c.failures[0]

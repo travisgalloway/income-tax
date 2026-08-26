@@ -31,7 +31,10 @@ _comment: |
 
   Vintages are stripped from both sides before comparison, so a CBO February-2026 ->
   February-2027 refresh passes and only a real change to WHICH sources are cited
-  fails. See _normalize_source in pipeline/lib/validate.py.
+  fails. DATES only, never arbitrary digits: "Table 5", "Table 23", "MEHOINUSA672N"
+  and "PL 115-97" identify a document rather than date it, so they survive
+  normalization and appear in the shapes below. See _normalize_source in
+  pipeline/lib/validate.py.
 
 registry:
   cbo_historical_budget:
@@ -149,7 +152,7 @@ outputs:
       - irs_revenue_procedures
       - tax_policy_center
       - fred_cpiaucns
-    source_shape: "{tax_foundation_rates} (-, from {irs_soi_table_23} and {irs_revenue_procedures}); {irs_revenue_procedures} - through - (-, curated); {irs_soi_table_23} / {tax_policy_center} for the published top rate; {fred_cpiaucns} for the constant-dollar deflator"
+    source_shape: "{tax_foundation_rates} (-, from {irs_soi_table_23} and {irs_revenue_procedures}); {irs_revenue_procedures} through (-, curated); {irs_soi_table_23} / {tax_policy_center} for the published top rate; {fred_cpiaucns} for the constant-dollar deflator"
 
   budget:
     cites: [cbo_historical_budget, cbo_historical_economic, cbo_jct_scores, crs_party_control]
@@ -157,7 +160,7 @@ outputs:
 
   cbo_effective_rates:
     cites: [cbo_household_income_distribution]
-    source_shape: "{cbo_household_income_distribution}, ( ), Supplemental Data Table , Average Federal Tax Rates by Income Group, to"
+    source_shape: "{cbo_household_income_distribution}, ( ), Supplemental Data Table 9, Average Federal Tax Rates by Income Group, to"
 
   debt:
     cites: [treasury_debt_to_the_penny, cbo_historical_budget]
@@ -177,11 +180,11 @@ outputs:
 
   income_inequality:
     cites: [census_via_fred, statutory_rate_schedules]
-    source_shape: "{census_via_fred}: MEHOINUSAN (income), GINIALLRF (Gini). {statutory_rate_schedules}"
+    source_shape: "{census_via_fred}: MEHOINUSA672N (income), GINIALLRF (Gini). {statutory_rate_schedules}"
 
   income_tax_by_group:
     cites: [irs_soi_individual, cbo_household_income_distribution]
-    source_shape: "{irs_soi_individual}, tax year . {cbo_household_income_distribution} for the top % income share"
+    source_shape: "{irs_soi_individual}, tax year . {cbo_household_income_distribution} for the top 1% income share"
 
   oecd:
     cites: [oecd_revenue_statistics]
@@ -189,7 +192,7 @@ outputs:
 
   party_splits:
     cites: [voteview, house_clerk]
-    source_shape: "{voteview} (voteview.com/data): HSall_members.csv joined to per-congress roll-call and vote files. Final-passage roll call per law curated by hand. PL - cross-checked against {house_clerk} ."
+    source_shape: "{voteview} (voteview.com/data): HSall_members.csv joined to per-congress roll-call and vote files. Final-passage roll call per law curated by hand. PL 115-97 cross-checked against {house_clerk} 699."
 
   revenue_sources:
     cites: [cbo_historical_budget]

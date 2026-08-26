@@ -86,10 +86,18 @@ Three rules that are not negotiable when editing any of this:
   source was missing. `registered_as` is matched **into** `SOURCES.md`; `SOURCES.md` is never
   parsed **out of**.
 - **Both sides are vintage-normalized by the same function**, `_normalize_source`, which strips
-  years, month names and bare digits. `SOURCES.md` carries the same vintages the `_meta.source`
-  strings do, so an ordinary CBO February-2026 → February-2027 refresh moves both and must pass.
-  This is loose on purpose, the same balance the schema bounds strike (`docs/test-plan.md`,
-  DATA-1): a check that turns every upstream republication red is a check that gets disabled.
+  **dates and only dates**: years, month names, a day-of-month attached to a month name, and the
+  `-NN` serial that numbers a Revenue Procedure within its year (`2018-57`). `SOURCES.md` carries
+  the same vintages the `_meta.source` strings do, so an ordinary CBO February-2026 →
+  February-2027 refresh moves both and must pass. This is loose on purpose, the same balance the
+  schema bounds strike (`docs/test-plan.md`, DATA-1): a check that turns every upstream
+  republication red is a check that gets disabled.
+- **Digits that identify a document are never stripped.** `Table 5` and `Table 23` are different
+  tables, `MEHOINUSA672N` and `MEHOINUSA646N` are different FRED series, `PL 115-97` is a specific
+  law. Erasing arbitrary numbers would let B match a registered source against some *other*
+  table's line in `SOURCES.md`, and let D's shape hold while the cited document changed underneath
+  it — the same silent pass this check exists to close. Identifying numbers therefore appear
+  verbatim in the stored `source_shape` values.
 - **A source that is cited but genuinely never ingested is an explicit named exemption**, not a
   weakened assertion. `rockefeller_bop` carries `cited_in_prose_only: true` because §11 names the
   Rockefeller Institute's balance-of-payments series in body copy and the pipeline ingests

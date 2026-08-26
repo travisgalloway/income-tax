@@ -98,10 +98,18 @@ def check_schema(c: Checks, names: list[str]) -> None:
             )
 
 
+_MONTH = r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*"
+
 _DATEISH = re.compile(
-    r"\b(19|20)\d{2}\b"
-    r"|\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\b"
-    r"|\d+"
+    # A day-of-month, in either order, before the bare-month rule can eat the
+    # month and strand the day: "7 Aug 2026", "August 7, 2026".
+    rf"\b\d{{1,2}}\s+{_MONTH}\b"
+    rf"|\b{_MONTH}\s+\d{{1,2}}\b"
+    rf"|\b{_MONTH}\b"
+    # A 4-digit year, plus the "-NN" that serially numbers an IRS Revenue
+    # Procedure within its year ("2018-57"): that suffix advances with the
+    # vintage, so it is part of the vintage.
+    r"|\b(?:19|20)\d{2}(?:-\d{1,3})?\b"
 )
 
 
@@ -113,6 +121,15 @@ def _normalize_source(s: str) -> str:
     schemas' bounds strike (docs/test-plan.md, DATA-1): a check that turned
     every ordinary upstream refresh red would be turned off, and a check that
     is off is a check that is not looking.
+
+    Only DATES are stripped, never arbitrary digits. A number is as often the
+    identity of a document as it is its vintage -- "SOI Data Book Table 5" and
+    "SOI Historical Table 23" are different tables, "MEHOINUSA672N" and
+    "MEHOINUSA646N" are different FRED series, "PL 115-97" is a specific law --
+    and a normalizer that erased those would let rule B match a registered
+    source against some OTHER table's line in SOURCES.md, and let rule D's
+    shape hold while the cited document changed underneath it. That is the
+    same silent-pass shape this check exists to close.
 
     Applied to BOTH sides of every comparison. SOURCES.md carries the same
     vintages the _meta.source strings do ("..., February 2026"), so a refresh
