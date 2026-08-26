@@ -1007,7 +1007,7 @@ def test_section_state_selector_is_scoped_and_not_bare():
     """
     rules = list(iter_css_rules(GLOBAL_CSS.read_text()))
     scoped = [
-        selectors for selectors, _ in rules
+        s for selectors, _ in rules
         for s in selectors
         if "[aria-current='true']" in s and (".toc" in s or ".navbar-toc" in s)
     ]
