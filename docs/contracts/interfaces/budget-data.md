@@ -83,11 +83,23 @@ render an explicit "no major law enacted this fiscal year" (or table `no data`) 
 empty string or `0` — this dataset follows the site-wide rule that absence is never rendered as
 zero.
 
+**The composition field a law row emits is `legacy_comp`, the retired PLR/PLD/XP classification —
+never read it.** The counted per-party split is `rollcall` (and `src/data/party_splits.json`, joined
+on `public_law`); `legacy_comp` and `vote_character` survive only as the superseded classification.
+`_meta.fields.L` must name only keys the pipeline actually emits: a description naming a key that no
+longer exists (`comp`) is a dangling reference, and it is fixed in `pipeline/curated/notes.yaml`,
+never by hand-editing the output.
+
 ## `_meta`
 
 - `_meta.source` — render **verbatim** wherever this dataset backs a `Figure` (`BRIEF.md` rule 1).
   Do not summarise it; put any scope/method caveat (e.g. "mandatory is net of offsetting receipts")
   in `Figure`'s `note` prop instead.
+- `_meta.notes[1]` states the **counted** position: per-party final-passage splits for all 23 laws
+  come from Voteview roll calls, carried in `party_splits.json` and joined on `public_law`. It is
+  read before charting under `BRIEF.md` rule 5, so it must never re-acquire the retired claim that
+  composition is classified from published vote character
+  (`test_no_document_still_calls_vote_composition_classified`).
 - `_meta.title` currently reads "…FY1995-FY2025" even though `_meta.coverage` and `_meta.notes[3]`
   correctly state the series now runs FY1962–FY2025. This is a known stale field — see
   `docs/parked-findings.md`. No component reads `_meta.title`; do not start.

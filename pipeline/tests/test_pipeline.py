@@ -874,6 +874,42 @@ def test_section_8_no_longer_claims_classified_composition():
     vote_section = sources[vstart:vend]
     assert "classified from published vote character" not in vote_section
     assert "Voteview" in vote_section
+
+
+def test_no_document_still_calls_vote_composition_classified():
+    """#31: the two rendered sections are locked above; this locks the norms
+    document and the machine-readable metadata no page exposes. Matches
+    PHRASES, never the bare stem: 'classified by the filer's address' and
+    'classified by place of performance' are the IRS's and USASpending's own
+    wording for a different subject and must survive."""
+    superseded = (
+        "classified party-line",
+        "partly classified, not counted",
+        "classified from published vote character",
+        "comp plr/pld/xp",
+        "exact only for pl 115-97",
+    )
+    for rel in (
+        "BRIEF.md",
+        "sections.md",
+        "SOURCES.md",
+        "pipeline/curated/notes.yaml",
+        "src/data/budget.json",
+    ):
+        text = (LEGACY / rel).read_text().lower()
+        for fragment in superseded:
+            assert fragment not in text, f"{rel} still says {fragment!r}"
+
+    meta = load("budget")["_meta"]
+    note = meta["notes"][1]
+    assert "counted" in note.lower(), note
+    assert "party_splits" in note, note
+    assert "legacy_comp" in meta["fields"]["L"], meta["fields"]["L"]
+    assert "comp PLR" not in meta["fields"]["L"], meta["fields"]["L"]
+    for l in _laws():
+        assert "comp" not in l, f"{l['public_law']} still emits a comp key"
+
+
 # ---- §9 attribution: the same $16.75T two ways ----------------------------
 #
 # These reproduce, independently of src/components/attribution/aggregate.ts,
