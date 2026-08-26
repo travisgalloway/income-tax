@@ -8,6 +8,7 @@ cannot quietly violate one.
 from __future__ import annotations
 
 import json
+from collections import Counter
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 from typing import Any
@@ -434,6 +435,44 @@ def check_bracket_history(c: Checks) -> None:
                      f"hi-nullness disagrees with being the top bracket")
                 c.ok((b["rhi"] is None) == is_top, f"bracket_history: {y} {status} bracket {i} "
                      f"rhi-nullness disagrees with being the top bracket")
+
+    # A duplicate bracket floor is the fingerprint of the one known corrupt upstream row (1985
+    # single, dropped by name at ingest in oneshot/bracket_history.py, which raises on a duplicate
+    # in any other year/status). This is the matching named check on the PUBLISHED output, so a
+    # duplicate floor that ever got past ingest cannot reach src/data unobserved.
+    for y, r in by.items():
+        for status, ladder in r["s"].items():
+            if ladder is None:
+                continue
+            los = [b["lo"] for b in ladder]
+            counts = Counter(los)
+            dupes = sorted(lo for lo, n in counts.items() if n > 1)
+            c.ok(all(a < b for a, b in zip(los, los[1:])),
+                 f"bracket_history: {y} {status} duplicate bracket floor {dupes}"
+                 if dupes else
+                 f"bracket_history: {y} {status} bracket floors are not strictly increasing: {los}")
+
+    # 1985 single is the ladder the upstream corruption lands in, so its correct shape is asserted
+    # positively rather than merely "it parsed". IRS 1985 Form 1040 Tax Rate Schedule X (the first
+    # indexed year under ERTA'81, reproduced in IRS SOI Historical Table 23): a single filer's zero
+    # bracket amount is $2,390, then fifteen rate brackets 11%-50%, the 50% rate applying above
+    # $85,130. A regression to the corrupt shape is a named failure, not a silent pass.
+    l85 = by[1985]["s"]["single"]
+    c.ok(len(l85) == 16, f"bracket_history: 1985 single has {len(l85)} brackets, expected 16 "
+                         "(the $2,390 zero bracket plus fifteen rates 11%-50%)")
+    zero_rate = [b for b in l85 if b["r"] == 0.0]
+    c.ok(len(zero_rate) == 1, f"bracket_history: 1985 single has {len(zero_rate)} zero-rate "
+                              "brackets, expected exactly one (the $2,390 zero bracket amount)")
+    c.ok(all(b["hi"] is not None for b in zero_rate),
+         "bracket_history: 1985 single carries an open-ended zero-rate bracket -- the phantom row "
+         "the ingest guard drops has reached the published data")
+    c.ok(bool(zero_rate) and zero_rate[0]["hi"] == 2390,
+         f"bracket_history: 1985 single zero bracket ends at "
+         f"{zero_rate[0]['hi'] if zero_rate else None}, expected $2,390")
+    top_85 = l85[-1]
+    c.ok(top_85["r"] == 50.0 and top_85["lo"] == 85130 and top_85["hi"] is None,
+         f"bracket_history: 1985 single top bracket is {top_85['r']}% open-ended above "
+         f"{top_85['lo']}, expected 50% above $85,130")
 
     top_1913 = by[1913]["s"]["single"][-1]
     c.ok(top_1913["lo"] == 500000, f"bracket_history: 1913 top bracket floor is {top_1913['lo']}, expected $500,000")

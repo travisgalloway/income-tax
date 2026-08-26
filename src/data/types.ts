@@ -100,6 +100,10 @@ export interface EconomyYear {
   nairu: number | null
   lfpr: number | null
   cpi: number | null
+  /** Chained CPI-U index level. null before FY2002 — CBO carries no earlier value. */
+  chained_cpiu: number | null
+  /** Core CPI-U index level. null before FY1958. */
+  core_cpiu: number | null
   core_pce: number | null
   ff: number | null
   t10: number | null

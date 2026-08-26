@@ -44,7 +44,8 @@ ECON_MAP = {
     "gdp": "gdp", "rgdp": "real_gdp", "potential_rgdp": "real_potential_gdp",
     "output_gap": "output_gap", "unemp": "unemployment_rate",
     "nairu": "noncyclical_rate_of_unemployment", "lfpr": "lfpr_16yo",
-    "cpi": "cpiu", "core_pce": "core_pce_price_index",
+    "cpi": "cpiu", "chained_cpiu": "chained_cpiu", "core_cpiu": "core_cpiu",
+    "core_pce": "core_pce_price_index",
     "ff": "fed_funds_rate", "t10": "treasury_note_rate_10yr", "t3m": "treasury_bill_rate_3mo",
     "prod": "output_per_hr_nfb",
 }
