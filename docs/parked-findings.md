@@ -625,3 +625,35 @@ time. Appended to, never rewritten. None of these have been acted on.
   hold literally. The Verification block's inline comment scopes the intent correctly — "0 in the
   ECO-* rows" — and that is how #43 satisfied it: 0 within the Economy-route section, 1 across the
   whole file. Found while working on #43. Severity: plan defect, resolved in place, non-blocking.
+- [2026-08-26] `package.json:16`, `@radix-ui/react-dialog` now has no consumer and no prospect of
+  one: #42 evaluated it for the narrow-viewport nav panel and chose the native
+  `<details>`/`<summary>` disclosure, recording the decision in
+  `docs/contracts/accessibility.md` § Conventions. `grep -rn "Dialog" src/` returns nothing. Same
+  shape as the `@radix-ui/react-collapsible` removal in #91. Found while working on #42.
+  Severity: dead dependency, non-blocking.
+- [2026-08-26] `docs/contracts/accessibility.md:232` and `:269-270`, the § Manual pass results
+  rows still attribute Economy-route findings to `/` — "ECO-4 inflation panel" and "ECO-4 rates
+  panel" under route `/` — stale since #43 moved Economy to `/economy` and left `/` a placeholder
+  with no charts at all. Several sibling rows in the same table have the same drift. Outside #42's
+  contract, which touches item 8 and the landmark and conventions paragraphs only. Found while
+  working on #42. Severity: documentation, non-blocking.
+- [2026-08-26] `src/components/islands/LawExplorer.tsx:12`, a prose comment uses the word "inert"
+  ("only filtering, sorting, selection and the basis toggle are inert"), so
+  `.claude/plans/issue-42.md` criterion 5's proof — `grep -rn "aria-modal\|inert" src/` returning
+  `0` — was already unsatisfiable on `main` before #42 began. The substantive claim holds and was
+  verified with an attribute-scoped grep instead: no `aria-modal` and no `inert` **attribute**
+  exists anywhere in `src/`. Found while working on #42. Severity: plan defect, worked around in
+  place, non-blocking.
+- [2026-08-26] `.claude/plans/issue-42.md` § Verification expects
+  `grep -o 'scroll-margin-top' dist/_astro/*.css | wc -l` to return `>= 2`; it returns `1`, because
+  the CSS minifier merges the `section[id]` and `#main` rules into a single
+  `section[id],#main{scroll-margin-top:…}`. Both selectors do carry the offset, and
+  `test_sticky_nav_bar_offsets_its_anchor_targets` checks them against the source stylesheet where
+  they are two rules. Found while working on #42. Severity: plan defect, non-blocking.
+- [2026-08-26] `.claude/plans/issue-42.md` § Verification requires "zero lines may be removals" in
+  the desktop-unchanged diff, but the plan itself mandates adding `data-section` to the rail's 12
+  contents anchors — which a line diff necessarily reports as 12 removals paired with 12 additions,
+  plus the stylesheet content-hash line. The intended claim was proved directly instead: once the
+  `.navbar` block, the inline `<script>` and the `data-section` attributes are removed and the
+  hash normalised, the built HTML is byte-identical to the pre-change build. Found while working on
+  #42. Severity: plan defect, non-blocking.
