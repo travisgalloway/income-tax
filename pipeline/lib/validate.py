@@ -61,8 +61,13 @@ def check_schema(c: Checks, names: list[str]) -> None:
     MISSING schema is a FAILURE, not a skip (#37): a validation step that
     passes because it had nothing to check reads exactly like one that passed
     because the data was good, and that is the state this gate exists to
-    prevent. A malformed or invalid schema file is a named failure too, so a
-    typo'd keyword cannot quietly disarm an output's only shape assertion."""
+    prevent. A schema file that is not valid JSON, or that does not conform
+    to the JSON Schema metaschema, is a named failure too. Note this does
+    NOT cover a typo'd or unknown keyword within an otherwise well-formed
+    schema (e.g. "requred" instead of "required") — jsonschema silently
+    ignores unrecognized keywords per the spec, so that class of mistake
+    still validates cleanly and is caught only by review or by the schema
+    actually asserting the wrong thing."""
     for n in names:
         path = SCHEMA_DIR / f"{n}.schema.json"
         if not path.exists():

@@ -24,7 +24,31 @@
           "required": ["start", "end", "mhi", "gini", "top"],
           "properties": {
             "start": { "type": "integer" },
-            "end": { "type": "integer" }
+            "end": { "type": "integer" },
+            "mhi": {
+              "type": "object",
+              "required": ["start", "end"],
+              "properties": {
+                "start": { "type": "integer" },
+                "end": { "type": "integer" }
+              }
+            },
+            "gini": {
+              "type": "object",
+              "required": ["start", "end"],
+              "properties": {
+                "start": { "type": "integer" },
+                "end": { "type": "integer" }
+              }
+            },
+            "top": {
+              "type": "object",
+              "required": ["start", "end"],
+              "properties": {
+                "start": { "type": "integer" },
+                "end": { "type": "integer" }
+              }
+            }
           }
         },
         "gini_basis": { "const": "families" }
