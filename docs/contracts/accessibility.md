@@ -154,9 +154,11 @@ WebKit **26.5** (Playwright WebKit, `AppleWebKit/605.1.15 Version/26.5` — the 
 assistive technology and no Safari.app exist in this environment; every row that needs one reads
 **NOT EXECUTED** and is carried by #80, which blocks `A11Y-2` from `Shipped`.
 
-The greyscale pass is **JavaScript on**. `DebtChart` mounts `client:visible`, so with scripting off
-its `<svg>` is absent entirely and a greyscale render of an absent chart proves nothing; the
-JavaScript-off state is checked by `M5` instead, on its own terms.
+The greyscale pass is **JavaScript on**, because that is the state a sighted reader is in. It is not
+because the charts are missing without it: every section island server-renders its full `<svg>`,
+`DebtChart` included — measured in #36 across all three routes, 25 of 25 figures, and held there
+since by `test_every_figure_server_renders_its_chart_svg`. `client:visible` defers *hydration*, not
+rendering. The JavaScript-off state is checked by `M5` instead, on its own terms.
 
 | Check | Route | Result | Tool | Evidence / issue |
 |---|---|---|---|---|

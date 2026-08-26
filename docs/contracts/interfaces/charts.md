@@ -112,6 +112,17 @@ follows the same skeleton:
    keyboard focus can never announce different text.
 5. A `<TableView>` mirroring the chart's active unit and columns.
 
+**Every island server-renders its whole `<svg>`.** The skeleton above must produce its chart in the
+build output, not on mount: with scripting off a reader still gets the SVG, both axis labels, the
+tick text, the figcaption apparatus and the table. Two things are therefore forbidden — mounting an
+island `client:only` (which emits an empty `<astro-island>` and no chart at all), and gating any
+part of the render on having measured the client, which is why `useChartSize` returns the `WIDE`
+preset *before* measurement rather than `null`. `client:visible` and `client:load` both server-render
+and differ only in when hydration fires, so either is fine.
+`pipeline/tests/test_accessibility.py::test_every_figure_server_renders_its_chart_svg` holds this for
+every `<figure class="figure">` on every built page; `test_government_section_1_renders_its_whole_apparatus_without_scripting`
+holds the fuller enumeration for `DebtChart`.
+
 `LawExplorer.tsx` extends this skeleton with a second focusable set beyond the chart's own
 per-fiscal-year data points: each table row's law-name `<button aria-pressed>` (real button
 semantics, since selecting a law is an action, unlike hovering a datum) also drives the same

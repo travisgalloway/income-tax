@@ -464,3 +464,14 @@ time. Appended to, never rewritten. None of these have been acted on.
   `toFixed(1)` rounds down. Pre-existing and unchanged by #35 (the deleted inline formatter used
   the same `toFixed(1)`), and noted only because the plan's manual-check expectation named
   `$40.1T`. Found while working on #35. Severity: cosmetic, non-blocking.
+- [2026-08-26] **Closed by #36: the `[2026-08-23]` entry above — "§1 (`DebtChart`) mounts with
+  `client:visible`, so its SVG does not exist at all with JavaScript disabled" — does not reproduce
+  and never did.** `client:visible` is not `client:only`: Astro server-renders the island's markup
+  and defers only hydration, `useChartSize` returns the `WIDE` preset before measurement by explicit
+  design, and `Chart` has no mount gate — measured 14/14 chart SVGs on `/government/` and 25/25
+  figures site-wide, §1's at 12,605 bytes with both axis labels, all tick text, the figcaption and
+  the table caption. The contrast the entry drew with §8's `client:load` was the misreading; both
+  server-render and differ only in when hydration fires. #36 shipped the missing regression guard
+  instead (`test_every_figure_server_renders_its_chart_svg`), since the conformance suite iterated
+  the SVGs it found and would have stayed green had one actually vanished. Recorded here rather than
+  by editing that entry: this file is appended to, never rewritten.
