@@ -305,7 +305,17 @@ UNROUTABLE = "https://no-such-host.invalid/never-resolves.csv"
 
 
 def _prime_cache(cache_dir: Path, key: str, body: dict) -> Path:
-    """Write a cache entry exactly as lib/fetch.py would, under `key`."""
+    """Write a cache entry exactly as lib/fetch.py would, under `key`.
+
+    The path actually written is derived from `lib_fetch.CACHE_DIR` (a module
+    global), not from `cache_dir` -- callers must monkeypatch `CACHE_DIR` to
+    `cache_dir` first. The assertion below keeps that requirement honest
+    instead of letting a caller that forgot to monkeypatch write silently to
+    the real cache directory.
+    """
+    assert lib_fetch.CACHE_DIR == cache_dir, (
+        "cache_dir must equal lib_fetch.CACHE_DIR -- monkeypatch it before calling _prime_cache"
+    )
     cache_dir.mkdir(parents=True, exist_ok=True)
     path = lib_fetch._cache_path(key)
     path.write_text(json.dumps(body))
@@ -384,6 +394,22 @@ def test_a_binary_cache_entry_does_not_crash_a_text_fetch(tmp_path, monkeypatch)
 
     with pytest.raises(SourceUnavailable):
         lib_fetch.fetch(UNROUTABLE, source="test")
+
+
+def test_retrieve_rejects_an_unrecognized_method(tmp_path, monkeypatch):
+    """A typo like "post" must fail loudly, not silently fall through to GET."""
+    monkeypatch.setattr(lib_fetch, "CACHE_DIR", tmp_path)
+
+    with pytest.raises(ValueError):
+        lib_fetch._retrieve(UNROUTABLE, source="test", cache_key=UNROUTABLE, method="post")
+
+
+def test_retrieve_rejects_post_without_a_payload(tmp_path, monkeypatch):
+    """POST without a payload is a programming error, not a request to send."""
+    monkeypatch.setattr(lib_fetch, "CACHE_DIR", tmp_path)
+
+    with pytest.raises(ValueError):
+        lib_fetch._retrieve(UNROUTABLE, source="test", cache_key=UNROUTABLE, method="POST")
 
 
 # ---- counted party splits ------------------------------------------------

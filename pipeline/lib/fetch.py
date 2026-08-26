@@ -16,7 +16,7 @@ Design rules, all of which exist because the failure they prevent is silent:
    that the grep proving its absence is part of the contract, so the words for
    it are deliberately absent from this module.
 
-Rules 1-3 are implemented exactly once, in `_retrieve`. The four public entry
+Rules 1-4 are implemented exactly once, in `_retrieve`. The four public entry
 points differ only in method, body type and what they do with the result; when
 they each carried their own copy of the discipline they were free to drift from
 each other, and they had. See docs/contracts/interfaces/pipeline-http.md.
@@ -103,7 +103,16 @@ def _retrieve(
     `write_cache=False` is for `post_json`, which must decode before it caches so
     that a 200 carrying a non-JSON body is never written to disk; it calls
     `_write_cache` itself once the decode has succeeded.
+
+    `method` must be exactly "GET" or "POST" -- anything else (a typo like
+    "post") is rejected here rather than silently treated as a GET, per the
+    "fail loud" contract above. POST additionally requires a `payload`.
     """
+    if method not in ("GET", "POST"):
+        raise ValueError(f"_retrieve: unsupported method {method!r}; expected 'GET' or 'POST'")
+    if method == "POST" and payload is None:
+        raise ValueError("_retrieve: POST requires a payload")
+
     cache_file = _cache_path(cache_key)
     body_key = "b64" if binary else "text"
 
