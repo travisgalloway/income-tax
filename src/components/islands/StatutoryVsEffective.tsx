@@ -18,6 +18,7 @@ import { useChartSize } from '../charts/useChartSize'
 import { TableView } from './TableView'
 import { percentRate, calendarYear } from '../charts/format'
 import type { BracketYear, CboEffectiveRates } from '../../data/types'
+import { ChartHint } from '../charts/ChartHint'
 
 const GROUPS: { key: keyof CboEffectiveRates['rows'][number]['v']; label: string }[] = [
   { key: 'lowest', label: 'Lowest quintile' },
@@ -191,7 +192,7 @@ export function StatutoryVsEffective({
             (activeAnchor
               ? `. CBO anchor point: lowest quintile ${percentRate(activeAnchor.v.lowest)}, top 1% ${percentRate(activeAnchor.v.top1)} (includes payroll tax).`
               : '. No CBO anchor point for this year.')
-          : 'Focus or hover a year to read its value.'}
+          : <ChartHint noun="year" />}
       </p>
 
       <TableView

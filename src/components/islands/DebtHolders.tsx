@@ -20,6 +20,7 @@ import { TableView } from './TableView'
 import { useChartSize } from '../charts/useChartSize'
 import type { Frame } from '../charts/scales'
 import type { DebtHolders as DebtHoldersData } from '../../data/types'
+import { ChartHint } from '../charts/ChartHint'
 
 type FocusKey = 'public' | 'intragov' | 'domestic' | 'foreign' | 'japan' | 'uk' | 'china'
 
@@ -266,7 +267,7 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
       )}
 
       <p aria-live="polite" className="readout">
-        {focus ? describe(focus) : 'Focus or hover a segment to read its value.'}
+        {focus ? describe(focus) : <ChartHint noun="segment" />}
       </p>
 
       <TableView

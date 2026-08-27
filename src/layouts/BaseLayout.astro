@@ -45,6 +45,20 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
           .axis-title { font-size: 19px; }
           .annotation { font-size: 21px; }
         }
+
+        /* #73: with scripting off there is no tap-to-read and no hover
+         * readout — the marks never hydrate, so neither gesture the other two
+         * hint sentences name does anything. The table is the only route to a
+         * number that genuinely works here (TableView is a native <details>),
+         * and the hint must say so. Reuses the mechanism already in <head> for
+         * the chart-legibility mitigation above: no inline script, no `js`
+         * class, no flash, nothing new to hydrate.
+         *
+         * `!important` because this block precedes the bundled stylesheet and
+         * the `@media (hover: …)` rules there would otherwise win on source
+         * order. Verified in the browser (B2c) rather than assumed. */
+        .hint-hover, .hint-touch { display: none !important; }
+        .hint-nojs { display: inline !important; }
       </style>
     </noscript>
   </head>

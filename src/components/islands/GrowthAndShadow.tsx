@@ -14,6 +14,7 @@ import { dollars } from '../charts/format'
 import { TableView } from './TableView'
 import { useChartSize } from '../charts/useChartSize'
 import type { EconomyYear, IncomeYear } from '../../data/types'
+import { ChartHint } from '../charts/ChartHint'
 
 const BASE = 1984
 
@@ -146,7 +147,7 @@ export function GrowthAndShadow({ economyRows, incomeRows }: { economyRows: Econ
       </Chart>
 
       <p aria-live="polite" className="readout">
-        {active ? describe(active) : 'Focus or hover a year to read its value.'}
+        {active ? describe(active) : <ChartHint noun="year" />}
       </p>
 
       <TableView

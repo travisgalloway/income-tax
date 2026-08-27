@@ -21,6 +21,7 @@ import { TableView } from './TableView'
 import { useChartSize } from '../charts/useChartSize'
 import { splitAtBoundary, BoundaryRule, PROJECTED_DASH, PROJECTED_OPACITY } from '../charts/estimates'
 import type { EconomyYear } from '../../data/types'
+import { ChartHint } from '../charts/ChartHint'
 
 interface InflationRow { y: number; actual: boolean; cpiYoy: number | null; pceYoy: number | null }
 
@@ -181,7 +182,7 @@ export function PricesAndRates({ rows, lastActualFy }: { rows: EconomyYear[]; la
       </Chart>
 
       <p aria-live="polite" className="readout">
-        {active && activeInf ? describe(active, activeInf) : 'Focus or hover a fiscal year to read its value.'}
+        {active && activeInf ? describe(active, activeInf) : <ChartHint noun="fiscal year" />}
       </p>
 
       <TableView

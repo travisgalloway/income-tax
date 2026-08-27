@@ -20,6 +20,7 @@ import { UnitToggle } from './UnitToggle'
 import { useChartSize } from '../charts/useChartSize'
 import { UNIT_LABEL, tick, value, fiscalYear, type Unit } from '../charts/format'
 import type { BudgetYear } from '../../data/types'
+import { ChartHint } from '../charts/ChartHint'
 
 /** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
  *  this key rather than typed — see `figureLabel.ts` (#72). */
@@ -215,7 +216,7 @@ export function StructuralGap({ rows }: { rows: BudgetYear[] }) {
       </Chart>
 
       <p aria-live="polite" className="readout">
-        {active ? readoutFor(active) : 'Focus or hover a year to read its value.'}
+        {active ? readoutFor(active) : <ChartHint noun="year" />}
       </p>
 
       <TableView

@@ -17,6 +17,7 @@ import { YearRange } from './YearRange'
 import { TableView } from './TableView'
 import { useChartSize } from '../charts/useChartSize'
 import type { IncomeYear } from '../../data/types'
+import { ChartHint } from '../charts/ChartHint'
 
 export function MedianIncome({ rows }: { rows: IncomeYear[] }) {
   // The series' own start/end, never a hardcoded constant, so a future
@@ -110,7 +111,7 @@ export function MedianIncome({ rows }: { rows: IncomeYear[] }) {
       </Chart>
 
       <p aria-live="polite" className="readout">
-        {active ? fmtFull(active) : 'Focus or hover a year to read its value.'}
+        {active ? fmtFull(active) : <ChartHint noun="year" />}
       </p>
 
       <TableView

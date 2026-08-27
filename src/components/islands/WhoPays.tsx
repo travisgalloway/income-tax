@@ -18,6 +18,7 @@ import { everyLeftGutterLabelFits } from '../charts/axisFit'
 import { TableView } from './TableView'
 import { useChartSize } from '../charts/useChartSize'
 import type { IncomeTaxGroup } from '../../data/types'
+import { ChartHint } from '../charts/ChartHint'
 
 type Metric = 'agi' | 'tax'
 type Active = { g: string; metric: Metric } | null
@@ -199,7 +200,7 @@ export function WhoPays({ rows }: { rows: IncomeTaxGroup[] }) {
       </Chart>
 
       <p aria-live="polite" className="readout">
-        {readoutText ?? 'Focus or hover a bar to read its value.'}
+        {readoutText ?? <ChartHint noun="bar" />}
       </p>
 
       <TableView

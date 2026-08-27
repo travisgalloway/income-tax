@@ -220,11 +220,18 @@ export async function openRoute(
   site: Site,
   route: Route,
   viewport: Viewport,
-  opts: { javaScriptEnabled?: boolean } = {},
+  opts: { javaScriptEnabled?: boolean; hasTouch?: boolean } = {},
 ): Promise<{ context: BrowserContext; page: Page }> {
   const context = await site.browser.newContext({
     viewport: { width: viewport.width, height: viewport.height },
     javaScriptEnabled: opts.javaScriptEnabled ?? true,
+    // `hasTouch` alone yields `(pointer: coarse)`, `(hover: none)`,
+    // `(any-pointer: coarse)` and `maxTouchPoints = 1` — measured, and the
+    // reason `isMobile` is deliberately NOT set: it forces a mobile UA and a
+    // viewport meta override, neither of which the touch contract (#73) is
+    // about, and both of which would make the lane measure a different page
+    // than the one the desktop specs measure.
+    hasTouch: opts.hasTouch ?? false,
     deviceScaleFactor: 1,
   })
   const page = await context.newPage()

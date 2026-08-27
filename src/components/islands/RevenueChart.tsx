@@ -19,6 +19,7 @@ import { TableView } from './TableView'
 import { useChartSize } from '../charts/useChartSize'
 import type { RevenueYear } from '../../data/types'
 import { labelledByFigure } from './figureLabel'
+import { ChartHint } from '../charts/ChartHint'
 
 /** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
  *  this key rather than typed — see `figureLabel.ts` (#72). */
@@ -285,7 +286,7 @@ export function RevenueChart({ rows }: { rows: RevenueYear[] }) {
       </Chart>
 
       <p aria-live="polite" className="readout">
-        {active ? describeYear(active, view) : 'Focus or hover a year to read its value.'}
+        {active ? describeYear(active, view) : <ChartHint noun="year" />}
       </p>
 
       <TableView

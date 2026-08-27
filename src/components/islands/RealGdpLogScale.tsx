@@ -17,6 +17,7 @@ import { TableView } from './TableView'
 import { useChartSize } from '../charts/useChartSize'
 import { splitAtBoundary, BoundaryRule, PROJECTED_DASH, PROJECTED_OPACITY } from '../charts/estimates'
 import type { EconomyYear } from '../../data/types'
+import { ChartHint } from '../charts/ChartHint'
 
 /** The single source of truth for a fiscal year's readout text: the focus
  *  rects' aria-label and the live-region paragraph both call this, so hover
@@ -131,7 +132,7 @@ export function RealGdpLogScale({ rows, lastActualFy }: { rows: EconomyYear[]; l
       </Chart>
 
       <p aria-live="polite" className="readout">
-        {active ? describe(active) : 'Focus or hover a fiscal year to read its value.'}
+        {active ? describe(active) : <ChartHint noun="fiscal year" />}
       </p>
 
       <TableView
