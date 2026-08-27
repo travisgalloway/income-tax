@@ -209,6 +209,37 @@ itself is still reused as-is for the tax-mix figure (`StateTaxMix.tsx`), which n
 whose collapsed-by-default behaviour is acceptable there because it is a supplementary detail
 table, not the chart's only non-visual path.
 
+**On a narrow viewport the table keeps all five columns, and identification is carried by a pinned
+row header rather than by a reduced column set (#63).** The reason is the one directly above,
+applied one layer down: this table is the cartogram's *primary* non-visual equivalent, chosen over
+`TableView` precisely because a reader must not have to open anything to reach it. Dropping columns
+below a breakpoint reintroduces exactly that — data behind a gesture — and a screen-reader user on a
+390px phone would lose them from the accessibility tree as well. So the strategy is **scroll, with
+the name kept on screen**, in three declarations in `global.css`:
+
+- `.sortable-table th[scope='row']` and `.sortable-table thead th:first-child` are `position:
+  sticky; left: 0` with `background: var(--ground)` — the page background token, because the cells
+  that scroll underneath sit on the page background, and because a sticky cell without an opaque
+  background of its own is the same as no sticky cell. `z-index: 1` is on both and no stacking
+  context is introduced on `.tableview-scroll`.
+- `.sortable-table caption` is `position: sticky; left: 0; width: 100cqi`. A `<caption>`'s box is
+  the *table's* width, so `max-width: 100%` would resolve against the overflowing table — the bug
+  itself — and `100vw` would overshoot the wrapper by the page's own margins. `100cqi` is the
+  wrapper's own inline size, which is why `.tableview-scroll` carries `container-type: inline-size`.
+  That declaration is site-wide and inert for the tables that do not query it.
+- Inside `@media (max-width: 30rem)`, `.sortable-table thead th` and `.sortable-table
+  th[scope='row']` drop to `white-space: normal`. Header labels and jurisdiction names are words and
+  may wrap; the data cells keep `nowrap`, because a broken number is a misread number. This is a
+  reduction of the distance to scroll, not a substitute for the pinned column — the two ship
+  together.
+
+Everything in that list is scoped to `.sortable-table`, which is §11's alone, except
+`container-type` on the shared wrapper. Nothing here is scripted, so it holds with JavaScript off.
+The measured before/after at 390×844 is in `contracts/accessibility.md` § "Government §11's
+by-state table at 390px (#63)". The **at-rest affordance** that a wide table scrolls at all — fade,
+shadow, persistent scrollbar or text hint, on `.tableview-scroll` and `.law-table-scroll` alike — is
+**#76**, deliberately not part of the above; keyboard operability of those wrappers is **#71**.
+
 `StatesTaxMix`'s `not_levied` vs `null`-alone distinction (`docs/contracts/interfaces/state-data.md`)
 renders as `"none levied"` vs `"no data"` — the same two words a reader needs to tell "this state
 doesn't have this tax" from "we don't have this figure" apart, and the page's closing `<p

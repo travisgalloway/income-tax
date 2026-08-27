@@ -1770,3 +1770,232 @@ def test_the_scroll_box_guard_bites_each_way_it_can_regress():
     ):
         assert mutant != css, f"the mutant for {why!r} did not apply"
         assert two_axis_scroll_box_failures(mutant), f"{why} passed"
+
+
+# ---- Government §11's by-state table on a phone (#63) ----------------------
+#
+# **None of these four guards can see the defect they exist to protect.**
+# Width, `overflow`, sticky offsets and `cqi` resolution are all *computed*;
+# `dist/` carries markup and a stylesheet, not a layout. What they prove is
+# that the declarations which produce the fixed behaviour are still present,
+# so a later sweep cannot quietly delete them. The behaviour itself is a
+# measured browser observation, recorded as such in
+# `docs/contracts/accessibility.md` § "Government §11's by-state table at
+# 390px"; #67 owns automating it.
+
+_STICKY_ROW_HEADER_SELECTORS = (
+    ".sortable-table th[scope='row']",
+    ".sortable-table thead th:first-child",
+)
+
+
+def pinned_row_header_failures(css_text: str) -> list[str]:
+    """Every selector that pins §11's name column must declare `position:
+    sticky`, a `left` offset, and an opaque background drawn from a token.
+
+    A sticky cell with no background of its own is the same as no sticky cell:
+    the four number columns scroll *through* it."""
+    failures: list[str] = []
+    for selector in _STICKY_ROW_HEADER_SELECTORS:
+        bodies = [
+            body for selectors, body in iter_css_rules(css_text)
+            if selector in selectors
+        ]
+        if not bodies:
+            failures.append(f"{selector} has no rule in global.css")
+            continue
+        joined = " ".join(bodies)
+        if not re.search(r"position\s*:\s*sticky", joined):
+            failures.append(f"{selector} does not declare `position: sticky`")
+        if not re.search(r"(?:^|;|\s)left\s*:", joined):
+            failures.append(f"{selector} declares no `left` offset to stick at")
+        m = re.search(r"background(?:-color)?\s*:\s*([^;]+)", joined)
+        if m is None:
+            failures.append(
+                f"{selector} sets no background, so the columns it pins "
+                "scroll through it"
+            )
+        elif "var(--" not in m.group(1) or "transparent" in m.group(1):
+            failures.append(
+                f"{selector} sets background {m.group(1).strip()!r}, which is "
+                "not an opaque palette token"
+            )
+    return failures
+
+
+def test_the_by_state_row_header_column_is_pinned():
+    assert not pinned_row_header_failures(GLOBAL_CSS.read_text())
+
+
+def caption_container_bound_failures(css_text: str) -> list[str]:
+    """§11's caption must be sized against the scroll container's own inline
+    size, and `.tableview-scroll` must actually be a query container.
+
+    A `<caption>`'s box is the *table's* width, so `max-width: 100%` resolves
+    against the 745px that is the bug. The two declarations are useless apart,
+    which is why one guard asserts both."""
+    failures: list[str] = []
+    rules = list(iter_css_rules(css_text))
+
+    caption = " ".join(
+        body for selectors, body in rules
+        if ".sortable-table caption" in selectors
+    )
+    if not caption:
+        failures.append(".sortable-table caption has no rule in global.css")
+    else:
+        m = re.search(r"(?:^|;|\s)(?:max-)?width\s*:\s*([^;]+)", caption)
+        if m is None:
+            failures.append(
+                ".sortable-table caption sets no width, so its box is the "
+                "table's 745px and its first line runs off a 390px phone"
+            )
+        elif "cqi" not in m.group(1) and "vw" not in m.group(1):
+            failures.append(
+                f".sortable-table caption is sized {m.group(1).strip()!r}, "
+                "which resolves against the table rather than the window it "
+                "scrolls inside"
+            )
+        if not re.search(r"position\s*:\s*sticky", caption):
+            failures.append(
+                ".sortable-table caption is not sticky, so it scrolls out of "
+                "the window with the table"
+            )
+
+    wrapper = " ".join(
+        body for selectors, body in rules if ".tableview-scroll" in selectors
+    )
+    if not wrapper:
+        failures.append(".tableview-scroll has no rule in global.css")
+    elif not re.search(r"container-type\s*:\s*inline-size", wrapper):
+        failures.append(
+            ".tableview-scroll is not `container-type: inline-size`, so "
+            "`cqi` inside it resolves against the viewport, not the wrapper"
+        )
+    return failures
+
+
+def test_the_by_state_caption_is_bound_to_its_scroll_container():
+    assert not caption_container_bound_failures(GLOBAL_CSS.read_text())
+
+
+_TABLE_CELL_SELECTOR_RE = re.compile(r"(?<![\w.#\-])(td|th|col|caption)(?![\w\-])")
+_CELL_HIDDEN_RE = re.compile(r"display\s*:\s*none|visibility\s*:\s*hidden")
+
+
+def hidden_table_cell_failures(css_text: str) -> list[str]:
+    """No rule anywhere in the stylesheet may hide a table cell.
+
+    The cheapest way to make a wide table fit a phone is to drop columns, and
+    #63's contract forbids it: §11's table is the cartogram's primary
+    non-visual equivalent, so a reader on a narrow viewport still needs all
+    five columns. Written over the whole stylesheet rather than over §11's
+    selectors, so a future table is covered without editing this suite."""
+    failures: list[str] = []
+    for selectors, body in iter_css_rules(css_text):
+        cells = [s for s in selectors if _TABLE_CELL_SELECTOR_RE.search(s)]
+        if cells and _CELL_HIDDEN_RE.search(body):
+            failures.append(
+                f"{', '.join(cells)} hides a table cell: {body.strip()!r}"
+            )
+    return failures
+
+
+def test_no_stylesheet_rule_hides_a_table_cell_at_a_breakpoint():
+    assert not hidden_table_cell_failures(GLOBAL_CSS.read_text())
+
+
+def test_the_by_state_table_serves_all_five_columns_with_scripting_off():
+    """The served-DOM half of #63: §11's table is always-visible markup, not a
+    disclosure and not a hydration product, so all five columns and every
+    jurisdiction row are in the built bytes."""
+    path = DIST / "government" / "index.html"
+    assert path.exists(), "dist/government/index.html is missing — run `npm run build`"
+    root = parse_html(path)
+
+    tables = [
+        n for n in nodes_of(root, "table") if "sortable-table" in n.classes()
+    ]
+    assert len(tables) == 1, (
+        f"expected exactly one .sortable-table on /government/, found {len(tables)}"
+    )
+    table = tables[0]
+
+    col_headers = [
+        n for n in nodes_of(table, "th") if n.get("scope") == "col"
+    ]
+    assert len(col_headers) == 5, (
+        "§11's by-state table must serve all five columns at every viewport; "
+        f"the build has {len(col_headers)}"
+    )
+    for th in col_headers:
+        buttons = [
+            n for n in th.iter_descendants()
+            if n.tag == "button" and "sort-button" in n.classes()
+        ]
+        assert buttons, (
+            f"column header {th.text()!r} ships no .sort-button — the sort "
+            "controls are this figure's only controls"
+        )
+
+    row_headers = [n for n in nodes_of(table, "th") if n.get("scope") == "row"]
+    assert len(row_headers) >= 51, (
+        "the 50 states and DC must each be a row header in the served markup; "
+        f"found {len(row_headers)}"
+    )
+
+
+def test_the_by_state_guards_bite_the_ways_the_fix_can_regress():
+    """Each of the three stylesheet guards above, against the mutant that
+    removes exactly what it protects."""
+    css = GLOBAL_CSS.read_text()
+    assert not pinned_row_header_failures(css)
+    assert not caption_container_bound_failures(css)
+    assert not hidden_table_cell_failures(css)
+
+    unpinned = _mutate_rule(
+        css, ".sortable-table thead th:first-child", "position: sticky;", ""
+    )
+    assert unpinned != css, "the unpinned mutant did not apply"
+    assert pinned_row_header_failures(unpinned), "a name column with no sticky passed"
+
+    see_through = _mutate_rule(
+        css,
+        ".sortable-table thead th:first-child",
+        "background: var(--ground);",
+        "background: transparent;",
+    )
+    assert pinned_row_header_failures(see_through), (
+        "a sticky cell with a transparent background passed — the numbers "
+        "would scroll straight through the name"
+    )
+
+    table_bound = _mutate_rule(
+        css, ".sortable-table caption", "width: 100cqi;", "max-width: 100%;"
+    )
+    assert caption_container_bound_failures(table_bound), (
+        "a caption sized against the table's own 745px passed"
+    )
+
+    uncontained = _mutate_rule(
+        css, ".tableview-scroll", "container-type: inline-size;", ""
+    )
+    assert caption_container_bound_failures(uncontained), (
+        "a `cqi` caption inside a wrapper that is not a query container passed"
+    )
+
+    dropped_column = css + (
+        "\n@media (max-width: 30rem) {\n"
+        "  .sortable-table td:nth-child(4) { display: none; }\n"
+        "}\n"
+    )
+    assert hidden_table_cell_failures(dropped_column), (
+        "a breakpoint that drops the Net balance column passed"
+    )
+
+    # And the guard must not sweep in a rule that hides something which is not
+    # a table cell — `.tableview .tv-close` and the navbar chrome are both
+    # `display: none` today.
+    assert not hidden_table_cell_failures(
+        css + "\n.tableview .tv-close { display: none; }\n"
+    ), "a non-cell `display: none` was reported as a hidden column"

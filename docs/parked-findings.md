@@ -1132,3 +1132,14 @@ time. Appended to, never rewritten. None of these have been acted on.
   widest element on the route by a factor of five and is the subject of #63; noted here only
   because #62's page-overflow measurement had to attribute the number to something. Found while
   measuring criterion 6 for #62. Severity: already owned by #63, non-blocking.
+- [2026-08-27] `src/styles/global.css:652` `.law-table-scroll` — §10's law table measures **1481px
+  inside a 350px window** at 390×844, which is three times §11's overflow, and it has no column
+  strategy of its own: nothing pins its name column and its caption's box is the table's full
+  width. #76 gives it the at-rest affordance and #63's scope was explicitly the by-state table
+  alone, so nothing owns making its columns identifiable while scrolled. Found while measuring
+  #63's before/after. Severity: accessibility, narrow viewport, non-blocking.
+- [2026-08-27] `src/styles/global.css:857` `.sortable-table` is 745px inside a 736px
+  `.tableview-scroll` at **1280×900** — a 9px horizontal overflow at full desktop width, present
+  before #63 and unchanged by it. Small enough to read as a rendering artefact rather than a
+  scroll, which is the case an at-rest affordance (#76) would make legible or a `min-width: 0`
+  pass would remove. Found while running #63's desktop check. Severity: cosmetic, non-blocking.

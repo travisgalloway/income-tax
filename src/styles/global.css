@@ -459,7 +459,12 @@ figcaption .lead,
 .tableview[open] .tv-open { display: none; }
 .tableview[open] .tv-close { display: inline; }
 
-.tableview-scroll { overflow-x: auto; margin-top: 0.9rem; }
+/* `container-type: inline-size` makes this wrapper a query container so a
+ * descendant can size itself against the *window* the table scrolls inside
+ * rather than against the table's own overflowing width. §11's caption is the
+ * one such descendant today (#63); the declaration is inert for the tables
+ * that do not query it. */
+.tableview-scroll { overflow-x: auto; margin-top: 0.9rem; container-type: inline-size; }
 .tableview table {
   border-collapse: collapse;
   font-family: var(--font-data);
@@ -868,6 +873,14 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   color: var(--ink-soft);
   font-size: 0.875rem;
   padding-bottom: 0.5rem;
+  /* A `<caption>`'s box is the table's width, so at 745px the caption's first
+   * line ran 375px past a 390px phone before it wrapped (#63). `cqi` is the
+   * scroll container's own inline size — 350px there — so the text wraps
+   * where the reader can see it, and `sticky` keeps it there while the
+   * numbers scroll under it. */
+  position: sticky;
+  left: 0;
+  width: 100cqi;
 }
 .sortable-table th, .sortable-table td {
   text-align: right;
@@ -884,6 +897,32 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 .sortable-table tbody tr { border-bottom: var(--rule-hair) solid var(--rule); }
 .sortable-table tbody tr:last-child { border-bottom: var(--rule-width) solid var(--ink); }
 .sortable-table th[scope='row'] { text-align: left; font-weight: 400; }
+
+/* The name column is the row's identity: it is a `<th scope="row">`, and the
+ * four number columns mean nothing without it. The table is 745px of
+ * `white-space: nowrap` inside a 350px window at 390px (#63), so without this
+ * the reader drags the name off-screen to reach the numbers it labels.
+ * `--ground` (not `--panel`) because the cells that scroll underneath sit on
+ * the page background. */
+.sortable-table th[scope='row'],
+.sortable-table thead th:first-child {
+  position: sticky;
+  left: 0;
+  background: var(--ground);
+  z-index: 1;
+}
+
+@media (max-width: 30rem) {
+  /* Four long labels held on one line each are most of the 745px. Wrapping
+     them shortens the distance to scroll without removing a column; the data
+     cells keep `nowrap` because a broken number is a misread number. */
+  .sortable-table thead th { white-space: normal; }
+  /* The row header is a name, not a number, so it may wrap too. Held on one
+     line, `District of Columbia (DC)` makes the pinned column 207px of a
+     350px window (#63, E3) and leaves too little of the window for the value
+     it labels. */
+  .sortable-table th[scope='row'] { white-space: normal; }
+}
 
 .sort-button {
   font: inherit;
