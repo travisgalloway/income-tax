@@ -1409,6 +1409,15 @@ a reader opens them. **No bound was raised**, and the worst state the site can r
 still clears `MAX_STOPS_TO_SECTION_11` by 7 and `MAX_STOPS_GOVERNMENT` by 25. That all-open state is
 asserted by `scroll.test.ts`; no test exercised it before #71.
 
+**How many containers overflow is PLATFORM-DEPENDENT, and no guard pins the number.** `tokens.css`
+documents a deliberate system-font stack with no webfont, so table widths differ by operating
+system: `/government` at 1440px measures **5** overflowing containers on macOS and **4** in CI's
+Linux Chromium, because one table clears its box by a few pixels on one and not the other. Every
+assertion here is written against the *invariant* — focusable exactly when it overflows — or
+self-baselined against a walk with the feature stripped, never against a count. A future guard that
+pins "5" would be red on half the machines that run it, which is the same class of failure
+`TOLERANCE_PX` exists to prevent.
+
 **The focus ring needed no stylesheet change.** The global
 `:focus-visible { outline: 1.5px solid var(--ink); outline-offset: 2px; }` paints on the container,
 whose box is exactly the `<figure>`'s, and `documentElement.scrollWidth` stays at the viewport width

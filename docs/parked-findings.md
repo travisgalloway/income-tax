@@ -1315,3 +1315,17 @@ time. Appended to, never rewritten. None of these have been acted on.
   container. Nothing is over the bound and no bound was raised, but that is the thinnest margin any
   walk in this repository now has, and the next section added above §11 will spend it. Found while
   measuring #71's worst case. Severity: coverage, non-blocking.
+- [2026-08-27] The browser lane stalled once in CI on this branch's first run — `npm run
+  test:browser` produced no output for 13 minutes after `keyboard.test.ts`'s last test and had to be
+  cancelled; the identical commit's tests then passed in 65 seconds on the next run, and no cause
+  was identified. `node --test` has no default test timeout and `.github/workflows/checks.yml` has no
+  step timeout, so the job would have burned the six-hour limit naming nothing. `scroll.test.ts` now
+  carries a 90s per-test ceiling and a `t.diagnostic` per page in its two six-page sweeps; the other
+  three spec files do not, and a step-level `timeout-minutes` on the workflow would bound all four.
+  Found while opening #71's PR. Severity: CI reliability, non-blocking.
+- [2026-08-27] `/government` at 1440px measures 5 overflowing scroll containers on macOS and 4 in
+  CI's Linux Chromium — one table clears its 736px box by a few pixels on one platform and not the
+  other, which follows from `tokens.css`'s deliberate no-webfont system stack. Nothing is wrong and
+  no guard is affected (#71's are invariant-based or self-baselined), but any future assertion that
+  pins an overflow *count* will be red on half the machines that run it. Found while reading #71's
+  first green CI run. Severity: coverage, non-blocking.
