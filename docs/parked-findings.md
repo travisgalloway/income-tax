@@ -1245,3 +1245,29 @@ time. Appended to, never rewritten. None of these have been acted on.
   and `axisFit.test.ts` exercises the branch. Noted so a later reader does not read it as dead code
   and delete the guard rail. Found while generalising the formatter for #66. Severity: none,
   informational.
+- [2026-08-27] `src/components/charts/Chart.tsx` renders every chart with a `viewBox` and no
+  `overflow: visible`, so a `<text>` drawn below the viewBox is clipped mid-glyph exactly as #64's
+  horizontal case was. The browser lane's first run found **19** of them: `YEARS TO MATURITY` on
+  `/government#how-old` renders as its top halves at both viewports, along with `Domestic $22.50T`,
+  `Foreign $9.64T`, the seven maturity axis ticks, `Control: FY1995–2025`, `United Kingdom $880B`,
+  `China $684B`, `Party control curated for FY1995–2025 only`, and `Tax year` and the schedule-ladder
+  panel title on `/households`. Same defect class as #64, second axis. The counts are pinned in
+  `tests/browser/smoke.test.ts`'s `VERTICAL_CLIP_BASELINE`, so the set cannot grow silently. Found
+  while building the browser lane for #67. Severity: correctness, user-visible.
+- [2026-08-27] `src/styles/global.css:928` — `.basis-toggle-item` (the `#by-state` "per person /
+  in total" toggle) is `.unit-toggle-item`'s visual twin but was never added to the shared
+  `::before` target overlay at `:462`, so its hit area measures **16px** against the 24px
+  `--target-min` floor — a WCAG 2.5.8 miss #65's stylesheet audit did not catch because the class
+  was not in its list. Carried as a named exception in `tests/browser/smoke.test.ts`'s
+  `KNOWN_UNDERSIZED`. Found while building the browser lane for #67. Severity: accessibility,
+  user-visible.
+- [2026-08-27] `.github/workflows/checks.yml` is not a **required** status check, and deliberately
+  not made one in #67. A required status check that never reports blocks every merge permanently
+  with no error message, and this repository had zero CI contexts before this PR. The precondition
+  for requiring it is that it has reported green on at least one real pull request. That is a
+  repository-settings change, not a file in the diff. Found while adding PR-triggered CI for #67.
+  Severity: process, non-blocking.
+- [2026-08-27] `docs/contracts/accessibility.md:1189` — the greyscale luminance-ratio table is
+  computed from the rendered DOM and is mechanisable by the browser lane, but it is #30's artefact
+  and automating it from #67 would widen that issue's scope. Found while cataloguing the deferred
+  measurements for #67. Severity: coverage, non-blocking.
