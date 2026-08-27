@@ -111,9 +111,14 @@ export function curatedVintage(meta: Meta, asOf: string): string {
 
 /** `2025-11` -> `November 2025`. A release month, not a day. */
 function longMonth(isoMonth: string): string {
-  const [y, m] = isoMonth.split('-').map(Number)
-  const name = MONTHS[m - 1]
-  if (!name || !Number.isFinite(y)) {
+  const match = /^(\d{4})-(\d{2})$/.exec(isoMonth)
+  if (!match) {
+    throw new Error(`longMonth: ${JSON.stringify(isoMonth)} is not a YYYY-MM release month.`)
+  }
+  const [, yStr, mStr] = match
+  const y = Number(yStr)
+  const name = MONTHS[Number(mStr) - 1]
+  if (!name) {
     throw new Error(`longMonth: ${JSON.stringify(isoMonth)} is not a YYYY-MM release month.`)
   }
   return `${name} ${y}`
