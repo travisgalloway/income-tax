@@ -23,7 +23,8 @@ glossary: defineCollection({
     short:      z.string().min(20).max(180),
     long:       z.string().min(80),
     source:     z.array(z.enum(REGISTER_KEYS)).min(1)
-                  .transform((keys) => ({ keys, text: sourceLine(keys) })),
+                  .transform((keys) => ({ keys, text: sourceLine(keys), links: sourceLinks(keys) })),
+    abbr:       z.array(z.string().min(1)).default([]),
     see_also:   z.array(z.string()).default([]),
     first_used: z.object({
       route:  z.enum(['/economy', '/households', '/government']),
@@ -38,7 +39,8 @@ glossary: defineCollection({
 | `term` | Display text. Recasing or rewording it must never move an anchor — see the slug rule below. |
 | `short` | One sentence. Floored at 20 characters so a stub is a build failure, **capped at 180 so it fits an in-prose popover**. The cap is the schema's job: a definition that will not fit in place is caught now, not discovered later by #47. |
 | `long` | The full entry, plain text. |
-| `source` | A **non-empty YAML block sequence of `pipeline/curated/sources.yaml` `registry:` keys**, never prose (#50). The rendered line is each key's `registered_as`, verbatim, joined by `"; "`, produced at build time by `src/data/source-register.ts` and never stored under `src/`. `z.enum` over the register's keys makes an unresolvable key a schema failure, so the raw key has no code path to the page; `.min(1)` covers an empty list and a missing `source` is Zod's own required-field failure. The rendered text is never a URL, which is how "zero external hyperlinks" stays true. |
+| `source` | A **non-empty YAML block sequence of `pipeline/curated/sources.yaml` `registry:` keys**, never prose (#50). The rendered line is each key's `registered_as`, verbatim, joined by `"; "`; `links` carries the same citations resolved into followable links, with each source's tier (#57) — an addition beside `text`, never a replacement. Both are produced at build time by `src/data/source-register.ts` and never stored under `src/`. `z.enum` over the register's keys makes an unresolvable key a schema failure, so the raw key has no code path to the page; `.min(1)` covers an empty list and a missing `source` is Zod's own required-field failure. The rendered text is never a URL, which is how "zero external hyperlinks" stays true. |
+| `abbr` | The short forms a reader meets **in place of** `term`: an acronym (`CBO`), an initialism with a suffix (`CPI-U`), a clipped noun (`intragovernmental`). Never a synonym, never a related word. Added by #59, and load-bearing twice. It is what makes "defined at first use" mechanical — `pipeline/tests/test_prose.py`'s Criterion 4 checker searches the served prose for `term` **plus every `abbr`**, so declaring one can turn a green page red, which is the field working: it means a reader was meeting the term before the marker. And every **all-caps** surface form in this collection is derived out of it into `REGISTERED_INITIALISMS`, whose remaining hand-named half the same file asserts is **disjoint** from it — so an acronym that gains an entry leaves the hand-named list in the same commit. Optional, defaults to `[]`. |
 | `see_also` | Sibling term **ids** (filename slugs), not display text. Optional, defaults to `[]`. |
 | `first_used` | Where a reader first meets the term. The route enum is the three routes that carry a contents list; the anchor is checked against `routeSections` at build time. |
 
@@ -147,19 +149,36 @@ file for it.
 
 ## Which terms are in, and which are deliberately out
 
-**23 files.** `structural deficit` / `cyclical deficit` is one bullet in #45 and two entries here,
+**29 files.** `structural deficit` / `cyclical deficit` is one bullet in #45 and two entries here,
 for the same reason `nominal` / `real` is: each is only meaningful against the other, so each needs
 its own anchor for a popover to point at.
 
-Three first-pass candidates are **deliberately absent**, each confirmed by grep against the prose:
+**Six of the 29 are acronyms, added by #59** and each carrying the acronym as its `abbr` rather
+than as its `term`: `congressional-budget-office` (CBO), `gross-domestic-product` (GDP),
+`consumer-price-index` (CPI, CPI-U), `pce-price-index` (PCE, core PCE),
+`internal-revenue-service` (IRS) and `oecd` (OECD). The `term` is the expansion because that is
+what a glossary heading should read as; the acronym is what the prose actually says, which is what
+`abbr` is for. **`FY` is not a seventh entry**: `fiscal-year` already exists, so `FY` is an `abbr`
+on it. Two entries for one concept is the failure `abbr` exists to prevent.
+
+Deliberately absent, each judged against the prose rather than assumed:
 
 | Term | Why not |
 |---|---|
 | `automatic stabilizers` | Zero occurrences in the routes' prose. |
 | `labor share` | Zero occurrences. The routes say "labour force", which is a different term. |
 | `mean` | Zero occurrences as a standalone contrast to `median`. |
+| `noncyclical` | Occurs on `/economy` §3 as "the noncyclical rate", where the sentence beside it *is* the definition ("the rate the series would sit at with the business cycle taken out"). A glossary entry would be a second, competing gloss of a term the prose already explains in place. |
+| `offsetting receipts` | Occurs on `/government` only inside a `<Figure note>`, which is a `string` prop and cannot carry a marker (`src/components/Figure.astro:38`), and inside prose that defines it in the same clause ("net of offsetting receipts, the basis used throughout this section"). |
+| `FRED` | A data host, not a concept: the routes cite it as a provenance label ("Census/FRED"), and the thing a reader needs to know about it is where the number came from, which `/sources` answers. Stays in `REGISTERED_INITIALISMS`' hand-named half. |
+| `AGI`, `TIC`, `TCJA`, `MSPD` | Named by #59's original ticket text, but measured against the built pages they occur in **no** markable prose element on any route — only in figure notes, source lines and register keys, all of which are quoted material. A term is added when the prose uses it. |
+| `ACA`, `CARES`, `IRA`, `JGTRRA`, `PL`, `CHIPS`, `PATH` | Published short names of laws, reaching prose through `pipeline/curated/laws.yaml`. The site quotes the name a statute is known by; expanding it would be editing quoted material, which Criterion 7 forbids. |
+| `DC`, `UK`, `US`, `EE`, `II`, `HTML` | Places, a savings-bond series, a Roman ordinal and a file format. None is a concept this site defines. |
 
-A term is added here when the prose uses it, not in anticipation of prose that might.
+A term is added here when the prose uses it, not in anticipation of prose that might. The judgement
+for every acronym that reaches markable prose is recorded per route in
+`docs/contracts/prose.md`'s **Criterion 4 audit**, and that table's row set is asserted **equal** to
+what `dist/` carries, so neither a new acronym nor a removed one can leave the judgement stale.
 
 ## In-prose markers — the `<Term>` consumer seam (#47)
 
@@ -188,23 +207,37 @@ subset. `nominal` is `first_used` on `/economy` and is marked independently on `
 `/government` too.
 
 > On each of the three route pages, for each glossary term, wrap the **first occurrence in
-> rendered prose** — text inside `<p class="prose">`, `<p class="standfirst">`, `<h2>` or `<li>` —
-> where the term is used *as the term*. Nothing else.
+> markable prose** — text inside an element carrying `prose`, `standfirst` or `finding` — where
+> the term is used *as the term*, counting every surface form the entry declares in `abbr`.
+> Nothing else.
 
-Four exclusions, each for its own reason:
+Three exclusions, each for its own reason:
 
 - **`<Figure>` props.** `ariaLabel`, `title`, `source`, `note` and `vintage` are `string` props
   validated at `Figure.astro:37-41`. They cannot carry markup — captions are not merely out of
-  scope, they are impossible.
-- **Island props.** Same reason.
-- **`<p class="finding">`.** The single-sentence assertion restating each figure is deliberately
-  terse and number-dense; the marked set belongs in the explanatory prose a reader is reading.
+  scope, they are impossible. This is why `.figure-caveat` is outside "markable prose" by
+  **structure** rather than by an exemption list.
+- **Island props, and prose assembled from curated data.** Same reason. `/government` §6's ‡
+  footnote is `pipeline/curated/laws.yaml:287` rendered as a string, so its "No roll call exists"
+  cannot carry a marker even though it renders inside a `.prose` element.
 - **Second and subsequent uses**, and an occurrence that is already the text of an `<a>` — an
   anchor cannot nest, so `net interest` on `/economy` (its only occurrence there is the cross-route
   link in §4) is marked on `/government` instead.
 
-`test_no_page_marks_a_term_twice` is the machine-checkable half. Whether a marker sits on the
-genuinely *first* occurrence is a reading check, named as such rather than pretended into a test.
+**#59 removed a fourth exclusion.** #47 kept markers out of `<p class="finding">` on the grounds
+that a finding is terse and number-dense. Criterion 4 counts a finding as a first use — a reader
+meets `intragovernmental` in `/government` §2's finding a full paragraph before §2's prose — so
+findings are now markable, and four markers sit in one. The constraint #47 was protecting still
+holds and is checked: a finding and its chart `aria-label` are deliberately the same sentence, and
+`_deep_text` skips `.term-pop`, so wrapping a word changes no served text and
+`test_every_chart_svg_states_a_finding` is unaffected.
+
+`test_no_page_marks_a_term_twice` is one machine-checkable half.
+`test_every_marked_term_sits_at_its_first_use` in `pipeline/tests/test_prose.py` is the other, and
+it is what closed the gap this paragraph used to name: whether a marker sits on the genuinely
+*first* occurrence was a reading check until #59 made it an assertion over the served bytes. What
+is still a reading is which *sense* of a word is on the page — see that test's docstring, and
+Checklist item 4 in `docs/contracts/prose.md`.
 
 ### Terms whose `first_used` route carries no marker
 
@@ -256,8 +289,15 @@ failure. `content-sources.md` §"A glossary term's `source` is a reference into 
 the full statement, including the qualifiers six terms lost and why keeping them would have been the
 second copy through a side door.
 
-**#59 — every technical term is defined the first time a reader meets it.** Attaches to
-`first_used` and the term list. `getCollection('glossary')` plus `first_used.{route,anchor}` is the
-machine-readable list #59's verification needs, and the build-time check guarantees every
-`first_used` still points at a section that exists. **What is not here**: nothing asserts the term
-is actually *defined or linked* at that point in the prose — only that its target exists.
+**#59 — every technical term is defined the first time a reader meets it. Shipped.** It attached to
+`first_used` and the term list, and it closed the gap this entry used to end on. Three things
+landed. The `abbr` field, so the short form a reader actually meets is data rather than a hand-kept
+map, and so `REGISTERED_INITIALISMS`' acronym half is derived out of this collection. Six acronym
+entries, taking the collection from 23 to 29. And two assertions over `dist/` in
+`pipeline/tests/test_prose.py` — that no marked term's surface form appears earlier in markable
+prose than its marker, and that every content route marks every glossary term it uses there —
+neither with a baseline, because seven measured violations sat on `prose.md` rule 3's fix-all road.
+**What is still not here**: which *sense* of a word is on the page. `real money` and `real terms`
+are the same eight characters to a matcher, and the fix menu is therefore two-item — move the
+marker, or reword the earlier sentence — which is why Checklist item 4 in `docs/contracts/prose.md`
+stays NOT EXECUTED.

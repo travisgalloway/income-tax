@@ -43,8 +43,11 @@ from pathlib import Path
 import pytest
 
 from test_accessibility import (  # noqa: F401  (Node/nodes_of re-exported for symmetry)
+    GLOSSARY_DIR,
+    UNMARKED_AT_FIRST_USE,
     Node,
     finding_shape_problems,
+    glossary_terms,
     nodes_of,
     parse_html,
 )
@@ -92,17 +95,26 @@ DIGIT_RUN = re.compile(r"\d[\d.,]*")
 #: two literal hyphens. Ruling 1 retires it outright rather than blessing it as an ASCII stand-in.
 BANNED_DASHES = ("—", " -- ")
 
-#: Acronyms and initialisms this site is entitled to write in capitals. An explicit named set, in
-#: the idiom of `test_accessibility.py`'s `FIGURES_WITHOUT_A_CHART` — it cannot be derived from
-#: `src/content/glossary/`, whose 23 entries are all words and none an acronym. If #59 adds acronym
-#: entries, deriving this from the glossary is #59's move to make.
-REGISTERED_INITIALISMS = frozenset(
+#: **Half** of the acronyms and initialisms this site is entitled to write in capitals: the ones
+#: with **no glossary entry**, each because the site does not define it. The other half is derived
+#: from `src/content/glossary/`'s `abbr` field, and `REGISTERED_INITIALISMS` — the set
+#: `test_no_prose_string_shouts` actually asks — is assembled from the two under the section 9
+#: banner below, where the test asserting they are disjoint also lives.
+#:
+#: The split is #59's, and the contract named it as #59's to make: while the glossary held 23
+#: entries and none of them an acronym, this set could only be hand-written. Now that six acronyms
+#: have entries, an acronym blessed here **and** defined there would be two sources of truth for
+#: one initialism, and the older one would rot silently the first time the entry was renamed.
+_INITIALISMS_WITH_NO_ENTRY = frozenset(
     {
-        # Statistical agencies, series and publishers
-        "CBO", "CPI", "FRED", "GDP", "IRS", "OECD", "PCE", "AGI", "FY",
+        # Data hosts and series names the site cites but does not define. FRED is a provenance
+        # label ("Census/FRED"); what a reader needs about it is on /sources. AGI reaches only
+        # figure notes and source lines, which are quoted material.
+        "FRED", "AGI",
         # Places
         "DC", "UK", "US",
-        # Laws, by their published short names
+        # Laws, by their published short names. Expanding one would be editing quoted material,
+        # which Criterion 7 forbids; they arrive through pipeline/curated/laws.yaml.
         "ACA", "CARES", "CHIPS", "IRA", "JGTRRA", "PATH", "PL",
         # Instruments and formats
         "EE", "HTML",
@@ -976,5 +988,308 @@ def test_the_criterion_three_audit_covers_every_page():
     assert not stale, (
         "Criterion 3 audit rows for pages that no longer exist. Delete them in the same commit as "
         "the route:\n  " + "\n  ".join(stale)
+    )
+    assert declared == actual
+
+
+# ---------------------------------------------------------------------------
+# 9. Criterion 4 — terms are defined
+# ---------------------------------------------------------------------------
+
+#: The prose a `<Term>` marker can physically go in. Three classes, not `PROSE_CLASSES`' four, and
+#: the missing one is excluded **structurally rather than by a list**: `.figure-caveat` is rendered
+#: from `Figure.astro`'s `note?: string` prop (`src/components/Figure.astro:38`), a plain string
+#: that cannot carry a component at all. An `aria-label` is an attribute and cannot either, which
+#: is why the accessible-name scopes are absent too. So the four terms whose only occurrence on a
+#: route is inside a figure note — `offsetting receipts`, `incidence`, `gdp-deflator` and
+#: `/households`' `fiscal-year` before #59 marked it elsewhere — need no exemption entry here.
+#: They are outside the population because the markup makes them so. Rule 2.
+MARKABLE_PROSE_CLASSES = ("prose", "standfirst", "finding")
+
+#: The glossary collection, read as frontmatter. `test_accessibility` already owns the `first_used`
+#: half of this parse; the surface-form half lives here because it is Criterion 4's, and both read
+#: the same files rather than a second copy of the list.
+_TERM_FIELD_RE = re.compile(r'^term:\s*"(.*)"\s*$', re.MULTILINE)
+_ABBR_BLOCK_RE = re.compile(r'^abbr:\s*$\n((?:^[ \t]+-[ \t]+".*"\s*$\n)+)', re.MULTILINE)
+_ABBR_ITEM_RE = re.compile(r'^[ \t]+-[ \t]+"(.*)"\s*$', re.MULTILINE)
+
+#: A surface form that is written entirely in capitals, and so is an initialism a reader meets as
+#: capitals. `CPI-U` and `core PCE` deliberately fail this: `CAPS_RUN` above already finds `CPI`
+#: inside `CPI-U` and `PCE` inside `core PCE`, so the shorter form is the one the shout check asks
+#: about and a second spelling would be a second entry for one initialism.
+_ALL_CAPS_FORM = re.compile(r"[A-Z]{2,}")
+
+
+def glossary_surface_forms() -> dict[str, list[str]]:
+    """Every glossary id mapped to the strings a reader may meet it as: `term`, plus every `abbr`.
+
+    Derived from `src/content/glossary/*.md`, never listed here. `abbr` exists precisely so that
+    this function has something to read: `intragovernmental` is how `/government` §2's finding
+    writes `Intragovernmental holdings`, and `FY` is how every route writes `Fiscal year`, and a
+    checker that only knew the display term would report green on both.
+    """
+    forms: dict[str, list[str]] = {}
+    for path in sorted(GLOSSARY_DIR.glob("*.md")):
+        text = path.read_text()
+        m = _TERM_FIELD_RE.search(text)
+        assert m, f"{path}: no `term` field in the frontmatter"
+        block = _ABBR_BLOCK_RE.search(text)
+        abbrs = _ABBR_ITEM_RE.findall(block.group(1)) if block else []
+        forms[path.stem] = [m.group(1)] + abbrs
+    assert forms, f"no glossary terms found under {GLOSSARY_DIR}"
+    return forms
+
+
+def _surface_pattern(form: str) -> re.Pattern[str]:
+    """`form` as a word-boundaried, case-insensitive, hyphen-or-space-flexible, plural-tolerant
+    pattern.
+
+    Three tolerances, each earning its keep against a live string. Case, because a term opening a
+    sentence is capitalised (`Real GDP`) and mid-sentence is not. Hyphen-or-space, because
+    `Roll-call vote` is written "roll call" and `chained dollars` could be written "chained-dollars".
+    The optional plural, because `Vintage` is written "vintages" and `Fiscal year` "fiscal years".
+    The lookarounds are letters only, not `\\b`: `FY` must match inside `FY2025` (a digit follows)
+    and must not match inside `FYI`.
+    """
+    parts = re.split(r"[\s\-]+", form.strip())
+    core = r"[\s\-]+".join(re.escape(p) for p in parts)
+    return re.compile(r"(?<![A-Za-z])" + core + r"(?:s|es)?(?![A-Za-z])", re.IGNORECASE)
+
+
+#: `src/data/sections.ts`'s `routeSections` keys, which are the routes a `first_used.route` may
+#: name and therefore the routes this criterion has a population on. Derived from the source of
+#: truth rather than restated: `/`, `/sources` and `/glossary` carry zero term markers by contract,
+#: and they fall out of scope here **because they are not keys of that map**, not because they are
+#: named in an exclusion set.
+_ROUTE_SECTIONS_KEY_RE = re.compile(r"^  '(/[a-z-]+)':", re.MULTILINE)
+
+
+def content_routes() -> list[str]:
+    src = (ROOT / "src" / "data" / "sections.ts").read_text()
+    start = src.find("export const routeSections = {")
+    assert start != -1, "src/data/sections.ts no longer declares `export const routeSections`"
+    end = src.find("} satisfies", start)
+    assert end != -1, "src/data/sections.ts's routeSections no longer ends in `} satisfies`"
+    routes = _ROUTE_SECTIONS_KEY_RE.findall(src[start:end])
+    assert len(routes) == 3, f"expected three content routes, parsed {routes}"
+    return routes
+
+
+def markable_stream(route: str) -> tuple[str, list[tuple[int, int, str]]]:
+    """A route's markable prose as one document-order string, with every `.term` span located.
+
+    Returns `(text, [(start, end, slug)])`. Elements are visited in document order — the parser's
+    `iter_descendants` is a pre-order walk — and joined with a newline, so an offset comparison in
+    this string is a "which does the reader meet first" comparison. A markable element nested
+    inside another is visited once, at the outer element, so a page cannot double-count its own
+    prose and shift every offset after it.
+    """
+    path = DIST / route.lstrip("/") / "index.html"
+    parts: list[str] = []
+    spans: list[tuple[int, int, str]] = []
+    pos = 0
+    for n in parse_html(path).iter_descendants():
+        if not any(c in MARKABLE_PROSE_CLASSES for c in n.classes()):
+            continue
+        if any(any(c in MARKABLE_PROSE_CLASSES for c in a.classes()) for a in n.ancestors()):
+            continue
+        text, offsets = _text_and_term_spans(n)
+        wrappers = [d for d in n.iter_descendants() if "term" in d.classes()]
+        assert len(wrappers) == len(offsets), f"{path}: .term span count does not match wrappers"
+        for (start, end), w in zip(offsets, wrappers):
+            spans.append((pos + start, pos + end, w.get("data-term") or ""))
+        parts.append(text)
+        parts.append("\n")
+        pos += len(text) + 1
+    assert parts, f"{path} carries no markable prose"
+    return "".join(parts), spans
+
+
+def _first_surface_use(text: str, forms: list[str]) -> tuple[int, str] | None:
+    """The earliest offset in `text` at which any of `forms` occurs, and the matched string."""
+    best: tuple[int, str] | None = None
+    for form in forms:
+        m = _surface_pattern(form).search(text)
+        if m and (best is None or m.start() < best[0]):
+            best = (m.start(), m.group(0))
+    return best
+
+
+def test_every_marked_term_sits_at_its_first_use():
+    """On each content route, no marked term's surface form appears earlier than its marker.
+
+    This is the assertion `docs/contracts/interfaces/glossary.md` said out loud it did not have:
+    "whether a marker sits on the genuinely *first* occurrence is a reading check". Seven live
+    violations were measured — three of them standfirsts, two findings — and all seven were fixed.
+    **Asserts zero: no baseline and no exemption set**, which is `docs/contracts/prose.md` rule 3's
+    fix-all road at that count, the one #52 took at four rather than the one #51 took at 26. A
+    baseline here would make the assertion unfalsifiable in the only direction that matters.
+
+    Two fixes are legal, and the failure message says both, because two different defects land
+    here. **Move the marker** when the earlier occurrence is the same term. **Reword the earlier
+    sentence** when it is not — `/government` §2 said "the intragovernmental piece is real money
+    owed to future retirees", where "real" is the everyday adjective and marking it would point the
+    reader at the economic term, which is the opposite of defining it.
+
+    **Cannot see which sense of a word is on the page.** `real money` and `real terms` are the same
+    four letters to a matcher, and no word list is invented here to guess between them, because a
+    proxy for a reading reports green on exactly the sentences it gets wrong. That is why the fix
+    menu has two entries rather than one, and why Checklist item 4 in `docs/contracts/prose.md`
+    stays NOT EXECUTED.
+
+    **Also cannot see a term a reader meets in a shortened form nobody declared.** The population
+    is `term` plus `abbr`; a clipped noun no editor wrote into `abbr` is invisible. That is a
+    deliberate trade against a fuzzy matcher, which would flag `gross federal debt` as `gross debt`
+    and go quiet the first time someone silenced it.
+    """
+    forms = glossary_surface_forms()
+    offenders = []
+    for route in content_routes():
+        text, spans = markable_stream(route)
+        first_marker: dict[str, int] = {}
+        for start, _end, slug in spans:
+            first_marker.setdefault(slug, start)
+        for slug, marker in sorted(first_marker.items()):
+            earlier = _first_surface_use(text, forms[slug])
+            if earlier is not None and earlier[0] < marker:
+                offenders.append(
+                    f"{route}: {slug!r} is marked at offset {marker} but a reader meets "
+                    f"{earlier[1]!r} at {earlier[0]}: ...{text[max(0, earlier[0] - 60):earlier[0] + 45]!r}"
+                )
+    assert not offenders, (
+        "A glossary term is marked later than the reader first meets it. docs/contracts/prose.md "
+        "Criterion 4: a term is defined the first time a reader meets it, per route, counting "
+        "standfirsts and findings. Two fixes are legal and which one applies is a reading — move "
+        "the marker onto the earlier occurrence, or, if the earlier occurrence is a different "
+        "sense of the same word, reword that sentence so the everyday sense is not the term. Do "
+        "not add an exemption: this check has no baseline by design. Occurrences:\n  "
+        + "\n  ".join(offenders)
+    )
+
+
+def test_every_content_route_marks_every_glossary_term_it_uses():
+    """First use is **per route**, so a term used on three routes is marked on three routes.
+
+    A reader arriving directly at `/households` has not read `/economy`, which is why `first_used`
+    is the site-wide first use and not the marking list. The population is `content_routes()` —
+    the three keys of `src/data/sections.ts`'s `routeSections` — so `/`, `/sources` and `/glossary`
+    are out of scope **structurally**: they are not keys of that map, and `first_used.route`'s
+    `z.enum` makes a term claiming one of them a build failure. No exclusion list is written here
+    for them.
+
+    The exceptions are not a second list either. They are `UNMARKED_AT_FIRST_USE` in
+    `test_accessibility.py`, already `==`-reconciled by
+    `test_every_first_used_route_carries_its_term_marker`, imported rather than copied — a copy
+    would be the rot that `docs/contracts/prose.md` rule 2 is about. A term is excused on a route
+    only when that route is its declared `first_used` route, so an unmarked use on a *different*
+    route still fails here.
+
+    **Cannot see** whether the marked occurrence is the right one; that is the test above.
+    """
+    forms = glossary_surface_forms()
+    routes = glossary_terms()
+    offenders = []
+    for route in content_routes():
+        text, spans = markable_stream(route)
+        marked = {slug for _s, _e, slug in spans}
+        for slug, surface in sorted(forms.items()):
+            if slug in marked:
+                continue
+            if slug in UNMARKED_AT_FIRST_USE and routes[slug] == route:
+                continue
+            used = _first_surface_use(text, surface)
+            if used is not None:
+                offenders.append(
+                    f"{route}: uses {used[1]!r} at offset {used[0]} and marks no {slug!r}: "
+                    f"...{text[max(0, used[0] - 60):used[0] + 45]!r}"
+                )
+    assert not offenders, (
+        "A content route uses a glossary term in markable prose and never marks it. "
+        "docs/contracts/prose.md Criterion 4: first use is per route, because a reader arriving "
+        "on one route has not read the others. Wrap the first occurrence in `<Term>`, or — if no "
+        "marker can go there, as when the occurrence is already the text of an `<a>` — record the "
+        "reason in UNMARKED_AT_FIRST_USE in test_accessibility.py and in "
+        "docs/contracts/interfaces/glossary.md. Occurrences:\n  " + "\n  ".join(offenders)
+    )
+
+
+def _glossary_initialisms() -> frozenset[str]:
+    """Every all-caps surface form in the glossary collection."""
+    return frozenset(
+        form
+        for surface in glossary_surface_forms().values()
+        for form in surface
+        if _ALL_CAPS_FORM.fullmatch(form)
+    )
+
+
+#: The set `test_no_prose_string_shouts` blesses, assembled rather than listed. `#59` owned this
+#: move: the acronym half is now the glossary's, so an initialism that gains an entry stops being
+#: hand-named in the same commit, and the test below asserts the two halves never overlap.
+REGISTERED_INITIALISMS = _INITIALISMS_WITH_NO_ENTRY | _glossary_initialisms()
+
+
+def test_registered_initialisms_do_not_duplicate_the_glossary():
+    """The hand-named half and the derived half are **disjoint**, and the union is what is used.
+
+    Disjointness is what makes the derivation load-bearing rather than decorative. Without it an
+    acronym could gain a glossary entry while its hand-written spelling stayed behind, and the two
+    would drift the first time the entry was renamed or deleted — the rot
+    `docs/contracts/prose.md` rule 2 exists to prevent, in the one place where a stale entry reads
+    as a passing check.
+
+    **Cannot see** whether an acronym *should* have an entry. That is a judgement, and it is
+    recorded per route in the Criterion 4 audit table, whose coverage the next test gates.
+    """
+    derived = _glossary_initialisms()
+    overlap = sorted(_INITIALISMS_WITH_NO_ENTRY & derived)
+    assert not overlap, (
+        "These initialisms are both hand-named in _INITIALISMS_WITH_NO_ENTRY and derived from a "
+        "glossary entry's `term`/`abbr`. The glossary is the source of truth for an acronym that "
+        "has an entry: delete the hand-named spelling in the same commit as the entry. "
+        f"Duplicated: {overlap}"
+    )
+    assert derived, (
+        "no all-caps surface form was derived from src/content/glossary/ — the `abbr` field or "
+        "its parse has moved, and REGISTERED_INITIALISMS has silently shrunk to the hand-named "
+        "half, which would let a real shout through"
+    )
+    assert REGISTERED_INITIALISMS == _INITIALISMS_WITH_NO_ENTRY | derived
+
+
+#: A row of the `### Criterion 4 audit` table: `` | /route | `CBO` | … | ``. The acronym is
+#: backticked, which keeps the reason in the third column from ever matching this.
+CRITERION_FOUR_ROW_RE = re.compile(r"^\|\s*(/[a-z-]+)\s*\|\s*`([A-Z]{2,})`\s*\|", re.MULTILINE)
+
+
+def test_the_criterion_four_audit_covers_every_prose_acronym():
+    """The audit table's `(route, acronym)` row set **equals** what `dist/` carries.
+
+    Equality, in the idiom of the Criterion 1, 2 and 3 audits. An acronym in prose is either
+    expanded for the reader — which since #59 means a glossary entry and a marker — or it is
+    deliberately left as it stands, and which of the two it is cannot be derived from anything:
+    `CARES` is a statute's published short name and expanding it would be editing quoted material,
+    while `CBO` is a term. So the judgement is written down per route, and this test only asserts
+    that every acronym has one and that no judgement outlives its acronym.
+
+    **Cannot see** whether a row's reason is *true*. A reviewer writes it; the acronym-judgement
+    Checklist item in `docs/contracts/prose.md` is where reading them is recorded as NOT EXECUTED.
+    """
+    table = _audit_table("Criterion 4 audit")
+    declared = set(CRITERION_FOUR_ROW_RE.findall(table))
+    actual: set[tuple[str, str]] = set()
+    for route in content_routes():
+        text, _spans = markable_stream(route)
+        actual |= {(route, m.group(0)) for m in CAPS_RUN.finditer(text)}
+    missing = sorted(actual - declared)
+    stale = sorted(declared - actual)
+    assert not missing, (
+        "Acronyms in markable prose with no row in the Criterion 4 audit table. Add a row saying "
+        "whether the reader needs it expanded, and why:\n  "
+        + "\n  ".join(f"{r} {a}" for r, a in missing)
+    )
+    assert not stale, (
+        "Criterion 4 audit rows for acronyms no route's prose carries any more. Delete them in "
+        "the same commit as the prose:\n  " + "\n  ".join(f"{r} {a}" for r, a in stale)
     )
     assert declared == actual

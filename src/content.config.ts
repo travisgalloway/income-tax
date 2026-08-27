@@ -56,6 +56,21 @@ export const collections = {
             'pipeline/curated/sources.yaml registry keys.',
         })
         .transform((keys) => ({ keys, text: sourceLine(keys), links: sourceLinks(keys) })),
+      /** The short forms a reader meets **in place of** `term` — an acronym (`CBO`), an
+       *  initialism written with a suffix (`CPI-U`), a clipped noun (`intragovernmental`).
+       *  Never a synonym and never a related word: this list is what makes "defined at first
+       *  use" mechanical, because `pipeline/tests/test_prose.py`'s Criterion 4 checker searches
+       *  the served prose for `term` **plus every `abbr`**, and a marker that sits after any of
+       *  them is a violation. Adding a value here can therefore turn a green page red, which is
+       *  the field working: it means a reader was meeting the term earlier than the marker.
+       *
+       *  It is also the acronym half of `REGISTERED_INITIALISMS`. Every all-caps surface form in
+       *  this collection is derived out of the glossary rather than named again in the test, and
+       *  the test asserts the derived half and the hand-named half are disjoint — so an acronym
+       *  that gains an entry has to leave the hand-named list in the same commit (#59).
+       *
+       *  Default `[]`: a term a reader only ever meets spelled out declares nothing. */
+      abbr: z.array(z.string().min(1)).default([]),
       /** Sibling term ids. Zod cannot see sibling entries, so a dangling value is caught by a
        *  build-time throw on the page, not here. */
       see_also: z.array(z.string()).default([]),

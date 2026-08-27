@@ -440,11 +440,60 @@ person, as Checklist item 12.
 
 **Asks:** is every technical term defined the first time a reader meets it? **Pass:** a first use
 wrapped in `<Term>`, as at `src/pages/economy/index.astro:33`, resolving to an entry under
-`src/content/glossary/`. **Fail:** a term used on a route with no marker and no entry.
-Interacts with Criterion 3: `REGISTERED_INITIALISMS` in `pipeline/tests/test_prose.py` is where an
-acronym is blessed, and today the glossary's 23 entries include no acronym, so the set cannot be
-derived from it. If acronym entries are added, deriving the set from the glossary is the right move
-and belongs to the same issue. **Cited by #59.**
+`src/content/glossary/`. **Fail:** a term used on a route with no marker and no entry, or marked
+somewhere a reader reaches *after* they have already met the word. **Cited by #59, which
+discharged it.**
+
+**Scope is markable prose: `prose`, `standfirst` and `finding`.** Three of `PROSE_CLASSES`' four,
+and the fourth is out **structurally, not by a list**. `.figure-caveat` renders
+`src/components/Figure.astro:38`'s `note?: string` — a plain string prop that cannot carry a component — and an
+`aria-label` is an attribute, which cannot either. So a term whose only occurrence on a route is
+inside a figure note is not a violation and needs no exemption entry: `offsetting receipts`,
+`incidence` and `gdp-deflator` are all of that shape. **A standfirst and a finding are first uses**,
+which is the substantive change #59 made to #47's marking rule: five of the seven violations it
+found were in one or the other. A finding and its chart `aria-label` are deliberately the same
+sentence, and wrapping a word does not break that — `_deep_text` skips `.term-pop`, so the served
+text is unchanged.
+
+**First use is per route.** A reader arriving on `/households` has not read `/economy`, so
+`first_used` is the site-wide first use and not the marking list. The population is the three keys
+of `src/data/sections.ts`'s `routeSections`; `/`, `/sources` and `/glossary` are out of it because
+they are not keys of that map, and `first_used.route`'s `z.enum` makes a term claiming one of them
+a build failure.
+
+**Two checks, both asserting zero with no baseline.**
+`test_every_marked_term_sits_at_its_first_use` measured seven live violations and all seven were
+fixed, which is rule 3's fix-all road at that count — #52's, not #51's. Neither existing baseline
+was touched and no `KNOWN_*_DEBT` entry was added; a baseline here would make the assertion
+unfalsifiable in the only direction that matters.
+`test_every_content_route_marks_every_glossary_term_it_uses` is the per-route half, and its
+exceptions are `UNMARKED_AT_FIRST_USE` in `test_accessibility.py` **imported**, never copied.
+
+**The `abbr` field is what makes this mechanical.** A reader meets `CBO`, not "Congressional Budget
+Office", and meets `intragovernmental`, not "Intragovernmental holdings". Those short forms are now
+data on the entry, and the checker searches for `term` plus every `abbr` — see
+`docs/contracts/interfaces/glossary.md`. Declaring one can turn a green page red, which is the
+field working.
+
+**Interacts with Criterion 3, and #59 made the move this paragraph used to defer.**
+`REGISTERED_INITIALISMS` is no longer hand-written: it is `_INITIALISMS_WITH_NO_ENTRY`, the
+acronyms this site cites but does not define, united with every all-caps surface form derived from
+the glossary, and `test_registered_initialisms_do_not_duplicate_the_glossary` asserts the two
+halves are **disjoint** — so an acronym that gains an entry leaves the hand-named list in the same
+commit rather than rotting there.
+
+**What the checks cannot see.** Which *sense* of a word is on the page. `real money` and
+`real terms` are the same four letters to a matcher, and no word list is invented to guess between
+them, because a proxy for a reading reports green on exactly the sentences it gets wrong — which is
+why the failure message offers two fixes (move the marker, or reword the earlier sentence) and why
+Checklist item 4 stays NOT EXECUTED. They cannot see a shortened form nobody declared in `abbr`:
+the alternative is a fuzzy matcher, which would flag "gross federal debt" as `gross debt` and be
+silenced the first time it did. They cannot see prose assembled from curated data —
+`/government` §6's ‡ footnote is `pipeline/curated/laws.yaml:287` rendered as a string, so its
+"No roll call exists" sits in a `.prose` element that cannot carry a marker; `roll-call-vote`
+therefore declares no `roll call` abbr, and that is a judgement, recorded here, not an oversight.
+And they cannot see whether a gloss **contradicts** the figure note on the same section, which is
+the issue's own sixth item and is the new acronym-and-gloss Checklist item below.
 
 ### Criterion 5 — prose that lets the reader check
 
@@ -635,6 +684,57 @@ The last two rows are not exemptions. They are the honest reading of a structura
 asked this criterion of whatever prose-class elements it carries, and two of the seven carry one
 and none respectively.
 
+### Criterion 4 audit
+
+One row per **acronym in markable prose, per content route** — twenty-seven of them. The population
+is `CAPS_RUN` over `prose`, `standfirst` and `finding` on the three keys of `routeSections`, which
+is why the same acronym appears once per route it reaches and why acronyms that occur only in a
+figure note (`EE`, `JGTRRA`, `PL`, and `FRED` on `/economy`) have no row: a note cannot carry a
+marker, so this criterion never asks about it.
+`test_the_criterion_four_audit_covers_every_prose_acronym` asserts this table's `(route, acronym)`
+set **equals** the set `dist/` carries, so a new acronym cannot ship without a judgement and a
+removed one cannot leave a stale judgement behind. What the test asserts is the **coverage**, never
+whether the judgement is right; reading them is the Checklist item below.
+
+`Defined` means the acronym has a glossary entry declaring it as an `abbr` and the route marks it at
+its first use — the reader gets the expansion in place, on hover and on focus. `Left as it stands`
+means the reader is not owed an expansion, and the row says why.
+
+| Route | Acronym | Judgement | Criterion 4 |
+|---|---|---|---|
+| /economy | `CBO` | Defined — `congressional-budget-office`, marked in §1's prose, the first of six occurrences | Pass |
+| /economy | `CPI` | Defined — `consumer-price-index`, marked on `CPI-U` in §4's finding. `CPI-U` is the all-urban series; `CAPS_RUN` sees the `CPI` inside it, which is the form the entry declares | Pass |
+| /economy | `FY` | Defined — `abbr` on `fiscal-year`, marked on "FY2025" in §1's standfirst, which is where a reader first meets the convention the whole site runs on | Pass |
+| /economy | `GDP` | Defined — `gross-domestic-product`, marked in §1's standfirst, the site's first sentence about a number | Pass |
+| /economy | `PCE` | Defined — `pce-price-index`, marked on "core PCE" in §4's prose | Pass |
+| /households | `CBO` | Defined — marked in §2's standfirst, this route's first occurrence | Pass |
+| /households | `FRED` | Left as it stands — a data host, not a concept. The route writes "Census/FRED" as a provenance label, and what a reader needs about it is which series it served, which `/sources` answers. Hand-named in `_INITIALISMS_WITH_NO_ENTRY` | Pass |
+| /households | `FY` | Defined — marked on "FY1995" in §5's prose, where the route says out loud that its tax-year dating breaks the site's fiscal-year convention | Pass |
+| /households | `GDP` | Defined — marked in §6's finding, this route's only occurrence | Pass |
+| /households | `IRS` | Defined — `internal-revenue-service`, marked in §5's prose, beside the sentence about what the SOI series excludes | Pass |
+| /government | `ACA` | Left as it stands — a statute's published short name, reaching prose through `pipeline/curated/laws.yaml`. Expanding it would be editing quoted material, which Criterion 7 forbids | Pass |
+| /government | `AT` | Left as it stands — not an acronym. A fragment of the shouted "AT LEAST ONE" in `src/data/party_splits.json:22`, curated data owned by **#103** and carried in `KNOWN_SHOUT_DEBT` | Pass |
+| /government | `CARES` | Left as it stands — a statute's published short name, as `ACA` above | Pass |
+| /government | `CBO` | Defined — marked in §1's prose, the first of this route's occurrences | Pass |
+| /government | `DC` | Left as it stands — a place. "28 states and DC" is the jurisdiction count, and the expansion tells a reader nothing they need | Pass |
+| /government | `FY` | Defined — marked in §1's standfirst, the first of this route's 35 occurrences | Pass |
+| /government | `GDP` | Defined — marked in §1's standfirst, on the toggle sentence that introduces the share-of-GDP reading | Pass |
+| /government | `II` | Left as it stands — a Roman ordinal, "Trump II". Not an initialism at all | Pass |
+| /government | `IRA` | Left as it stands — a statute's published short name, as `ACA` above | Pass |
+| /government | `IRS` | Defined — marked in §11's prose, at the dating-exception sentence, this route's first occurrence | Pass |
+| /government | `LEAST` | Left as it stands — a fragment of "AT LEAST ONE", as `AT` above. **#103** | Pass |
+| /government | `OECD` | Defined — `oecd`, marked in §10's prose, immediately before the cross-country figure it introduces | Pass |
+| /government | `ONE` | Left as it stands — a fragment of "AT LEAST ONE", as `AT` above. **#103** | Pass |
+| /government | `UK` | Left as it stands — a place, in a list of the largest foreign holders beside Japan and China | Pass |
+| /government | `US` | Left as it stands — a place, and the country this entire site is about | Pass |
+| /government | `VOICE` | Left as it stands — a fragment of the shouted "VOICE VOTE" in `pipeline/curated/laws.yaml:287`, curated data owned by **#103** | Pass |
+| /government | `VOTE` | Left as it stands — a fragment of "VOICE VOTE", as `VOICE` above. **#103** | Pass |
+
+`AT`, `LEAST`, `ONE`, `VOICE` and `VOTE` are not acronyms and their rows say so. They are here
+because the population is derived from `CAPS_RUN` rather than from a list of things someone already
+decided were acronyms — which is rule 2, and which is also why a genuine new acronym cannot slip in
+under the same shape.
+
 ## Checklist — status per item
 
 What only a human reader can judge. Every item is **NOT EXECUTED** on landing, and that is a
@@ -651,8 +751,15 @@ statement about this contract's coverage, not a formality. Nothing below is enfo
    Divergence is invisible to `test_every_chart_svg_states_a_finding`, which checks the label's shape
    and not its agreement with the finding beside it. — **NOT EXECUTED.** Human required. Criterion 7.
 4. **Read the site as someone who does not know the vocabulary.** Which terms are used before they
-   are defined, and which glossary entries are never reached from prose? — **NOT EXECUTED.** Human
-   required. Criterion 4.
+   are defined, and which glossary entries are never reached from prose? #59 made the ordering
+   mechanical — `test_every_marked_term_sits_at_its_first_use` asserts no marked term's surface
+   form appears earlier than its marker, with no baseline — but it left the half a matcher cannot
+   reach. **Which sense of a word is on the page is a reading**: `/government` §2 said "the
+   intragovernmental piece is real money owed to future retirees", where "real" is the everyday
+   adjective and marking it would have pointed the reader at the economic term, which is the
+   opposite of defining it. That sentence was reworded rather than exempted, and nothing stops the
+   next one. No word list is invented to fake this, because a proxy would report green on exactly
+   the sentence it misreads. — **NOT EXECUTED.** Human required. Criterion 4.
 5. **Check every causal-sounding sentence against what the data can support.** "Rose while" is a
    claim about a series; "rose because" is a claim about the world. — **NOT EXECUTED.** Human
    required. Criterion 5.
@@ -695,3 +802,14 @@ statement about this contract's coverage, not a formality. Nothing below is enfo
     boundaries, it served "6 destinations,25 numbered figures" before #58, and the fix is a `{' '}`
     that only a rendered read can confirm is still there. — **NOT EXECUTED.** Human required.
     Criterion 3.
+13. **Read every row of the Criterion 4 audit against the page it judges, and read every gloss
+    against the figure note on the same section.** Two readings, one item, because both are the
+    same question asked of a definition: does it agree with what the page beside it says? The audit
+    table's coverage is asserted; whether "left as it stands" is the right call for `DC` on
+    `/government` §10, or whether marking `CPI` inside `CPI-U` reads correctly in a finding a
+    screen reader also speaks, is a judgement a reviewer writes and nothing checks. And a glossary
+    `short` is rendered inside a paragraph by `<Term>`, a `<Figure note>` is rendered under the
+    chart in the same section, and **no test compares them** — a gloss that says a series is
+    fiscal-year while the note beside it says calendar-year would pass every assertion in
+    `test_prose.py`. This is #59's sixth definition-of-done item, and it is human-judged by method
+    rule 4 rather than proxied. — **NOT EXECUTED.** Human required. Criterion 4 and Criterion 7.

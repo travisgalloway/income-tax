@@ -1032,3 +1032,23 @@ time. Appended to, never rewritten. None of these have been acted on.
   follows its own rules, and the file that enforces it does not. Two characters, in a docstring.
   Found while adding section 8 for #58, which is scoped to prose a reader meets. Severity:
   cosmetic, non-blocking.
+- [2026-08-27] **The front door defines none of its own vocabulary, and Criterion 4 structurally
+  cannot ask it to.** `src/pages/index.astro:91` writes "net interest, a line nobody votes on at
+  all", `:186` "climbs steeply in nominal dollars", `:177` "real table", and `:57`, `:164`, `:197`
+  and `:222` all use "vintage" as a term of art. All four are glossary entries; none is marked, and
+  none can be — `first_used.route`'s `z.enum` in `src/content.config.ts` admits only the three
+  content routes, `src/data/sections.ts` says out loud that a term whose first prose use is `/` is
+  a category error, and `pipeline/tests/test_accessibility.py` asserts `/` carries zero markers. So
+  a reader who starts at the front door, which is the page every other route links back to, meets
+  four technical words with no gloss and no link, and #59's checker reports green because `/` is
+  not in its population. Widening the enum is a design change to #45's collection, touching
+  `sections.ts`, `content.config.ts`, `glossary.astro` and three tests, and it is not a prose edit.
+  Found while measuring Criterion 4's population for #59. Severity: a real gap in the reader's
+  path, invisible to every existing check, non-blocking.
+- [2026-08-27] `src/pages/households/index.astro:279` repeats `:218` verbatim: "Refundable credits
+  are excluded from the IRS series, which overstates the effective rate at the bottom." §5's prose
+  and limit 5 carry the same sentence, one screen apart. Only the §5 copy carries the `IRS` and
+  `effective rate` markers, so the limits copy now reads as the unmarked twin of a marked sentence.
+  Deduplicating it is a Criterion 6 hand-off question (does the limits block restate or does it
+  extend?), which is **#61**'s, and #59 marks words rather than editing sentences. Found while
+  marking `IRS` at its first use for #59. Severity: cosmetic repetition, non-blocking.
