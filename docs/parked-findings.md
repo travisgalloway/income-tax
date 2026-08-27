@@ -1052,3 +1052,50 @@ time. Appended to, never rewritten. None of these have been acted on.
   Deduplicating it is a Criterion 6 hand-off question (does the limits block restate or does it
   extend?), which is **#61**'s, and #59 marks words rather than editing sentences. Found while
   marking `IRS` at its first use for #59. Severity: cosmetic repetition, non-blocking.
+- [2026-08-27] **`pipeline/curated/prose_figures.yaml`'s `section:` key is the retired
+  `sections.md` deck's numbering** (Ruling 3 in `docs/contracts/prose.md`), not the route-and-anchor
+  scheme every page and every other audit table uses. Its bare-numeric keys are ambiguous: `3`, `4`
+  and `10` carry Households figures as well as Government ones. Consequences, both silent: the drift
+  report's `§` column at `pipeline/lib/report.py:99` names a surface nobody edits, and **no
+  route-scoped assertion is available to
+  `test_every_registered_prose_figure_still_appears_in_the_prose`** — it can prove a registered
+  figure is somewhere in the served prose, but not that it is in the section that registered it, so
+  a figure that migrated between routes passes. Re-keying is a pipeline change: it needs a
+  regeneration and a revalidation, and `pipeline/tests/test_pipeline.py` reads the file. Found while
+  building Criterion 5's mechanical half for #60. Severity: a real limit on a shipped check, stated
+  in that check's docstring, non-blocking.
+- [2026-08-27] **The Households route has no entries in `pipeline/curated/prose_figures.yaml` under
+  an `H` key.** Economy has `E1` through `E6`; Government has bare numerals; Households reaches the
+  drift report only through whichever deck-numbered entries happen to carry its figures. So whether
+  `/households`' quoted figures are fully registered is **unestablished**, and the new Criterion 5
+  check inherits that gap: it can only assert that what *is* registered still appears, never that
+  what appears is registered. Registering them is a data change, which #60's Out list forbids.
+  Found while joining the registry to `prose_strings()` for #60. Severity: an unmeasured surface on
+  the site's drift protection, non-blocking.
+- [2026-08-27] `src/data/oecd.json:8` carries the same unsupported claim #60 removed from the page:
+  the `_meta.notes` entry says the US being the only OECD member with no value-added tax "accounts
+  for most of the gap". It is a quantitative causal claim with no figure behind it, and it is now
+  the only copy left on the site. It is curated data, so editing it is a data change and outside a
+  prose issue's remit by #60's own "no source-line edit, no data change" rule. Found while
+  rewriting `src/pages/government/index.astro`'s §10 prose for #60. Severity: an unsupported claim
+  surviving in provenance metadata, non-blocking.
+- [2026-08-27] **Astro's HTML compression fuses a text node with an inline element that begins on
+  the next source line, and `test_no_prose_string_fuses_two_words_at_a_component_boundary` sees only
+  `.term` boundaries, never `<a>` ones.** Two live examples, both found by accident:
+  `dist/government/index.html` served `See<a href="#net-interest">net interest</a>` and
+  `the debt is</a>for the maturity structure`, from `src/pages/government/index.astro` where the
+  anchor sat on its own line. #60 fixed both because they were inside sentences it was rewriting,
+  using the `{' '}` idiom `src/pages/contents.astro:87` established. **The check does not cover the
+  general case**, and the miss is not cosmetic: the first of the two hid a Criterion 4 violation
+  outright, because `test_every_marked_term_sits_at_its_first_use` could not see "net interest" at
+  its true first use while the phrase was fused to the word before it. Widening the check to every
+  inline element boundary is #58's surface, not #60's. Found while rebuilding `/government` §3 for
+  #60. Severity: a checker blind spot that masks a second checker, non-blocking.
+- [2026-08-27] `dist/households/index.html` serves "who pays the<span class="term">income tax</span>"
+  fused, from `src/pages/households/index.astro`'s §6 standfirst — the same Astro whitespace
+  collapse as the finding above, on a `.term` boundary this time, which
+  `test_no_prose_string_fuses_two_words_at_a_component_boundary` is supposed to catch. Worth
+  checking whether the assertion reads the served bytes or the popover-stripped text before
+  concluding either way. Outside #60: the sentence carries no causal claim and no registered
+  figure, so rewriting it would be a Criterion 3 edit in a Criterion 5 pass. Found while dumping
+  per-section prose for #60's audit table. Severity: a reader-visible word-join, non-blocking.
