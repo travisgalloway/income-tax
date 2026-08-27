@@ -905,12 +905,27 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 
 /* ---- Focus and motion ---------------------------------------------------- */
 
-:focus-visible { outline: 1.5px solid var(--ink); outline-offset: 2px; }
+/* Width comes from `--focus-ring` (tokens.css) and from nowhere else. Offsets
+ * are per-control; thickness is not. */
+:focus-visible { outline: var(--focus-ring) solid var(--ink); outline-offset: 2px; }
 
 .datum { cursor: pointer; }
 /* WebKit does not paint `outline` on SVG shapes, so the ring is drawn twice:
- * `outline` for engines that honour it, `stroke` for those that do not. */
-.datum:focus-visible { outline: 1.5px solid var(--ink); outline-offset: 1px; stroke: var(--ink); stroke-width: 2; }
+ * `outline` for engines that honour it, `stroke` for those that do not.
+ *
+ * `vector-effect` is load-bearing, not cosmetic. `stroke-width` resolves in
+ * USER units and every chart <svg> is scaled to its container, so a bare
+ * `stroke-width: 2` rendered 1.944 CSS px at 390px (CTM scale 0.9722) and
+ * 2.044 at 1440px — under the minimum, in the one engine where this stroke IS
+ * the ring. `non-scaling-stroke` makes it resolve in CSS px whatever the
+ * transform, so both engines paint the same 2px. */
+.datum:focus-visible {
+  outline: var(--focus-ring) solid var(--ink);
+  outline-offset: 1px;
+  stroke: var(--ink);
+  stroke-width: var(--focus-ring);
+  vector-effect: non-scaling-stroke;
+}
 
 /* Roving marks (#69). Arrow keys move focus with `.focus()`, and an engine's
  * `:focus-visible` heuristic is entitled to decline PROGRAMMATIC focus — which
@@ -918,11 +933,16 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
  * ring is also keyed on `data-roving`, which the hook sets on the group only
  * while the last move came from a key. NOT on bare `:focus`: that would ring a
  * mouse click, which is the thing `:focus-visible` exists to avoid. */
+/* This rule is `:focus`, not `:focus-visible`, so it cannot inherit its width
+ * from the base rule and must declare its own — which is why the width is a
+ * token rather than a literal. `vector-effect` for the same reason as `.datum`
+ * above: the stroke is the whole ring in WebKit and it must not scale. */
 [data-roving] [data-mark]:focus {
-  outline: 1.5px solid var(--ink);
+  outline: var(--focus-ring) solid var(--ink);
   outline-offset: 1px;
   stroke: var(--ink);
-  stroke-width: 2;
+  stroke-width: var(--focus-ring);
+  vector-effect: non-scaling-stroke;
 }
 
 .skip-link {
@@ -950,7 +970,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 
 .state-grid { width: 100%; height: auto; display: block; }
 .state-tile { cursor: pointer; }
-.state-tile:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.state-tile:focus-visible { outline: var(--focus-ring) solid var(--ink); outline-offset: 1px; }
 .state-tile-code {
   font-family: var(--font-data);
   font-size: 10px;
@@ -1469,7 +1489,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   transform: translate(-50%, -50%);
 }
 .year-range-thumb:hover { background: var(--ink); }
-.year-range-thumb:focus-visible { outline: 1.5px solid var(--ink); outline-offset: 3px; }
+.year-range-thumb:focus-visible { outline: var(--focus-ring) solid var(--ink); outline-offset: 3px; }
 .year-range-endpoints {
   display: flex;
   justify-content: space-between;

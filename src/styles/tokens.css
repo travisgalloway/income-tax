@@ -81,6 +81,18 @@
   --gap: 1.5rem;
   --rule-width: 1px;
   --rule-hair: 0.5px;
+  /* WCAG 2.2 SC 2.4.13 Focus Appearance, Level AAA, and the 2px perimeter SC
+     2.4.11 (Focus Not Obscured) assumes. 2px and not 1.5px because both
+     engines round 1.5 down: Chromium and WebKit each computed the old rule as
+     1 device pixel, so the shipped ring was half what the stylesheet claimed.
+     Every ring rule in `global.css` reads this — the base `:focus-visible`,
+     `.datum`, #69's `[data-roving] [data-mark]:focus` fallback, `.state-tile`
+     and `.year-range-thumb` — so one declaration decides the thickness and a
+     sixth rule cannot pick a different number. Only `outline-offset` is
+     per-control (2/1/1/1/3px), and the colour stays `--ink` at 13.65:1.
+     `tests/browser/focus.test.ts` reads this token from `:root` at runtime and
+     never hardcodes 2, the way `harness.ts` reads `--target-min`. */
+  --focus-ring: 2px;
   /* WCAG 2.2 SC 2.5.8 Target Size (Minimum), Level AA. 24px, not the 44px of
      SC 2.5.5 (Enhanced, AAA): the controls sit in `.controls` rows whose
      row-gap is 0.5rem, and a 44px hit area centred on a 16px control would

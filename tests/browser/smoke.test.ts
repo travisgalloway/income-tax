@@ -510,32 +510,3 @@ test('every radiogroup on /government has a distinct accessible name (#72)', { t
     await context.close()
   }
 })
-
-
-/** Inventory #29 — a KNOWN FAILURE, carried explicitly rather than omitted.
- *
- *  `:focus-visible { outline: 1.5px solid var(--ink) }` (`src/styles/global.css:863`)
- *  is under WCAG 2.2 Focus Appearance's 2px minimum. That is #75, open, and
- *  `docs/contracts/accessibility.md:411-414` records it as a standing FAIL.
- *
- *  This entry asserts the failure so the suite arrives green and #75 flips it:
- *  when the ring reaches 2px this test fails loudly, and the assertion is
- *  inverted in the same change. Chromium computes the 1.5px rule as `1px`. */
-test('the focus ring is still under WCAG 2.2 Focus Appearance (#75, expected failure)', async () => {
-  const { context, page } = await openRoute(site, ROUTES[0], VIEWPORTS[1])
-  try {
-    await page.keyboard.press('Tab')
-    const width = await page.evaluate(() => {
-      const el = document.activeElement
-      return el === null ? NaN : parseFloat(getComputedStyle(el).outlineWidth)
-    })
-    assert.ok(Number.isFinite(width), 'no element took focus on the first Tab')
-    assert.ok(
-      width < 2,
-      `the focus ring now computes ${width}px, at or above WCAG 2.2's 2px minimum. #75 is fixed — ` +
-        `invert this assertion to \`width >= 2\` and update docs/contracts/accessibility.md's M8 rows.`,
-    )
-  } finally {
-    await context.close()
-  }
-})
