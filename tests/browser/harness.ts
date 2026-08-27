@@ -40,14 +40,30 @@ import { chromium, type Browser, type BrowserContext, type Page } from 'playwrig
 export const TOLERANCE_PX = 1
 
 /** The two viewports the accessibility contract commits to
- *  (`docs/contracts/accessibility.md`). 320px and landscape phones are
- *  explicitly outside it and are deliberately not asserted here. */
+ *  (`docs/contracts/accessibility.md`) and that every general sweep runs at.
+ *
+ *  320px and landscape phones remain outside the contract's general commitment,
+ *  with ONE named exception: #74 committed the legend-integrity invariant at
+ *  320px, and `legend.test.ts` declares its own three widths locally rather
+ *  than widening this table. Widening `VIEWPORTS` would silently change every
+ *  other spec's cost and coverage; a spec that needs a width the contract does
+ *  not commit to declares it, and says so, on its own. */
 export const VIEWPORTS = [
   { name: 'narrow', width: 390, height: 844 },
   { name: 'wide', width: 1440, height: 900 },
 ] as const
 
 export type Viewport = (typeof VIEWPORTS)[number]
+
+/** What `openRoute` actually needs: a name for failure messages and a size.
+ *  `Viewport` is assignable to it, so the contract widths still typecheck; a
+ *  spec that declares its own width (see `VIEWPORTS` above) uses this instead
+ *  of casting past the type. */
+export interface ViewportSize {
+  readonly name: string
+  readonly width: number
+  readonly height: number
+}
 
 /** Console messages the production build is permitted to emit.
  *
@@ -219,7 +235,7 @@ export async function withSite(portOffset = 0): Promise<Site> {
 export async function openRoute(
   site: Site,
   route: Route,
-  viewport: Viewport,
+  viewport: ViewportSize,
   opts: { javaScriptEnabled?: boolean; hasTouch?: boolean } = {},
 ): Promise<{ context: BrowserContext; page: Page }> {
   const context = await site.browser.newContext({
@@ -313,6 +329,177 @@ export async function textBoxes(page: Page): Promise<
         const box = rect(t)
         if (box.right - box.left === 0 && box.bottom - box.top === 0) return
         out.push({ svgIndex, text: (t.textContent ?? '').trim(), svg: svgBox, box })
+      })
+    })
+    return out
+  })
+}
+
+export interface LegendMarker {
+  /** `tag.first-class`, for the failure message. */
+  label: string
+  /** Which side of the marker the text it belongs to is on, or `none` when the
+   *  marker abuts no text at all and is therefore not a legend key. */
+  side: 'after' | 'before' | 'none'
+  /** The abutting text, trimmed and clipped — enough to name the offender. */
+  text: string
+  /** The marker's own box. */
+  marker: { top: number; bottom: number; left: number; right: number }
+  /** The line box of the abutting text the marker must share a line with: the
+   *  one holding its FIRST word for `after`, its LAST for `before`. Null when
+   *  `side` is `none`.
+   *
+   *  A WORD, not the range's first line box. The two differ exactly where it
+   *  matters: `.state-legend`'s keys read swatch, glyph, words, and a break
+   *  between the glyph and the words leaves the glyph sitting beside the
+   *  swatch — so a first-line-box rule reports a legend whose LABEL has walked
+   *  off as intact. Measured: a `display: contents` mutant of
+   *  `.state-legend-item` passed that formulation and fails this one. */
+  line: { top: number; bottom: number } | null
+  /** The marker's own box and the box that lays those boxes out — its parent
+   *  and grandparent — with their horizontal overflow, so a "fix" that stops a
+   *  wrap by overflowing instead is caught in the same sweep.
+   *
+   *  TWO LEVELS, DELIBERATELY, not a walk to the root. Above the legend the
+   *  answer stops being about legends: `/households`' page wrapper already
+   *  reports 285 against 280 at 320px, because a Radix slider thumb overhangs
+   *  its track by 5px by construction. That is a real measurement and a
+   *  different subject; sweeping it in here would make this guard red for a
+   *  reason it cannot fix and would earn a tolerance, which is how a guard
+   *  stops biting.
+   *
+   *  The walk also STOPS BELOW an ancestor whose computed `overflow-x` is not
+   *  `visible`. `.tableview-scroll` is exactly that: a wide table scrolling
+   *  sideways is the design (#122), not a defect to report. */
+  containers: { label: string; scrollWidth: number; clientWidth: number }[]
+}
+
+/** Every legend marker on the page, with the line box of the text it abuts.
+ *
+ *  A MARKER is an element outside a chart `<svg>` — or a top-level inline
+ *  `<svg>`, which is how `StatutoryVsEffective` draws its CBO keys — with a
+ *  non-zero box no larger than 26x26px that paints a background. That is a
+ *  generic rule, not a list of the classes this site happens to use today, so a
+ *  legend added tomorrow is swept without anyone remembering to add it.
+ *
+ *  ITS TEXT is a `Range` from the marker's next sibling through its parent's
+ *  last child; if that range holds no text, from the parent's first child
+ *  through the marker's previous sibling — `LawExplorer`'s in-cell dots trail
+ *  their text rather than leading it. A marker with text on neither side (the
+ *  year-range slider's four thumbs) is reported with `side: 'none'` and left
+ *  for the caller to count rather than silently dropped.
+ *
+ *  Read the class with `getAttribute('class')`, NEVER `el.className`: on an
+ *  `<svg>` that is an `SVGAnimatedString`, and it stringifies to
+ *  `[object SVGAnimatedString]`, which would make every failure message here
+ *  useless. Hit while prototyping this sweep.
+ *
+ *  Plain data, no assertions — this file owns no assertions. */
+export async function legendMarkers(page: Page): Promise<LegendMarker[]> {
+  return page.evaluate(() => {
+    const MAX_PX = 26
+    const out: {
+      label: string
+      side: 'after' | 'before' | 'none'
+      text: string
+      marker: { top: number; bottom: number; left: number; right: number }
+      line: { top: number; bottom: number } | null
+      containers: { label: string; scrollWidth: number; clientWidth: number }[]
+    }[] = []
+    const describe = (el: Element) => {
+      const cls = (el.getAttribute('class') ?? '').split(' ')[0] ?? ''
+      return `${el.tagName.toLowerCase()}${cls === '' ? '' : `.${cls}`}`
+    }
+    const isMarker = (el: Element): boolean => {
+      const r = el.getBoundingClientRect()
+      if (r.width === 0 || r.height === 0) return false
+      if (r.width > MAX_PX || r.height > MAX_PX) return false
+      // A top-level inline `<svg>` is itself a marker; anything nested inside
+      // any `<svg>` is chart content and is covered by `textBoxes`, not here.
+      if (el.tagName.toLowerCase() === 'svg') return el.parentElement?.closest('svg') == null
+      if (el.closest('svg') !== null) return false
+      const cs = getComputedStyle(el)
+      const bg = cs.backgroundColor
+      const opaque = bg !== '' && bg !== 'transparent' && bg.replace(/\s/g, '') !== 'rgba(0,0,0,0)'
+      return opaque || cs.backgroundImage !== 'none'
+    }
+    const spanning = (from: Node, to: Node): Range => {
+      const range = document.createRange()
+      range.setStartBefore(from)
+      range.setEndAfter(to)
+      return range
+    }
+    /** The client rect of the range's first (or last) letter or digit.
+     *  Punctuation and the legend's own `−`/`·`/`+` glyphs are deliberately not
+     *  words: the question is where the LABEL sits, not where the glyph does. */
+    const wordRect = (range: Range, first: boolean): DOMRect | null => {
+      const WORD = /[\p{L}\p{N}]/u
+      const root = range.commonAncestorContainer
+      const walker = document.createTreeWalker(
+        root.nodeType === Node.TEXT_NODE ? (root.parentNode as Node) : root,
+        NodeFilter.SHOW_TEXT,
+      )
+      const parts: Text[] = []
+      for (let n = walker.nextNode(); n !== null; n = walker.nextNode()) {
+        if (range.intersectsNode(n)) parts.push(n as Text)
+      }
+      if (!first) parts.reverse()
+      for (const node of parts) {
+        const text = node.nodeValue ?? ''
+        const order = Array.from({ length: text.length }, (_, i) => i)
+        if (!first) order.reverse()
+        for (const i of order) {
+          if (!WORD.test(text[i] as string)) continue
+          const one = document.createRange()
+          one.setStart(node, i)
+          one.setEnd(node, i + 1)
+          const rects = Array.from(one.getClientRects()).filter((r) => r.width > 0 && r.height > 0)
+          if (rects.length > 0) return rects[0] as DOMRect
+        }
+      }
+      return null
+    }
+
+    document.querySelectorAll('body *').forEach((el) => {
+      if (!isMarker(el)) return
+      const parent = el.parentElement
+      let side: 'after' | 'before' | 'none' = 'none'
+      let range: Range | null = null
+      if (parent !== null) {
+        if (el.nextSibling !== null && parent.lastChild !== null) {
+          const r = spanning(el.nextSibling, parent.lastChild)
+          if (r.toString().trim() !== '') {
+            range = r
+            side = 'after'
+          }
+        }
+        if (range === null && el.previousSibling !== null && parent.firstChild !== null) {
+          const r = spanning(parent.firstChild, el.previousSibling)
+          if (r.toString().trim() !== '') {
+            range = r
+            side = 'before'
+          }
+        }
+      }
+      let line: { top: number; bottom: number } | null = null
+      if (range !== null) {
+        const pick = wordRect(range, side === 'after')
+        if (pick === null) side = 'none'
+        else line = { top: pick.top, bottom: pick.bottom }
+      }
+      const containers: { label: string; scrollWidth: number; clientWidth: number }[] = []
+      for (let a = parent, depth = 0; a !== null && a !== document.body && depth < 2; a = a.parentElement, depth += 1) {
+        if (getComputedStyle(a).overflowX !== 'visible') break
+        containers.push({ label: describe(a), scrollWidth: a.scrollWidth, clientWidth: a.clientWidth })
+      }
+      const box = el.getBoundingClientRect()
+      out.push({
+        label: describe(el),
+        side,
+        text: (range?.toString() ?? '').replace(/\s+/g, ' ').trim().slice(0, 60),
+        marker: { top: box.top, bottom: box.bottom, left: box.left, right: box.right },
+        line,
+        containers,
       })
     })
     return out

@@ -1404,3 +1404,19 @@ time. Appended to, never rewritten. None of these have been acted on.
   file's append-only rule. The wrong attribution came from #73's plan and was carried into the first
   draft of the contract unchecked. Severity: accessibility, user-visible, keyboard only — and
   narrower than first recorded.
+- [2026-08-27] `/households` overflows its own page wrapper by **5px at every phone width**, and it
+  is a Radix slider thumb. Measured while writing #74's legend sweep, hydrated, at three widths:
+  `main` and `.shell` report `scrollWidth`/`clientWidth` of **285/280** at 320px, **355/350** at
+  390px and **379/374** at 414px — the same 5px each time, so it is a fixed overhang and not a
+  width-dependent reflow. The source is `span.year-range-thumb`: the thumb is 20px wide in a 15px
+  parent (`20/15`, measured on the thumb's own parent span), and Radix centres it on the track end,
+  so half a thumb hangs past each end of the track. `documentElement.scrollWidth == clientWidth`
+  throughout (320/320, 390/390, 414/414), so the page itself does **not** scroll sideways — the
+  page's 1.25rem side padding absorbs it — which is why every existing width guard is green and this
+  has gone unnoticed. Not acted on: #74 is about legend keys, and this is a slider's geometry on a
+  route whose legend is correct. It is named explicitly in `legendMarkers`' doc comment as the
+  reason that helper's overflow walk stops two levels above the marker rather than running to the
+  root — a walk to the root would report this as a legend defect and would earn a tolerance, which
+  is how a guard stops biting. Severity: cosmetic today; it becomes user-visible the moment the page
+  padding shrinks below 5px, and it is a live 5px of horizontal overflow inside the content column
+  either way.

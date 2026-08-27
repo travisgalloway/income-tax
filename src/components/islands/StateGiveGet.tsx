@@ -71,11 +71,23 @@ function describe(j: StateJurisdiction, basis: Basis): string {
   return `receives ${get} and pays ${give}, a net ${net} ${dir}`
 }
 
+/** The glyph each tile carries beside its state code, and the only thing in the
+ *  figure that says which way a tile leans without reference to its colour.
+ *
+ *  One constant, shared with the legend below (#74), so the two cannot drift
+ *  apart in source. `MARK.missing` deliberately has no legend entry: no tile
+ *  currently renders it, and the missing-figure case is spelled out in full by
+ *  `describe()` in the tile's own aria-label and in the live readout.
+ *  `test_the_state_legend_names_every_glyph_it_ships` is the tripwire if a
+ *  `?` ever ships — the legend gaining an entry is then a decision, not an
+ *  oversight. U+2212 MINUS SIGN, U+00B7 MIDDLE DOT, U+002B PLUS SIGN. */
+const MARK = { gives: '−', even: '·', gets: '+', missing: '?' } as const
+
 function markFor(j: StateJurisdiction): string {
-  if (j.balance_pc == null) return '?'
-  if (j.balance_pc > 0) return '+'
-  if (j.balance_pc < 0) return '−'
-  return '·'
+  if (j.balance_pc == null) return MARK.missing
+  if (j.balance_pc > 0) return MARK.gets
+  if (j.balance_pc < 0) return MARK.gives
+  return MARK.even
 }
 
 type SortKey = 'code' | 'give_b' | 'get_b' | 'balance_b' | 'ratio'
@@ -211,13 +223,38 @@ export function StateGiveGet({ data }: { data: StatesBalance }) {
         {active ? `${active.name}: ${describe(active, basis)}` : <ChartHint noun="tile" />}
       </p>
 
+      {/* Each swatch+glyph+label is ONE box, not three loose siblings (#74).
+       *
+       *  WHY IT MATTERS. This legend is the only thing in the figure that says
+       *  what the colour ramp means, and — since the glyphs were added here —
+       *  the only thing that says what the `+`/`−`/`·` on each tile mean; no
+       *  prose on the route explains them. Read left to right, a swatch that
+       *  has wrapped away from its own label sits beside the NEXT label and
+       *  inverts the direction encoding for a sighted reader, degrading the
+       *  redundant carrier recorded at docs/contracts/accessibility.md GOV-11.
+       *
+       *  Note that `test_no_island_encodes_a_category_only_in_colour` does NOT
+       *  cover this island: it matches `fill=`/`stroke=` against a literal
+       *  `var(--token)` and this island paints via `divergingFill(...)`, so the
+       *  pattern never fires here. The guards are the new ones —
+       *  `tests/browser/legend.test.ts` for the geometry and
+       *  `test_the_state_legend_names_every_glyph_it_ships` for the glyphs. */}
       <div className="state-legend">
-        <span className="state-legend-swatch" style={{ background: divergingFill(-bound, bound) }} />
-        <span>Gives more, up to {basis === 'per_capita' ? perPerson(bound) : 'the state maximum'}</span>
-        <span className="state-legend-swatch" style={{ background: divergingFill(0, bound) }} />
-        <span>Even</span>
-        <span className="state-legend-swatch" style={{ background: divergingFill(bound, bound) }} />
-        <span>Gets more, up to {basis === 'per_capita' ? perPerson(bound) : 'the state maximum'}</span>
+        <span className="state-legend-item">
+          <span className="state-legend-swatch" style={{ background: divergingFill(-bound, bound) }} />
+          <span className="state-legend-mark" aria-hidden="true">{MARK.gives}</span>
+          <span>Gives more, up to {basis === 'per_capita' ? perPerson(bound) : 'the state maximum'}</span>
+        </span>
+        <span className="state-legend-item">
+          <span className="state-legend-swatch" style={{ background: divergingFill(0, bound) }} />
+          <span className="state-legend-mark" aria-hidden="true">{MARK.even}</span>
+          <span>Even</span>
+        </span>
+        <span className="state-legend-item">
+          <span className="state-legend-swatch" style={{ background: divergingFill(bound, bound) }} />
+          <span className="state-legend-mark" aria-hidden="true">{MARK.gets}</span>
+          <span>Gets more, up to {basis === 'per_capita' ? perPerson(bound) : 'the state maximum'}</span>
+        </span>
       </div>
       <p className="prose">
         Midpoint: zero net balance, equivalently $1.00 received per $1.00 paid. Washington DC is

@@ -965,21 +965,57 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   pointer-events: none;
 }
 
+/* The container wraps between ITEMS; the item never wraps inside itself in a
+ * way that separates the swatch from its own label (#74). The column gap is
+ * wider than the item's internal gap so the grouping reads as three units.
+ *
+ * `align-items: baseline` on the item, not `center`, is load-bearing: when a
+ * long label runs to two lines, `center` floats the swatch BETWEEN them, which
+ * is both the wrong reading order and geometrically unassertable. `baseline`
+ * puts it on the first line, where it belongs.
+ *
+ * The last three keep ONE TOKEN wider than the container inside it: `min-width:
+ * 0` + `max-width: 100%` let the item shrink to the container instead of
+ * forcing the row wider, and `overflow-wrap: anywhere` (#57's precedent,
+ * docs/contracts/accessibility.md:524) lets the token itself break. Measured at
+ * 320px against a 45-character currency string: with all three, and with either
+ * half alone, `.state-legend` is 280 against 280; with none of them it is 290
+ * against 280. Both halves are kept because they answer different shapes of the
+ * same failure, and `tests/browser/legend.test.ts` L3 drives that string so the
+ * claim is a measurement rather than a comment.
+ *
+ * This is also why `white-space: nowrap` on the label is the WRONG fix: it
+ * stops the wrap by buying it back as horizontal overflow, which is a different
+ * defect, not a fix. */
 .state-legend {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem 0.6rem;
+  align-items: baseline;
+  gap: 0.4rem 0.9rem;
   margin-top: 0.7rem;
   font-family: var(--font-data);
   font-size: 0.8125rem;
   color: var(--ink-soft);
+}
+.state-legend-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 .state-legend-swatch {
   display: inline-block;
   width: 0.85rem;
   height: 0.85rem;
   border: 1px solid var(--rule);
+}
+/* The glyph each tile carries. Same family and size as the tile's `<text>`, so
+ * the legend key and the mark on the grid read as the same character. */
+.state-legend-mark {
+  font-family: var(--font-data);
+  color: var(--ink);
 }
 
 .basis-toggle { display: inline-flex; align-items: baseline; gap: 0.9rem; }
