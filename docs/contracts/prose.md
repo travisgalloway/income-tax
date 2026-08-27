@@ -269,6 +269,36 @@ Consequences, recorded here with the change deferred to that follow-on:
 - #31 is closed and never modified `sections.md`, so the ordering question #51's body raised is moot
   rather than deferred.
 
+### Ruling 4 — the heading register
+
+Set by #60, because Criterion 5 asked what a heading and a standfirst are allowed to assert and the
+contract had no answer, and because the obvious answer — a list of forbidden words — would have been
+the wrong one.
+
+**The ruling.** *A heading and a standfirst may be pointed, and the site's second person is not a
+fault. Neither may assert a claim the section's own figures cannot settle.*
+
+The two halves are equally load-bearing, and the second is the one that needs saying out loud.
+Deleting the site's register is not the goal. `BRIEF.md:26-27` makes the site's job to let a reader
+check a thing for themselves rather than be persuaded of it, and a flat heading persuades nobody of
+anything — it just fails to say what the section found. Criterion 1 already requires a heading to
+state a question or a claim rather than name the variables, and a claim stated flatly is still a
+claim.
+
+Applied across the three routes, this ruled on three sites and moved one:
+
+| Site | Judgement |
+|---|---|
+| `/government` §3 `<h2>`, "The debt is younger than you think" | **Out.** It asserts a comparison against the reader's prior belief, and no chart on the page measures what the reader believed. Rewritten to "The debt is refinanced every few years, not every few decades", which is the same point stated as a claim the section's average-maturity figure settles. **The `how-old` anchor does not move** — it is linked from `/economy` §4 and `/government` §7, and only the visible text changed |
+| `/households` §4 `.prose`, "The gap between the two lines is the whole point of this section" | **In register.** It is the site telling a reader where to look, not a claim about the world. The chart shows the gap; the sentence names it as the thing worth reading |
+| `/government` §12 `.standfirst`, "Read them before arguing with anyone about the charts above" | **In register.** Second person and pointed, and it asserts nothing about the data. It says what the limits block is for, which is Criterion 1's job for a standfirst |
+
+**No word list is added, and none can be.** "May not assert a claim its section cannot support" is a
+reading of a heading against a chart, not a token in it. The half that *is* mechanical already
+exists: `test_no_section_heading_names_the_charts_construction` catches a heading naming the
+apparatus, and its own docstring says it cannot catch a heading naming the variables. Checklist item
+8 holds the rest, and this ruling is what that item now reads a heading against.
+
 ## Drift and quoted material
 
 **No prose edit may move a number registered in `pipeline/curated/prose_figures.yaml`.** Rewording
@@ -504,6 +534,36 @@ cause. **Fail:** any sentence in which one series drives another, or any bare nu
 unit. Bounded by **Drift and quoted material**: rewording around a figure is in scope, restating the
 figure is not. **Cited by #60.**
 
+**Its mechanical half is two tests**, under the `# 10.` banner in `pipeline/tests/test_prose.py`.
+`test_every_registered_prose_figure_still_appears_in_the_prose` asserts that every `quoted` value in
+`pipeline/curated/prose_figures.yaml` is still somewhere in the served prose — 118 registered, 118
+present, **0 missing, asserted as zero with no baseline** (method rule 3's fix-all road, at a
+measured count of zero). It exists because a Criterion 5 pass is the edit most likely to break the
+registry silently: reword *around* a figure carelessly and the figure leaves the page, after which
+the drift report goes on reconciling a number no reader ever meets, green forever on a check that is
+no longer looking at anything. Matching is scale-and-precision tolerant by arithmetic rather than by
+a hand-kept unit map, and anchored against digits so `39` cannot match inside `139`; the test asserts
+that anchoring against itself before it trusts it, so a later widening of the tolerance fails loudly
+instead of quietly matching everything.
+`test_the_criterion_five_audit_covers_every_section` is method rule 5: the audit table's
+`(route, section id)` set **equals** the set built from `dist/`, 29 today.
+
+**What they cannot see, and the three checks that were measured and rejected.** Neither test reads a
+sentence. Which section carries a registered figure is invisible to the first — the registry's
+`section:` key is the retired deck's numbering (Ruling 3) and its bare-numeric keys `3`, `4` and `10`
+do not all resolve to Government sections, so no route-scoped assertion is available without
+re-keying the registry, which is a pipeline change. Whether the sentence around a figure supports
+what it claims is Checklist item 5; whether a figure note tells a reader what the chart cannot do is
+Checklist item 7. Three further checks were each built, measured against the built site, and
+**rejected on the number**, and they are recorded here so the small mechanical surface reads as a
+finding rather than an omission:
+
+| Check considered | Measured against `dist/` | Why it was not added |
+|---|---|---|
+| A **causal-connective word list** (`because`, `this is why`, `which is why`, `accounts for`, `caused`, `as a result`, `since`, `so that`, `therefore`, `due to`, `reflects`) | **47 hits** through `prose_strings()`. 36 **method** (why a series starts where it starts, why a panel is separate, why an axis is not zero-based), 9 **temporal** ("since 1913", "since 1995"), **2 claims about the world** | 45 of 47 legitimate — **96%**. Worse, the list found **2 of the 5** sites this issue was opened to fix: three of the five drew their cause with no connective token in them at all. A list that is 96% false positives and 60% false negatives measures nothing. The judgement is a reading, and it is recorded in the audit table below |
+| A **hype vocabulary list** — `BRIEF.md:199`'s three words plus 21 more (`dramatic`, `soaring`, `skyrocket`, `alarming`, `massive`, `devastating`, `runaway`, `obviously`, `clearly`, `of course`, `undeniabl`, …) | **22 of 24 words at zero**, `shocking` and `staggering` among them. `crisis` 1, in a `figure` `aria-label` naming the 2008-2009 financial crisis. `unprecedented` 1, in `/government` §12 limit 2, naming the distortion the limit warns against | Zero live violations, and both survivors are exemptions the criterion would have to enumerate by name. A 24-word list asserting zero on a site that already writes this way is a check that cannot fail, which method rule 4 rules out. The measurement is recorded; the judgement is Checklist item 5 |
+| A **number-without-its-unit detector**, Criterion 5's third clause | **5,753 numbers** in prose, of which **816** are not adjacent to `$` or `%` and are not a four-digit year. Almost all are legitimate: per-datum chart readouts (`Families Gini index, 1996: 0.425`), index values (`1984 = 100`), list numbering, section cross-references, ratios and arithmetic identities (`77.0 = 70 x 1.1`) | Separating the 816 needs a hand-kept vocabulary of allowed units *and* allowed non-unit contexts, which is the rotting list method rule 2 forbids. Not mechanically checkable here. Human-judged, and the audit table's column 3 is where a section declares what a reader checks its figures against |
+
 ### Criterion 6 — hand-off
 
 **Asks:** does each section hand off to the next, and each route to the next, rather than stopping?
@@ -735,6 +795,53 @@ because the population is derived from `CAPS_RUN` rather than from a list of thi
 decided were acronyms — which is rule 2, and which is also why a genuine new acronym cannot slip in
 under the same shape.
 
+### Criterion 5 audit
+
+One row per section on the four report routes, and the row set is asserted equal to `dist/`'s by
+`test_the_criterion_five_audit_covers_every_section`. **This is where the causal-connective
+inventory lands**, per method rule 5 and in place of the PR body the issue originally asked for: 47
+connective hits were classified section by section as *method* (a claim about the chart's
+construction, checkable from the chart), *temporal* ("since 1913"), or *a claim about the world*.
+Only the last is a Criterion 5 problem, and the judgement is what column 4 records.
+
+Column 3 is what settles the section's claims: the figure, its `<details>` table, its note, its
+source line, or a registry entry. Column 4 is the surviving interpretation and the sentence that
+marks it as one, or **None** where every sentence is a statement about the data or the drawing. A
+new section cannot ship without declaring both. Neither column is machine-checked — only their
+coverage is — and reading a row against the page it judges is Checklist items 5 and 7.
+
+| Route | Section id | What a reader checks its prose against | What in it is the site's reading, and where it says so | Criterion 5 |
+|---|---|---|---|---|
+| / | what-this-is | The three routes themselves. Every claim in the through-line paragraph is made on a route with the evidence beside it, and the paragraph says so | The reading that "the popular story does not survive contact with the data" is the site's, and the next sentence hands each of its three parts to the route that carries the evidence rather than asserting them here | Pass |
+| / | where-to-start | The six destinations it lists, each linked and each described in one line | "The three routes are meant to be read in order" is an editorial recommendation, and the sentence gives its reason (the economy sets the denominators the other two are measured against) rather than asserting an order | Pass |
+| / | how-to-read-a-figure | Any figure on the site: the apparatus described here is on all of them, in this order, and a reader can open one and check | That a single-unit chart distorts is the site's reading. It is marked by stating the arithmetic first: the same series reads three ways and "all three of those are true at once" | Pass |
+| / | where-the-numbers-come-from | The build itself. Four named places where a missing source stops it, plus `/sources` and `/glossary` | None. Every sentence is a statement about what the build refuses to do, and the paragraph says outright that this is not a statement of intent | Pass |
+| /economy | one-picture | `one-picture` and its table; $2.383T, $23.718T and 895% are registered in `prose_figures.yaml` | None. The closing prose is about the log axis and the fiscal-year convention, both claims about the drawing | Pass |
+| /economy | growth-shadow | `growth-shadow`, its note, and the full-span table beneath it | None, and the section says so in its own sentence: "This chart shows that the two series diverged. It does not show why, and nothing here identifies a cause" | Pass |
+| /economy | who-works | `who-works`, two panels with two denominators, and its note | That the noncyclical rate is CBO's estimate rather than an observation is marked in its own sentence, which also says CBO revises it | Pass |
+| /economy | prices-rates | `prices-rates`, the price panel over the rate panel on the same fiscal years | That "the same shape appears in both" is a reading of two panels, and the sentence after it says "Nothing here identifies a cause", giving the narrower reason the panels are stacked at all | Pass |
+| /economy | labor-capital | `labor-capital` and its note; both shares are of GDP, which the standfirst, the note and the prose each say | That the fiscal 2020 moves are denominator artefacts rather than a trend. Marked as arithmetic in its own sentence: a share's numerator can rise against a shrinking denominator without any of it being newly earned | Pass |
+| /economy | limits | The five limits, each naming a series on this route | None. Every sentence states what the route cannot answer, and the last hands off to `/households` | Pass |
+| /households | what-a-household-earns | `median-income` and its note; $65,380, $83,730 and 28.1% are registered | That the pre-1984 years "are not flat: they are unobserved by this particular measure" is a statement about the measure, and it is written as one | Pass |
+| /households | the-spread | `the-spread`, whose table carries the Gini series and both CBO anchor points, and its note | None, and the section says so: the two measures are "shown on one timeline without a causal claim attached", with nothing connecting the distribution to any particular policy | Pass |
+| /households | a-century-of-brackets | `bracket-history`, whose table carries the bracket count, the top rate and the threshold in nominal and constant 2024 dollars, with a documented reason for each of the twelve divergent years | That the bracket count is a policy choice and the threshold erodes unless re-indexed is a mechanism, and both halves are checkable in the table's own columns. The ordinary-income scope is stated in its own paragraph | Pass |
+| /households | statutory-vs-effective | `statutory-vs-effective`; CBO's five published anchor years, which the note says are never drawn as a line | None. The lowest quintile's fall from 9.3% to 0.6% is stated as the two anchor points, followed by the sentence saying the anchor years establish the fall and not what produced it | Pass |
+| /households | who-pays | `who-pays` and `top1-share`, both from the IRS table, and the two notes | That "the tax-share column alone misleads about who pays the most versus who earns the most" is a reading about how the chart is misread. It is marked by giving both columns in the same sentence, so a reader can disagree from the figure | Pass |
+| /households | the-bill-you-do-not-see | `payroll-bill` and its note, which states the fiscal-year break and the wage cap | That the payroll bill is larger for every household outside the top decile is an incidence claim beyond this chart's aggregate shares. The paragraph marks it by saying the two charts answer different questions about the same taxpayer, and neither is the whole federal bill | Pass |
+| /households | limits | The five numbered limits, each naming its section and its source | None. Each limit states a scope or a dating fact, including that this route breaks the site's own FY convention | Pass |
+| /government | forty-trillion | `debt` in both units; $19.57T and the $40T crossing are registered, and the note says the final point is a daily close | That "what changed is the base" is a reading, marked by giving its arithmetic in the same paragraph: $10.2 trillion added over the earlier decade against $20.3 trillion over this one | Pass |
+| /government | who-holds-it | `debt-holders`, whose note redoes the 30%-of-public against 24%-of-gross arithmetic in full; the Japan, UK and China holdings are registered to the TIC release | The foreign share. The prose states what the snapshot is (who holds the paper, counting no payments), says it settles nothing about solvency, and names reading a rising foreign share as a constraint as an interpretation the chart does not carry | Pass |
+| /government | how-old | `debt-maturity`: 71 months average, roughly a third inside twelve months, with the note naming the instruments it omits | That a short average maturity is a repricing schedule is a claim about how Treasury debt is issued, not about the interest series. The paragraph marks the boundary by saying this section does not measure what the repricing cost, and pointing at section 7 for that | Pass |
+| /government | whole-budget | `whole-budget`, whose two panels carry outlays, revenue and the deficit, and its note on offsetting receipts | None. The closing prose is about the drawing: the two panels are the same arithmetic seen twice | Pass |
+| /government | structural-gap | `structural-gap`; the 17.2% and 21.1% averages are registered | That the gap is "structural rather than circumstantial" is a reading, and it is marked by carrying its own test in the same sentence: it shows up in years with no recession and no major tax bill, and the four years it closed are named | Pass |
+| /government | what-congress-votes-on | `voted-and-not` and its table, which carries the whole series behind the two endpoints | That "the endpoints hide the trajectory" is a reading of the chart, and the sentence gives the intermediate value it turns on: 1.2% of GDP in 2015, nearly tripled since | Pass |
+| /government | net-interest | `net-interest`; $232B, $970B, the $9.4T total and the 39% are registered | None. The 39% is stated as a ratio of two totals, with the sentence after it saying it is not an earmark and that no borrowed dollar is assigned to interest | Pass |
+| /government | the-laws | `law-explorer`, whose table carries each law's score, date and per-party roll call, with the † and ‡ footnotes for the two unscored laws and the voice vote | The 10% cross-party threshold, marked in its own sentence: "This threshold is a judgement, stated here so it can be disagreed with." The $16.75T-against-$24.15T gap names what moves a deficit without a roll call and then says which of them accounts for how much is not something this route measures | Pass |
+| /government | passed-signed | `attribution`, whose table carries both columns and both totals, and its note on net against gross | That colouring by control credits or blames one party for laws the other largely voted for is a reading, and it is marked by naming the two roll calls it turns on, 71-28 and 67-28 | Pass |
+| /government | where-money-comes-from | `revenue` and `oecd`, with the note saying the OECD figure counts all three levels of government and the federal figure does not | That the US having no value-added tax explains the OECD gap is the claim this section refuses: the prose says how much of the gap that absence explains is not something the comparison settles, because it ranks totals and does not decompose them | Pass |
+| /government | by-state | `state-give-get` and `state-tax-mix`, with the note defining give as gross IRS collections by filer address and get as USASpending award spending by place of performance | The whole section is the marking. Three paragraphs state what it is not (a balance of payments), that where a dollar is booked is not where it lands, and that neither side is complete, ending on "Read the ordering, not the arithmetic" | Pass |
+| /government | limits | The six limits, each naming the charts it bounds and the convention it breaks | Limit 1 is the route's own refusal of causation: "Every chart here records who was in office, not who caused what." Limit 2's "unprecedented" names the distortion nominal dollars produce, not the subject, and the sentence gives the arithmetic that makes it a distortion | Pass |
+
 ## Checklist — status per item
 
 What only a human reader can judge. Every item is **NOT EXECUTED** on landing, and that is a
@@ -761,13 +868,30 @@ statement about this contract's coverage, not a formality. Nothing below is enfo
    next one. No word list is invented to fake this, because a proxy would report green on exactly
    the sentence it misreads. — **NOT EXECUTED.** Human required. Criterion 4.
 5. **Check every causal-sounding sentence against what the data can support.** "Rose while" is a
-   claim about a series; "rose because" is a claim about the world. — **NOT EXECUTED.** Human
-   required. Criterion 5.
+   claim about a series; "rose because" is a claim about the world. #60 made this as mechanical as
+   it goes and no further. The two checks under the `# 10.` banner see the registry and the audit
+   table's coverage; **neither reads a sentence.** A figure can sit inside a paragraph that
+   misdescribes it and pass `test_every_registered_prose_figure_still_appears_in_the_prose`, and a
+   section can declare "None" in the audit's interpretation column while its prose quietly draws a
+   cause. **Three word lists were measured against the built site and all three were rejected**, and
+   the numbers are in Criterion 5 above: a causal-connective list at 47 hits was 96% legitimate and
+   found only 2 of the 5 sites this issue existed to fix, because three of the five drew a cause with
+   no connective in them at all; a 24-word hype list scored zero on 22 of its words, and its two
+   survivors are exemptions it would have to name; a number-without-its-unit detector cannot separate
+   the 816 unclassified numbers without a hand-kept vocabulary. Each would have reported green on
+   exactly the sentences a reader stumbles over. — **NOT EXECUTED.** Human required. Criterion 5.
 6. **Check sentence rhythm out loud**, which is the only reliable test for the long clause-stacked
    sentence the dash was hiding. A dash removed and replaced with a comma pair sometimes reveals a
    sentence that should have been two. — **NOT EXECUTED.** Human required. Criterion 3.
 7. **Read the figure notes as a sceptical reader**, asking of each one whether it tells the reader
-   what the chart cannot do or merely restates what it does. — **NOT EXECUTED.** Human required.
+   what the chart cannot do or merely restates what it does. Nothing reaches this. A `.figure-caveat`
+   is inside `PROSE_CLASSES`, so it is held to the punctuation, emphasis and sentence-length rules
+   and to Criterion 5's registry check — and to nothing else. **No test compares a note to the chart
+   above it**, which is where a restating note and a bounding note look identical: `/government` §2's
+   note redoes the 30%-of-public against 24%-of-gross arithmetic and bounds the chart, while a note
+   that only repeats the finding would pass every assertion in `test_prose.py`. The audit table's
+   column 3 records which artefact settles each section's claims, and a note is often that artefact;
+   whether it earns the description is this reading. — **NOT EXECUTED.** Human required.
    Criterion 5.
 8. **Read each section in the order standfirst, chart, closing prose.** Does the standfirst pose a
    question a reader could have asked, does the closing prose answer that question rather than

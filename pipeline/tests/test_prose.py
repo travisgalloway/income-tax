@@ -32,7 +32,11 @@ left is #102's four island-generated accessible names and #103's five curated-da
 surfaces no prose edit to a page source can reach.
 
 Standard library only, and the HTML tree comes from `test_accessibility`'s parser rather than a
-third copy of one — the idiom `pipeline/tests/test_contents_index.py` established.
+third copy of one — the idiom `pipeline/tests/test_contents_index.py` established. The one import
+past the standard library is deliberate and is the same rule stated again: section 10 reads
+`pipeline/curated/prose_figures.yaml` through `lib.curated._load`, the loader `pipeline/lib/report.py`
+uses to build the drift report, so the population this suite asserts against and the population the
+drift report reconciles cannot silently diverge.
 """
 
 from __future__ import annotations
@@ -1291,5 +1295,158 @@ def test_the_criterion_four_audit_covers_every_prose_acronym():
     assert not stale, (
         "Criterion 4 audit rows for acronyms no route's prose carries any more. Delete them in "
         "the same commit as the prose:\n  " + "\n  ".join(f"{r} {a}" for r, a in stale)
+    )
+    assert declared == actual
+
+
+# ---------------------------------------------------------------------------
+# 10. Criterion 5 — prose that lets the reader check
+# ---------------------------------------------------------------------------
+
+#: Scale factors tried when matching a registry `quoted` value against the served prose.
+#:
+#: The registry stores most money figures in trillions — `0.232` is written "$232 billion" and
+#: `1.203` is written "$1.20 trillion" — and stores percentages as their own unit. Rather than
+#: keep a hand-written map of "this entry is in trillions, that one in percent", which is exactly
+#: the rotting list method rule 2 forbids, the match is arithmetic: try the value at each of these
+#: scales, formatted at 0 to 3 decimal places, with and without thousands separators. Tolerant by
+#: construction, and tolerant in the safe direction — this check exists to catch a figure that has
+#: vanished from the prose entirely, not to police how it is rounded.
+_REGISTRY_SCALES = (1, 100, 0.01, 1000, 0.001)
+
+
+def _renderings(quoted: float) -> set[str]:
+    """Every decimal string a registry value could plausibly have been written as in prose.
+
+    The sign is dropped: `n_de` is stored as `-1.78` and the prose says "$1.78 trillion short".
+    A deficit's sign is a convention of the generated file, not of the sentence.
+    """
+    magnitude = abs(float(quoted))
+    out: set[str] = set()
+    for scale in _REGISTRY_SCALES:
+        scaled = magnitude * scale
+        for places in range(4):
+            grouped = f"{scaled:,.{places}f}"
+            out.add(grouped)
+            out.add(grouped.replace(",", ""))
+    return out
+
+
+def _appears_in(quoted: float, blob: str) -> bool:
+    """Does any rendering of `quoted` appear in `blob` as a number in its own right?
+
+    Anchored on both sides against digits, `.` and `,` so that `39` does not match inside `139`,
+    `390`, `39.5` or `1,392`. Without the anchors a two-digit registry value would match almost
+    any page and the check would report green on a figure nobody can read.
+    """
+    return any(
+        re.search(rf"(?<![\d.,]){re.escape(form)}(?![\d.,]?\d)", blob)
+        for form in sorted(_renderings(quoted))
+    )
+
+
+def registered_prose_figures() -> list[tuple[str, str, float]]:
+    """The registry, as `(section key, text, quoted)`, read through the pipeline's own loader.
+
+    `lib.curated._load` is the same door `pipeline/lib/report.py:99` opens to build the drift
+    report. Reading it through a second YAML parser here would be a second extractor, which is
+    what method rule 1 exists to prevent: the population this test asserts against must be the
+    population the drift report reconciles, or the two can disagree without either noticing.
+    """
+    from lib import curated  # the pipeline's loader, not a second parser
+
+    return [
+        (str(f.get("section", "")), str(f.get("text", "")), float(f["quoted"]))
+        for f in curated._load("prose_figures")["figures"]
+        if "quoted" in f
+    ]
+
+
+def test_every_registered_prose_figure_still_appears_in_the_prose():
+    """Every `quoted` value in `pipeline/curated/prose_figures.yaml` is still in the served prose.
+
+    This is Criterion 5's mechanical floor, and it closes the one silent failure mode a Criterion 5
+    pass is most likely to open. The registry is how "a reader can check" stays true over time: 118
+    figures quoted in prose, each mapped to the generated field it came from, recomputed on every
+    run and reported as an editorial event when they drift. Nothing checked that the *prose* still
+    carried them. Reword around a figure carelessly and the figure leaves the page, after which the
+    drift report goes on reconciling a number no reader ever meets — green, forever, on a check
+    that is no longer looking at anything.
+
+    **Measured at 118 of 118 present, 0 missing, so it asserts zero with no baseline** — method
+    rule 3's fix-all road at a count of zero. A baseline here would make the assertion
+    unfalsifiable in the only direction that matters.
+
+    *Cannot see:* **which section** carries the figure. The registry's `section:` key is the
+    retired `sections.md` deck's numbering (Ruling 3), and its bare-numeric keys `3`, `4` and `10`
+    do not all resolve to Government sections, so no route-scoped assertion is available without
+    first re-keying the registry, which is a pipeline change. And it cannot see whether the
+    sentence *around* the figure supports what it claims, which is Checklist item 5. A number
+    present in a sentence that misdescribes it passes here and fails Criterion 5 on any reading.
+    """
+    strings = [" ".join(text.split()) for _page, _scope, text in prose_strings()]
+    blob = " ".join(strings)
+
+    # The matcher's own falsifiability, asserted before it is trusted. A tolerance wide enough to
+    # find every registered figure is also wide enough to find figures that are not there, and the
+    # difference between the two is the whole value of this test. If a later edit loosens the
+    # scaling or drops the anchors to make a real failure go away, these two fail first and say so.
+    assert not _appears_in(8_675_309, blob), (
+        "The registry matcher found a value that is nowhere in the prose. Its tolerance has been "
+        "widened past the point of meaning: a check that matches anything reports green on a "
+        "figure that has left the page, which is the failure this test exists to catch."
+    )
+    assert not _appears_in(139, "the ratio is 39% of the deficits run in them"), (
+        "The registry matcher is no longer anchored: 139 matched inside '39%'. Restore the digit "
+        "lookarounds in `_appears_in`, or every two- and three-digit registry entry passes on any "
+        "page carrying a longer number that happens to contain it."
+    )
+
+    missing = [
+        f"§{section} {text!r} (quoted {quoted})"
+        for section, text, quoted in registered_prose_figures()
+        if not _appears_in(quoted, blob)
+    ]
+    assert not missing, (
+        "A figure registered in pipeline/curated/prose_figures.yaml no longer appears in the built "
+        "prose. docs/contracts/prose.md Criterion 5 and 'Drift and quoted material': the registry "
+        "is what keeps a quoted number reconcilable against the data it came from, and a figure "
+        "reworded out of the prose leaves the drift report reconciling a number no reader meets. "
+        "Put the figure back, or retire its registry entry in the same commit. Do not add an "
+        "exemption: this check has no baseline by design. Figures:\n  " + "\n  ".join(missing)
+    )
+
+
+#: A row of the `### Criterion 5 audit` table. Same shape as `AUDIT_ROW_RE`, which it reuses:
+#: `| /route | section-id | … |`.
+def test_the_criterion_five_audit_covers_every_section():
+    """The Criterion 5 audit table's row set **equals** the section set built from `dist/`.
+
+    Method rule 5, in the idiom `test_the_criterion_one_audit_covers_every_section` established.
+    Equality, not containment: containment would let a new section ship without declaring what a
+    reader can check its prose against and what in it is the site's own reading, and would let a
+    deleted section leave a stale judgement behind.
+
+    What is asserted is **coverage**. The three judgement columns are a reviewer's reading and are
+    exactly the part no machine can check — which is the point of recording them here, where they
+    can be re-read, rather than in a PR body, which nothing can re-read and nothing can fail on.
+
+    *Cannot see:* whether a row is **right**. A section can declare "none" in the interpretation
+    column while its prose quietly draws a cause, and this test passes. That reading is Checklist
+    item 5; the figure notes are Checklist item 7.
+    """
+    table = _audit_table("Criterion 5 audit")
+    declared = {(route, sid) for route, sid in AUDIT_ROW_RE.findall(table)}
+    actual = {(_route_of(page), sid) for page, sid, _, _ in sections()}
+    missing = sorted(actual - declared)
+    stale = sorted(declared - actual)
+    assert not missing, (
+        "Sections on the built site with no row in the Criterion 5 audit table. Add a row naming "
+        "what a reader checks the section's prose against, and what in it is the site's own "
+        "reading:\n  " + "\n  ".join(f"{r}#{s}" for r, s in missing)
+    )
+    assert not stale, (
+        "Criterion 5 audit rows for sections that no longer exist. Delete them in the same commit "
+        "as the section:\n  " + "\n  ".join(f"{r}#{s}" for r, s in stale)
     )
     assert declared == actual
