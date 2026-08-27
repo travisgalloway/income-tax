@@ -74,8 +74,8 @@ Type: **Bricolage Grotesque** 800 for display, **IBM Plex Sans** for body,
 Google Fonts. Numbers are always mono — this is the strongest single cue that
 ties the site to the deck.
 
-Kickers are mono, uppercase, ~11px, letter-spacing 0.16em. Body copy is sentence
-case. Never use em dashes in prose.
+Kickers are small caps at 0.9375rem, letter-spacing 0.09em (`src/styles/global.css:60-66`).
+Body copy is sentence case. No em dashes; `docs/contracts/prose.md` names the replacement.
 
 **Do not** reuse party colours for non-partisan data. Debt holders and OECD
 comparisons have no partisan content and colouring them red and blue invents a
