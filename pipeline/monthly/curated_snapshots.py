@@ -1,10 +1,16 @@
 """Outputs that cannot honestly be auto-fetched.
 
-IRS SOI and OECD Revenue Statistics publish as documents, not APIs, and the debt
-holder and maturity figures are assembled from several Treasury releases plus the
-resolutions in curated/discrepancies.yaml. Pretending to scrape them would buy a
-false sense of freshness; instead they are curated and the pipeline surfaces how
-old each one is.
+IRS SOI, OECD Revenue Statistics and the CBO distribution tables publish as
+documents, not APIs, and the debt maturity figures are assembled from several
+Treasury releases. Pretending to scrape them would buy a false sense of
+freshness; instead they are curated and the pipeline surfaces how old each one
+is.
+
+`debt_holders` used to be in this set and is not any more (#54): its foreign
+holdings are fetched from Treasury International Capital, so it is built by
+`monthly/debt_holders.py` and carries `refresh.mode: "mixed"`. "Cannot honestly
+be auto-fetched" is a conclusion to verify against the source, never an
+assumption to inherit.
 """
 
 from __future__ import annotations
@@ -12,30 +18,23 @@ from __future__ import annotations
 from lib import curated, emit
 
 GEN = "monthly/curated_snapshots.py"
-OUTPUTS = ["debt_holders", "debt_maturity", "income_tax_by_group", "oecd", "cbo_effective_rates"]
+OUTPUTS = ["debt_maturity", "income_tax_by_group", "oecd", "cbo_effective_rates"]
 
 
 def build(dry_run: bool = False) -> list[str]:
     snapshots = curated._load("snapshots")["snapshots"]
-    resolutions = curated.discrepancies()
 
     for name in OUTPUTS:
-        data = snapshots[name]
         extra = {
             "refresh": {
                 "mode": "curated",
                 "reason": "source publishes as a document, not a machine-readable feed",
             }
         }
-        if name == "debt_holders":
-            # Make the deliberate omission legible to anything reading this file.
-            extra["deliberate_omissions"] = {
-                "federal_reserve_holdings": resolutions["federal_reserve_holdings"]["rule"]
-            }
         emit.write(
             name,
             emit.build_meta(name, generator=GEN, extra=extra),
-            data,
+            snapshots[name],
             dry_run=dry_run,
         )
     return OUTPUTS

@@ -1,21 +1,24 @@
 {
  "_meta": {
   "title": "Who holds the federal debt",
-  "source": "US Treasury Debt to the Penny (public vs intragovernmental, 7 Aug 2026); Treasury International Capital (foreign holdings, 2025)",
+  "source": "US Treasury Debt to the Penny (public vs intragovernmental, 7 Aug 2026); Treasury International Capital, Major Foreign Holders of Treasury Securities (foreign holdings, November 2025)",
   "notes": [
-   "Foreign holders are about 30% of PUBLICLY HELD debt, which is about 24% of GROSS debt. Do not conflate. Al Jazeera reported 32% of gross; that figure does not reconcile.",
-   "TIC data is revised monthly. China has been reported between $683B and $760B depending on vintage.",
+   "Foreign holders are about 30% of publicly held debt. That is about $9.6T of the $32.14T held by the public, which is 24% of the $39.88T gross. A 32% figure is the share of publicly held debt wearing the gross label; the two denominators are not interchangeable.",
+   "Treasury International Capital is revised monthly and the release month is part of the figure. This dataset pins the November 2025 release, where China reads $683.9B; the same series reads $760.8B for January 2025.",
    "Federal Reserve holdings are reported between $4.53T and $4.9T across sources; omitted rather than pick one."
   ],
   "provenance": {
-   "generator": "monthly/curated_snapshots.py",
-   "git_sha": "5751121",
-   "generated_at": "2026-08-23T22:29:21Z"
+   "generator": "monthly/debt_holders.py",
+   "git_sha": "082d17d",
+   "generated_at": "2026-08-27T02:09:38Z",
+   "vintage": "2025-11",
+   "retrieved_at": "2026-08-27T01:58:32Z"
   },
   "refresh": {
-   "mode": "curated",
-   "reason": "source publishes as a document, not a machine-readable feed"
+   "mode": "mixed",
+   "reason": "foreign holdings fetched from Treasury International Capital, Major Foreign Holders of Treasury Securities, at the release month pinned in curated/snapshots.yaml; the public versus intragovernmental split, the total and the foreign share history are curated from Debt to the Penny and carry their own as_of"
   },
+  "tic_grand_total_b": 9349.6,
   "deliberate_omissions": {
    "federal_reserve_holdings": "OMIT rather than pick. This is a deliberate absence, not missing data. If a future fetcher starts supplying a Fed holdings figure, it must not be charted without re-opening this decision."
   }
@@ -23,6 +26,7 @@
  "data": {
   "total_debt_t": 39.88,
   "as_of": "2026-08-07",
+  "tic_as_of": "2025-11",
   "split": [
    {
     "k": "public",
@@ -56,11 +60,11 @@
    },
    {
     "country": "United Kingdom",
-    "amount_t": 0.889
+    "amount_t": 0.88
    },
    {
     "country": "China",
-    "amount_t": 0.683
+    "amount_t": 0.684
    }
   ],
   "foreign_share_history": [

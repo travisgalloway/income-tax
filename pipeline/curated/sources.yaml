@@ -29,12 +29,30 @@ _comment: |
                          a source line and never registered fail the build, rather
                          than pass unnoticed: the leftover free text will not match.
 
+  not_a_source
+    name                 a publisher that must not appear in ANY src/data/*.json
+    reason               why, recorded rather than remembered
+
   Vintages are stripped from both sides before comparison, so a CBO February-2026 ->
   February-2027 refresh passes and only a real change to WHICH sources are cited
   fails. DATES only, never arbitrary digits: "Table 5", "Table 23", "MEHOINUSA672N"
   and "PL 115-97" identify a document rather than date it, so they survive
   normalization and appear in the shapes below. See _normalize_source in
   pipeline/lib/validate.py.
+
+# Publishers that may be named in SOURCES.md as the ORIGIN OF A CIRCULATING CLAIM,
+# and may never source an emitted value. check_sources rule E fails the build if one
+# of these names appears anywhere in src/data/*.json. Curated and explicit rather
+# than scraped, the shape #39 established: the list can only shrink deliberately.
+not_a_source:
+  - name: "Al Jazeera"
+    reason: >-
+      Until #54, debt_holders._meta.notes sourced the China holdings figure to
+      "TIC via Al Jazeera" -- an outlet's paraphrase standing in for the agency's
+      own release, and one that had already drifted from it ($889B for the UK
+      matches no TIC month in 2025). The figures now come from
+      ticdata.treasury.gov directly. A news report of an agency's data is not the
+      agency's data, and the reader cannot trace it.
 
 registry:
   cbo_historical_budget:
@@ -72,6 +90,12 @@ registry:
   treasury_tic:
     registered_as: "US Treasury, Treasury International Capital"
     cited_as: "Treasury International Capital"
+    # Major Foreign Holders of Treasury Securities, fetched from
+    # https://ticdata.treasury.gov/Publish/mfhhis01.txt by pipeline/lib/tic.py.
+    # NOT mfh.txt, which serves a January-2023 vintage from the same host. The
+    # release month is pinned in curated/snapshots.yaml as
+    # debt_holders.tic_vintage and recorded in the output's
+    # _meta.provenance.vintage (#54).
 
   jec_debt_update:
     registered_as: "Joint Economic Committee, monthly debt update, August 2026"
@@ -168,7 +192,7 @@ outputs:
 
   debt_holders:
     cites: [treasury_debt_to_the_penny, treasury_tic]
-    source_shape: "{treasury_debt_to_the_penny} (public vs intragovernmental, ); {treasury_tic} (foreign holdings, )"
+    source_shape: "{treasury_debt_to_the_penny} (public vs intragovernmental, ); {treasury_tic}, Major Foreign Holders of Treasury Securities (foreign holdings, )"
 
   debt_maturity:
     cites: [treasury_mspd, jec_debt_update, peterson_foundation]

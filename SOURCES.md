@@ -37,8 +37,11 @@ Instrument composition of marketable debt. Bills roughly 22%, notes about $15.9T
 bonds about $5.4T as of May 2026.
 
 **US Treasury, Treasury International Capital**
-Foreign holdings by country, 2025. Japan $1.203T, UK $889B, China $683B.
-Revised monthly.
+Major Foreign Holders of Treasury Securities, November 2025 release.
+`ticdata.treasury.gov/Publish/mfhhis01.txt`, machine-readable and fetched
+directly. Japan $1,202.7B, UK $879.8B, China $683.9B. Revised monthly; the
+pinned release month is recorded in `debt_holders._meta.provenance.vintage` and
+moving it is an editorial act, not a refresh.
 
 **OECD, Revenue Statistics 2025, United States country note**
 2024 preliminary. US 25.6% of GDP, OECD average 34.1%, US ranked 31st of 38.
@@ -103,16 +106,19 @@ Party control of the presidency, House and Senate by Congress.
 
 Resolve these the way described. Do not silently pick a number.
 
-**Foreign share of the debt.** Al Jazeera (20 August 2026) reported foreign
-holders at 32% of gross debt in 2025. That does not reconcile. Foreign holdings
-are roughly 30% of the ~$32T held by the public, which is about $9.6T, or 24% of
-$40T gross. The 32% figure appears to be a share-of-public-debt number labelled
-as share-of-gross. **Use: about 30% of publicly held debt, about a quarter of the
-total.**
+**Foreign share of the debt.** A widely circulated 2025 figure (Al Jazeera,
+20 August 2026, among others) puts foreign holders at 32% of gross debt. It is
+answered by arithmetic, not by whose word it is against: foreign holders are
+about 30% of the $32.14T held by the public, so about $9.6T; against $39.88T
+gross that is 24%, not 32%. 32% is the share-of-public number wearing the gross
+label. **Use: about 30% of publicly held debt, about a quarter of the total**,
+and never a share without its denominator.
 
-**China's holdings.** Reported at $683B (TIC via Al Jazeera) and about $760B
-(other current sources). Both plausible depending on vintage. **Use $683B with a
-note that TIC is revised monthly.**
+**China's holdings.** $683.9B and about $760B are the same series ten months
+apart, not two sources disagreeing: Treasury International Capital reads 683.9
+for the November 2025 release and 760.8 for January 2025. **Use the pinned
+release, and name the month.** The pipeline fetches the figure from the release
+itself and checks it against the resolution above rather than the reverse.
 
 **Federal Reserve holdings.** Reported at $4.528T (Peterson Foundation) and about
 $4.9T elsewhere. **Omit rather than pick.**

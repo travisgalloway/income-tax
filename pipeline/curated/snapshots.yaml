@@ -1,22 +1,43 @@
 _comment: 'Curated snapshots. NEVER machine-written.
 
-  These four datasets are NOT auto-fetchable: IRS SOI and OECD Revenue Statistics are
+  Four of these five outputs are NOT auto-fetchable: IRS SOI, OECD Revenue Statistics
 
-  published as documents, and the debt holder/maturity figures are assembled from
+  and the CBO distribution tables publish as documents, and the debt maturity figures
 
-  several Treasury releases plus the discrepancy resolutions in discrepancies.yaml.
+  are assembled from several Treasury releases. They are refreshed by hand, and the
 
-  They are refreshed by hand. The pipeline stamps each with the as_of date already in
+  pipeline stamps each with the as_of date already in the data so a stale snapshot is
 
-  the data so a stale snapshot is visible in the UI rather than silently current.
+  visible in the UI rather than silently current.
+
+  debt_holders is the exception since #54 and is built by monthly/debt_holders.py, not
+
+  by curated_snapshots.py: its foreign holdings are FETCHED from Treasury International
+
+  Capital at the release month pinned below as tic_vintage. Everything else under it is
+
+  still curated, which is why that output carries refresh.mode "mixed" and two dates.
+
+  Moving tic_vintage is an editorial act: TIC revises monthly, and adopting a newer
+
+  release changes published figures. Do not bump it to make a drift report go away.
 
   IMPORTANT: Federal Reserve holdings are deliberately ABSENT from debt_holders.
 
-  See discrepancies.yaml -> federal_reserve_holdings. Do not add them.'
+  See discrepancies.yaml -> federal_reserve_holdings. Do not add them. The MFH table
+
+  carries no Federal Reserve row, and lib/tic.py reads three countries and the grand
+
+  total only, so the fetch gives no route back in.'
 snapshots:
   debt_holders:
     total_debt_t: 39.88
     as_of: '2026-08-07'
+    # The pinned Treasury International Capital release month. The country
+    # holdings block is FETCHED from this column of the Major Foreign Holders
+    # table and must not be written here; monthly/debt_holders.py refuses to
+    # build if a curated copy of it reappears under this key.
+    tic_vintage: '2025-11'
     split:
     - k: public
       label: Held by the public
@@ -33,13 +54,6 @@ snapshots:
     - k: foreign
       label: Foreign holders
       share_of_public_pct: 30
-    top_foreign:
-    - country: Japan
-      amount_t: 1.203
-    - country: United Kingdom
-      amount_t: 0.889
-    - country: China
-      amount_t: 0.683
     foreign_share_history:
     - year: 1970
       share_of_gross_pct: 5

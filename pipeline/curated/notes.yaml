@@ -68,11 +68,14 @@ outputs:
   debt_holders:
     title: Who holds the federal debt
     source: US Treasury Debt to the Penny (public vs intragovernmental, 7 Aug 2026); Treasury International
-      Capital (foreign holdings, 2025)
+      Capital, Major Foreign Holders of Treasury Securities (foreign holdings, November 2025)
     notes:
-    - Foreign holders are about 30% of PUBLICLY HELD debt, which is about 24% of GROSS debt. Do not
-      conflate. Al Jazeera reported 32% of gross; that figure does not reconcile.
-    - TIC data is revised monthly. China has been reported between $683B and $760B depending on vintage.
+    - Foreign holders are about 30% of publicly held debt. That is about $9.6T of the $32.14T held
+      by the public, which is 24% of the $39.88T gross. A 32% figure is the share of publicly held
+      debt wearing the gross label; the two denominators are not interchangeable.
+    - Treasury International Capital is revised monthly and the release month is part of the figure.
+      This dataset pins the November 2025 release, where China reads $683.9B; the same series reads
+      $760.8B for January 2025.
     - Federal Reserve holdings are reported between $4.53T and $4.9T across sources; omitted rather
       than pick one.
   debt_maturity:

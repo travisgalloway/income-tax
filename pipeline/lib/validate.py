@@ -463,6 +463,59 @@ def check_sources(c: Checks, names: list[str]) -> None:
             f"  got:      {got}",
         )
 
+    _check_no_outlet_sources_a_figure(c, reg)
+
+
+def _check_no_outlet_sources_a_figure(c: Checks, reg: dict[str, Any]) -> None:
+    """Rule E -- no emitted value is attributed to a news outlet (#54).
+
+    Rules A-D reconcile the source LINE against the register. They say nothing
+    about a publisher named somewhere else in the payload, and that is exactly
+    where the defect lived: debt_holders._meta.notes sourced the China figure to
+    "TIC via Al Jazeera", an outlet's paraphrase standing in for the agency's
+    own release, with every check green.
+
+    Curated and explicit rather than scraped, the shape #39 established: the
+    banned list is a written decision in curated/sources.yaml with a reason
+    beside each name, and an empty or malformed list is a FAILURE rather than a
+    check with nothing to do. Scoped to src/data/*.json deliberately --
+    SOURCES.md may still name an outlet as the ORIGIN OF A CIRCULATING CLAIM,
+    which is a different thing from sourcing a published figure to it.
+    """
+    banned = reg.get("not_a_source")
+    if not isinstance(banned, list) or not banned:
+        c.ok(
+            False,
+            "curated/sources.yaml has no non-empty not_a_source: list. An outlet cannot "
+            "be checked against a list that is not there, and a check with nothing to "
+            "check reads exactly like one that passed (#54).",
+        )
+        return
+
+    files = sorted(DATA_DIR.glob("*.json"))
+    c.ok(
+        bool(files),
+        f"no published outputs found at {DATA_DIR}; rule E is therefore checking nothing, "
+        f"and an unreadable output directory is unknown, never clean",
+    )
+
+    for entry in banned:
+        name = entry.get("name") if isinstance(entry, dict) else None
+        if not name or not (isinstance(entry, dict) and entry.get("reason")):
+            c.ok(False, f"curated/sources.yaml not_a_source entry {entry!r} needs a name and "
+                        f"a written reason; an exemption with no reason is how a check turns "
+                        f"back into a skip")
+            continue
+        needle = name.lower()
+        for path in files:
+            c.ok(
+                needle not in path.read_text().lower(),
+                f"{path.name}: names {name!r}, which curated/sources.yaml lists under "
+                f"not_a_source. A news report of an agency's data is not the agency's "
+                f"data, and the reader cannot trace it (#54). Source the figure to the "
+                f"release itself.",
+            )
+
 
 def check_budget(c: Checks) -> None:
     rows = _load("budget")["data"]
@@ -672,6 +725,119 @@ def check_income(c: Checks) -> None:
             c.ok(r[k] is None or r[k] > 0, f"income_inequality: {k} is non-positive in {y}")
 
 
+# A TIC release month. Deliberately month-bounded rather than `\d{2}`: a fetch
+# that read a column header wrong would otherwise publish "2025-13" as a vintage.
+_TIC_VINTAGE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
+
+# The three countries the site publishes, and the only ones lib/tic.py returns.
+FOREIGN_HOLDERS = {"Japan", "United Kingdom", "China"}
+
+
+def _check_foreign_holdings(
+    c: Checks,
+    holders: dict[str, Any],
+    split: dict[str, Any],
+    latest_foreign: dict[str, Any] | None,
+) -> None:
+    """The guards that came with the TIC fetch (#54).
+
+    Foreign holdings used to be hand-typed constants traceable to a news
+    report; they are now a column of a Treasury release. Everything that can go
+    wrong with that is a SILENT failure -- a column read one to the left, a
+    builder that adopted the newest release, a parser that grabbed a shifted
+    row -- so each has a guard here and each guard has a negative test proving
+    it bites.
+    """
+    d = holders["data"]
+    meta = holders["_meta"]
+    vintage = meta.get("provenance", {}).get("vintage")
+    pin = curated._load("snapshots")["snapshots"]["debt_holders"].get("tic_vintage")
+
+    # G1 -- the vintage is present, well formed, and describes the data beside
+    # it. A fetch that fell back to a different column would leave these two
+    # disagreeing.
+    c.ok(
+        isinstance(vintage, str) and bool(_TIC_VINTAGE.match(vintage))
+        and vintage == d.get("tic_as_of"),
+        f"debt_holders: _meta.provenance.vintage must be a YYYY-MM TIC release month and "
+        f"must equal data.tic_as_of; got {vintage!r} and {d.get('tic_as_of')!r}. A figure "
+        f"without its release month is the trap SOURCES.md exists to prevent.",
+    )
+
+    # G2 -- the pin is honoured. TIC revises monthly and publishes with a lag,
+    # so "whatever is newest" would move published figures on every re-run
+    # without anyone deciding to. Moving the vintage is an editorial act.
+    c.ok(
+        d.get("tic_as_of") == pin,
+        f"debt_holders: data.tic_as_of is {d.get('tic_as_of')!r} but "
+        f"curated/snapshots.yaml pins debt_holders.tic_vintage: {pin!r}. The builder "
+        f"adopted a release nobody chose.",
+    )
+
+    # G3 -- exactly the three countries, no more and no other. Catches a parser
+    # that read a shifted row, and closes the door the Fed omission depends on.
+    c.ok(
+        {row["country"] for row in d["top_foreign"]} == FOREIGN_HOLDERS
+        and len(d["top_foreign"]) == len(FOREIGN_HOLDERS),
+        f"debt_holders: top_foreign must be exactly {sorted(FOREIGN_HOLDERS)}, got "
+        f"{[row['country'] for row in d['top_foreign']]}",
+    )
+
+    # G4 -- THE REBUTTAL, MACHINE-CHECKED. discrepancies.yaml ->
+    # foreign_share_of_debt answers the circulating "32% of gross" claim with
+    # arithmetic: 30% of the $32.14T held by the public is ~$9.6T, which is 24%
+    # of $39.88T gross. If a future edit moves either share without the other,
+    # the site would be publishing a 32%-shaped inconsistency of its own.
+    foreign = next((s for s in d["public_split"] if s["k"] == "foreign"), None)
+    gross_pct = latest_foreign["share_of_gross_pct"] if latest_foreign else None
+    if foreign is None or gross_pct is None:
+        c.ok(False, "debt_holders: no foreign public_split row or no 2025 gross share; the "
+                    "two denominators cannot be reconciled")
+    else:
+        implied = foreign["share_of_public_pct"] * split["public"]["amount_t"] / d["total_debt_t"]
+        c.ok(
+            abs(implied - gross_pct) <= 1.0,
+            f"debt_holders: the two denominators no longer reconcile. "
+            f"{foreign['share_of_public_pct']}% of the ${split['public']['amount_t']}T held "
+            f"by the public is {implied:.1f}% of ${d['total_debt_t']}T gross, but "
+            f"foreign_share_history says {gross_pct}%. Fix both or neither.",
+        )
+
+    # G5 -- TIC's own all-country total corroborates the curated foreign share.
+    # A CROSS-CHECK, not a published figure: the TIC release month and Debt to
+    # the Penny's as_of are different dates, so their quotient is not a
+    # well-defined share and the 30/24 stay curated. 3pp of slack is what those
+    # different dates cost.
+    grand_total_b = meta.get("tic_grand_total_b")
+    if not isinstance(grand_total_b, (int, float)) or foreign is None:
+        c.ok(False, "debt_holders: _meta.tic_grand_total_b is missing or not a number; the "
+                    "curated foreign share is then corroborated by nothing")
+    else:
+        corroborated = 100 * (grand_total_b / 1000) / split["public"]["amount_t"]
+        c.ok(
+            abs(corroborated - foreign["share_of_public_pct"]) <= 3.0,
+            f"debt_holders: TIC's grand total of ${grand_total_b}B is {corroborated:.1f}% of "
+            f"the ${split['public']['amount_t']}T held by the public, against a curated "
+            f"foreign share of {foreign['share_of_public_pct']}%. More than 3pp apart: one "
+            f"of the two has moved and the other has not.",
+        )
+
+    # G-china -- discrepancies.yaml -> china_holdings keeps a chosen value, and
+    # it is now the editorial BOUND the fetched figure is checked against rather
+    # than the source of the published number. TIC November 2025 reads 683.9,
+    # which the site publishes as 0.684; the resolution's 0.683 is what that is
+    # allowed to differ from.
+    china = next((row for row in d["top_foreign"] if row["country"] == "China"), None)
+    chosen = curated.discrepancies()["china_holdings"]["use"]["amount_t"]
+    c.ok(
+        china is not None and abs(china["amount_t"] - chosen) <= 0.01,
+        f"debt_holders: China reads {china and china['amount_t']} from TIC but "
+        f"discrepancies.yaml -> china_holdings chose {chosen}. More than 0.01T apart means "
+        f"the fetched release and the editorial resolution are about different vintages; "
+        f"re-open the resolution rather than letting the pipeline overwrite it.",
+    )
+
+
 def check_snapshots(c: Checks) -> None:
     holders = _load("debt_holders")
     d = holders["data"]
@@ -699,6 +865,8 @@ def check_snapshots(c: Checks) -> None:
     latest_foreign = next((h for h in d["foreign_share_history"] if h["year"] == 2025), None)
     c.ok(latest_foreign is not None and latest_foreign["share_of_gross_pct"] == 24,
          "debt_holders: no 2025 foreign_share_history point at 24% of gross debt")
+
+    _check_foreign_holdings(c, holders, split, latest_foreign)
 
     maturity = _load("debt_maturity")["data"]
     comp = {row["k"]: row for row in maturity["composition"]}

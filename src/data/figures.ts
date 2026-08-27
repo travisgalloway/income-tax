@@ -33,6 +33,7 @@ import {
   economy,
   income,
   incomeGroups,
+  mixedVintage,
   oecd,
   revenue,
   statesBalance,
@@ -172,7 +173,7 @@ const declared = {
       section: 'who-holds-it',
       title: 'Who holds the federal debt, 7 August 2026',
       source: debtHolders._meta.source,
-      vintage: curatedVintage(debtHolders._meta, debtHolders.data.as_of),
+      vintage: mixedVintage(debtHolders._meta, debtHolders.data.as_of),
     },
     {
       key: 'debt-maturity',

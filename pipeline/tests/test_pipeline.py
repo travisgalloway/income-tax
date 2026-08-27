@@ -863,10 +863,18 @@ def test_federal_reserve_absent_from_rendered_section_2():
 
 
 def test_tic_revision_note_is_carried():
+    """TIC is revised monthly and published with a lag, so a country figure
+    without its RELEASE MONTH is unreadable. Since #54 the note names the month
+    and both endpoints of the apparent conflict, which are one series ten months
+    apart rather than two sources disagreeing. `684 billion` is the November
+    2025 release rounded to the site's precision; it was `683` while the figure
+    came through a news paraphrase."""
     notes = " ".join(load("debt_holders")["_meta"]["notes"])
-    assert "683" in notes and "760" in notes and "monthly" in notes.lower()
+    assert "683.9" in notes and "760.8" in notes and "monthly" in notes.lower()
+    assert "November 2025" in notes
     section2 = _rendered_section("who-holds-it")
-    assert "683 billion" in section2 and "monthly" in section2.lower()
+    assert "684 billion" in section2 and "monthly" in section2.lower()
+    assert "November 2025" in section2
 
 
 def test_maturity_instruments_are_not_an_exhaustive_partition():
@@ -913,16 +921,30 @@ def test_curated_snapshots_expose_their_as_of():
     curatedVintage() must be used instead, wherever the figure's source line is
     composed. Since #49 that place is the figure manifest, not the page: the
     call sites take `title`/`source`/`vintage` from `src/data/figures.ts`, which
-    /contents reads too."""
-    for name in ("debt_holders", "debt_maturity"):
-        meta = load(name)["_meta"]
-        assert meta.get("refresh", {}).get("mode") == "curated"
+    /contents reads too.
+
+    Since #54, `debt_holders` is no longer in that set: its foreign holdings are
+    fetched, so it carries `mode: "mixed"` and TWO dates, and `mixedVintage()`
+    renders both. The distinction is load-bearing rather than cosmetic --
+    `curatedVintage` THROWS at build time on a non-curated dataset, which is
+    what makes "this output is honestly described" un-skippable."""
+    assert load("debt_maturity")["_meta"].get("refresh", {}).get("mode") == "curated"
+
+    holders = load("debt_holders")["_meta"]
+    assert holders.get("refresh", {}).get("mode") == "mixed"
+    assert holders["refresh"]["reason"], "a mixed dataset must say what is fetched and what is not"
+    assert holders["provenance"]["vintage"] and holders["provenance"]["retrieved_at"]
 
     manifest = FIGURES_MANIFEST.read_text()
-    assert manifest.count("curatedVintage(") >= 2, \
-        "figures.ts should call curatedVintage() for both debtHolders and debtMaturity"
+    assert manifest.count("curatedVintage(") >= 1, \
+        "figures.ts should call curatedVintage() for debtMaturity"
+    assert manifest.count("mixedVintage(") == 1, \
+        "figures.ts should call mixedVintage() for debtHolders, and for nothing else yet"
     assert GOV_PAGE.read_text().count("curatedVintage(") == 0, \
         "the government page should take its vintages from the manifest, not compose its own"
+    assert GOV_PAGE.read_text().count("mixedVintage(") == 0
+
+
 # ---- section 8: the law explorer ----
 
 def _laws() -> list[dict]:
@@ -2407,3 +2429,183 @@ def test_tic_fetches_through_the_one_http_core():
     assert "from .fetch import fetch" in src
     assert tic.MIN_BYTES >= 50_000, \
         "a truncated MFH body would parse as 'the pinned month is not published yet'"
+
+
+# ---- #54: the guards that came with the TIC fetch ---------------------------
+
+
+def test_foreign_holdings_come_from_tic():
+    """Criterion 1. The three country figures are a column of a Treasury
+    release, not constants, and the column is named."""
+    doc = load("debt_holders")
+    meta, d = doc["_meta"], doc["data"]
+
+    assert meta["provenance"]["generator"] == "monthly/debt_holders.py"
+    assert meta["provenance"]["retrieved_at"], "a fetched figure records when it was fetched"
+
+    pin = curated._load("snapshots")["snapshots"]["debt_holders"]["tic_vintage"]
+    assert re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", pin)
+    assert meta["provenance"]["vintage"] == pin == d["tic_as_of"]
+
+    # The curated copy is GONE, not shadowed. Two sources for one published
+    # figure with nothing reconciling them is the defect, not the fix.
+    snapshots = (ROOT / "curated" / "snapshots.yaml").read_text()
+    assert "top_foreign" not in snapshots, \
+        "curated/snapshots.yaml still carries a curated copy of the country holdings"
+
+    assert [row["country"] for row in d["top_foreign"]] == ["Japan", "United Kingdom", "China"], \
+        "prose_figures.yaml pins Japan/UK/China to top_foreign.{0,1,2}; the order is load-bearing"
+    for row in d["top_foreign"]:
+        assert row["amount_t"] > 0
+        assert round(row["amount_t"], 3) == row["amount_t"], "$T are published to three places"
+
+    # Two dates, distinguishable. Presenting one for both is the failure.
+    assert d["as_of"] != d["tic_as_of"]
+    assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", d["as_of"])
+
+
+def test_the_two_denominators_reconcile():
+    """The 32%-of-gross rebuttal, as arithmetic a reader can redo. 30% of the
+    $32.14T held by the public is ~$9.6T, which is 24% of $39.88T gross. Both
+    numbers are curated, so nothing recomputes them -- which is exactly why the
+    relationship between them needs a check."""
+    d = load("debt_holders")["data"]
+    public = next(s for s in d["split"] if s["k"] == "public")["amount_t"]
+    foreign_of_public = next(s for s in d["public_split"] if s["k"] == "foreign")["share_of_public_pct"]
+    of_gross = next(h for h in d["foreign_share_history"] if h["year"] == 2025)["share_of_gross_pct"]
+
+    implied = foreign_of_public * public / d["total_debt_t"]
+    assert abs(implied - of_gross) <= 1.0, \
+        f"{foreign_of_public}% of ${public}T is {implied:.1f}% of ${d['total_debt_t']}T, " \
+        f"not the published {of_gross}%"
+    # And the claim being rebutted is NOT what the arithmetic gives.
+    assert abs(implied - 32) > 5
+
+    notes = " ".join(load("debt_holders")["_meta"]["notes"]).lower()
+    assert "publicly held" in notes and "gross" in notes and "32%" in notes
+
+
+def test_no_emitted_figure_is_sourced_to_a_news_outlet():
+    """Criterion 4. An outlet may be named in SOURCES.md as the ORIGIN OF A
+    CIRCULATING CLAIM; it may not be the source of a published value."""
+    banned = curated.source_register()["not_a_source"]
+    assert banned, "an empty not_a_source list would make the guard vacuous"
+    for entry in banned:
+        assert entry["name"] and entry["reason"], "an exemption with no reason is a skip"
+        for path in sorted(DATA.glob("*.json")):
+            assert entry["name"].lower() not in path.read_text().lower(), \
+                f"{path.name} names {entry['name']}"
+
+
+# --- and the proof that each of them bites -----------------------------------
+
+
+def _mutated_data_dir(tmp_path: Path, mutate: Callable[[dict], None]) -> Path:
+    """A copy of src/data with debt_holders.json mutated. The whole directory is
+    copied because check_snapshots reads four outputs and check_sources reads
+    every one of them; a directory holding only the mutant would fail for the
+    wrong reason."""
+    # A fresh subdirectory per call: one test mutates twice, and copytree
+    # refuses an existing destination.
+    staged = tmp_path / f"data{len(list(tmp_path.glob('data*')))}"
+    shutil.copytree(DATA, staged)
+    doc = json.loads((staged / "debt_holders.json").read_text())
+    mutate(doc)
+    (staged / "debt_holders.json").write_text(json.dumps(doc, indent=1))
+    return staged
+
+
+def _snapshot_failures(tmp_path, monkeypatch, mutate) -> list[str]:
+    monkeypatch.setattr(validate, "DATA_DIR", _mutated_data_dir(tmp_path, mutate))
+    c = validate.Checks()
+    validate.check_snapshots(c)
+    return c.failures
+
+
+def test_the_guards_pass_on_what_is_actually_published(tmp_path, monkeypatch):
+    """The inverse of every negative test below, so none of them can pass by
+    failing for an unrelated reason."""
+    clean = _snapshot_failures(tmp_path, monkeypatch, lambda doc: None)
+    assert clean == []
+
+
+def test_g1_bites_a_malformed_or_disagreeing_vintage(tmp_path, monkeypatch):
+    """A fetch that read a different column would leave the recorded vintage and
+    the data's own tic_as_of disagreeing."""
+    def mutate(doc):
+        doc["_meta"]["provenance"]["vintage"] = "2025-13"
+    failures = _snapshot_failures(tmp_path, monkeypatch, mutate)
+    assert any("must be a YYYY-MM TIC release month" in f for f in failures), failures
+
+
+def test_g2_bites_a_release_nobody_pinned(tmp_path, monkeypatch):
+    """E8: adopting the newest TIC release would move Japan by 0.017 and the UK
+    by 0.026 on a re-run, past the prose tolerance, with nobody deciding to."""
+    def mutate(doc):
+        doc["_meta"]["provenance"]["vintage"] = "2025-12"
+        doc["data"]["tic_as_of"] = "2025-12"
+    failures = _snapshot_failures(tmp_path, monkeypatch, mutate)
+    assert any("adopted a release nobody chose" in f for f in failures), failures
+
+
+def test_g3_bites_a_shifted_country_row(tmp_path, monkeypatch):
+    def mutate(doc):
+        doc["data"]["top_foreign"][1]["country"] = "Belgium"
+    failures = _snapshot_failures(tmp_path, monkeypatch, mutate)
+    assert any("top_foreign must be exactly" in f for f in failures), failures
+
+
+def test_g4_bites_a_denominator_moved_without_the_other(tmp_path, monkeypatch):
+    """THE REBUTTAL, machine-checked. Moving the share of publicly held debt
+    without moving the share of gross would leave the site publishing its own
+    version of the mislabelled 32%."""
+    def mutate(doc):
+        for row in doc["data"]["public_split"]:
+            row["share_of_public_pct"] = 40 if row["k"] == "foreign" else 60
+    failures = _snapshot_failures(tmp_path, monkeypatch, mutate)
+    assert any("the two denominators no longer reconcile" in f for f in failures), failures
+
+
+def test_g5_bites_a_grand_total_that_stops_corroborating(tmp_path, monkeypatch):
+    def mutate(doc):
+        doc["_meta"]["tic_grand_total_b"] = 4000.0
+    failures = _snapshot_failures(tmp_path, monkeypatch, mutate)
+    assert any("More than 3pp apart" in f for f in failures), failures
+
+    def drop(doc):
+        del doc["_meta"]["tic_grand_total_b"]
+    failures = _snapshot_failures(tmp_path, monkeypatch, drop)
+    assert any("corroborated by nothing" in f for f in failures), failures
+
+
+def test_g_china_bites_a_fetched_value_that_left_its_resolution_behind(tmp_path, monkeypatch):
+    """discrepancies.yaml -> china_holdings keeps a chosen value; it is now the
+    editorial bound the fetched figure is checked against. A TIC month whose
+    China figure has moved past it re-opens the resolution rather than silently
+    overwriting it."""
+    def mutate(doc):
+        next(r for r in doc["data"]["top_foreign"] if r["country"] == "China")["amount_t"] = 0.761
+    failures = _snapshot_failures(tmp_path, monkeypatch, mutate)
+    assert any("re-open the resolution" in f for f in failures), failures
+
+
+def test_g6_bites_an_outlet_reappearing_in_an_emitted_file(tmp_path, monkeypatch):
+    """Rule E. Rules A-D reconcile the SOURCE LINE against the register and are
+    blind to a publisher named anywhere else in the payload, which is where the
+    defect actually lived."""
+    def mutate(doc):
+        doc["_meta"]["notes"].append("China reads $683B (TIC via Al Jazeera).")
+    staged = _mutated_data_dir(tmp_path, mutate)
+    monkeypatch.setattr(validate, "DATA_DIR", staged)
+    names = sorted(p.stem for p in staged.glob("*.json"))
+
+    c = validate.Checks()
+    validate.check_sources(c, names)
+    assert any("not_a_source" in f and "debt_holders.json" in f for f in c.failures), c.failures
+
+    # The inverse: unmutated, the same call is clean.
+    clean_dir = _mutated_data_dir(tmp_path, lambda doc: None)
+    monkeypatch.setattr(validate, "DATA_DIR", clean_dir)
+    clean = validate.Checks()
+    validate.check_sources(clean, names)
+    assert clean.failures == []
