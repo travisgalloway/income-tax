@@ -14,6 +14,7 @@ import { percent } from '../charts/format'
 import { TableView } from './TableView'
 import { useChartSize } from '../charts/useChartSize'
 import type { Top1IncomeSharePoint } from '../../data/types'
+import { ChartHint } from '../charts/ChartHint'
 
 export function Top1TaxShare({ rows }: { rows: Top1IncomeSharePoint[] }) {
   const [focus, setFocus] = useState<number | null>(null)
@@ -95,7 +96,7 @@ export function Top1TaxShare({ rows }: { rows: Top1IncomeSharePoint[] }) {
       </Chart>
 
       <p aria-live="polite" className="readout">
-        {active ? describe(active) : 'Focus or hover a point to read its value.'}
+        {active ? describe(active) : <ChartHint noun="point" />}
       </p>
 
       <TableView

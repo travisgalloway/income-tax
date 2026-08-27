@@ -18,6 +18,7 @@ import { TableView } from './TableView'
 import { dollars, dollarsCompact, calendarYear, percentRate } from '../charts/format'
 import { AXIS_TITLE_FONT_PX, firstThatFits, placeTickLabel, spanRoomAt } from '../charts/axisFit'
 import type { BracketYear } from '../../data/types'
+import { ChartHint } from '../charts/ChartHint'
 
 const MARGIN = { top: 8, right: 16, bottom: 34, left: 60 }
 const GAP = 30
@@ -234,7 +235,7 @@ export function BracketHistory({ rows }: { rows: BracketYear[] }) {
       </svg>
 
       <p aria-live="polite" className="readout">
-        {active ? readout(active) : 'Focus or hover a year to read its value.'}
+        {active ? readout(active) : <ChartHint noun="year" />}
       </p>
 
       <TableView

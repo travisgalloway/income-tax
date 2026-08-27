@@ -22,6 +22,7 @@ import { TableView } from './TableView'
 import { useChartSize } from '../charts/useChartSize'
 import { AXIS_TITLE_FONT_PX, firstThatFits } from '../charts/axisFit'
 import type { IncomeYear, Top1IncomeSharePoint } from '../../data/types'
+import { ChartHint } from '../charts/ChartHint'
 
 type Focus = { series: 'gini'; year: number } | { series: 'top1'; point: Top1IncomeSharePoint } | null
 
@@ -204,7 +205,7 @@ export function HouseholdSpread({ rows, top1 }: { rows: IncomeYear[]; top1: Top1
           ? giniFmtFull(activeGini)
           : activeTop1
             ? top1FmtFull(activeTop1)
-            : 'Focus or hover a datum to read its value.'}
+            : <ChartHint noun="datum" />}
       </p>
 
       <TableView

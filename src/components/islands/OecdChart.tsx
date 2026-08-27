@@ -16,6 +16,7 @@ import { linear } from '../charts/scales'
 import { TableView } from './TableView'
 import { useChartSize } from '../charts/useChartSize'
 import type { OecdCountry, OecdComparison } from '../../data/types'
+import { ChartHint } from '../charts/ChartHint'
 
 const X_DOMAIN: [number, number] = [0, 50]
 const ROW_HEIGHT_WIDE = 32
@@ -61,7 +62,7 @@ export function OecdChart({ data }: { data: OecdComparison }) {
       ? describeAverage(data.oecd_average_pct_gdp)
       : active
         ? describeCountry(active, data.us_rank, data.of_countries)
-        : 'Focus or hover a country to read its value.'
+        : <ChartHint noun="country" />
 
   const chartLabel =
     `Total tax revenue as a share of GDP across ${countries.length} selected OECD countries and the OECD average, ${data.year} preliminary data. The United States collects ${data.us_pct_gdp.toFixed(1)}% of GDP, ranked ${data.us_rank} of ${data.of_countries} members and below the ${data.oecd_average_pct_gdp.toFixed(1)}% average.`

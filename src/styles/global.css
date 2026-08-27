@@ -598,6 +598,51 @@ figcaption .lead,
   min-height: 1.3em;
 }
 
+/* ---- The chart hint, and the touch readout it names (#73) ----------------
+ *
+ * Every chart used to say `Focus or hover a year to read its value.` on every
+ * device — 24 occurrences in the served bytes — naming two interactions a
+ * phone does not have. `ChartHint` now ships all three sentences and this
+ * switch picks one. HIDDEN BY DEFAULT, then exactly one shown: a device that
+ * matches neither query (and there is one — see the <noscript> block in
+ * BaseLayout.astro, which is the third case) shows nothing rather than all
+ * three stacked. Source order matters and the noscript block overrides both. */
+.hint-nojs,
+.hint-hover,
+.hint-touch { display: none; }
+
+@media (hover: hover) { .hint-hover { display: inline; } }
+@media (hover: none) { .hint-touch { display: inline; } }
+
+/* `hover`, not `pointer: coarse`, on purpose: `pointer` describes precision,
+ * `hover` describes whether the sentence "hover a year" is a lie, and that
+ * sentence is what #73's second criterion is about. A touchscreen laptop
+ * (`hover: hover` AND `any-pointer: coarse`) is told the thing that works for
+ * its primary input, and the touch gesture still works there because
+ * `roving.ts` keys on `e.pointerType`, never on a media query. */
+
+@media (hover: none) {
+  /* MEASURED, NOT COSMETIC. A tap fires emulated `mouseenter`/`mouseleave`
+   * AFTER the pointer events, so the sequence for a tap landing in a gap is
+   * `pointerdown` -> our `focus(N)` -> `mouseleave(previous)` ->
+   * `setFocus(null)`: the readout the tap just set is wiped one event later.
+   * `preventDefault()` on `pointerdown` does not suppress it (spiked and
+   * disproved). Making the marks inert to the pointer is what stops the
+   * emulated event reaching one — and on a device that cannot hover, a hover
+   * state was a lie anyway. Keyboard and programmatic focus are unaffected by
+   * `pointer-events`, so #69's roving group is untouched. Scoped to marks: the
+   * <foreignObject> controls inside some charts keep their events. */
+  .chart [data-mark] { pointer-events: none; }
+
+  /* `pan-y`, NOT `none`. Two measurements decided this. Without any
+   * `touch-action`, Chromium swallows a horizontal gesture whole and the svg
+   * receives nothing at all — so the scrub genuinely depends on this line.
+   * With `none`, the reader could no longer scroll the page past a chart, and
+   * a 26,000px route is mostly chart. `pan-y` keeps the vertical scroll native
+   * and gives the horizontal scrub to us. */
+  .chart { touch-action: pan-y; }
+}
+
 /* ---- Select (Radix), for the law explorer's filter bar -------------------
  * A trigger styled like the unit-toggle's baseline rule, not a boxed <select>,
  * so it reads as part of the same control language as the toggle groups. */

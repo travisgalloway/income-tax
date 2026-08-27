@@ -21,6 +21,7 @@ import { useScrollableRegion } from './scrollRegion'
 import { dollars } from '../charts/format'
 import type { StateJurisdiction, StatesBalance } from '../../data/types'
 import { labelledByFigure } from './figureLabel'
+import { ChartHint } from '../charts/ChartHint'
 
 /** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
  *  this key rather than typed — see `figureLabel.ts` (#72). */
@@ -207,7 +208,7 @@ export function StateGiveGet({ data }: { data: StatesBalance }) {
       </svg>
 
       <p aria-live="polite" className="readout readout-state">
-        {active ? `${active.name}: ${describe(active, basis)}` : 'Focus or hover a tile to read its value.'}
+        {active ? `${active.name}: ${describe(active, basis)}` : <ChartHint noun="tile" />}
       </p>
 
       <div className="state-legend">

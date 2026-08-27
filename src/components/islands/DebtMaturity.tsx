@@ -18,6 +18,7 @@ import { linear } from '../charts/scales'
 import { TableView } from './TableView'
 import { useChartSize } from '../charts/useChartSize'
 import type { DebtMaturity as DebtMaturityData } from '../../data/types'
+import { ChartHint } from '../charts/ChartHint'
 
 type BandKey = 'bills' | 'notes' | 'bonds'
 
@@ -128,7 +129,7 @@ export function DebtMaturity({ d }: { d: DebtMaturityData }) {
       </Chart>
 
       <p aria-live="polite" className="readout">
-        {focus ? describe(focus) : 'Focus or hover an instrument band to read its value.'}
+        {focus ? describe(focus) : <ChartHint noun="instrument band" />}
       </p>
 
       <TableView

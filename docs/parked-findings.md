@@ -1339,3 +1339,68 @@ time. Appended to, never rewritten. None of these have been acted on.
   (`pipeline/tests/test_accessibility.py`) has several floors — `test_the_label_coverage_did_not_narrow`
   among them — whose guards may read selectors the floor never counts through. Found while executing
   #72's M9. Severity: hollow-check risk, non-blocking.
+- [2026-08-27] `/government` renders **7 zero-area `[data-mark]` elements**: 5 presidential-term
+  rects in `src/components/islands/LawExplorer.tsx` and 2 "none levied" groups in
+  `src/components/islands/StateTaxMix.tsx`. Each is focusable and each has `width: 0` or `height: 0`
+  in the rendered box, so a keyboard reader arrowing through the group arrives at a datum with
+  nothing on screen to look at. #73 makes the touch resolver skip them, and asserts that skip in
+  `nearest.test.ts`, so a tap can never select one — but that is a defence, not a fix. Why they are
+  rendered at all, and what a keyboard reader should hear on reaching one, is #30/#80 territory.
+  Found while measuring the mark population for #73. Severity: accessibility, user-visible,
+  keyboard only.
+- [2026-08-27] `src/components/islands/StatutoryVsEffective.tsx` — the chart plots **44** years of
+  the top statutory rate and its `TableView` carries only the CBO anchor years, so a value the chart
+  can read out (1990, 2001 and 2011 among them) is genuinely absent from the table below it. Every
+  other figure on the site ties: #73's B1c checks 26 charts and this is the only one where a tapped
+  identifier is not in a `<td>` of its own figure. It matters because the table is the site's
+  declared non-visual equivalent for every chart (`Chart.tsx`'s header comment), and here it is a
+  subset. `tests/browser/touch.test.ts` names it in `TABLE_INCOMPLETE` as an explicit exception
+  rather than softening the rule to "where present". Found while writing #73's B1c. Severity:
+  accessibility, non-visual equivalent, non-blocking.
+- [2026-08-27] `src/components/islands/AttributionSplit.tsx:276` — the one `p.readout` on the site
+  that carries no `<ChartHint>`. Its idle text is `announcement(view, buckets)`, a summary of the
+  current tab ("By voting coalition. 3 coalitions, net total …"), so it never told anyone to hover
+  and was correctly outside #73's defect. But it is also the one chart whose readout never names any
+  gesture: a reader who does not already know they can tap is not told. Whether a live-region
+  announcement and an interaction hint can share one element, or whether that figure needs both, is
+  a question about the readout's design rather than about touch. Found while counting hint carriers
+  for #73. Severity: discoverability, non-blocking.
+- [2026-08-27] Chromium's emulated `mousedown` after a touch tap resolves focus to the nearest
+  focusable ancestor when the tap's target is not focusable, which on this site is
+  `<main tabindex="-1">`. #73 defuses it in `src/components/charts/roving.ts` with a
+  `preventDefault()` scoped to the chart `<svg>`, but the same shape would bite any *other* element
+  that takes focus in a `pointerdown` handler and is not itself focusable — `YearRange`'s thumbs and
+  the scroll containers #71 made focusable are the candidates, neither checked. The general form is
+  worth a sweep: any programmatic focus set during `pointerdown` survives on desktop and is undone
+  on touch. Found while debugging why #73's drag worked and its tap did not. Severity: latent
+  defect, unverified elsewhere.
+- [2026-08-27] `tests/browser/scroll.test.ts` — `/government: the Tab order grows by exactly the
+  overflowing count @ 390px` (#71's B5) is **intermittently red under CPU contention**: 2 failures
+  in the first 7 full-suite runs on #73's branch, both while a `pytest` run competed for the machine,
+  reporting `11 !== 13` — the *overflow* count was right and two overflowing containers had not yet
+  become Tab stops when the walk ran. Not caused by #73, and measured rather than assumed: at 390px
+  with every `<details>` open, all 15 containers report **byte-identical** `scrollWidth -
+  clientWidth` margins on `main` and on the branch (50, 263, 161, 1674, 145, 72, 94, 0, 1131, 221,
+  0, 732, 78, 146, 660 — 13 overflowing, 13 focusable, none within 3px of the boundary), so no
+  layout moved. It then passed 8 consecutive full runs, 3 of them under the same deliberate load,
+  and 3 of 3 in isolation. The cause is that `settleContainers` waits a fixed interval for the
+  `ResizeObserver` to install `tabindex`, and a loaded machine can outlast it; the fix is to wait on
+  the observed count rather than on time. Left alone because it is #71's mechanism and #73 owns
+  chart marks. Found while running #73's full lane. Severity: CI reliability, non-blocking.
+- [2026-08-27] **Correction to the zero-area-marks entry above, and it changes what the finding is.**
+  That entry says the 7 zero-area `[data-mark]` elements on `/government` are 5 presidential-term
+  rects in `LawExplorer` plus 2 "none levied" groups in `StateTaxMix`, and that all 7 are focusable.
+  Re-measured in the hydrated page while answering a question about it: **`LawExplorer` has none —
+  all 31 of its marks render.** The 5 belong to `AttributionSplit`'s by-president panel, which Radix
+  keeps mounted (`forceMount`) and hides with `display: none` while the other tab is selected; that
+  subtree is **not focusable** (measured: `.focus()` on its first mark leaves `document.activeElement`
+  elsewhere) and its whole `<svg>` measures 0x0, so nothing there is reachable by keyboard or by
+  touch. Those 5 are correct as they stand and are **not** a defect. The finding is the other **2**:
+  `StateTaxMix`'s "none levied" categories are in a live, visible chart and **are** focusable, so a
+  keyboard reader can arrow onto "Individual income tax: none levied" with nothing on screen. The
+  resolver skips both kinds because the rule is geometric, and a 78-tap sweep across the two `<svg>`s
+  that own them selected a zero-area mark 0 times. `nearest.ts` and
+  `docs/contracts/accessibility.md` are corrected; the entry above is left as written, per this
+  file's append-only rule. The wrong attribution came from #73's plan and was carried into the first
+  draft of the contract unchecked. Severity: accessibility, user-visible, keyboard only — and
+  narrower than first recorded.

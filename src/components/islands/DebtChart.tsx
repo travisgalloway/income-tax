@@ -24,6 +24,7 @@ import {
   type Unit,
 } from '../charts/format'
 import type { DebtYear } from '../../data/types'
+import { ChartHint } from '../charts/ChartHint'
 
 /** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
  *  this key rather than typed — see `figureLabel.ts` (#72). */
@@ -159,7 +160,7 @@ export function DebtChart({ rows }: { rows: DebtYear[] }) {
       <p aria-live="polite" className="readout">
         {active
           ? `${fiscalYear(active.y)}: ${full(active)}${active.year_end ? '' : ' (not a fiscal year-end close)'}`
-          : 'Focus or hover a year to read its value.'}
+          : <ChartHint noun="year" />}
       </p>
 
       <TableView

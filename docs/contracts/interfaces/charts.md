@@ -100,6 +100,38 @@ A figure that hand-rolls its own `<svg>` (`BracketHistory`, `StateGiveGet`, `Sta
 the roving state must be in the **served HTML** — `client:visible` server-renders the markup and
 defers only hydration. See `docs/contracts/accessibility.md` for the full rule and the numbers.
 
+### Reading a mark with a finger (#73)
+
+`groupProps` also carries the touch readout, and there is **nothing to opt into**: a figure that
+already spreads it gets tap-and-drag for free, including the three that hand-roll their `<svg>`.
+
+At 390px a mark is 3.317px wide and a chart draws up to 389 of them across 350px of plot, so the
+mark cannot be the hit target. Under `@media (hover: none)` the marks stop hit-testing
+(`pointer-events: none`) and the `<svg>` becomes one target: a pointerdown anywhere in it resolves
+the nearest visible mark with `nearestBox` (`src/components/charts/nearest.ts`) and calls
+`.focus({ preventScroll: true })` on it.
+
+**That `focus()` call is the entire mechanism, and it is why nothing else in an island changes.**
+`onFocusCapture` sets the roving index, and the island's existing `onFocus` fills the readout — the
+same handler the keyboard already drives. Do **not** add a parallel activation callback or a second
+readout setter; two writers is how the roving index and the visible value drift apart.
+
+Three rules a new figure inherits and must not break:
+
+- **Mark boxes are what get measured**, so a mark drawn with zero width or height is invisible to
+  the resolver by design (`/government` has 7 such marks today). A mark meant to be reachable by
+  finger must have a rendered box.
+- **`.chart` carries `touch-action: pan-y`** so a vertical swipe still scrolls the page. A figure
+  that sets its own `touch-action` takes that away.
+- **Desktop is untouched**: mouse pointerdowns bail out before anything happens, and `data-roving` —
+  the keyboard-only focus-ring flag — is deliberately not set by a finger.
+
+The hint sentence is `<ChartHint noun="…" />` (`src/components/charts/ChartHint.tsx`), which renders
+one span per modality; CSS shows exactly one. **Do not write the sentence by hand** — the three
+strings live in `src/components/charts/hint.ts`, `test_no_page_tells_a_touch_reader_to_hover` fails
+the build output on the pre-#73 literal, and `test_every_hint_carrier_ships_one_span_per_modality`
+fails on a carrier that ships fewer than three spans.
+
 ## `Axis.tsx`
 
 `AxisLeft` / `AxisBottom` both require a `label` prop (the unit) — there is no bare-axis escape
@@ -203,8 +235,9 @@ follows the same skeleton:
    the same focus state) — never `role="button"`, because focusing a datum reveals a value, it does
    not activate anything.
 4. A `<p aria-live="polite" className="readout">` (or an `.inspector` panel for a richer, multi-line
-   readout) built from the **same formatting function** the `aria-label` uses, so hover and
-   keyboard focus can never announce different text.
+   readout) built from the **same formatting function** the `aria-label` uses, so hover, keyboard
+   focus and touch can never announce different text — since #73 all three arrive through the same
+   `onFocus`. Its idle text is `<ChartHint noun="…" />`, never a hand-written sentence.
 5. A `<TableView>` mirroring the chart's active unit and columns.
 
 **Every island server-renders its whole `<svg>`.** The skeleton above must produce its chart in the

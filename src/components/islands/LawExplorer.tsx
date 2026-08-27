@@ -36,6 +36,7 @@ import {
 import { joinLawsToSplits, type Row } from '../laws/join'
 import type { BudgetYear, Law, PartySplit } from '../../data/types'
 import { labelledByFigure } from './figureLabel'
+import { ChartHint } from '../charts/ChartHint'
 
 /** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
  *  this key rather than typed — see `figureLabel.ts` (#72). */
@@ -213,7 +214,7 @@ export function LawExplorer({
     ? lawReadout(activeRow, basis)
     : focusFy != null && yearByFy.get(focusFy)
       ? fyReadout(yearByFy.get(focusFy)!)
-      : 'Focus or hover a fiscal year or a law to read its value.'
+      : <ChartHint noun="fiscal year or a law" />
 
   const chartAriaLabel =
     'Federal deficit or surplus as a percent of GDP, fiscal year 1995 to 2025, with the enactment ' +

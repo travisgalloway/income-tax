@@ -9,6 +9,7 @@ import * as Select from '@radix-ui/react-select'
 import { TableView, type Column } from './TableView'
 import { useRovingMarks } from '../charts/roving'
 import type { StatesTaxMix, TaxMixJurisdiction } from '../../data/types'
+import { ChartHint } from '../charts/ChartHint'
 
 function cellText(j: TaxMixJurisdiction, k: string): string {
   const v = j.shares[k]
@@ -38,7 +39,7 @@ export function StateTaxMix({ data }: { data: StatesTaxMix }) {
         const cat = data.categories.find((c) => c.k === focusedK)!
         return `${selected.name}, ${cat.label}: ${cellText(selected, cat.k)} of total state tax collections`
       })()
-    : `Focus or hover a segment to read ${selected.name}'s tax mix.`
+    : <ChartHint noun="segment" />
 
   const columns: Column[] = [
     { key: 'name', label: 'Jurisdiction', unit: '' },
