@@ -79,20 +79,31 @@ Nothing else is a prose string. In particular:
 ## Conventions
 
 **No em dash, and no ` -- ` either.** The ban stands (Ruling 1), and every job an em dash was doing
-has a named replacement. Fail: `src/pages/economy/index.astro:288` reads "Every series on this route
-— GDP, prices, rates, the wage and profit shares — is one number"; the aside is itself a list, so it
-takes parentheses. Fail: `src/pages/households/index.astro:145-146` reads "what people actually pay
--- the average federal tax rate -- has moved far less"; an appositive gloss takes a comma pair. Pass:
-`src/pages/government/index.astro:272-275`, which does the same work with a full stop and a new
+has a named replacement. Both worked fails are quoted historically, without a `path:line`, because
+#58 fixed both: a citation bound to a quotation the line no longer supports is the one rot
+`test_prose_contract_cites_lines_that_resolve` cannot catch, since the line still exists. Fail, as
+`/economy` read before #58: "Every series on this route — GDP, prices, rates, the wage and profit
+shares — is one number"; the aside is itself a list, so it takes parentheses, and it now reads
+"Every series on this route (GDP, prices, rates, the wage and profit shares) is one number". Fail, as
+`/households` read before #58: "what people actually pay -- the average federal tax rate -- has moved
+far less"; an appositive gloss takes a comma pair, and it now reads "what people actually pay, the
+average federal tax rate, has moved far less". Pass:
+`src/pages/government/index.astro:273-277`, which does the same work with a full stop and a new
 sentence. Enforced by `test_no_prose_string_contains_an_em_dash_or_a_double_hyphen`.
 
-**No all-caps emphasis.** Capitals are the `.kicker`'s role and nothing else's (Ruling 2). Fail:
-`src/pages/households/index.astro:122`, "The bracket COUNT is a policy choice". Fail:
-`src/pages/households/index.astro:134`, "Surtaxes ARE folded into the published top rate". Fail, in a
-figure note, `src/pages/households/index.astro:159`, "it INCLUDES PAYROLL TAX". Pass:
-`src/pages/government/index.astro:448` and `src/pages/government/index.astro:455`, which put the
-emphasis on a `<strong>` noun phrase, and `src/pages/households/index.astro:262`, which does the same
-for a numbered limit. Enforced by `test_no_prose_string_shouts`.
+**No all-caps emphasis.** Capitals are the `.kicker`'s role and nothing else's (Ruling 2). All
+three worked fails are quoted historically, for the reason the paragraph above gives: #58 discharged
+all three and their lines no longer carry them. Fail, as `/households` read before #58: "The bracket
+COUNT is a policy choice", now a `<strong>` on the noun phrase, "The bracket **count** is a policy
+choice". Fail, as `/households` read before #58: "Surtaxes ARE folded into the published top rate",
+now recast to "Surtaxes are the exception: they are folded into the published top rate", which puts
+the emphasis where the word order puts it. Fail, in a figure note, as `/households` read before #58:
+"it INCLUDES PAYROLL TAX", now recast to "counts payroll tax, corporate income tax and excise tax as
+well as the individual income tax", because a `note=` prop is a plain attribute rendered as text and
+cannot carry markup. Pass: `src/pages/government/index.astro:449` and
+`src/pages/government/index.astro:456`, which put the emphasis on a `<strong>` noun phrase, and
+`src/pages/households/index.astro:262`, which does the same for a numbered limit. Enforced by
+`test_no_prose_string_shouts`.
 
 **Acronyms are registered, not assumed.** An all-caps run of two or more letters is either in
 `REGISTERED_INITIALISMS` in `pipeline/tests/test_prose.py` or it is a shout. Pass: "GDP", "CBO",
@@ -105,7 +116,7 @@ diff. Enforced by `test_no_prose_string_shouts`.
 **Body copy is sentence case.** `BRIEF.md:77`. The kicker is not an exception, because it is not
 literal capitals: `src/styles/global.css:60-66` sets `font-variant-caps: all-small-caps` with
 `letter-spacing: 0.09em` at `0.9375rem`, and no `text-transform`. Pass:
-`src/pages/economy/index.astro:115` writes `<span class="section-no">Section 3</span>`, in sentence
+`src/pages/economy/index.astro:116` writes `<span class="section-no">Section 3</span>`, in sentence
 case, and the CSS does the rest. There is therefore no kicker carve-out anywhere in this contract.
 Enforced, for the capitals half, by `test_no_prose_string_shouts`.
 
@@ -116,13 +127,13 @@ with a figure, and the ruling is that the numeral wins. Pass:
 the figure out, because `pipeline/curated/prose_figures.yaml` is watching that number and a spelled
 form detaches the registry from the prose it describes. Not mechanically enforced.
 
-**Every figure carries its unit.** `sections.md:9-10`. Pass: `src/pages/economy/index.astro:118`,
+**Every figure carries its unit.** `sections.md:9-10`. Pass: `src/pages/economy/index.astro:119`,
 "Unemployment was 4.2% in fiscal 2025 against a noncyclical rate of 4.4%". Fail: any bare "4.2" in
 running prose. Not mechanically enforced here; the *figure*'s axes are separately gated by
 `src/components/Figure.astro:47`, which fails the build when either axis is unnamed.
 
 **No causation the data does not support.** `BRIEF.md:197-198`. Pass:
-`src/pages/economy/index.astro:108-111`, which states what a series shows and then says outright that
+`src/pages/economy/index.astro:109-112`, which states what a series shows and then says outright that
 nothing here identifies a cause. Fail: any sentence in which one series "drove", "caused" or "led to"
 another. Not mechanically enforced. Criterion 5 is where a reviewer catches it.
 
@@ -130,7 +141,7 @@ another. Not mechanically enforced. Criterion 5 is where a reviewer catches it.
 rule is broader than the list, and the list is the floor. Not mechanically enforced.
 
 **A finding states one claim a reader could falsify against the figure.** Pass:
-`src/pages/economy/index.astro:121-124`, which gives the unrounded values, both series and the
+`src/pages/economy/index.astro:122-125`, which gives the unrounded values, both series and the
 comparison between them, in two sentences. Fail: a finding that restates the standfirst, or that
 makes two claims joined by "and". Not mechanically enforced. Criterion 2 owns it.
 
@@ -138,7 +149,7 @@ makes two claims joined by "and". Not mechanically enforced. Criterion 2 owns it
 name are deliberately the same sentence per `docs/contracts/accessibility.md`, so a convention that
 moves one must move both, in the same commit. The label is additionally bound by
 `pipeline/tests/test_accessibility.py:284-306`: a digit, at least 40 characters, no leading shape
-word, and never "chart showing". Pass: `src/pages/economy/index.astro:127`. Fail:
+word, and never "chart showing". Pass: `src/pages/economy/index.astro:128`. Fail:
 `src/components/islands/StatutoryVsEffective.tsx:97`, which is a ` -- ` violation *inside* an
 accessible name, and is the reason `dist/households/index.html` carries more banned dashes than its
 page source does. Enforced by `test_no_prose_string_contains_an_em_dash_or_a_double_hyphen` and, for
@@ -161,19 +172,27 @@ would bless three incompatible conventions rather than replace them with one.
 `BRIEF.md:78` banned the character and named no replacement, which is why the ban was ignored. One
 replacement per grammatical job, so remediation is a mechanical pass and not thirty-seven judgements:
 
-| Job | Live example | Replacement |
+| Job | Example, as it read before #58 | Replacement |
 |---|---|---|
-| parenthetical aside | `src/pages/economy/index.astro:288` | comma pair; parentheses where the aside is itself a list, as it is there |
-| amplifying clause | `src/pages/government/index.astro:429` | colon, or a full stop and a new sentence |
-| appositive gloss | `src/pages/households/index.astro:145-146` | comma pair |
+| parenthetical aside | `/economy`: "Every series on this route — GDP, prices, rates, the wage and profit shares — is one number" | comma pair; parentheses where the aside is itself a list, as it is there |
+| amplifying clause | `/government`: "not the balance-of-payments question it sounds like — what follows is narrower on both sides" | colon, or a full stop and a new sentence |
+| appositive gloss | `/households`: "what people actually pay -- the average federal tax rate -- has moved far less" | comma pair |
 | generated readout separator | `src/components/islands/BudgetChart.tsx:84` | full stop. The readout's other fields are already separated by ". ", so one template edit clears all 31 labels |
+
+Rows 1 to 3 carry no `path:line` for the reason given under **Conventions**: #58 fixed all three and
+a citation would now bind a quotation to a line that no longer supports it. Row 4 keeps its citation
+because it is #102's and is untouched.
 
 Four scoping decisions, each stated so that no future issue has to litigate a grep:
 
 1. **` -- ` is retired outright.** No ASCII stand-in is blessed. It is not an em dash and it is not a
    substitute for one: it renders as two literal hyphens, which is what a reader sees at every
    viewport. Ten instances reached `dist/` on the day this contract landed, all on `/households`;
-   #53's Criterion 2 rewrites took two of them, leaving eight.
+   #53's Criterion 2 rewrites took two of them, leaving eight. #58 measured six still standing in
+   prose classes and cleared all six, so **no ` -- ` reaches a reader in prose today**. The two
+   that remain anywhere in `dist/` are both inside one chart's accessible name at
+   `src/components/islands/StatutoryVsEffective.tsx:97`, which is #102's and is why a dist-wide
+   grep is the wrong check.
 2. **Numeric-range hyphens are out of scope.** "1946-1950" at
    `src/pages/households/index.astro:116`, "FY1995-FY2025" throughout: a hyphen between two numbers
    is a range operator, not punctuation. **No en dash is introduced in its place.** The minus-sign
@@ -195,7 +214,7 @@ Four scoping decisions, each stated so that no future issue has to litigate a gr
 
 **All-caps is reserved for the `.kicker` role and banned in body copy and figure notes.** The
 replacement is `<strong>` on the load-bearing noun phrase, which the pages already do well at
-`src/pages/government/index.astro:448`, `src/pages/government/index.astro:455` and
+`src/pages/government/index.astro:449`, `src/pages/government/index.astro:456` and
 `src/pages/households/index.astro:262`, or a recast that puts the emphasis where the word order puts
 it.
 
@@ -203,13 +222,15 @@ Two refinements:
 
 - **The kicker is not literal capitals**, so there is no carve-out. `src/styles/global.css:60-66` is
   `font-variant-caps: all-small-caps`; kicker source text is sentence case
-  (`src/pages/economy/index.astro:115`) and passes the same mechanical check as body copy. The rule
+  (`src/pages/economy/index.astro:116`) and passes the same mechanical check as body copy. The rule
   is uniform across every prose class.
 - **Figure notes are ruled in, explicitly.** `src/components/Figure.astro:60` renders a `note` into
   the figcaption as `.figure-caveat`, and `.figure-caveat` is inside the allow-list. Without this,
-  `src/pages/households/index.astro:159`'s "it INCLUDES PAYROLL TAX" would stay legal. All three
-  shouts, `src/pages/households/index.astro:122`, `:134` and `:159`, are assigned to **#58** as one
-  pass: splitting a three-instance fix across issues costs more than it documents.
+  the figure note's "it INCLUDES PAYROLL TAX" would have stayed legal. All three shouts were
+  assigned to **#58** as one pass, because splitting a three-instance fix across issues costs more
+  than it documents, and **#58 discharged all three**: a `<strong>` on "count", a recast for
+  "Surtaxes are the exception", and a recast for the note, which cannot carry markup. `#58`'s block
+  of `KNOWN_SHOUT_DEBT` is empty, and the five entries that remain are all `#103`'s.
 
 The rule is about emphasis, not about acronyms. A registered initialism is not a shout, and the
 register lives in `REGISTERED_INITIALISMS` in `pipeline/tests/test_prose.py`.
@@ -257,8 +278,8 @@ clothes, and it is out of scope for every C-issue. The drift report
 auto-correcting, so a prose edit that moves a number leaves the registry silently describing
 something that is no longer on the page.
 
-**Prose may round, and harmonising precision is not a prose fix.** `src/pages/economy/index.astro:118`
-gives "4.2%" and `src/pages/economy/index.astro:122` gives "4.175%", the value the registry holds.
+**Prose may round, and harmonising precision is not a prose fix.** `src/pages/economy/index.astro:119`
+gives "4.2%" and `src/pages/economy/index.astro:123` gives "4.175%", the value the registry holds.
 That is correct: the standfirst reads and the finding checks. The rule is that the registered value
 must appear at least once in its section, not that every mention matches it. A precision convention
 would detach the registry from the prose it describes, which is the failure this section exists to
@@ -295,10 +316,10 @@ summarises the chart the reader has not seen yet, so the figure arrives as evide
 rather than as an answer to a question. **Cited by #52.**
 
 **The mechanical half.** Four positional and textual facts, over the four report routes' built
-pages. **Enforced by** `pipeline/tests/test_prose.py:473`, `:492`, `:511` and `:535`: a
+pages. **Enforced by** `pipeline/tests/test_prose.py:453`, `:472`, `:491` and `:515`: a
 `.standfirst` before the section's first `<figure>`; a `.prose` after its **last** `</figure>`; a
 standfirst whose number tokens overlap its finding's by less than `PREEMPTION_CEILING`
-(`pipeline/tests/test_prose.py:407`, 0.5) on Jaccard, because a standfirst quoting the finding's
+(`pipeline/tests/test_prose.py:387`, 0.5) on Jaccard, because a standfirst quoting the finding's
 exact figures posed no question; and no `<h2>` containing a word from `CONSTRUCTION_WORDS`. Scope is
 structural, with no exemption list anywhere: a section is asked the first two questions **because it
 carries a `<figure>`**, which is what silently and correctly discharges the three Limits sections
@@ -308,7 +329,7 @@ which is the choice the rule below says to make at that count.
 **What they cannot see.** They cannot see a heading that names the section's *variables* rather than
 its question: "Prices and rates" and "Labor and capital" told the reader what was plotted, not what
 was found, and both passed every word list anyone would write. #52 rewrote them by reading, to
-`src/pages/economy/index.astro:165` and `src/pages/economy/index.astro:226`. They cannot see a
+`src/pages/economy/index.astro:166` and `src/pages/economy/index.astro:227`. They cannot see a
 standfirst that restates its finding **in words** rather than in numbers, and they cannot judge
 whether the closing prose answers the question the standfirst actually posed. That is Checklist
 item 8, and it is human-judged.
@@ -316,7 +337,7 @@ item 8, and it is human-judged.
 ### Criterion 2 — the standfirst sets up, the finding claims
 
 **Asks:** does the standfirst set the chart up, and does the finding state exactly one claim a reader
-could falsify against the figure? **Pass:** `src/pages/economy/index.astro:117-124`, where the
+could falsify against the figure? **Pass:** `src/pages/economy/index.astro:118-125`, where the
 standfirst rounds and orients and the finding gives the unrounded values and the comparison between
 them. **Fail:** a finding that restates the standfirst, or that joins two claims with "and". Bound by
 the pairing rule in **Drift and quoted material**: a finding edit moves the matching `aria-label` in
@@ -324,12 +345,12 @@ the same commit, and the label stays inside `pipeline/tests/test_accessibility.p
 **Cited by #53.**
 
 **The mechanical half.** Four facts about every `.finding` on the four report routes, and about
-the standfirst beside it. **Enforced by** `pipeline/tests/test_prose.py:654`, `:680`, `:714` and
-`:739`: no standfirst and finding share a number token that is not a four-digit calendar year (the
+the standfirst beside it. **Enforced by** `pipeline/tests/test_prose.py:635`, `:661`, `:695` and
+`:720`: no standfirst and finding share a number token that is not a four-digit calendar year (the
 year is exempt as a regex class, not as a list, because a standfirst says over what window and a
 finding says when, so both name the same years by construction); every finding and every
 `figure.figure` accessible name clears the finding-shape floor; no finding runs past
-`FINDING_CHARS_MAX` (`pipeline/tests/test_prose.py:629`, 220 characters, with the longest surviving
+`FINDING_CHARS_MAX` (`pipeline/tests/test_prose.py:610`, 220 characters, with the longest surviving
 finding at 193); and each section carries at most one finding, immediately after its standfirst and
 before its first figure. The floor is `finding_shape_problems` at
 `pipeline/tests/test_accessibility.py:284`, extracted from `test_every_chart_svg_states_a_finding`
@@ -357,12 +378,63 @@ floor. Those are Checklist items 2, 3 and 9 below.
 ### Criterion 3 — sentence craft
 
 **Asks:** sentence length, clause count, punctuation (Ruling 1) and emphasis (Ruling 2).
-**Pass:** `src/pages/government/index.astro:272-275`, three sentences, one clause each, a full stop
-where a dash was tempting. **Fail:** `src/pages/economy/index.astro:288` and
-`src/pages/households/index.astro:145-146` for punctuation;
-`src/pages/households/index.astro:122`, `:134` and `:159` for emphasis. This is the only criterion
-with a machine-checkable definition of done: **the baseline going to zero is the criterion being
-met.** **Cited by #58.**
+**Pass:** `src/pages/government/index.astro:273-277`, three sentences, one clause each, a full stop
+where a dash was tempting. **Fail**, all quoted historically because #58 fixed every one of them:
+"Every series on this route — GDP, prices, rates, the wage and profit shares — is one number" and
+"what people actually pay -- the average federal tax rate -- has moved far less" for punctuation;
+"The bracket COUNT is a policy choice", "Surtaxes ARE folded into the published top rate" and the
+figure note's "it INCLUDES PAYROLL TAX" for emphasis. This is the only criterion with a
+machine-checkable definition of done: **the baseline going to zero is the criterion being met**,
+and #58 took it there. **Cited by #58.**
+
+**The mechanical half now spans three of this checker's numbered blocks.** Sections 1 and 2 are
+punctuation and emphasis, both `==` against the baselines. Section 8, added by #58, is sentence
+length and word spacing: `pipeline/tests/test_prose.py:834` caps a prose sentence at
+`SENTENCE_WORDS_MAX` (`pipeline/tests/test_prose.py:802`, 45 words),
+`pipeline/tests/test_prose.py:900` fails a `.term` span that abuts a letter, digit or comma in the
+served bytes, and `pipeline/tests/test_prose.py:946` gates the audit table below. All three assert
+zero.
+
+**The counts, and the exemption policy they chose (rule 3).** #58 met four numbers. It retired **23
+dash fingerprints** over 24 em dashes and 6 ` -- ` occurrences, and **5 shout fingerprints** over 3
+sites, by deleting them from #51's baselines entry by entry — that is #51's road, already chosen,
+and #58 emptied its block of each rather than replacing the mechanism. The two *new* checks measured
+**7** sentences past 45 words and **5** term-boundary word-joins. Both are #52's road: **fix them
+all and assert zero, with no baseline and no exemption list.** A 7-entry and a 5-entry
+`fingerprint -> "#owner"` map would cost more to maintain than the twelve edits cost to make, and
+there is no third party to hand either to.
+
+**Why 45 words, and why words rather than characters.** Measured across all 443 prose-class
+sentences on the seven built pages before the edits: 50 ran past 30 words, 29 past 35, 13 past 40,
+**7 past 45**, 3 past 50 and 2 past 55. 45 is the knee. A cap of 40 catches thirteen, several of
+them long but well-behaved lists of caveats that read fine; a cap of 50 leaves standing the 46- and
+49-word sentences that were the worst clause-stacking on the site. The unit diverges from
+`FINDING_CHARS_MAX` (220 characters) deliberately, and the two disagree materially here: the
+49-word offender measured 320 characters while the 46-word one measured 241. `FINDING_CHARS_MAX` is
+a **display-length** cap on one ruled-off sentence that a screen reader also reads aloud in full;
+this one is a **proxy for clause load**, where the word is the unit a reader parses. The longest
+finding on the site is 40 words, so the two caps cannot collide.
+
+**Scope, derived from structure (rule 2).** The length cap asks the four prose classes and not the
+three kinds of accessible name. That is scope, not exemption: a chart's name is bound by
+`docs/contracts/accessibility.md` and, where it is a finding, by `FINDING_CHARS_MAX` above, and the
+island-generated per-datum readouts are `.tsx` templates owned by #102. Holding a readout a number
+formatter assembles to a sentence-craft cap would be measuring the formatter. The word-join check
+asks every `.term` inside every prose element, with punctuation that legitimately abuts — an
+opening bracket or quote — allowed by construction rather than by a list.
+
+**What the checks cannot see.** They cannot see whether a sentence is *hard*: a 46-word sentence a
+reader glides through and a 30-word one they have to restart score the same, because length is a
+proxy and clause count is the judgement. No clause-counter and no proxy word list is invented to
+fake it, which is Checklist item 10. They cannot see the OpenStax 8.6 essential/nonessential
+judgement that decides whether a clause takes commas at all — Ruling 1's replacement table is the
+mechanical half, and choosing which job a given dash was doing is a reading. They cannot tell
+whether a split changed what a sentence claims, which is Checklist item 11. And the word-join check
+cannot see the **expression-boundary** variant of the same defect: the collapse that fuses a text
+run with a `<Term>` also fuses it with a `{expr}`, which is how `/contents` served
+"6 destinations,25 numbered figures", and an interpolated value is indistinguishable from literal
+text in the served bytes, so there is no span to anchor on. That one is fixed by hand and read by a
+person, as Checklist item 12.
 
 ### Criterion 4 — terms are defined
 
@@ -378,7 +450,7 @@ and belongs to the same issue. **Cited by #59.**
 
 **Asks:** can a reader verify each claim from the figure and its source? No causation the data does
 not support, no hype, figures always with units. **Pass:**
-`src/pages/economy/index.astro:108-111`, which says outright that nothing in the section identifies a
+`src/pages/economy/index.astro:109-112`, which says outright that nothing in the section identifies a
 cause. **Fail:** any sentence in which one series drives another, or any bare number without its
 unit. Bounded by **Drift and quoted material**: rewording around a figure is in scope, restating the
 figure is not. **Cited by #60.**
@@ -438,7 +510,7 @@ docs are most of the diff.
 |---|---|---|
 | 1 | **#52** | The `.kicker` + heading + `.standfirst` block opening each section across the three route pages. Prose only: no figure, no data and no `aria-label` change |
 | 2 | **#53** | `.standfirst` and `.finding` elements — 13 and 11 on `/government`, 8 and 6 on `/households`, 7 and 5 on `/economy`. Constrained by the pairing rule above |
-| 3 | **#58** | What is left of the day-one baseline: 23 prose-class dash fingerprints over 30 rendered occurrences, six of them ` -- ` on `/households`, and the three shouts at `src/pages/households/index.astro:122`, `:134` and `:159`. It opened at 26 over 33; #53 retired three, because Criterion 2 made it rewrite those three sentences and a rewritten sentence takes its dash with it. Each fix deletes its fingerprint from `KNOWN_DASH_DEBT` or `KNOWN_SHOUT_DEBT` in the same commit |
+| 3 | **#58** | **Discharged.** It took what was left of the day-one baseline — 23 prose-class dash fingerprints over 30 rendered occurrences, six of them ` -- ` on `/households`, and the three shouts in `/households` sections 3 and 4 — and deleted every one, each in the same commit as its edit. It opened at 26 over 33; #53 retired three, because Criterion 2 made it rewrite those three sentences and a rewritten sentence takes its dash with it. #58 also set the sentence-length cap this criterion had left open and split the seven sentences over it, and fixed six reader-visible word-joins. **The remainder is owned, not orphaned: `KNOWN_DASH_DEBT` holds exactly 4 entries, all `#102`, and `KNOWN_SHOUT_DEBT` holds exactly 5, all `#103`.** Both stay non-empty, so `test_the_baselines_are_declining`'s `assert baseline` still holds and neither check stops looking |
 | 4 | **#59** | `src/content/glossary/` (23 entries), `src/components/Term.astro`, and each route's first use of each term. Owns any move of `REGISTERED_INITIALISMS` onto the glossary |
 | 5 | **#60** | `.prose` bodies and `.figure-caveat` notes across all three routes, plus the Government route's section 12 limits block |
 | 6 | **#61** | The closing paragraph of each section and the terminal section of each route: Economy section 6, Households section 7, Government section 12 |
@@ -457,7 +529,7 @@ Two surfaces no C-issue can reach, each filed and each named beside the baseline
 
 One row per `<section id>` on the four report routes, twenty-nine of them. The question is a
 reviewer's one-line paraphrase of what the section's kicker, heading and standfirst pose before the
-reader meets a chart. `pipeline/tests/test_prose.py:589` asserts this table's `Route` and
+reader meets a chart. `pipeline/tests/test_prose.py:570` asserts this table's `Route` and
 `Section id` set **equals** the set built from `dist/`, so a section cannot ship without declaring
 its question and a deleted section cannot leave its judgement behind. What the test asserts is the
 **coverage**, never the wording: whether the paraphrase is honest, and whether the closing prose
@@ -505,7 +577,7 @@ is the structural scope of rule 2 above, and it is why this contract has no exem
 One row per `.finding` on the four report routes, twenty-two of them. `The one claim it makes` is a
 reviewer's paraphrase of the single thing the finding asserts; `Checkable against` names the figure
 whose `<details>` table settles it, which is where the two-figure sections are discharged, because a
-finding cannot be checkable against both. `pipeline/tests/test_prose.py:778` asserts this table's
+finding cannot be checkable against both. `pipeline/tests/test_prose.py:759` asserts this table's
 `Route` and `Section id` set **equals** the set of sections carrying a finding in `dist/`. What the
 test asserts is the coverage, never the wording: whether the paraphrase is honest, and whether the
 finding really states one claim rather than two, is Checklist item 9.
@@ -537,6 +609,31 @@ again, not an exemption.
 | /government | passed-signed | Both attributions of the scored cost total the same $16.75 trillion | `attribution`, whose table carries both columns' totals | Pass |
 | /government | where-money-comes-from | Over three decades the revenue mix tilted toward the individual income tax and away from payroll and corporate tax | `revenue`, the first of the section's two figures; `oecd` is an international comparison the finding does not claim | Pass |
 | /government | by-state | More states receive more federal spending per person than they pay in federal tax than the reverse | `state-give-get`, the first of the section's two figures; `state-tax-mix` is a different question | Pass |
+
+### Criterion 3 audit
+
+One row per **built page**, seven of them. Criterion 3's surface is the page, not the section:
+punctuation and emphasis conventions are page-wide, and both baselines above are keyed by page.
+`What its sentence craft turns on` is a reviewer's one-line paraphrase of the pressure this page's
+prose is under. `pipeline/tests/test_prose.py:946` asserts this table's page set **equals** the set
+`dist/` carries, so a new route cannot ship without declaring what its sentence craft turns on and
+a deleted one cannot leave its judgement behind. What the test asserts is the **coverage**, never
+the wording. **No measured counts sit in this table**: a count rots on the next prose edit, and the
+test would then be asserting a number it cannot maintain.
+
+| Page | What its sentence craft turns on | Criterion 3 |
+|---|---|---|
+| `index.html` | Pure exposition with no chart to lean on: four sections that have to survive as sentences alone. Its dashes were doing a definition's job, so they became colons and full stops, and its two longest sentences were single-breath inventories that split cleanly at the point the inventory begins | Pass |
+| `contents/index.html` | One standfirst over a wholly generated index. Every count in it is interpolated, so the sentence has to read correctly across four `{expr}` boundaries as well as scan — which is exactly where the served bytes fused "destinations,25" | Pass |
+| `economy/index.html` | Derivation prose: index start years, one-year offsets and deflator bases, chained behind colons and semicolons. Both of its over-long sentences were derivations stacked into one, and both split at the derivation rather than at a comma | Pass |
+| `government/index.html` | The longest route and the most caveat-dense. Its over-long sentences were vintage and scope qualifications queued behind a colon; each qualification is now its own sentence, which is also what let the two ` -- `-free asides drop their dashes without losing the pause | Pass |
+| `households/index.html` | Where every ` -- ` and all three shouted-capital emphases lived. Emphasis matters most here because the statutory-versus-effective distinction is the route's whole argument, and it now travels by `<strong>` or by word order, never by capitals | Pass |
+| `glossary/index.html` | One standfirst of its own; everything else a reader meets on the page is a glossary entry authored under `src/content/glossary/` and owned by #59. The criterion bites on that one sentence and no further | Pass |
+| `sources/index.html` | Carries no prose-class element at all. The page renders `SOURCES.md`, which is quoted register material no prose rule may edit, so there is nothing here for this criterion to hold and the row says so rather than leaving the page undeclared | Pass |
+
+The last two rows are not exemptions. They are the honest reading of a structural scope: a page is
+asked this criterion of whatever prose-class elements it carries, and two of the seven carry one
+and none respectively.
 
 ## Checklist — status per item
 
@@ -577,3 +674,24 @@ statement about this contract's coverage, not a formality. Nothing below is enfo
    half of Criterion 2 measures shared number tokens and character counts, which is why
    `households#who-pays` was catchable and why a standfirst that restates its finding in words
    would not be. Neither number is the judgement. — **NOT EXECUTED.** Human required. Criterion 2.
+10. **Decide, clause by clause, which clauses are essential and which are not**, in the sense
+    OpenStax *Writing Guide* 8.6 uses, and check that the punctuation follows the decision.
+    Ruling 1's replacement table is the mechanical half: it says what to write once you know which
+    job the dash was doing. Knowing which job it was doing is a reading, and so is deciding whether
+    a clause a comma pair now sets off was ever nonessential. **No word list is invented to make
+    this look mechanical**, because a proxy for it would report green on exactly the sentences a
+    reader stumbles over. `test_no_prose_sentence_runs_past_the_cap` measures length, which is a
+    proxy for clause load and nothing more. — **NOT EXECUTED.** Human required. Criterion 3.
+11. **Read the seven split sentences aloud and confirm each still claims what it claimed.** #58
+    split seven sentences that ran past 45 words, on `/`, `/economy` and `/government`. A split is
+    allowed to move a pause; it is not allowed to move a figure, drop a qualifier onto the wrong
+    clause, or turn a hedged claim into a flat one. Every figure in those sentences is registered
+    in `pipeline/curated/prose_figures.yaml`, and the drift report checks the *number*, never the
+    sentence around it. — **NOT EXECUTED.** Human required. Criterion 3 and Criterion 7.
+12. **Read `/contents`' standfirst in the browser, not in the source.**
+    `test_no_prose_string_fuses_two_words_at_a_component_boundary` cannot see the
+    expression-boundary form of the word-join it exists to catch, because an interpolated count is
+    indistinguishable from literal text once rendered. The standfirst carries four such
+    boundaries, it served "6 destinations,25 numbered figures" before #58, and the fix is a `{' '}`
+    that only a rendered read can confirm is still there. — **NOT EXECUTED.** Human required.
+    Criterion 3.
