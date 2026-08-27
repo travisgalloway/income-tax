@@ -8,22 +8,32 @@ _comment: |
 resolutions:
   foreign_share_of_debt:
     conflict: >-
-      Al Jazeera (20 August 2026) reported foreign holders at 32% of GROSS debt
-      in 2025. That does not reconcile: foreign holdings are roughly 30% of the
-      ~$32T held by the public, which is about $9.6T, or 24% of $40T gross. The
-      32% figure appears to be a share-of-public-debt number labelled as
-      share-of-gross.
+      A widely circulated 2025 figure puts foreign holders at 32% of GROSS debt.
+      It does not reconcile against the arithmetic, which anyone can redo:
+      foreign holders are about 30% of the $32.14T held by the public, so about
+      $9.6T; against $39.88T gross that is 24%, not 32%. 32% is what 30% of the
+      publicly held figure looks like when the denominator is mislabelled, the
+      share-of-public number wearing the gross label. Restated as arithmetic
+      rather than as one outlet's word against the site's (#54): the claim is
+      answered by the two denominators, not by who published it.
     use:
       share_of_public_pct: 30
       share_of_gross_pct: 24
     rule: Never present a share without saying which denominator it uses.
 
   china_holdings:
-    conflict: Reported at $683B (TIC via Al Jazeera) and about $760B elsewhere. Both
-      plausible depending on vintage.
+    conflict: >-
+      $683.9B and about $760B are both Treasury International Capital, ten
+      months apart in one series: TIC reads 683.9 for the November 2025 release
+      and 760.8 for January 2025. This was never a disagreement between sources,
+      and it is now shown from the fetched release rather than asserted (#54).
     use:
       amount_t: 0.683
-    rule: Carry the note that TIC is revised monthly.
+    rule: >-
+      Carry the note that TIC is revised monthly, and NAME the release month.
+      amount_t is the editorial bound the fetched figure is checked against, not
+      the source of the published number: check_snapshots fails the build if the
+      TIC value and this value differ by more than 0.01.
 
   federal_reserve_holdings:
     conflict: Reported at $4.528T (Peterson Foundation) and about $4.9T elsewhere.

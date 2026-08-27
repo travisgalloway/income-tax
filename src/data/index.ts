@@ -109,6 +109,56 @@ export function curatedVintage(meta: Meta, asOf: string): string {
   return `Curated snapshot, as of ${longDate(asOf)}. Refreshed by hand, not auto-fetched.`
 }
 
+/** `2025-11` -> `November 2025`. A release month, not a day. */
+function longMonth(isoMonth: string): string {
+  const match = /^(\d{4})-(\d{2})$/.exec(isoMonth)
+  if (!match) {
+    throw new Error(`longMonth: ${JSON.stringify(isoMonth)} is not a YYYY-MM release month.`)
+  }
+  const [, yStr, mStr] = match
+  const y = Number(yStr)
+  const name = MONTHS[Number(mStr) - 1]
+  if (!name) {
+    throw new Error(`longMonth: ${JSON.stringify(isoMonth)} is not a YYYY-MM release month.`)
+  }
+  return `${name} ${y}`
+}
+
+/** Freshness stamp for a MIXED dataset (`_meta.refresh.mode === 'mixed'`): part
+ *  fetched, part curated, and the two parts are as of DIFFERENT dates.
+ *
+ *  `debt_holders` is the case this exists for (#54). Its foreign holdings come
+ *  from the Treasury International Capital release pinned in
+ *  `_meta.provenance.vintage` (a month), while its public/intragovernmental
+ *  split comes from Debt to the Penny as of `data.as_of` (a day). Naming one of
+ *  those two dates and letting the reader assume it covers both is the failure;
+ *  this names both.
+ *
+ *  The two source labels are written in because `debt_holders` is the only mixed
+ *  dataset. A second one takes them as parameters rather than copying this
+ *  sentence. Throws when the mode is not `'mixed'`, and when the vintage is
+ *  missing — a mixed dataset with no release month has nothing to render here,
+ *  and a blank date is worse than a loud failure. */
+export function mixedVintage(meta: Meta, asOf: string): string {
+  if (meta.refresh?.mode !== 'mixed') {
+    throw new Error(
+      `mixedVintage called on a dataset whose _meta.refresh.mode is ` +
+        `${JSON.stringify(meta.refresh?.mode)}; use curatedVintage or vintageOf instead.`,
+    )
+  }
+  const vintage = meta.provenance.vintage
+  if (!vintage) {
+    throw new Error(
+      'mixedVintage: _meta.provenance.vintage is missing. A fetched figure without its ' +
+        'release month is the trap SOURCES.md exists to prevent.',
+    )
+  }
+  return (
+    `Treasury International Capital, ${longMonth(vintage)} release. ` +
+    `Debt to the Penny as of ${longDate(asOf)}.`
+  )
+}
+
 export const laws = budget.data.flatMap((y) => y.L)
 
 // The laws-to-splits join lives in src/components/laws/join.ts (issue #33) —

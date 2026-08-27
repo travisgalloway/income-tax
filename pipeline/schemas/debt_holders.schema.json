@@ -6,27 +6,30 @@
   "properties": {
     "_meta": {
       "type": "object",
-      "required": ["source", "title", "provenance", "refresh", "deliberate_omissions"],
+      "required": ["source", "title", "provenance", "refresh", "deliberate_omissions", "tic_grand_total_b"],
       "properties": {
         "source": { "type": "string", "minLength": 12 },
         "title": { "type": "string", "minLength": 1 },
         "provenance": {
           "type": "object",
-          "required": ["generator", "git_sha", "generated_at"],
+          "required": ["generator", "git_sha", "generated_at", "vintage", "retrieved_at"],
           "properties": {
             "generator": { "type": "string", "minLength": 1 },
             "git_sha": { "type": "string", "minLength": 7 },
-            "generated_at": { "type": "string", "minLength": 1 }
+            "generated_at": { "type": "string", "minLength": 1 },
+            "vintage": { "type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$" },
+            "retrieved_at": { "type": "string", "minLength": 1 }
           }
         },
         "refresh": {
           "type": "object",
           "required": ["mode", "reason"],
           "properties": {
-            "mode": { "const": "curated" },
+            "mode": { "const": "mixed" },
             "reason": { "type": "string", "minLength": 1 }
           }
         },
+        "tic_grand_total_b": { "type": "number", "exclusiveMinimum": 0 },
         "deliberate_omissions": {
           "type": "object",
           "required": ["federal_reserve_holdings"],
@@ -38,10 +41,11 @@
     },
     "data": {
       "type": "object",
-      "required": ["total_debt_t", "as_of", "split", "public_split", "top_foreign", "foreign_share_history"],
+      "required": ["total_debt_t", "as_of", "tic_as_of", "split", "public_split", "top_foreign", "foreign_share_history"],
       "properties": {
         "total_debt_t": { "type": "number", "exclusiveMinimum": 0 },
         "as_of": { "type": "string", "format": "date", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+        "tic_as_of": { "type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$" },
         "split": {
           "type": "array",
           "minItems": 2,
@@ -72,6 +76,7 @@
         "top_foreign": {
           "type": "array",
           "minItems": 3,
+          "maxItems": 3,
           "items": {
             "type": "object",
             "required": ["country", "amount_t"],

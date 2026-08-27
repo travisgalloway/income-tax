@@ -895,3 +895,26 @@ time. Appended to, never rewritten. None of these have been acted on.
   prose one: whether the front door should make any checkable claim at all, or whether its job is
   purely to route a reader onward. Nobody's issue today. Found while deriving Criterion 2's scope
   for #53. Severity: design question, non-blocking.
+- [2026-08-26] `pipeline/curated/prose_figures.yaml:3` and `pipeline/lib/report.py:135` both name
+  `content/sections.md`. No such path exists: the file is `./sections.md` at the repo root, and it
+  is the legacy brief, superseded by the `.astro` pages as the actual prose surface. A dangling
+  reference in two curated headers. Found while planning #54. Severity: docs, non-blocking.
+- [2026-08-26] `./sections.md:60` and `./debt-holders.json` (the legacy brief, read as `LEGACY` by
+  `pipeline/tests/test_pipeline.py:794`) still carry `UK $889B` / `China $683B` and the outlet
+  attribution that #54 removed from the published data. They are an append-only historical record
+  of what the site was built from, so they are deliberately not edited — but nothing states that
+  policy anywhere, and the next person to grep for `$889B` will find them and not know. Found while
+  planning #54. Severity: docs, non-blocking.
+- [2026-08-26] `src/data/index.ts:93` `longDate` expects a full `YYYY-MM-DD` and renders
+  `${d} ${month} ${y}`, but `figures.ts:183` passes `debtMaturity.data.avg_maturity_as_of`, which is
+  `2026-06`. Figure 3's source line on `/government` therefore reads "Curated snapshot, as of
+  **undefined** June 2026" in `dist/government/index.html` today. Pre-existing, GOV-3's, and not
+  reachable from #54's scope, which touches `debt_holders` only. One fix would be a month-aware
+  branch in `curatedVintage` beside the `longMonth` helper #54 added. Found while rewriting the
+  `curatedVintage` example in `contracts/interfaces/curated-snapshots.md`. Severity: visible
+  rendering defect on a published source line, non-blocking for this issue.
+- [2026-08-26] `pipeline/curated/snapshots.yaml`'s `_comment` said "these four datasets" while
+  `curated_snapshots.OUTPUTS` listed five (`cbo_effective_rates` was added later and never reached
+  the comment). #54 rewrote that `_comment` for its own reasons and the count is now right, so the
+  finding is recorded as closed-in-passing rather than as open work. Found while planning #54.
+  Severity: docs, resolved incidentally.

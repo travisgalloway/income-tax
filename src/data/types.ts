@@ -30,8 +30,11 @@ export interface Meta {
   provenance: Provenance
   coverage?: Record<string, unknown>
   estimate_boundary?: { last_actual_fy: number; note: string }
-  /** Present on curated snapshots (not auto-fetched). See curatedVintage(). */
-  refresh?: { mode: string; reason: string }
+  /** How this output is kept current. `'curated'` — nothing is fetched, see
+   *  `curatedVintage()`. `'mixed'` — part fetched and part curated, carrying two
+   *  dates, see `mixedVintage()`. Absent on a fully fetched output, where
+   *  `vintageOf()` answers the freshness question. */
+  refresh?: { mode: 'curated' | 'mixed'; reason: string }
   [key: string]: unknown
 }
 
@@ -293,7 +296,13 @@ export interface StatesTaxMix {
 
 export interface DebtHolders {
   total_debt_t: number
+  /** Debt to the Penny's as-of date, for the split and the total. */
   as_of: string
+  /** The pinned Treasury International Capital release month, `YYYY-MM`, for
+   *  `top_foreign` only. A SECOND date, deliberately: the foreign holdings come
+   *  from a different release with a different vintage, and presenting one date
+   *  for both is the failure. `mixedVintage()` renders the pair. */
+  tic_as_of: string
   split: { k: 'public' | 'intragov'; label: string; amount_t: number; share_pct: number }[]
   /** Deliberately `share_of_public_pct`, NOT `share_pct`: the denominator is
    *  part of the field name so a renderer cannot silently print it as a share

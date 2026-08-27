@@ -30,7 +30,7 @@ FINAL_DIR = ROOT.parent / "src" / "data"
 # Builders that exist and must run. A module named here but missing from disk is
 # a HARD FAILURE, not a skip.
 TIERS: dict[str, list[str]] = {
-    "monthly": ["cbo", "treasury", "fred", "curated_snapshots", "states"],
+    "monthly": ["cbo", "treasury", "debt_holders", "fred", "curated_snapshots", "states"],
     "oneshot": ["party_splits", "bracket_history"],
 }
 

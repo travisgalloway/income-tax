@@ -99,17 +99,18 @@ const sourcesHref = join('/sources')
       fig={fig('debt-holders')}
       xUnit="Share of gross debt, and share of publicly held debt"
       yUnit="holder category"
-      note="Foreign holders are about 30% of publicly held debt, which is about 24% of gross debt; the two are not interchangeable. Treasury International Capital is revised monthly and China has been reported between $683 billion and $760 billion depending on vintage."
+      note="Foreign holders are about 30% of publicly held debt. Redo it: 30% of the $32.14 trillion held by the public is about $9.6 trillion, and against $39.88 trillion of gross debt that is 24%. A 32% figure is the share of publicly held debt wearing the gross label, and the two denominators are not interchangeable. Country holdings are the Treasury International Capital release for November 2025, a series revised monthly."
     >
       <DebtHolders client:visible d={debtHolders.data} />
     </Figure>
 
     <p class="prose">
       Of the publicly held part, roughly 70% is domestic. The biggest foreign holders are
-      Japan at about $1.20 trillion, the UK at $889 billion and China at $683 billion.
-      Foreign holders were 5% of the debt in 1970 and are now close to a quarter of it. That
-      is not a solvency problem by itself, but a growing share of interest payments leaves
-      the country.
+      Japan at about $1.20 trillion, the UK at $880 billion and China at $684 billion, each
+      read from the Treasury International Capital release for November 2025. Foreign holders
+      were 5% of the debt in 1970 and are now close to a quarter of it. That is not a
+      solvency problem by itself, but a growing share of interest payments leaves the
+      country.
     </p>
     <p class="prose">
       The <Term id="intragovernmental-holdings">intragovernmental</Term> piece is real money
