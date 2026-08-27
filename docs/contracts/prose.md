@@ -577,14 +577,14 @@ which are the counts #61 measured against a clean `dist/` before it wrote a sent
 
 | Check | What it asserts | Measured before #61 |
 |---|---|---|
-| `test_every_in_prose_cross_reference_resolves_and_is_base_aware` | Every `/`- or `#`-rooted href inside a prose element begins with the served base path, names a route `dist/` actually built, and lands on an `id` that exists on that built page | **11 in-prose cross-references, 11 resolving, 0 not base-aware.** The issue's central premise — that three cross-route links skip the base — was **already discharged** by #43/#70, which fixed exactly those three, and by #49, which moved `join()` out of `BaseLayout.astro` so the site has one implementation of the base join |
+| `test_every_in_prose_cross_reference_resolves_and_is_base_aware` | Every `/`- or `#`-rooted href inside a prose element begins with the served base path, names a route `dist/` actually built, and lands on an `id` that exists on that built page | **12 in-prose cross-references, 12 resolving, 0 not base-aware.** The issue's central premise — that three cross-route links skip the base — was **already discharged** by #43/#70, which fixed exactly those three, and by #49, which moved `join()` out of `BaseLayout.astro` so the site has one implementation of the base join |
 | `test_every_joint_of_the_route_ladder_is_written` | Each content route, in `routeSections` order, carries an **in-prose** link to the route after it | **1 of 2 joints written.** `/economy` §6 handed off to `/households`; `/households` carried **zero** links to `/government` in any sentence a reader reads |
 | `test_the_last_routes_ending_points_back_into_the_argument` | The closing `.prose` of the terminal section of the terminal route links something other than `/sources`, `/glossary` and `/contents` | **0 such links.** The site's last paragraph was a Sources line and nothing else |
 | `test_the_criterion_six_audit_covers_every_section` | Method rule 5: the audit table's `(route, section id)` set **equals** the set built from `dist/`, 29 today | 29 sections: 4 on `/`, 6 on `/economy`, 7 on `/households`, 12 on `/government` |
 
 The first three exist because a check that already passes is exactly what a copy pass needs: #61 added
-roughly ten new cross-references, and without them the next link written by hand reintroduces #70's
-production bug silently. **Prose-scoping is what makes the second and third non-trivial.** The rail
+six new cross-references, taking the page-wide total from twelve to eighteen, and without them the
+next link written by hand reintroduces #70's production bug silently. **Prose-scoping is what makes the second and third non-trivial.** The rail
 and the narrow-viewport navbar link every route from every page, so an unscoped grep for
 `government` in the built Households page returned a non-zero count on the day the issue opened and
 would have passed vacuously. Two exclusions do the scoping, both taken from markup rather than from

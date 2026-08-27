@@ -1554,10 +1554,11 @@ def test_every_in_prose_cross_reference_resolves_and_is_base_aware():
     -- and its route must be a route `dist/` actually built, and its fragment, if it has one, must
     be an `id` on that built page.
 
-    **Measured at the count this issue opened on: 11 in-prose cross-references, 11 resolving, 0
+    **Measured at the count this issue opened on: 12 in-prose cross-references, 12 resolving, 0
     not base-aware.** Asserted as zero with **no baseline**, which is method rule 3's fix-all road
     at a count of zero, the road #52 and #60 took. The point of a check that already passes is
-    that #61 adds roughly ten more cross-references to the ones it measured: without it the next
+    that #61 adds six more cross-references to the twelve it measured, taking the page-wide total
+    to eighteen: without it the next
     hand-written link reintroduces #70 silently.
 
     *Cannot see:* whether the target section **delivers what the sentence promised**. A link to
