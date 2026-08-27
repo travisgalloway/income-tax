@@ -573,8 +573,9 @@ def _audit_table(heading: str) -> str:
     With `### Criterion 2 audit` sitting beside it, that slice swallows both tables and each
     coverage test below then measures the *union* of the two row sets against its own subject.
     Today that union happens to equal the section set, so the mis-parse would pass rather than
-    fail, which is the worse of the two outcomes. Ending at `\\n## ` or `\\n### `, whichever comes
-    first, keeps each table to itself.
+    fail, which is the worse of the two outcomes. Ending at the next heading of any level --
+    `\\n# ` through `\\n###### `, whichever comes first -- keeps each table to itself even if the
+    contract later grows a `####` subsection between two audit tables.
     """
     text = PROSE_DOC.read_text()
     start = text.find(f"### {heading}")
@@ -582,7 +583,7 @@ def _audit_table(heading: str) -> str:
         f"docs/contracts/prose.md has no `### {heading}` section. The per-surface judgement lives "
         "in the contract, where it can be re-read, not in a PR body, where it cannot."
     )
-    nxt = re.search(r"\n#{2,3} ", text[start + 1 :])
+    nxt = re.search(r"\n#{1,6} ", text[start + 1 :])
     return text[start : start + 1 + nxt.start()] if nxt else text[start:]
 
 
@@ -722,11 +723,11 @@ def test_no_finding_runs_past_the_cap():
     person. What this catches is the shape that made every multi-claim finding on the site
     identifiable: a finding that kept going.
     """
-    offenders = [
-        f"{page}#{sid} at {len(_collapsed(node))} characters: {_collapsed(node)[:70]!r}"
-        for page, sid, node in findings()
-        if len(_collapsed(node)) > FINDING_CHARS_MAX
-    ]
+    offenders = []
+    for page, sid, node in findings():
+        text = _collapsed(node)
+        if len(text) > FINDING_CHARS_MAX:
+            offenders.append(f"{page}#{sid} at {len(text)} characters: {text[:70]!r}")
     assert not offenders, (
         f"A finding runs past {FINDING_CHARS_MAX} characters. docs/contracts/prose.md Criterion 2: "
         "a finding states one claim a reader can check against the figure, and it is also the "
