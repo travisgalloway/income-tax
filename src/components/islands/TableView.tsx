@@ -11,7 +11,7 @@
  *  exactly when the table is wider than the box, names it after this table's own
  *  caption, and moves it on Left/Right/Home/End/PageUp/PageDown. All 25
  *  instances of this component inherit that; no call site changes. */
-import { useScrollableRegion } from './scrollRegion.ts'
+import { useScrollableRegion } from './scrollRegion'
 
 export interface Column {
   key: string

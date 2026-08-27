@@ -57,6 +57,15 @@ const MAX_STOPS_GOVERNMENT = 200
 const WALK_MAX = 1200
 const SECTION_11 = '#by-state, #by-state *'
 
+/** Per-test ceiling. The slowest test here measures 3.5s on a developer's
+ *  machine, so 90s is 25x headroom — this is not a tolerance, it is the
+ *  difference between a lane that REPORTS and a lane that hangs. `node --test`
+ *  has no default test timeout, and the CI job has no step timeout, so a single
+ *  wait that never settles burns the six-hour job limit and names nothing. A
+ *  check that cannot fail loudly is the shape this repository keeps deleting;
+ *  one that cannot fail at all, because it never finishes, is worse. */
+const T = { timeout: 90_000 } as const
+
 const GOVERNMENT = ROUTES.find((r) => r.path === '/government') as Route
 const ECONOMY = ROUTES.find((r) => r.path === '/economy') as Route
 const NARROW = VIEWPORTS[0]
@@ -67,7 +76,7 @@ let site: Site
 before(async () => {
   // Its own port: two servers on one is a race that presents as a mystery 404.
   site = await withSite(3)
-})
+}, T)
 after(async () => {
   await site?.close()
 })
@@ -347,7 +356,7 @@ function widest(rows: ContainerRow[]): ContainerRow {
  * somewhere — is true across the sweep.
  * ------------------------------------------------------------------------- */
 
-test('every scroll container is focusable exactly when it overflows', async () => {
+test('every scroll container is focusable exactly when it overflows', T, async (t) => {
   const failures: string[] = []
   let overflowing = 0
   let fitting = 0
@@ -368,6 +377,12 @@ test('every scroll container is focusable exactly when it overflows', async () =
         total += rows.length
         overflowing += rows.filter((r) => r.overflows).length
         fitting += rows.filter((r) => !r.overflows).length
+        // A six-page sweep that stops part-way must say WHERE. Without this the
+        // only evidence is silence, which reads the same as slow.
+        t.diagnostic(
+          `${route.path} @ ${viewport.width}px: ${rows.length} containers, ` +
+            `${rows.filter((r) => r.overflows).length} overflowing`,
+        )
         failures.push(
           ...focusabilityFailures(rows).map(
             (f) => `${route.path} @ ${viewport.width}px: ${f}`,
@@ -387,7 +402,7 @@ test('every scroll container is focusable exactly when it overflows', async () =
   assert.deepEqual(failures, [], failures.join('\n  '))
 })
 
-test('the focusability guard bites in both directions', async () => {
+test('the focusability guard bites in both directions', T, async () => {
   const { context, page } = await open(GOVERNMENT, WIDE)
   try {
     await openAllDetails(page)
@@ -433,7 +448,7 @@ test('the focusability guard bites in both directions', async () => {
  * ------------------------------------------------------------------------- */
 
 for (const route of CHART_ROUTES) {
-  test(`${route.path}: arrows, Home and End scroll its widest container`, async () => {
+  test(`${route.path}: arrows, Home and End scroll its widest container`, T, async () => {
     const { context, page } = await open(route, WIDE)
     try {
       await openAllDetails(page)
@@ -484,7 +499,7 @@ for (const route of CHART_ROUTES) {
   })
 }
 
-test('a sort button inside a container keeps its own arrow keys (E7)', async () => {
+test('a sort button inside a container keeps its own arrow keys (E7)', T, async () => {
   // §10 and §11 both put `.sort-button`s inside the scroll container. An arrow
   // pressed on one of those is the browser's business; the handler acts only
   // when the container itself is the target.
@@ -524,7 +539,7 @@ test('a sort button inside a container keeps its own arrow keys (E7)', async () 
   }
 })
 
-test('the scroll guard bites when the key handler never runs', async () => {
+test('the scroll guard bites when the key handler never runs', T, async () => {
   const { context, page } = await open(ECONOMY, WIDE)
   try {
     await openAllDetails(page)
@@ -583,7 +598,7 @@ async function visibleColumns(page: Page): Promise<boolean[]> {
   )
 }
 
-test('/economy #prices-rates: all seven columns are reachable by keyboard alone', async () => {
+test('/economy #prices-rates: all seven columns are reachable by keyboard alone', T, async () => {
   const { context, page } = await open(ECONOMY, WIDE)
   try {
     await openAllDetails(page)
@@ -649,7 +664,7 @@ test('/economy #prices-rates: all seven columns are reachable by keyboard alone'
   }
 })
 
-test('the seven-column guard bites when the key handler never runs', async () => {
+test('the seven-column guard bites when the key handler never runs', T, async () => {
   const { context, page } = await open(ECONOMY, WIDE)
   try {
     await openAllDetails(page)
@@ -706,7 +721,7 @@ function isAuthorRing(r: Ring): boolean {
 }
 
 for (const viewport of VIEWPORTS) {
-  test(`every focusable container is named after its own table @ ${viewport.width}px`, async () => {
+  test(`every focusable container is named after its own table @ ${viewport.width}px`, T, async (t) => {
     const failures: string[] = []
     let named = 0
     for (const route of CHART_ROUTES) {
@@ -717,6 +732,7 @@ for (const viewport of VIEWPORTS) {
         const rows = await containers(page)
         named += rows.filter((r) => r.overflows).length
         failures.push(...nameFailures(rows).map((f) => `${route.path}: ${f}`))
+        t.diagnostic(`${route.path} @ ${viewport.width}px: ${rows.length} containers`)
       } finally {
         await context.close()
       }
@@ -726,7 +742,7 @@ for (const viewport of VIEWPORTS) {
   })
 }
 
-test('the accessible-name guard bites on a bare "scrollable region" and on no name', async () => {
+test('the accessible-name guard bites on a bare "scrollable region" and on no name', T, async () => {
   const { context, page } = await open(ECONOMY, WIDE)
   try {
     await settleContainers(page)
@@ -772,7 +788,7 @@ test('the accessible-name guard bites on a bare "scrollable region" and on no na
 })
 
 for (const viewport of VIEWPORTS) {
-  test(`a focused container paints a ring the reader can see @ ${viewport.width}px`, async () => {
+  test(`a focused container paints a ring the reader can see @ ${viewport.width}px`, T, async () => {
     const { context, page } = await open(ECONOMY, viewport)
     try {
       await openAllDetails(page)
@@ -811,7 +827,7 @@ for (const viewport of VIEWPORTS) {
   })
 }
 
-test('the ring guard bites with every :focus-visible rule deleted', async () => {
+test('the ring guard bites with every :focus-visible rule deleted', T, async () => {
   const { context, page } = await open(ECONOMY, WIDE)
   try {
     await openAllDetails(page)
@@ -860,7 +876,7 @@ test('the ring guard bites with every :focus-visible rule deleted', async () => 
  * ------------------------------------------------------------------------- */
 
 for (const viewport of VIEWPORTS) {
-  test(`/government: the Tab order grows by exactly the overflowing count @ ${viewport.width}px`, async () => {
+  test(`/government: the Tab order grows by exactly the overflowing count @ ${viewport.width}px`, T, async () => {
     const { context, page } = await open(GOVERNMENT, viewport)
     try {
       // The DEFAULT state first, because that is the page a reader lands on.
@@ -911,7 +927,7 @@ for (const viewport of VIEWPORTS) {
   })
 }
 
-test('the growth guard bites when every container is made focusable', async () => {
+test('the growth guard bites when every container is made focusable', T, async () => {
   const { context, page } = await open(GOVERNMENT, WIDE)
   try {
     await openAllDetails(page)
@@ -956,7 +972,7 @@ test('the growth guard bites when every container is made focusable', async () =
  * ------------------------------------------------------------------------- */
 
 for (const viewport of VIEWPORTS) {
-  test(`/government: both bounds hold with every table open @ ${viewport.width}px`, async () => {
+  test(`/government: both bounds hold with every table open @ ${viewport.width}px`, T, async () => {
     const { context, page } = await open(GOVERNMENT, viewport)
     try {
       const opened = await openAllDetails(page)
@@ -995,7 +1011,7 @@ for (const viewport of VIEWPORTS) {
   })
 }
 
-test('the all-open walk reports a number when the §11 bound is actually threatened', async () => {
+test('the all-open walk reports a number when the §11 bound is actually threatened', T, async () => {
   // 390px is the worse viewport: eleven of the thirteen containers above §11
   // overflow there. The mutation is the two things that could spend the
   // remaining margin — a blanket tabindex on the containers that fit, and one
@@ -1051,7 +1067,7 @@ test('the all-open walk reports a number when the §11 bound is actually threate
  * B6 — runtime state. The `ResizeObserver`'s two jobs, and the filters.
  * ------------------------------------------------------------------------- */
 
-test('/government §9: an inactive tab panel is not a scroll box, and becomes one (E3)', async () => {
+test('/government §9: an inactive tab panel is not a scroll box, and becomes one (E3)', T, async () => {
   const { context, page } = await open(GOVERNMENT, NARROW)
   try {
     await openAllDetails(page)
@@ -1103,7 +1119,7 @@ test('/government §9: an inactive tab panel is not a scroll box, and becomes on
   }
 })
 
-test('/economy: a live resize past the fit point makes a container focusable, keeping focus (E1, E6)', async () => {
+test('/economy: a live resize past the fit point makes a container focusable, keeping focus (E1, E6)', T, async () => {
   const { context, page } = await open(ECONOMY, WIDE)
   try {
     // Opened, because a closed `<details>` subtree is not focusable at all in
@@ -1152,7 +1168,7 @@ test('/economy: a live resize past the fit point makes a container focusable, ke
   }
 })
 
-test('the runtime-state guards bite with ResizeObserver stubbed out', async () => {
+test('the runtime-state guards bite with ResizeObserver stubbed out', T, async () => {
   const { context, page } = await openRoute(site, ECONOMY, WIDE)
   try {
     // The INITIAL measurement still runs — the effect calls `measure()` before
@@ -1198,7 +1214,7 @@ test('the runtime-state guards bite with ResizeObserver stubbed out', async () =
 
 const FILTERS = ['filter-character', 'filter-president', 'filter-control'] as const
 
-test('#the-laws: every option of every filter leaves the invariant intact (E4)', async () => {
+test('#the-laws: every option of every filter leaves the invariant intact (E4)', T, async () => {
   const { context, page } = await open(GOVERNMENT, WIDE)
   try {
     await settleContainers(page)
