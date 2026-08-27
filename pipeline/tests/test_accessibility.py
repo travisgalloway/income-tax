@@ -3101,18 +3101,29 @@ def test_annotation_placement_is_not_measured_at_runtime():
             f"so the server and the client agree"
         )
 
-    # `getBoundingClientRect` has exactly one legitimate use in this tree:
-    # useChartSize measures the CONTAINER to choose between two presets. It
-    # never touches text. Pinned by name so a second use has to argue for
-    # itself here.
+    # `getBoundingClientRect` has exactly two legitimate uses in this tree, and
+    # each had to argue for itself here:
+    #
+    #   useChartSize.ts  measures the CONTAINER to choose between two presets.
+    #                    It never touches text.
+    #   roving.ts        (#73) snapshots every MARK's box once per touch
+    #                    gesture, to resolve which datum a finger meant. It runs
+    #                    only from a `pointerdown` handler, never during render
+    #                    and never on the server, so it cannot make the server
+    #                    and client renders disagree — which is the divergence
+    #                    this test exists to prevent. It measures boxes, not
+    #                    text, so annotation placement stays pure.
+    #
+    # Pinned by name so a third use has to argue for itself too.
     rect_users = {
         path.name
         for path in sorted(CHARTS_DIR.glob("*.ts*")) + ISLANDS
         if "getBoundingClientRect" in _without_comments(path.read_text())
     }
-    assert rect_users == {"useChartSize.ts"}, (
-        f"getBoundingClientRect is used in {sorted(rect_users)}; only useChartSize.ts "
-        f"may measure, and only the container, never text"
+    assert rect_users == {"useChartSize.ts", "roving.ts"}, (
+        f"getBoundingClientRect is used in {sorted(rect_users)}; only "
+        "useChartSize.ts (the container) and roving.ts (mark boxes, in a "
+        "pointer handler) may measure, and neither may measure text"
     )
 
     helper = _without_comments(ANNOTATE_TS.read_text())
@@ -4568,3 +4579,331 @@ def test_the_scroll_contract_guard_bites():
     gutted = doc.replace("(#71)", "(#7l)")
     assert gutted != doc, "the contract heading this guard reads has moved"
     assert scroll_contract_failures(css, gutted), "a missing #71 section passed"
+
+
+# ---------------------------------------------------------------------------
+# Reading a datum with no hover (#73). Static half.
+#
+# WHAT WAS MEASURED. At 390x844 a chart mark is 3.317px x 237px and `/economy`
+# draws 389 of them across a 350px plot — 0.9px per datum. Site-wide: 1,111
+# marks, 1,092 of them under 44px wide. No per-mark geometry change reaches the
+# target-size floor, so on a device that cannot hover the marks stop being hit
+# targets and the plot becomes one target with the nearest visible mark
+# resolved from the pointer position (`src/components/charts/nearest.ts`).
+# The hint text said `Focus or hover a year to read its value.` in 24 places in
+# the served bytes, naming two interactions a phone does not have.
+#
+# WHY THE SCOPE IS STATIC. What a browser cannot tell you is what the SERVED
+# bytes say, and DoD 2 is a claim about them: all three sentences ship on every
+# device and CSS picks one, so a reader on a slow connection sees the right one
+# before a line of JavaScript runs. The behaviour — that a tap actually selects
+# a mark, that the media queries resolve the way they are written — is
+# `tests/browser/touch.test.ts` (B1-B4), not this file. G4 here is calibration
+# for that lane, not a substitute for it.
+#
+# WHAT EACH GUARD CATCHES THAT NO OTHER ONE DOES.
+#   G1  the pre-#73 literal is gone from the bytes. Restoring one island's old
+#       string turns only this red — the spans would still be well-formed.
+#   G2  every hint carrier has one span per mode. Dropping `.hint-touch` from
+#       one island leaves G1 green and G3's count green (the element still
+#       carries SOME hint), and only this notices.
+#   G3  the floor: how many carriers there are at all. Deleting an island's
+#       <ChartHint> outright leaves G1 and G2 green over a smaller set.
+#   G4  the switch survives the build. Deleting the CSS block leaves every
+#       guard above green over markup that now shows all three sentences at
+#       once, or none.
+#
+# G2 and G3 both count through HINT_CLASSES, which is DERIVED FROM `hint.ts`'s
+# own HINT_MODES rather than written out here, and both RECOGNISE a hint span
+# by shape rather than by membership in that list. That combination is #72's
+# lesson applied directly: its two structural guards each filtered on a bare
+# literal while the floor counted through a different constant, so both could
+# have gone blind with every floor green. Here, a mode deleted from the
+# component shrinks the expectation but NOT the observation, so G2 fails; and a
+# selector that stops matching drives G3's count to zero and fails by name.
+# ---------------------------------------------------------------------------
+
+HINT_MODULE = SRC / "components" / "charts" / "hint.ts"
+
+# The pre-#73 sentence. Zero occurrences is the criterion.
+LEGACY_HINT = "Focus or hover"
+
+
+def hint_modes() -> tuple[str, ...]:
+    """The modes, read from the component's own source.
+
+    Parsed, not copied: the class names this suite counts have to be the ones
+    the component emits, or the count is of something else.
+    """
+    text = HINT_MODULE.read_text()
+    m = re.search(r"export const HINT_MODES = \[([^\]]*)\]", text)
+    assert m, f"{HINT_MODULE}: no HINT_MODES array to read"
+    modes = tuple(re.findall(r"'([^']+)'", m.group(1)))
+    assert modes, f"{HINT_MODULE}: HINT_MODES is empty"
+    return modes
+
+
+HINT_MODES = hint_modes()
+HINT_CLASSES = tuple(f"hint-{mode}" for mode in HINT_MODES)
+
+# Any class the component could plausibly emit for a mode, matched by SHAPE
+# rather than by membership in HINT_CLASSES. That distinction is the whole
+# anti-blindness property: if the sweep only recognised the classes it already
+# expected, a mode deleted from `hint.ts` would shrink the expectation and the
+# observation together and every assertion would stay green over markup still
+# shipping the extra span.
+HINT_CLASS_SHAPE = re.compile(r"^hint-[a-z]+$")
+
+# The tag and class of the readout every figure but one carries. Kept as
+# constants because G3's own anti-blindness mutation is to break this selector:
+# the count must go to zero and fail BY NAME, not sweep an empty set green.
+READOUT_TAG = "p"
+READOUT_CLASS = "readout"
+
+# Measured at `b0c4847` over a fresh `npm run build`.
+#
+# 23 `p.readout` elements carry the full hint set, out of 24 on the site. The
+# 24th is `AttributionSplit`'s, whose idle text is an announcement of the
+# current tab ("By voting coalition. 3 coalitions, net total ...") rather than
+# an instruction — it never named a gesture, so it was never part of #73's
+# defect and did not gain a hint.
+#
+# 24 elements carry the hint in total: those 23 plus `BudgetChart`'s, which is
+# a `<dd>` inside a `<dl class="inspector">` rather than a `<p class="readout">`
+# because that figure reads out a breakdown and not a single value. Both
+# numbers are recorded because they answer different questions, and a change
+# that moved a hint from one shape to the other would otherwise be invisible.
+READOUT_HINT_CARRIERS = 23
+HINT_CARRIERS_TOTAL = 24
+
+
+def hint_carriers(root: Node) -> list[Node]:
+    """Every element carrying at least one hint span, whatever its tag."""
+    out: list[Node] = []
+    for n in root.iter_descendants():
+        if any(
+            any(HINT_CLASS_SHAPE.match(cls) for cls in child.classes())
+            for child in n.children
+            if child.tag != "#text"
+        ):
+            out.append(n)
+    return out
+
+
+def hint_span_classes(n: Node) -> list[str]:
+    """Every hint-shaped class on this element's direct children, in order."""
+    return [
+        cls
+        for child in n.children
+        if child.tag != "#text"
+        for cls in child.classes()
+        if HINT_CLASS_SHAPE.match(cls)
+    ]
+
+
+def test_no_page_tells_a_touch_reader_to_hover():
+    """G1. The literal, over the served bytes of every page."""
+    offenders = [
+        f"{_page_id(p)}: {p.read_text().count(LEGACY_HINT)}"
+        for p in PAGES
+        if LEGACY_HINT in p.read_text()
+    ]
+    assert not offenders, (
+        f"{len(offenders)} page(s) still ship the literal {LEGACY_HINT!r}, which "
+        "names two interactions a phone does not have. It was 24 occurrences "
+        f"before #73 and must be 0: {offenders}"
+    )
+
+
+def test_every_hint_carrier_ships_one_span_per_modality():
+    """G2. One span per mode, no duplicates, in the order the component emits.
+
+    Not "at least one": all three sentences must be in the bytes on every
+    device, because the switch is CSS and a missing span is a device that sees
+    NOTHING rather than a device that sees the wrong thing.
+    """
+    failures: list[str] = []
+    for path in PAGES:
+        root = parse_html(path)
+        for n in hint_carriers(root):
+            got = hint_span_classes(n)
+            if got != list(HINT_CLASSES):
+                failures.append(
+                    f"{_page_id(path)}: <{n.tag} class={n.get('class')!r}> carries "
+                    f"{got}, expected {list(HINT_CLASSES)}"
+                )
+    assert not failures, "\n".join(failures)
+
+
+def test_the_hint_reaches_every_readout_that_had_one():
+    """G3, the floor. How many carriers exist at all, counted two ways.
+
+    G1 and G2 are both satisfied vacuously by a page with no hints on it. This
+    is the guard that notices an island losing its <ChartHint> — and, because
+    the selector it counts through is a named constant, the guard that fails
+    loudly rather than sweeping an empty set if that selector ever stops
+    matching.
+    """
+    readouts = 0
+    total = 0
+    for path in PAGES:
+        root = parse_html(path)
+        for n in hint_carriers(root):
+            total += 1
+            if n.tag == READOUT_TAG and READOUT_CLASS in n.classes():
+                readouts += 1
+    assert readouts == READOUT_HINT_CARRIERS, (
+        f"{readouts} <{READOUT_TAG} class={READOUT_CLASS!r}> elements carry the "
+        f"hint, expected READOUT_HINT_CARRIERS = {READOUT_HINT_CARRIERS}. A "
+        "count of 0 means the selector stopped matching, not that the site lost "
+        "its charts."
+    )
+    assert total == HINT_CARRIERS_TOTAL, (
+        f"{total} elements carry the hint site-wide, expected "
+        f"HINT_CARRIERS_TOTAL = {HINT_CARRIERS_TOTAL}"
+    )
+
+
+def test_the_hint_switch_survives_the_build():
+    """G4. The three CSS switches and the mark-inertness block, in built CSS.
+
+    Calibration for `tests/browser/touch.test.ts`, which asserts the RESOLVED
+    behaviour. This one catches the build dropping the block entirely, which
+    would leave B2's failures looking like a hint-text bug rather than a
+    stylesheet one.
+    """
+    css_files = list(DIST.glob("_astro/*.css"))
+    assert css_files, f"No built CSS found under {DIST / '_astro'}"
+    built = "\n".join(f.read_text() for f in css_files)
+
+    for cls in HINT_CLASSES:
+        assert f".{cls}" in built, f"built CSS has no .{cls} rule (#73)"
+
+    assert re.search(r"@media\s*\(hover:\s*hover\)", built), (
+        "built CSS lost the (hover: hover) query — the desktop hint no longer "
+        "has a rule to display it"
+    )
+    assert re.search(r"@media\s*\(hover:\s*none\)", built), (
+        "built CSS lost the (hover: none) query — a touch reader sees no hint "
+        "at all, and the marks keep hit-testing"
+    )
+    # The two rules that make the touch readout work, as opposed to merely
+    # describing it. Both live inside `@media (hover: none)`; their presence
+    # UNSCOPED would be a desktop regression, which is B3b's job to catch.
+    assert re.search(
+        r"\.chart\s*\[data-mark\]\s*\{[^}]*pointer-events:\s*none", built
+    ), (
+        "built CSS lost `.chart [data-mark] { pointer-events: none }` — the "
+        "emulated mouseleave a tap fires will wipe the readout one event later"
+    )
+    assert re.search(r"touch-action:\s*pan-y", built), (
+        "built CSS lost `touch-action: pan-y` on .chart — without a touch-action "
+        "Chromium swallows the horizontal gesture and the svg receives nothing"
+    )
+
+
+def test_the_noscript_block_points_a_scripting_off_reader_at_the_table():
+    """The JS-off case, in the served bytes rather than in a browser.
+
+    With scripting off neither gesture the other two sentences name does
+    anything: the marks never hydrate. The table is a native <details> and is
+    the only route to a number that still works, so it is the only one the hint
+    may offer. B2c asserts the resolved cascade; this asserts the rule is there
+    to resolve.
+    """
+    layout = BASE_LAYOUT.read_text()
+    m = re.search(r"<noscript>\s*<style>(.*?)</style>\s*</noscript>", layout, re.S)
+    assert m, f"{BASE_LAYOUT}: no <noscript><style> block"
+    block = m.group(1)
+    assert re.search(
+        r"\.hint-nojs\s*\{[^}]*display:\s*inline\s*!important", block
+    ), (
+        "the <noscript> block does not show .hint-nojs — a reader with "
+        "scripting off is told to use a gesture that cannot work"
+    )
+    for cls in HINT_CLASSES:
+        if cls == "hint-nojs":
+            continue
+        assert cls in block, (
+            f"the <noscript> block does not hide .{cls}; with scripting off "
+            "that sentence would show alongside the table one"
+        )
+
+
+def hint_floor_failures(roots: list[Node]) -> list[str]:
+    """The G2/G3 checks as a pure function, so their own biting can be tested."""
+    failures: list[str] = []
+    readouts = 0
+    total = 0
+    for root in roots:
+        for n in hint_carriers(root):
+            total += 1
+            if n.tag == READOUT_TAG and READOUT_CLASS in n.classes():
+                readouts += 1
+            got = hint_span_classes(n)
+            if got != list(HINT_CLASSES):
+                failures.append(f"<{n.tag}> carries {got}")
+    if readouts != READOUT_HINT_CARRIERS:
+        failures.append(f"readout carriers {readouts} != {READOUT_HINT_CARRIERS}")
+    if total != HINT_CARRIERS_TOTAL:
+        failures.append(f"total carriers {total} != {HINT_CARRIERS_TOTAL}")
+    return failures
+
+
+def test_the_hint_guards_bite():
+    """Each mutation the plan named, performed here in memory as well as on disk.
+
+    The last two are the ones that matter: they are not "the feature
+    regressed", they are "the guard went blind", which is the failure shape
+    that reads as a pass.
+    """
+    global READOUT_CLASS, HINT_CLASSES
+
+    roots = [parse_html(p) for p in PAGES]
+    assert not hint_floor_failures(roots), "the unmutated build already fails"
+
+    def build(fragment: str) -> Node:
+        b = _TreeBuilder()
+        b.feed(fragment)
+        return b.root
+
+    spans = "".join(f'<span class="{c}">x</span>' for c in HINT_CLASSES)
+    one_readout = f'<p class="{READOUT_CLASS}">{spans}</p>'
+
+    # (a) an island drops one span. The counts stay right, so only G2 can catch
+    #     it.
+    dropped = build(
+        f'<p class="{READOUT_CLASS}"><span class="{HINT_CLASSES[0]}">x</span></p>'
+    )
+    assert any("carries" in f for f in hint_floor_failures([dropped]))
+
+    # (b) an island loses its <ChartHint> entirely. The spans that remain are
+    #     well-formed, so only the floor notices.
+    assert any("readout carriers" in f for f in hint_floor_failures([])), (
+        "an empty set of pages passed the floor"
+    )
+
+    # (c) THE SELECTOR GOES BLIND. #72 found two guards filtering on their own
+    #     bare literal while the floor counted through a different constant.
+    #     Here the count goes to zero and says so by name.
+    original = READOUT_CLASS
+    try:
+        READOUT_CLASS = "readoutX"
+        blind = hint_floor_failures(roots)
+        assert any("readout carriers 0" in f for f in blind), blind
+    finally:
+        READOUT_CLASS = original
+    assert not hint_floor_failures(roots), "the mutation was not reverted"
+
+    # (d) THE MODE LIST SHRINKS. Because a hint span is recognised by shape and
+    #     not by membership, the observation does not shrink with the
+    #     expectation, and every carrier on the site fails G2 — rather than the
+    #     sweep quietly covering one mode fewer.
+    original_classes = HINT_CLASSES
+    try:
+        HINT_CLASSES = HINT_CLASSES[:-1]
+        shrunk = hint_floor_failures([build(one_readout)])
+        assert any("carries" in f for f in shrunk), shrunk
+    finally:
+        HINT_CLASSES = original_classes
+    assert not hint_floor_failures(roots), "the mutation was not reverted"
