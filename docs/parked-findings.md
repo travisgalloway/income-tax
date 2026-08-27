@@ -1177,3 +1177,25 @@ time. Appended to, never rewritten. None of these have been acted on.
   hand-picked y offsets that assume the series stay apart. Found while checking #64's criterion 4
   (no clamped label lands on what it names) across all three routes. Severity: legibility,
   non-blocking.
+- [2026-08-27] `src/components/islands/StateTaxMix.tsx:57-60` — `/government` §10's Jurisdiction
+  control renders **no label at all** until its island hydrates. `<Select.Value />` is given no
+  children and no `placeholder`, and Radix has nothing to show for the selected value while the
+  `Select.Portal`'s items are unmounted, so the server-rendered trigger is
+  `<span style="pointer-events:none"></span>` and the button measures **0 × 2.6px**. It settles at
+  38.1 × 17.6 once React mounts. `Select.tsx`'s three `/government` filters are written the same way
+  but were measured populated, so the difference is when the island hydrates rather than the markup.
+  Two consequences: with scripting off the control is an unlabelled 0-width button, and before
+  hydration its hit area is zero however large the CSS says it is — which is why #65 measured it as
+  0 × 24 on first paint and 38.1 × 24 after scrolling it into view. Not #65's: the target-size floor
+  is met the moment the element has a box, and no CSS can give width to an empty label. Likely
+  adjacent to **#72** (control naming) or a scripting-off pass. Found while running #65's manual
+  probe at 390×844. Severity: **correctness** with scripting off, legibility before hydration;
+  non-blocking for #65.
+- [2026-08-27] `.claude/plans/issue-65.md:405` — the plan's criterion 7 proof grepped
+  `dist/{,households/,government/}index.html` for `tableview-trigger` and expected each ≥ 1, but
+  `dist/index.html` is the **introduction** route and carries no figures, so it has zero and always
+  did. The three routes that carry figures are `/economy` (5), `/households` (7) and `/government`
+  (13); the criterion was satisfied against those instead, with the substitution stated in #65's PR.
+  Noted because the same `{,households/,government/}` brace list appears in other plans and reads as
+  "the three content routes" while actually naming the intro route. Found while running #65's
+  Verification section. Severity: documentation drift, non-blocking.
