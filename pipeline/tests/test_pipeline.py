@@ -1779,6 +1779,83 @@ def test_check_bracket_history_rejects_a_duplicate_bracket_floor(monkeypatch, tm
     assert clean.failures == [], clean.failures
 
 
+# ---- #55: the top-rate series is anchored on IRS SOI Table 23 ---------------
+
+def test_top_rates_match_the_soi_table_23_anchor():
+    """#55 criterion 4. curated/top_rates.yaml cited "IRS SOI Historical Table 23"
+    and NOTHING checked it. This is the corroboration, run as a test rather than
+    asserted in a comment: all 106 overlapping years agree to the digit.
+
+    The anchor's reach is asserted too. Table 23 carries four footnote-prefixed
+    rate cells ('[19] 91.0' at 1954, '[24, 25] 70.0' at 1974, '[36] 39.6' at
+    2000, and a '[31 ] 311,950' in the adjacent floor column at 2003). An
+    extractor that dropped those years instead of stripping the prefix would
+    still leave a test that passed on everything it happened to cover, so the
+    1913-2018 no-gaps assertion is the half that makes the agreement mean
+    something.
+    """
+    anchor = curated.top_rates_soi_anchor()
+    published = curated.top_rates()
+
+    assert sorted(anchor) == list(range(1913, 2019)), "anchor must cover 1913-2018 with no gaps"
+    assert len(anchor) == 106
+
+    for y in sorted(anchor):
+        assert abs(published[y] - anchor[y]) < 0.001, f"{y}: {published[y]} != Table 23 {anchor[y]}"
+
+    # The footnote-prefixed years specifically, read out of the file rather than
+    # inferred: these are the four the naive regex got wrong.
+    assert anchor[1954] == 91.0 and anchor[1974] == 70.0 and anchor[2000] == 39.6
+    # 1981 is the blended part-year rate, not a rounding of 70.
+    assert anchor[1981] == 69.125
+
+    # Table 23 stops at 2018 by construction; 2019-2025 are anchored on
+    # PL 115-97 and Rev. Proc. 2018-57 -> 2024-40, not on this file.
+    assert max(anchor) == 2018
+    assert sorted(set(published) - set(anchor)) == list(range(2019, 2026))
+
+    # And the whole check is green against the real curated pair.
+    c = validate.Checks()
+    validate.check_top_rates_anchor(c)
+    assert c.failures == [], c.failures
+
+
+def test_the_soi_anchor_check_rejects_a_top_rate_that_drifts_from_it(monkeypatch):
+    """#55 criterion 4. A guard that currently finds nothing must still be proved
+    to BITE -- otherwise "zero drift" is indistinguishable from "nothing was
+    compared". Drift one anchored year and require the failure to name it, and
+    to carry both values so the reader can see which side moved.
+    """
+    anchor = curated.top_rates_soi_anchor()
+    published = curated.top_rates()
+
+    for year, bad in ((1944, 92.0), (1913, 8.0), (2018, 39.6)):
+        monkeypatch.setattr(curated, "top_rates", lambda y=year, b=bad: {**published, y: b})
+        c = validate.Checks()
+        validate.check_top_rates_anchor(c)
+        assert len(c.failures) == 1, f"expected exactly one failure for {year}, got {c.failures}"
+        f = c.failures[0]
+        assert str(year) in f, f
+        assert str(bad) in f and str(anchor[year]) in f, f
+        assert "Table 23" in f, f
+
+    # A year the anchor covers going missing from the published series is a
+    # named failure too, not a quietly skipped comparison.
+    monkeypatch.setattr(curated, "top_rates",
+                        lambda: {y: v for y, v in published.items() if y != 1969})
+    c = validate.Checks()
+    validate.check_top_rates_anchor(c)
+    assert any("1969" in f and "absent" in f for f in c.failures), c.failures
+
+    # And a gap in the ANCHOR fails, so a dropped footnote year cannot shrink the
+    # check's reach without saying so.
+    monkeypatch.setattr(curated, "top_rates_soi_anchor",
+                        lambda: {y: v for y, v in anchor.items() if y != 1954})
+    c = validate.Checks()
+    validate.check_top_rates_anchor(c)
+    assert any("no gaps" in f and "1954" in f for f in c.failures), c.failures
+
+
 # ---- #38: the two CBO price series -----------------------------------------
 
 def test_chained_and_core_cpi_start_at_their_own_first_year():

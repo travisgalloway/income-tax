@@ -62,6 +62,79 @@ government shutdown; BLS stated it could not retroactively gather it — the fir
 monthly series since 1921). `bracket_history.py` accepts 11 monthly observations for calendar year
 2025 only (`EXPECTED_MONTHS`), and raises for any other year with fewer than 12.
 
+### Where the 1913-2019 ladder comes from, and why it is not fetched from IRS (#55)
+
+`_meta.source` names the Tax Foundation `income-tax-rates.csv` as a **compilation of** IRS SOI
+Historical Table 23 and the IRS Revenue Procedures. That wording is deliberate and it is the
+outcome of a live probe, not an impression. Probed **2026-08-26**:
+
+| URL | Status | Bytes | What it is |
+|---|---|---|---|
+| `https://www.irs.gov/pub/irs-soi/histab23.xls` | **200** | **99,840** | Table 23 itself. Legacy BIFF8 `.xls` (Composite Document File V2), last saved 2021-01-13. |
+| `https://www.irs.gov/statistics/soi-tax-stats-historical-table-23` | 200 | 104,147 | The landing page linking the above. |
+| `https://www.irs.gov/pub/irs-soi/histab23.xlsx` | **404** | — | No modern-format twin. |
+| `https://www.irs.gov/pub/irs-soi/histabb.xls` | 200 | 56,320 | A different historical table, not the ladder. |
+| `https://www.irs.gov/pub/irs-soi/histaba.xls` | 404 | — | — |
+| `https://www.irs.gov/pub/irs-soi/histab24.xls` | 404 | — | No Table 24. |
+| `https://www.irs.gov/pub/irs-soi/23in01ts.xls` | 404 | — | — |
+| `https://www.irs.gov/pub/irs-soi/02inrate.xls` | 404 | — | — |
+| `https://www.irs.gov/statistics/soi-tax-stats-historical-data-tables` | 200 | 122,703 | Index of the historical-tables release. |
+
+SHA-256 of the fetched `histab23.xls`, re-verified at execution:
+`57aed4c02ac6c6dcd39d0fea18ca231ebe22085acedf098b3b993fb154399557`.
+
+**Table 23's actual granularity, read out of the file** (`Sheet1`, 245 rows × 15 columns, header
+rows 2-4) is eight columns:
+
+```
+Tax year | Personal exemptions [Single, Married, Dependents]
+         | Tax rates for regular tax
+             Lowest bracket  [rate, taxable income under]
+             Highest bracket [rate, taxable income over]
+```
+
+**Two rates per year — the lowest and the highest.** There is no per-bracket ladder, no filing-status
+dimension beyond the exemption columns, and nothing resembling the
+`(year, filingStatus, rate, incomeGreaterThan, incomeNotGreaterThan)` tuples `_fetch_ladder`
+consumes. Coverage is **1913-2018, 106 rows, no gaps** — it does not reach 2019, where the fetched
+CSV ends.
+
+**So the fetcher stays on the Tax Foundation CSV.** Not as a shortcut: no IRS release publishes the
+ladder at per-year, per-filing-status, per-bracket granularity, so there is no primary feed to move
+to. Tax Foundation is a compiler of primary data here, not a reporter on it, which is why it is not
+in `sources.yaml`'s `not_a_source`. `pipeline/oneshot/bracket_history.py` is unchanged by #55:
+`TF_CSV`, `_drop_phantom_zero_row`, `min_bytes=150_000` (measured, not guessed) and
+`EXPECTED_MONTHS = {2025: 11}` all keep exactly the state documented above.
+
+### The top-rate series is anchored on Table 23, and the anchor is checked (#55)
+
+Table 23's *highest bracket* column **is** the series `curated/top_rates.yaml` publishes, so the
+citation that file already carried is now an observation rather than a claim.
+`pipeline/curated/top_rates_soi_anchor.yaml` holds that column for 1913-2018 with full provenance
+(URL, SHA-256, retrieval date, sheet, column, and the `uv run --with xlrd` reproduction command).
+It is curated and frozen — Table 23 ends at 2018 and was last saved 2021-01-13 — and `xlrd` is
+deliberately **not** a project dependency, because nothing in the build reads `.xls`.
+
+`lib/validate.py` `check_top_rates_anchor` runs **unconditionally** at the validation gate (it
+reconciles two curated files and needs no output, so a tier gate would only make it skippable,
+#37). It fails naming the year and both values, and asserts the anchor covers 1913-2018 with no
+gaps — the half that stops a footnote-prefixed cell (`[19] 91.0` at 1954, `[24, 25] 70.0` at 1974,
+`[36] 39.6` at 2000) being silently dropped and quietly shrinking the check's reach. Proven to
+bite by `test_the_soi_anchor_check_rejects_a_top_rate_that_drifts_from_it`.
+
+**All 106 overlapping years agree to the digit; no published value changed.** The remaining seven
+years, 2019-2025, are outside Table 23's range and are anchored on PL 115-97 and Revenue Procedures
+2018-57 through 2024-40, transcribed in `curated/brackets_modern.yaml`. **Tax Policy Center was
+removed** from every citation: every value it was cited for is corroborated by Table 23 or by a
+Revenue Procedure, so it was doing no work the register could point a reader at.
+
+Incidental corroboration of the 1985 defect above, from the same primary source: Table 23's 1985
+row reads lowest bracket **11.0%**, highest **50.0%** over **$169,020** (that floor is the
+married-filing-jointly figure; the single-filer 50% floor is $85,130, which is what the site
+publishes). An 11% lowest rate is independent confirmation that the open-ended **0%** row is
+corrupt and that the real 0% row is the $2,390 zero-bracket amount. The existing guard is right and
+#55 changed no part of it.
+
 ## `cbo_effective_rates.json` (`pipeline/monthly/curated_snapshots.py`)
 
 A curated snapshot, not a builder in its own right — same shape family as `debt_holders` /

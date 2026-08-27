@@ -918,3 +918,22 @@ time. Appended to, never rewritten. None of these have been acted on.
   the comment). #54 rewrote that `_comment` for its own reasons and the count is now right, so the
   finding is recorded as closed-in-passing rather than as open work. Found while planning #54.
   Severity: docs, resolved incidentally.
+- [2026-08-26] #55 probe record, for the next person who wonders whether the 1913-2019 bracket
+  ladder can be fetched from IRS directly. It cannot. Nine URLs probed live:
+  `https://www.irs.gov/pub/irs-soi/histab23.xls` **200, 99,840 bytes** (Table 23 itself, legacy
+  BIFF8 `.xls`, Composite Document File V2, last saved 2021-01-13, SHA-256
+  `57aed4c02ac6c6dcd39d0fea18ca231ebe22085acedf098b3b993fb154399557`);
+  `.../statistics/soi-tax-stats-historical-table-23` 200, 104,147 (landing page);
+  `.../pub/irs-soi/histab23.xlsx` **404** (no modern-format twin);
+  `.../pub/irs-soi/histabb.xls` 200, 56,320 (a different table, not the ladder);
+  `.../pub/irs-soi/histaba.xls` 404; `.../pub/irs-soi/histab24.xls` 404 (no Table 24);
+  `.../pub/irs-soi/23in01ts.xls` 404; `.../pub/irs-soi/02inrate.xls` 404;
+  `.../statistics/soi-tax-stats-historical-data-tables` 200, 122,703 (release index).
+  Table 23 is eight columns — tax year, three personal-exemption columns, and then exactly TWO
+  rates per year, lowest-bracket and highest-bracket, each with its threshold. No per-bracket
+  rows, no filing-status dimension, and coverage 1913-2018 (106 rows, no gaps) that does not even
+  reach 2019. So Table 23 is the top-and-bottom envelope of the ladder, not the ladder, and the
+  Tax Foundation CSV stays as the fetched source, documented as a compilation rather than cited as
+  an origin. Found while executing #55. Severity: none — this is a closed decision, recorded so it
+  is not re-litigated from an impression. The same record, in full, is in
+  `docs/contracts/interfaces/bracket-history-data.md`.

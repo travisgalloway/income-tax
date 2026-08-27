@@ -35,6 +35,23 @@ def law_totals() -> dict[str, Any]:
     return _load("laws")["totals"]
 
 
+def top_rates() -> dict[int, float]:
+    """The PUBLISHED top statutory marginal rate, 1913-2025."""
+    return _load("top_rates")["top_marginal_rate"]
+
+
+def top_rates_soi_anchor() -> dict[int, float]:
+    """IRS SOI Historical Table 23's highest-bracket rate, 1913-2018 (#55).
+
+    Frozen primary-source evidence, not a feed. `top_rates()` is checked
+    against it year by year by validate.check_top_rates_anchor, so that
+    "anchored on IRS SOI Table 23" is an observation the build makes rather
+    than a sentence in a comment. Table 23 stops at 2018; 2019-2025 are
+    anchored on PL 115-97 and Rev. Proc. 2018-57 through 2024-40.
+    """
+    return _load("top_rates_soi_anchor")["top_marginal_rate"]
+
+
 def source_register() -> dict[str, Any]:
     """The cited-source -> SOURCES.md registration map (#39). Read by
     validate.check_sources; nothing writes it."""

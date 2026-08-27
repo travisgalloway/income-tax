@@ -1,0 +1,176 @@
+_comment: |-
+  Curated. NEVER machine-written. FROZEN EVIDENCE, not a feed.
+  The "Highest bracket - Tax rate (percent)" column of IRS SOI Historical Table 23,
+  tax years 1913-2018, transcribed verbatim. This file exists so that the claim
+  "curated/top_rates.yaml is anchored on a primary source" is an OBSERVATION the
+  build checks (lib/validate.py check_top_rates_anchor) rather than a sentence in
+  a comment that nothing verifies. See issue #55.
+
+  PROVENANCE:
+    Source:    IRS SOI Historical Table 23, "U.S. Individual Income Tax: Personal
+               Exemptions and Lowest and Highest Bracket Tax Rates, and Tax Base
+               for Regular Tax, Tax Years 1913-2018"
+    URL:       https://www.irs.gov/pub/irs-soi/histab23.xls
+    Landing:   https://www.irs.gov/statistics/soi-tax-stats-historical-table-23
+    Format:    legacy BIFF8 .xls (Composite Document File V2), 99,840 bytes,
+               last saved 2021-01-13. No .xlsx twin exists (histab23.xlsx is 404).
+    SHA-256:   57aed4c02ac6c6dcd39d0fea18ca231ebe22085acedf098b3b993fb154399557
+    Retrieved: 2026-08-26
+    Sheet:     Sheet1, 245 rows x 15 columns. Header rows 2-4; the column-number
+               row is row 7; data rows begin at row 8 (all 0-based).
+    Column:    column 7 as the sheet numbers it (0-based index 6),
+               "Highest bracket / Tax rate [2] (percent)".
+
+  REPRODUCTION (xlrd is deliberately NOT in pyproject.toml - nothing in the build
+  reads .xls, and a dependency added for a frozen one-off record is a dependency
+  nobody maintains):
+
+    curl -sL -A "Mozilla/5.0" -o /tmp/histab23.xls https://www.irs.gov/pub/irs-soi/histab23.xls
+    shasum -a 256 /tmp/histab23.xls   # must equal the SHA-256 above
+    uv run --with xlrd python -c "
+    import re, xlrd
+    P = re.compile(r'^\s*\[\s*\d+(?:\s*,\s*\d+)*\s*\]\s*')
+    s = xlrd.open_workbook('/tmp/histab23.xls').sheet_by_index(0)
+    for r in range(8, s.nrows):
+        y = s.cell_value(r, 0)
+        if not isinstance(y, float) or not (1913 <= y <= 2018):
+            continue
+        v = s.cell_value(r, 6)
+        if isinstance(v, str):
+            v = float(P.sub('', v).strip().replace(',', ''))
+        print(f'  {int(y)}: {float(v)}')
+    "
+
+  TRAPS:
+    - Footnote prefixes. Four cells carry a leading footnote reference the naive
+      read drops on the floor: 1954 '[19] 91.0', 1974 '[24, 25] 70.0',
+      2000 '[36] 39.6', and (in the adjacent floor column) 2003 '[31 ] 311,950'
+      - note the space before the bracket. The extractor strips a leading
+        [N], [N, M] or [N ] and FAILS LOUD on any cell that still will not parse,
+      because a silently dropped year understates coverage and the no-gaps
+      assertion is the only thing that would catch it.
+    - Table 23 stops at 2018. It does not reach 2019, let alone 2025. The
+      remaining years in top_rates.yaml (2019-2025, all 37.0) are anchored on
+      PL 115-97 and Revenue Procedures 2018-57 through 2024-40, transcribed in
+      curated/brackets_modern.yaml - not on this file.
+    - Table 23 is NOT the bracket ladder. It publishes exactly two rates per year,
+      the lowest and the highest, plus the three personal-exemption columns. It
+      carries no filing-status dimension and no per-bracket rows, which is why
+      the 1913-2019 ladder still comes from the Tax Foundation compilation. The
+      full probe record is in docs/contracts/interfaces/bracket-history-data.md.
+    - The floor column is the MARRIED-FILING-JOINTLY threshold in indexed years.
+      Table 23's 1985 highest bracket reads 50.0% over $169,020 (MFJ); the
+      single-filer 50% floor is $85,130, which is what the site publishes and
+      what validate.py asserts. Do not reconcile the two.
+    - 1981 reads 69.125, the blended rate after a part-year cut. Table 23 carries
+      the blended figure too; it is not a rounding of 70.
+coverage:
+  start: 1913
+  end: 2018
+top_marginal_rate:
+  1913: 7.0
+  1914: 7.0
+  1915: 7.0
+  1916: 15.0
+  1917: 67.0
+  1918: 77.0
+  1919: 73.0
+  1920: 73.0
+  1921: 73.0
+  1922: 58.0
+  1923: 43.5
+  1924: 46.0
+  1925: 25.0
+  1926: 25.0
+  1927: 25.0
+  1928: 25.0
+  1929: 24.0
+  1930: 25.0
+  1931: 25.0
+  1932: 63.0
+  1933: 63.0
+  1934: 63.0
+  1935: 63.0
+  1936: 79.0
+  1937: 79.0
+  1938: 79.0
+  1939: 79.0
+  1940: 81.1
+  1941: 81.0
+  1942: 88.0
+  1943: 88.0
+  1944: 94.0
+  1945: 94.0
+  1946: 86.45
+  1947: 86.45
+  1948: 82.13
+  1949: 82.13
+  1950: 84.36
+  1951: 91.0
+  1952: 92.0
+  1953: 92.0
+  1954: 91.0
+  1955: 91.0
+  1956: 91.0
+  1957: 91.0
+  1958: 91.0
+  1959: 91.0
+  1960: 91.0
+  1961: 91.0
+  1962: 91.0
+  1963: 91.0
+  1964: 77.0
+  1965: 70.0
+  1966: 70.0
+  1967: 70.0
+  1968: 75.25
+  1969: 77.0
+  1970: 71.75
+  1971: 70.0
+  1972: 70.0
+  1973: 70.0
+  1974: 70.0
+  1975: 70.0
+  1976: 70.0
+  1977: 70.0
+  1978: 70.0
+  1979: 70.0
+  1980: 70.0
+  1981: 69.125
+  1982: 50.0
+  1983: 50.0
+  1984: 50.0
+  1985: 50.0
+  1986: 50.0
+  1987: 38.5
+  1988: 28.0
+  1989: 28.0
+  1990: 28.0
+  1991: 31.0
+  1992: 31.0
+  1993: 39.6
+  1994: 39.6
+  1995: 39.6
+  1996: 39.6
+  1997: 39.6
+  1998: 39.6
+  1999: 39.6
+  2000: 39.6
+  2001: 39.1
+  2002: 38.6
+  2003: 35.0
+  2004: 35.0
+  2005: 35.0
+  2006: 35.0
+  2007: 35.0
+  2008: 35.0
+  2009: 35.0
+  2010: 35.0
+  2011: 35.0
+  2012: 35.0
+  2013: 39.6
+  2014: 39.6
+  2015: 39.6
+  2016: 39.6
+  2017: 39.6
+  2018: 37.0
