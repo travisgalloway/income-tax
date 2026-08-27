@@ -19,7 +19,22 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # The pull-request checks, run again against main before anything deploys.
+  # A FAILURE HERE BLOCKS THE DEPLOY, deliberately: all three defects the browser
+  # lane exists for (#62, #63, #64) shipped to production and stayed there, and a
+  # check that reports without blocking is a check nobody reads. The cost is that
+  # a red lane stops a content deploy; the override is `workflow_dispatch` above,
+  # which ships past it and leaves a record of who did.
+  #
+  # Called rather than restated so the deploy gate and the PR gate cannot drift.
+  # It is a separate job from `build` because `withastro/action@v6` owns that job
+  # end to end with no seam for a browser install, and because a separate job
+  # makes the added wall clock attributable.
+  checks:
+    uses: ./.github/workflows/checks.yml
+
   build:
+    needs: [checks]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
