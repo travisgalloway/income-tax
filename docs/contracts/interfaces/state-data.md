@@ -50,6 +50,14 @@ on the actual output. `states_balance.fy_give` and `.fy_get` are always equal by
   equivalents and are not opposite sides of one ledger. Any consumer rendering these figures must
   say so in body copy — never in a tooltip or chart furniture (`Figure`'s `note` prop, or a `<p
   class="prose">`, are the only sanctioned places).
+  **Ruled 2026-08-26 (#56): the Rockefeller sentence is KEPT, as an attributed limitation.** It
+  names what a reader might expect §11 to be and states why this is not that, so deleting it would
+  make the page claim less about its own limits rather than more; the FY2022 series end stays
+  stated in the same sentence, and the five echoes of it (`SOURCES.md`, `sections.md` §372 and
+  §401, `pipeline/curated/notes.yaml`, `src/pages/government/index.astro`) stay in step. The
+  register entry carries `cited_in_prose_only: true`, which is what keeps `check_sources` rule C
+  from reading a cited-but-uningested source as an unused one. A future edit that ingests the
+  study supersedes this ruling; one that merely tidies the sentence away does not.
 
 ### `is_state` vs `in_grid` — read this before filtering
 

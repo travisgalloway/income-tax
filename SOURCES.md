@@ -182,6 +182,16 @@ and vote files) by `pipeline/oneshot/party_splits.py`. PL 115-97 reproduces the
 published House Clerk record on the caucus basis: House R 224–12, D 0–189;
 Senate R 51–0, D 0–48.
 
+**Voteview is an academic republication of primary roll-call records, not a
+secondary interpretation of them, and it is not a candidate for replacement**
+(#56): the join it feeds is regressed against the independently published House
+Clerk record for PL 115-97 at `pipeline/oneshot/party_splits.py`, which fails the
+build if it drifts. Its `rollnumber` index is its own — `698` for the TCJA's
+final House passage, against the Clerk's session-scoped `RC699` for the same
+vote on 20 December 2017. **The two numbers are not an inconsistency and must not
+be reconciled**; `roll698.xml` at `clerk.house.gov` is H RES 66, a different
+measure entirely.
+
 Four limits remain, and section 11 states all four. The final-passage roll call
 for each law was curated by hand, because a bill carries many roll calls and
 selecting one by date returns the wrong vote. The House passed the CARES Act by
@@ -228,7 +238,8 @@ Used for the state tax-mix figure.
 introduced into this pipeline's CI.
 
 **Rockefeller Institute of Government, state balance-of-payments studies** — **Cited, never
-ingested.** This is the authoritative balance-of-payments comparison and the honest name for what
+ingested.** Ruled 2026-08-26 (#56), in
+`docs/contracts/interfaces/state-data.md`: kept as an attributed limitation. This is the authoritative balance-of-payments comparison and the honest name for what
 a reader might expect §11 to be; its published series ends at FY2022 with no machine-readable feed.
 Hand-transcribing a 50-state table from a PDF is exactly the fabrication risk this pipeline's
 fetch-and-validate gate exists to prevent, so it is cited in body copy and never treated as data.

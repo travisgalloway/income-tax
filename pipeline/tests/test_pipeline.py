@@ -596,6 +596,35 @@ def test_no_party_colour_token_in_the_state_section_source():
             assert token not in text, f"{f} references partisan token {token}"
 
 
+def test_states_rockefeller_limitation_is_stated_everywhere_it_was_ruled():
+    """#56 ruled the Rockefeller sentence KEPT, as an attributed limitation: it
+    names what a reader might expect section 11 to be and says why this is not
+    that, so deleting it would make the page claim less about its own limits.
+
+    A ruling with no guard is a sentence a later tidying sweep removes from one
+    file and leaves in five. This asserts the echoes stay in step, and that the
+    ruling itself is dated in the contract rather than left as a practice."""
+    root = ROOT.parent
+    for rel in (
+        "src/pages/government/index.astro",
+        "src/data/states_balance.json",
+        "SOURCES.md",
+        "sections.md",
+        "docs/contracts/interfaces/state-data.md",
+        "pipeline/curated/notes.yaml",
+    ):
+        assert "Rockefeller" in (root / rel).read_text(), \
+            f"{rel} no longer names the Rockefeller balance-of-payments study"
+
+    contract = (root / "docs/contracts/interfaces/state-data.md").read_text()
+    assert "Ruled 2026-08-26 (#56)" in contract and "attributed limitation" in contract, \
+        "the ruling itself is gone from the contract; the practice would then be undocumented"
+    register = curated.source_register()["registry"]["rockefeller_bop"]
+    assert register.get("cited_in_prose_only") is True, \
+        "a cited-but-uningested source that is not marked reads to check_sources rule C as " \
+        "an unused registry entry"
+
+
 # ---- income_tax_by_group --------------------------------------------------
 
 def test_top1_income_share_is_present_and_paired():
@@ -989,6 +1018,26 @@ def _enactment_fy(date: str) -> int:
     fiscal year starts 1 October of the prior calendar year."""
     y, m, _ = (int(p) for p in date.split("-"))
     return y + 1 if m >= 10 else y
+
+
+def test_tcja_verified_source_is_the_clerk_record_alone():
+    """#56. `verified_source` read "House Clerk RC699; Ballotpedia" -- the Clerk
+    record IS the record, and the second name added nothing a reader could
+    trace. The counts beside it are the Voteview regression target and are
+    asserted here so the string edit cannot drift into the numbers.
+
+    698 vs RC699 is NOT an inconsistency and must not be reconciled. 698 is
+    Voteview's own `rollnumber` index; RC699 is the Clerk's session-scoped
+    number for the same vote, H R 1 on 20 December 2017. `roll698.xml` at
+    clerk.house.gov is H RES 66, a different measure."""
+    tcja = next(l for l in _laws() if l["public_law"] == "115-97")
+    assert tcja["verified_source"] == "House Clerk RC699"
+    assert "ballotpedia" not in json.dumps(load("budget")).lower()
+    assert tcja["verified_house"] == [224, 12, 0, 189]
+    assert tcja["verified_senate"] == [51, 0, 0, 48]
+    assert tcja["rollcall"]["house"] == 698, \
+        "698 is Voteview's index for the vote the Clerk numbers RC699; reconciling the two " \
+        "breaks the join party_splits.py regresses against the Clerk record"
 
 
 def _margin(split: dict) -> int | None:
