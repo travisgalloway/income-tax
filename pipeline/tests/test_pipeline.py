@@ -2390,13 +2390,16 @@ def test_check_glossary_sources_is_clean_against_the_real_tree():
 
 def test_every_glossary_term_cites_only_registered_keys():
     """#50 criterion 1. The population is `src/content/glossary/*.md`, not the terms
-    that happen to appear in the register, so term twenty-four cannot ship with an
+    that happen to appear in the register, so term thirty cannot ship with an
     unchecked citation. The file count is asserted too: a term added without a source
-    would otherwise leave this passing over a smaller population."""
+    would otherwise leave this passing over a smaller population. 23 until #59 added
+    the six acronym entries (CBO, GDP, CPI, PCE, IRS, OECD); the literal moves with the
+    collection, in the same commit, which is what makes it an assertion and not a
+    comment."""
     registry = curated.source_register()["registry"]
     entries = validate._glossary_entries()
 
-    assert len(entries) == len(list(GLOSSARY.glob("*.md"))) == 23
+    assert len(entries) == len(list(GLOSSARY.glob("*.md"))) == 29
 
     for term, keys in entries:
         assert keys, f"{term}: source is missing or empty"
