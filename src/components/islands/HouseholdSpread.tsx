@@ -11,6 +11,7 @@
 import { useMemo, useState } from 'react'
 import { line as d3line } from 'd3-shape'
 import { Chart } from '../charts/Chart'
+import { Annotation } from '../charts/Annotation'
 import { AxisBottom, AxisLeft } from '../charts/Axis'
 import { linear, extent, niceExtent } from '../charts/scales'
 import { calendarYear, indexValue, percent } from '../charts/format'
@@ -170,9 +171,12 @@ export function HouseholdSpread({ rows, top1 }: { rows: IncomeYear[]; top1: Top1
                     onMouseEnter={() => setFocus({ series: 'top1', point: p })}
                     onMouseLeave={() => setFocus(null)}
                   />
-                  <text x={x(p.year) + 8} y={yTop1(p.v) - 8} className="annotation">
-                    {calendarYear(p.year)}, {percent(p.v, 0)}
-                  </text>
+                  <Annotation
+                    frame={fr}
+                    x={x(p.year) + 8}
+                    y={yTop1(p.v) - 8}
+                    label={`${calendarYear(p.year)}, ${percent(p.v, 0)}`}
+                  />
                 </g>
               ))
             )}

@@ -10,6 +10,7 @@
  */
 import { useMemo, useState } from 'react'
 import { Chart } from '../charts/Chart'
+import { Annotation } from '../charts/Annotation'
 import { AxisBottom } from '../charts/Axis'
 import { linear } from '../charts/scales'
 import { TableView } from './TableView'
@@ -89,10 +90,16 @@ export function OecdChart({ data }: { data: OecdComparison }) {
                 strokeDasharray="2 3"
                 strokeWidth={1}
               />
-              <text x={x(data.oecd_average_pct_gdp) + 6} y={-22} className="dotplot-average-label">
-                <tspan x={x(data.oecd_average_pct_gdp) + 6}>OECD average, {data.oecd_average_pct_gdp.toFixed(1)}% of GDP</tspan>
-                <tspan x={x(data.oecd_average_pct_gdp) + 6} dy="1.15em">(mean of 38 members, not a country)</tspan>
-              </text>
+              {/* Two lines sharing one placement: the clamp uses the WIDER
+                  line, not the concatenation of the two (#64, E9). */}
+              <Annotation
+                frame={fr}
+                x={x(data.oecd_average_pct_gdp) + 6}
+                y={-22}
+                className="dotplot-average-label"
+                label={`OECD average, ${data.oecd_average_pct_gdp.toFixed(1)}% of GDP`}
+                lines={['(mean of 38 members, not a country)']}
+              />
               <rect
                 className="datum"
                 x={x(data.oecd_average_pct_gdp) - 6}

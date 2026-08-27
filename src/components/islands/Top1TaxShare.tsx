@@ -7,6 +7,7 @@
  */
 import { useState } from 'react'
 import { Chart } from '../charts/Chart'
+import { Annotation } from '../charts/Annotation'
 import { AxisLeft, AxisBottom } from '../charts/Axis'
 import { linear, niceExtent } from '../charts/scales'
 import { percent } from '../charts/format'
@@ -79,14 +80,13 @@ export function Top1TaxShare({ rows }: { rows: Top1IncomeSharePoint[] }) {
                     onMouseLeave={() => setFocus(null)}
                   />
                   <circle cx={x(p.year)} cy={y(p.v)} r={2.5} fill="var(--ink)" />
-                  <text
+                  <Annotation
+                    frame={fr}
                     x={x(p.year)}
                     y={y(p.v) - 12}
-                    textAnchor="middle"
-                    className="annotation"
-                  >
-                    {`${p.year}: ${percent(p.v, 1)}`}
-                  </text>
+                    anchor="middle"
+                    label={`${p.year}: ${percent(p.v, 1)}`}
+                  />
                 </g>
               )
             })}

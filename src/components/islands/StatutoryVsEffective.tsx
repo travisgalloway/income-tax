@@ -11,6 +11,7 @@
 import { useMemo, useState } from 'react'
 import { line as d3line, curveMonotoneX } from 'd3-shape'
 import { Chart } from '../charts/Chart'
+import { Annotation } from '../charts/Annotation'
 import { AxisBottom, AxisLeft } from '../charts/Axis'
 import { linear } from '../charts/scales'
 import { useChartSize } from '../charts/useChartSize'
@@ -115,9 +116,7 @@ export function StatutoryVsEffective({
             <AxisBottom frame={fr} ticks={xTicks} format={(t) => `${t}`} label="Tax / calendar year" scale={x} />
 
             <path d={path} fill="none" stroke="var(--ink)" strokeWidth={2} />
-            <text x={x(span[span.length - 1].y) + 6} y={y(span[span.length - 1].top)} className="annotation">
-              Top statutory rate
-            </text>
+            <Annotation frame={fr} x={x(span[span.length - 1].y) + 6} y={y(span[span.length - 1].top)} label="Top statutory rate" />
 
             {cbo.rows.map((r) =>
               GROUPS.map((g) => (
@@ -131,9 +130,14 @@ export function StatutoryVsEffective({
               const row = cbo.rows.find((r) => r.year === yr)
               if (!row) return null
               return (
-                <text key={yr} x={x(yr)} y={y(row.v.top1) - 10} textAnchor="middle" className="annotation">
-                  {yr}: top 1% {percentRate(row.v.top1)}
-                </text>
+                <Annotation
+                  key={yr}
+                  frame={fr}
+                  x={x(yr)}
+                  y={y(row.v.top1) - 10}
+                  anchor="middle"
+                  label={`${yr}: top 1% ${percentRate(row.v.top1)}`}
+                />
               )
             })}
 

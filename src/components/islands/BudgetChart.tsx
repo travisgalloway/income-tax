@@ -14,6 +14,7 @@
 import { useMemo, useState } from 'react'
 import { area as d3area, line as d3line } from 'd3-shape'
 import { Chart } from '../charts/Chart'
+import { Annotation } from '../charts/Annotation'
 import { AxisBottom, AxisLeft, ZeroLine } from '../charts/Axis'
 import { linear, niceExtent } from '../charts/scales'
 import { UnitToggle } from './UnitToggle'
@@ -306,10 +307,10 @@ export function BudgetChart({ rows: source }: { rows: BudgetYear[] }) {
                 figure replaces these at narrow (see the <p> after </Chart>). */}
             {!narrow && (
               <>
-                <text x={iw + 6} y={seriesLabelY.mand} dy="0.32em" className="annotation">Mandatory (net)</text>
-                <text x={iw + 6} y={seriesLabelY.disc} dy="0.32em" className="annotation">Discretionary</text>
-                <text x={iw + 6} y={seriesLabelY.int} dy="0.32em" className="annotation">Net interest</text>
-                <text x={iw + 6} y={seriesLabelY.rev} dy="0.32em" className="annotation">Revenue</text>
+                <Annotation frame={fr} x={iw + 6} y={seriesLabelY.mand} dy="0.32em" label="Mandatory (net)" />
+                <Annotation frame={fr} x={iw + 6} y={seriesLabelY.disc} dy="0.32em" label="Discretionary" />
+                <Annotation frame={fr} x={iw + 6} y={seriesLabelY.int} dy="0.32em" label="Net interest" />
+                <Annotation frame={fr} x={iw + 6} y={seriesLabelY.rev} dy="0.32em" label="Revenue" />
               </>
             )}
 

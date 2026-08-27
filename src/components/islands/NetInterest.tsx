@@ -17,6 +17,7 @@
 import { useMemo, useState } from 'react'
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
 import { Chart } from '../charts/Chart'
+import { Annotation } from '../charts/Annotation'
 import { AxisBottom, AxisLeft } from '../charts/Axis'
 import { linear, niceExtent, scalePoint } from '../charts/scales'
 import { TableView } from './TableView'
@@ -165,15 +166,14 @@ export function NetInterest({ rows }: { rows: BudgetYear[] }) {
             {span
               .filter((r) => r.y === TROUGH_YEAR || r.y === SERIES_LOW_YEAR)
               .map((r) => (
-                <text
+                <Annotation
                   key={r.y}
+                  frame={fr}
                   x={x(r.y) ?? 0}
                   y={y(netInterestOf(r, view)) - 8}
-                  textAnchor="middle"
-                  className="annotation"
-                >
-                  {r.y === TROUGH_YEAR ? 'Trough' : 'Series low'}
-                </text>
+                  anchor="middle"
+                  label={r.y === TROUGH_YEAR ? 'Trough' : 'Series low'}
+                />
               ))}
 
             {/* Every year is a focusable datum; a large invisible hit target

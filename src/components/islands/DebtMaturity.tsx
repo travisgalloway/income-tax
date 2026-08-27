@@ -13,6 +13,7 @@
  */
 import { useMemo, useState } from 'react'
 import { Chart } from '../charts/Chart'
+import { Annotation } from '../charts/Annotation'
 import { linear } from '../charts/scales'
 import { TableView } from './TableView'
 import { useChartSize } from '../charts/useChartSize'
@@ -63,7 +64,7 @@ export function DebtMaturity({ d }: { d: DebtMaturityData }) {
   return (
     <div ref={boxRef}>
       <Chart ariaLabel={ariaLabel} interactive width={W} height={baselineY + (narrow ? 40 : 50)} margin={f}>
-        {() => (
+        {(fr) => (
           <>
             {(Object.keys(RANGES) as BandKey[]).map((k) => {
               const [y0, y1] = RANGES[k]
@@ -106,22 +107,22 @@ export function DebtMaturity({ d }: { d: DebtMaturityData }) {
               x1={xYears(avgYears)} y1={baselineY} x2={xYears(avgYears)} y2={baselineY - bandMaxH - 14}
               stroke="var(--ink)" strokeWidth={1} strokeDasharray="2 3"
             />
-            <text
-              x={xYears(avgYears)} y={baselineY - bandMaxH - 20} textAnchor="middle" className="maturity-marker-label"
-            >
-              Average maturity, {d.avg_maturity_months} months (about {avgYears.toFixed(0)} years)
-            </text>
+            <Annotation
+              frame={fr}
+              x={xYears(avgYears)} y={baselineY - bandMaxH - 20} anchor="middle" className="maturity-marker-label"
+              label={`Average maturity, ${d.avg_maturity_months} months (about ${avgYears.toFixed(0)} years)`}
+            />
             <line
               x1={xYears(d.longest_instrument_years)} y1={baselineY}
               x2={xYears(d.longest_instrument_years)} y2={baselineY - bandMaxH - 14}
               stroke="var(--ink)" strokeWidth={1}
             />
-            <text
+            <Annotation
+              frame={fr}
               x={xYears(d.longest_instrument_years) - (narrow ? 4 : 0)} y={baselineY - bandMaxH - 20}
-              textAnchor={narrow ? 'end' : 'middle'} className="maturity-marker-label"
-            >
-              Longest instrument, {d.longest_instrument_years}-year bond
-            </text>
+              anchor={narrow ? 'end' : 'middle'} className="maturity-marker-label"
+              label={`Longest instrument, ${d.longest_instrument_years}-year bond`}
+            />
           </>
         )}
       </Chart>

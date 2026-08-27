@@ -10,7 +10,8 @@
  */
 import { useMemo, useState } from 'react'
 import { line as d3line, curveMonotoneX } from 'd3-shape'
-import { linear, scaleLog } from '../charts/scales'
+import { frame as makeFrame, linear, scaleLog } from '../charts/scales'
+import { Annotation } from '../charts/Annotation'
 import { useChartSize } from '../charts/useChartSize'
 import { TableView } from './TableView'
 import { dollars, calendarYear, percentRate } from '../charts/format'
@@ -26,6 +27,10 @@ export function BracketHistory({ rows }: { rows: BracketYear[] }) {
   const panelH = narrow ? 108 : 128
   const innerW = W - MARGIN.left - MARGIN.right
   const H = MARGIN.top + panelH * 3 + GAP * 2 + MARGIN.bottom
+  // This figure builds its own <svg> rather than using <Chart>, but its panels
+  // use the same `translate(margin.left, …)` convention, so one frame over the
+  // shared x axis is the right span for every panel's annotations (#64).
+  const fr = makeFrame(W, H, MARGIN)
 
   const [focus, setFocus] = useState<number | null>(null)
 
@@ -127,9 +132,16 @@ export function BracketHistory({ rows }: { rows: BracketYear[] }) {
           ))}
           {/* One direct label illustrating the divergence pattern -- the full
               set is documented in the table and the aria-live readout. */}
-          <g transform={`translate(${x(1981)},${yRate(69.125) - 8})`}>
-            <text textAnchor="middle" className="annotation">1981: 69.125% (part-year cut)</text>
-          </g>
+          {/* Placed explicitly rather than carried in by the ancestor's
+              translate: an x-less <text> reads as x=0 to the clipping guard,
+              which would hide a real overrun (#64, E7). */}
+          <Annotation
+            frame={fr}
+            x={x(1981)}
+            y={yRate(69.125) - 8}
+            anchor="middle"
+            label="1981: 69.125% (part-year cut)"
+          />
         </g>
 
         {/* Panel B: bracket count */}
@@ -144,13 +156,9 @@ export function BracketHistory({ rows }: { rows: BracketYear[] }) {
           ))}
           <path d={pathNb} fill="none" stroke="var(--disc)" strokeWidth={2} />
           <circle cx={x(minNb.y)} cy={yNb(minNb.nb)} r={3} fill="var(--disc)" />
-          <text x={x(minNb.y)} y={yNb(minNb.nb) - 8} textAnchor="middle" className="annotation">
-            {minNb.y}: {minNb.nb}
-          </text>
+          <Annotation frame={fr} x={x(minNb.y)} y={yNb(minNb.nb) - 8} anchor="middle" label={`${minNb.y}: ${minNb.nb}`} />
           <circle cx={x(maxNb.y)} cy={yNb(maxNb.nb)} r={3} fill="var(--disc)" />
-          <text x={x(maxNb.y)} y={yNb(maxNb.nb) - 8} textAnchor="middle" className="annotation">
-            {maxNb.y}: {maxNb.nb}
-          </text>
+          <Annotation frame={fr} x={x(maxNb.y)} y={yNb(maxNb.nb) - 8} anchor="middle" label={`${maxNb.y}: ${maxNb.nb}`} />
         </g>
 
         {/* Panel C: top-bracket threshold, constant 2024 dollars, log scale */}
