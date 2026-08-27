@@ -998,7 +998,7 @@ def test_the_criterion_three_audit_covers_every_page():
 
 #: The prose a `<Term>` marker can physically go in. Three classes, not `PROSE_CLASSES`' four, and
 #: the missing one is excluded **structurally rather than by a list**: `.figure-caveat` is rendered
-#: from `Figure.astro`'s `note?: string` prop (`src/components/Figure.astro:37`), a plain string
+#: from `Figure.astro`'s `note?: string` prop (`src/components/Figure.astro:38`), a plain string
 #: that cannot carry a component at all. An `aria-label` is an attribute and cannot either, which
 #: is why the accessible-name scopes are absent too. So the four terms whose only occurrence on a
 #: route is inside a figure note — `offsetting receipts`, `incidence`, `gdp-deflator` and

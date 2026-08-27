@@ -446,7 +446,7 @@ discharged it.**
 
 **Scope is markable prose: `prose`, `standfirst` and `finding`.** Three of `PROSE_CLASSES`' four,
 and the fourth is out **structurally, not by a list**. `.figure-caveat` renders
-`src/components/Figure.astro:37`'s `note?: string` — a plain string prop that cannot carry a component — and an
+`src/components/Figure.astro:38`'s `note?: string` — a plain string prop that cannot carry a component — and an
 `aria-label` is an attribute, which cannot either. So a term whose only occurrence on a route is
 inside a figure note is not a violation and needs no exemption entry: `offsetting receipts`,
 `incidence` and `gdp-deflator` are all of that shape. **A standfirst and a finding are first uses**,
