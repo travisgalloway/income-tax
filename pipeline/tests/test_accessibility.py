@@ -3,9 +3,18 @@
 Walks every built page under `dist/**/index.html` and every island component
 under `src/components/islands/*.tsx`, checking the parts of issue #15's
 Definition of done that are provable from source and build output alone —
-no DOM, no assistive technology, no rendered pixels. Everything that needs a
-browser or a screen reader is itemised instead in
-`docs/contracts/accessibility.md` for a human to run.
+no DOM, no assistive technology, no rendered pixels. THAT BOUNDARY IS
+UNCHANGED and it is the point of this suite: it asserts what the served bytes
+say, which is the one thing a browser cannot tell you about a build.
+
+Since #67 the rendered-pixel half is no longer a human's job. `npm run
+test:browser` (`tests/browser/`, `node --test` driving Playwright's Chromium)
+re-measures it on every pull request — seven routes at 390x844 and 1440x900,
+plus a scripting-off pass. What is left for a person is the *assistive
+technology* half: screen-reader passes, the greyscale reading judgement, and
+Safari.app's focus ring, itemised in `docs/contracts/accessibility.md` and
+owned by #30 and #80. Playwright's WebKit is not Safari.app, and this suite's
+docstring is not the place to blur that.
 
 Written generically on purpose: only thirteen of the fourteen sections this
 issue was meant to audit exist yet (Government section 1; everything else on

@@ -330,6 +330,91 @@ clamped to their SVG's edges by `src/components/charts/annotate.ts` and asserted
 `.annotation` under `<noscript>` was never the fix for #64 and would not have been — the defect was
 placement past the viewBox edge, not type size, and larger type at the same `x` clips *sooner*.
 
+## The browser lane, and what it now asserts
+
+Every geometric claim in the sections below was, until #67, a number a person measured once in a
+browser and nothing re-ran. `npm run test:browser` (`tests/browser/`, `node --test` driving
+Playwright's Chromium) re-runs the machine-checkable half on every pull request, via
+`.github/workflows/checks.yml`; `deploy.yml` calls the same workflow, so **a failure blocks the
+deploy**. Seven routes, 390x844 and 1440x900, plus a scripting-off pass.
+
+**Legend.** **ASSERTED** — the spec fails if it regresses. **ASSERTED (driven)** — asserted, but
+only after the spec operates a control. **HUMAN** — stays with #30/#80; the spec does not claim it.
+**COVERED ELSEWHERE** — a static or unit guard already holds it, and the browser lane deliberately
+does not duplicate it.
+
+| # | Deferred measurement | Disposition |
+|---|---|---|
+| 1 | Radix `Select` popper width at 390px: listbox and every option inside `innerWidth` | **ASSERTED (driven)** — `driven.test.ts`, all 3 `.select-trigger`s at both viewports |
+| 2 | Option text wraps, never truncates (`text-overflow` computes `clip`) | **ASSERTED (driven)** — `getComputedStyle` per option |
+| 3 | Whether the seven wrapped labels still *read* as distinguishable | **HUMAN** — a copy judgement, #80 |
+| 4 | #62 E1: forcing `--radix-select-content-available-width` invalid still clamps | **HUMAN** — asserting it would pin us to a Radix internal, which is the thing the fallback exists to survive |
+| 5 | #62 E4: the clamp is inert at desktop width | **ASSERTED (driven)** — the 1440x900 pass measures the same inertness |
+| 6 | By-state `.tableview-scroll` overflows its client while the page does not | **ASSERTED** — `driven.test.ts`, and again in the scripting-off pass |
+| 7 | Pinned row header holds at full-right scroll | **ASSERTED (driven)** — `scrollLeft` set to max, then measured against the container's left edge |
+| 8 | #63 E4: the five sort buttons clicked at full-right scroll, geometry re-measured after each | **ASSERTED (driven)** |
+| 9 | #63 E2: `border-collapse` hairlines still paint across and along the pinned column | **HUMAN** — established by screenshot; no non-pixel assertion expresses it |
+| 10 | #63 E6: identical geometry with `javaScriptEnabled: false` | **ASSERTED** — the scripting-off pass |
+| 11 | #63 E9: 320x568 still fits name + `Net balance` | **HUMAN** — 320px is explicitly outside this contract; asserting it would widen the contract silently |
+| 12 | #64 rendered pixels: no annotation overruns its SVG, both viewports, all routes | **ASSERTED** — generalised past `.annotation` to **every** `<text>` in every `<svg>` |
+| 13 | #64 criterion 4: a clamped label must not land on the series it names | **HUMAN** — needs the set of labels the clamp *moved*, knowable only by re-running the placement. The clip guard was green throughout while this was broken, so a green spec must not imply it |
+| 14 | #64 `ADVANCE_EM`: worst `getComputedTextLength()/(chars x fontPx)` <= 0.62 | **ASSERTED** — one-sided, over exactly the classes `estimateTextWidth` estimates |
+| 15 | #64: no annotation moves between SSR paint and hydration | **COVERED ELSEWHERE** — `test_annotation_placement_is_not_measured_at_runtime` |
+| 16 | #65: adjacent controls' hit areas on a **wrapped** 390px row | **ASSERTED** — pairwise intersection over every control's hit area, both viewports, zero intersecting pairs |
+| 17 | #65: every control's hit area is >= `--target-min`, read from `:root` at runtime | **ASSERTED** — the floor is **read**, never hardcoded. One named exception, below |
+| 18 | #65 E7: `elementFromPoint` at the track centre returns the range, not the thumb | **ASSERTED (driven)** |
+| 19 | #65 E8: two thumbs at `minStepsBetweenThumbs` clear the hit-area floor | **ASSERTED (driven)** — both thumbs driven to minimum separation with the keyboard |
+| 20 | #65 E2: an open `.select-content` does not intersect its trigger's hit band | **ASSERTED (driven)** |
+| 21 | #65 E9: overlays inside `.law-table-scroll` still measure the floor | **ASSERTED** — falls out of 17 |
+| 22 | #66 rendered pixels, **NOT EXECUTED in that pass**: relocated category labels, staggered leader labels, four shortened titles | **ASSERTED** — same walk as 12; widening it past `.annotation` is what closes this |
+| 23 | #66 E8: that `WhoPays`' label reads as belonging to its own bar pair | **HUMAN** — recorded there as human-judged and **not** claimed as verified; that sentence stands |
+| 24 | #66 per-figure grid, the rows reading NOT EXECUTED for figures in their **default** state | **ASSERTED** — the default-state geometry of all 25 figures is covered by 12 and 22 |
+| 25 | ...of those, the 5 rows whose deferral names an **interactive** state | **ASSERTED (driven)** — `#whole-budget`, `#the-laws`, `#by-state`, `#what-a-household-earns`, `#the-spread`: each named control operated once, the figure re-measured |
+| 26 | #66: "Browser lane not run in this pass" as a standing FAIL disposition | **RESOLVED** — asserted since #67 |
+| 27 | #46/#42 contents affordance: 44px tap targets, tab order `.skip-link` -> `<summary>` -> `main` | **ASSERTED** — the 44px falls out of 17; the tab order is the first three stops below 62rem. The rail's sticky geometry stays **HUMAN** |
+| 28 | "nothing re-runs any of the above" | **RESOLVED** — rewritten in place to name the spec |
+| 29 | M8: the focus ring computes under WCAG 2.2's 2px minimum (a standing **FAIL**, #75) | **ASSERTED as a known failure** — a named expected-failure entry carrying #75, which flips to a plain assertion the day #75 lands. Chromium computes the `1.5px` rule as `1px` |
+| 30 | M1/M3/M5/M6/M7/M8 on `/glossary` and `/contents`: **NOT EXECUTED** | **PARTLY ASSERTED** — the spec covers all seven routes, so the width, overflow, target-size, console and skip-link halves close. The screen-reader and greyscale-reading halves stay **HUMAN** |
+| 31 | M2 screen-reader pass, every route | **HUMAN** — no assistive technology runs in CI. Explicitly out of #67's scope |
+| 32 | M6 greyscale render | **HUMAN** for the reading judgement. The luminance-ratio table below is mechanisable but is #30's artefact — **parked**, `docs/parked-findings.md` |
+| 33 | Safari.app focus-ring check | **HUMAN** — Playwright's WebKit is **not** Safari.app, and a lookalike engine must not be allowed to satisfy it. #80 |
+| 34 | M12 JavaScript disabled: page `scrollWidth` == viewport, and the trigger shapes | **ASSERTED** for the width and overflow half, by the scripting-off pass; the trigger-shape half is **COVERED ELSEWHERE** by the static `test_*term*` guards |
+
+**Of the 34, 21 are asserted, 3 are covered elsewhere, and 10 remain human-judged** — every one of
+the 10 for a stated reason that is not "we ran out of time": assistive technology that does not exist
+in CI, a pixel judgement, a copy judgement, a viewport outside this contract, or a probe whose
+assertion would pin us to a third-party internal.
+
+### What the lane found on its first run
+
+Two defects, both **parked and not fixed in #67** — the lane reports, it does not repair:
+
+- **Vertical clipping.** `Chart.tsx` renders with a `viewBox` and no `overflow: visible`, so a
+  `<text>` drawn below the box is cut mid-glyph exactly as #64's horizontal case was. 19 of them,
+  `YEARS TO MATURITY` on `/government#how-old` worst. The counts are pinned per route and viewport in
+  `smoke.test.ts`'s `VERTICAL_CLIP_BASELINE`, asserted with `<=`, so the set cannot grow silently.
+- **`.basis-toggle-item`**, the `#by-state` per-person/total toggle, is `.unit-toggle-item`'s twin
+  but was never added to the shared `::before` overlay, so its hit area measures 16px against the
+  24px floor. Carried as a named, issue-referenced entry in `smoke.test.ts`'s `KNOWN_UNDERSIZED` —
+  a named exception, never a lowered floor.
+
+### What this lane deliberately does not do
+
+- It does not re-derive `annotate.test.ts` and `axisFit.test.ts`'s NARROW-lane geometry, nor the
+  static guards in `pipeline/tests/test_accessibility.py`. The three-lane boundary below stands.
+- It runs **Chromium only**. WebKit is not installed, because Playwright's WebKit is not Safari.app
+  and installing it would let a lookalike engine appear to close #80.
+- It is **not a required status check**. A required check that never reports blocks every merge
+  permanently with no error message, and this repository had zero CI contexts before #67. The
+  precondition — green on a real pull request — is parked in `docs/parked-findings.md`.
+
+**Font metrics.** `src/styles/tokens.css:4-5` ships a deliberate system-font stack with no webfont,
+so macOS and Linux metrics differ by design. The lane takes a **tolerance, not a pinned container**:
+a container would make CI reproducible at the cost of making the developer's local run the divergent
+one, which is the run that has to be trusted while someone is fixing a failure. `TOLERANCE_PX = 1` on
+containment; every other assertion is an integer or a one-sided inequality, so drift can only make
+the lane stricter.
+
 ## Manual pass results
 
 Issue #30's sweep, in two sittings. **2026-08-24**: keyboard traversal, roving tabindex and focus
@@ -457,7 +542,9 @@ and no live region, and it is asserted by the five `test_*term*` checks.
 contains `select-content` **zero** times against `select-trigger` **3** times — so no static test in
 this repository can see this defect, and the three guards added in
 `pipeline/tests/test_accessibility.py` do not claim to: they assert the *declarations* are present,
-so a later sweep that deletes one turns red. Automating the observation below in CI is **#67**.
+so a later sweep that deletes one turns red. The observation below is **asserted since #67** by
+`tests/browser/driven.test.ts` — every `.select-trigger` is opened at both viewports and the listbox
+and every option are measured against `innerWidth`. See *The browser lane, and what it now asserts*.
 
 **Executed 2026-08-27**, Chromium **151.0.0.0** (Playwright MCP), `dist/` served locally at
 **390×844**, `/government/`. Before and after are the same build path, changing only the CSS clamp
@@ -507,7 +594,8 @@ present (`test_the_by_state_row_header_column_is_pinned`,
 turns red, and the fourth
 (`test_the_by_state_table_serves_all_five_columns_with_scripting_off`) reads the built bytes.
 `test_the_by_state_guards_bite_the_ways_the_fix_can_regress` is their negative test. Automating the
-observation below in CI is **#67**.
+observation below is **asserted since #67** by `tests/browser/driven.test.ts`. See *The browser
+lane, and what it now asserts*.
 
 **The defect class, established before the fix and worth recording**: this was never hidden
 columns. `global.css` had no width breakpoint at all — its only two `@media` blocks were `62rem`
@@ -632,7 +720,7 @@ of them is a browser.
 |---|---|---|
 | **WIDE, 720 units** — every annotation in `dist/` | `pytest -k annotation`, five guards over the served bytes | **ASSERTED**, and unattended |
 | **NARROW, 360 units** — client-only, the worst case, and the only place a label clips off the LEFT edge | `npm run test:unit` over the pure helper (`src/components/charts/annotate.test.ts`) | **ASSERTED**, at the unit level |
-| **Rendered pixels**, real `getBoundingClientRect()` and `getComputedTextLength()` at 390x844 and 1440x900 | browser | **MEASURED**, recorded below. Automating it in CI is **#67** |
+| **Rendered pixels**, real `getBoundingClientRect()` and `getComputedTextLength()` at 390x844 and 1440x900 | browser | **ASSERTED since #67** — `npm run test:browser`, on every pull request. Recorded below |
 
 SSR cannot reach NARROW at all: `useChartSize.ts` returns the WIDE preset before the first client
 measurement, so the server render — and therefore every assertion any pytest guard can make — only
@@ -743,7 +831,10 @@ future measurement comes in lower, leave it alone.
   past its SVG. It is recorded in `docs/parked-findings.md` and deliberately not fixed here.
   `test_no_annotation_class_ships_outside_the_guarded_set` is an `==` audit over every `<text>` class
   in `dist/`, so that boundary is explicit in the suite rather than implied.
-- **#67** owns wiring a browser probe into CI. The measurement above is recorded, not automated.
+- **Asserted since #67.** `tests/browser/smoke.test.ts` re-measures the worst ratio on every route
+  and viewport on every pull request, against `ADVANCE_EM` imported from the source rather than
+  restated. The assertion is one-sided (`worst <= ADVANCE_EM`), so the rule above — raised, never
+  lowered — is the direction it enforces.
 - **#78** owns the scripting-off `<noscript>` geometry; see § Known limitation above.
 - **`overflow: visible` on the SVG is not the fix** and was not used. It would spill annotations into
   adjacent prose and could reintroduce page-level horizontal overflow; `Chart.tsx` is untouched, and
@@ -847,8 +938,10 @@ the hairline off the word, and a zero-demanding guard would have been red on arr
 
 **What no test here asserts:** the wrapped-row vertical clearance at 390px. An 8px row gap plus a
 16px computed line box is a 24px pitch against a 24px floor — a touch at 0px clearance, not an
-overlap — and both halves of that sentence are computed values. It is measured below and **#67**
-owns automating it. On the tree as it stands no `.controls` row wraps its toggles onto two lines at
+overlap — and both halves of that sentence are computed values. It is measured below and
+**asserted since #67**: `tests/browser/smoke.test.ts` tests every pair of control hit areas for
+intersection at both viewports and requires zero intersecting pairs, so the case bites the day a row
+does wrap. On the tree as it stands no `.controls` row wraps its toggles onto two lines at
 390px, so the 0px case does not currently arise; the tightest measured vertical clearance is 45.7px.
 
 #### Executed 2026-08-27 (the browser lane)
@@ -961,7 +1054,7 @@ An arithmetic error in a probe reads exactly like a finding.
 | **WIDE, 720 units** — every `<text>` of every class in `dist/`, horizontally | `pytest -k "chart_text or left_axis_tick or holders_labels"`, over the served bytes | **ASSERTED**, and unattended |
 | **WIDE, 720 units** — rotated axis titles, vertically | `pytest -k rotated_axis_title` | **ASSERTED** |
 | **NARROW, 360 units** — the left gutter (42 units, six characters), the right-edge bottom tick, the rotated title down a short panel | `npm run test:unit` over the pure helpers (`src/components/charts/axisFit.test.ts`) | **ASSERTED**, at the unit level |
-| **Rendered pixels**, real `getBoundingClientRect()` at 390x844 and 1440x900 | browser | **NOT EXECUTED in this pass** — see below. Automating it in CI is **#67** |
+| **Rendered pixels**, real `getBoundingClientRect()` at 390x844 and 1440x900 | browser | **ASSERTED since #67** — `npm run test:browser` walks every `<text>` in every `<svg>`, not only `.annotation` |
 
 SSR cannot reach NARROW at all: `useChartSize.ts` returns the WIDE preset before the first client
 measurement, so the server render — and therefore every assertion any pytest guard can make — only
@@ -989,7 +1082,8 @@ moved.
 It does **not** cover what this issue moved, and saying so is the point: `WhoPays`' six category
 labels are now inside the plot, `DebtHolders`' leader labels are staggered, and four titles took a
 shorter variant. Those are the rows in the table below reading **NOT EXECUTED**, and each names
-**#67** as the owner. A sweep that measured unmounted `client:visible` islands would report a false
+**#67** as the owner, and #67 closed it: `mountIslands()` step-scrolls at 0.8x the viewport and then
+*waits on* the exact hydrated `<svg>` count rather than sampling it. A sweep that measured unmounted `client:visible` islands would report a false
 PASS, which is the most expensive outcome available here (E1) — so the lane is recorded as unrun
 rather than run cheaply.
 
@@ -1007,35 +1101,37 @@ specific failure, or NOT EXECUTED with a reason; none is blank.
 - **PASS (S)** — asserted statically against `dist/` by a named guard in
   `pipeline/tests/test_accessibility.py`.
 - **PASS (C)** — true by construction, with the mechanism asserted rather than the outcome sampled.
+- **PASS (B)** — asserted in a real browser by `npm run test:browser` (#67), on every pull request.
+  `driven` marks a figure whose named control the spec operates before re-measuring.
 - **NOT EXECUTED** — needs rendered pixels; owner named.
 
 | Route + section | Figure (`aria-label`, abridged) | No content clipped | Type at intended size | No control over the plot | `figcaption` + Units/Note/Source | "View as table" reachable | JS off |
 |---|---|---|---|---|---|---|---|
-| /economy `#one-picture` | Real GDP grew 895% between fiscal 1950 and fiscal 2025, fr… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
-| /economy `#growth-shadow` | Output per hour reached 216.5 by 2024 while real median ho… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
-| /economy `#who-works` | Unemployment was 4.2% in fiscal 2025 against a noncyclical… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
-| /economy `#prices-rates` | The fed funds rate peaked at 16.9% in fiscal 1981, one fis… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
-| /economy `#labor-capital` | Wages and salaries fell from a fiscal 1970 peak of 51.5% o… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
-| /government `#forty-trillion` | Debt doubled in ten fiscal years, from $19.57 trillion at… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | known FAIL, **#36** |
-| /government `#who-holds-it` | $32.14 trillion of the federal debt is held by the public… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
-| /government `#how-old` | Average maturity of marketable Treasury debt is 71 months… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
-| /government `#whole-budget` | Federal outlays from fiscal 1962 to 2025 stacked into mand… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** (unit toggle) | PASS (S) | PASS (S) | owned by **#78** |
-| /government `#structural-gap` | Revenue averaged 17.2% of GDP against outlays at 21.1% acr… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
-| /government `#what-congress-votes-on` | Share of GDP from FY1995 to FY2025: mandatory rose from 9.… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
-| /government `#net-interest` | Net interest rose from $232 billion in FY1995 to $970 bill… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
-| /government `#the-laws` | Sixteen of the twenty-three major deficit-moving laws sinc… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** (coalition/president filter) | PASS (S) | PASS (S) | owned by **#78** |
-| /government `#passed-signed` | Both attributions total the same $16.75 trillion in net te… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
-| /government `#where-money-comes-from` | Federal revenue by source held near 17 to 18 percent of GD… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
-| /government `#where-money-comes-from` | The United States collected 25.6% of GDP in tax in 2024, 3… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
-| /government `#by-state` | Federal gross tax collections against federal award spendi… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** (state metric filter) | PASS (S) | PASS (S) | owned by **#78** |
-| /government `#by-state` | Each state's own tax collections by category as a share of… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** (state metric filter) | PASS (S) | PASS (S) | owned by **#78** |
-| /households `#what-a-household-earns` | Real median household income rose from $65,380 in 1995 to… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** (year range) | PASS (S) | PASS (S) | owned by **#78** |
-| /households `#the-spread` | The family Gini index rose from 0.421 in 1995 to 0.456 in… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** (year range) | PASS (S) | PASS (S) | owned by **#78** |
-| /households `#a-century-of-brackets` | In constant 2024 dollars, the income at which the top brac… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
-| /households `#statutory-vs-effective` | Between 1979 and 2022 the top statutory income tax rate fe… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
-| /households `#who-pays` | The top 1% earned 20.6% of adjusted gross income and paid… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
-| /households `#who-pays` | Share of federal individual income tax paid by the top 1%… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
-| /households `#the-bill-you-do-not-see` | Payroll tax and individual income tax, each as a share of… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
+| /economy `#one-picture` | Real GDP grew 895% between fiscal 1950 and fiscal 2025, fr… | PASS (S) | PASS (C) | PASS (B) | PASS (S) | PASS (S) | owned by **#78** |
+| /economy `#growth-shadow` | Output per hour reached 216.5 by 2024 while real median ho… | PASS (S) | PASS (C) | PASS (B) | PASS (S) | PASS (S) | owned by **#78** |
+| /economy `#who-works` | Unemployment was 4.2% in fiscal 2025 against a noncyclical… | PASS (S) | PASS (C) | PASS (B) | PASS (S) | PASS (S) | owned by **#78** |
+| /economy `#prices-rates` | The fed funds rate peaked at 16.9% in fiscal 1981, one fis… | PASS (S) | PASS (C) | PASS (B) | PASS (S) | PASS (S) | owned by **#78** |
+| /economy `#labor-capital` | Wages and salaries fell from a fiscal 1970 peak of 51.5% o… | PASS (S) | PASS (C) | PASS (B) | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#forty-trillion` | Debt doubled in ten fiscal years, from $19.57 trillion at… | PASS (S) | PASS (C) | PASS (B) | PASS (S) | PASS (S) | known FAIL, **#36** |
+| /government `#who-holds-it` | $32.14 trillion of the federal debt is held by the public… | PASS (S) | PASS (C) | PASS (B) | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#how-old` | Average maturity of marketable Treasury debt is 71 months… | PASS (S) | PASS (C) | PASS (B) | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#whole-budget` | Federal outlays from fiscal 1962 to 2025 stacked into mand… | PASS (S) | PASS (C) | PASS (B), driven — unit toggle | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#structural-gap` | Revenue averaged 17.2% of GDP against outlays at 21.1% acr… | PASS (S) | PASS (C) | PASS (B) | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#what-congress-votes-on` | Share of GDP from FY1995 to FY2025: mandatory rose from 9.… | PASS (S) | PASS (C) | PASS (B) | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#net-interest` | Net interest rose from $232 billion in FY1995 to $970 bill… | PASS (S) | PASS (C) | PASS (B) | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#the-laws` | Sixteen of the twenty-three major deficit-moving laws sinc… | PASS (S) | PASS (C) | PASS (B), driven — coalition/president filter | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#passed-signed` | Both attributions total the same $16.75 trillion in net te… | PASS (S) | PASS (C) | PASS (B) | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#where-money-comes-from` | Federal revenue by source held near 17 to 18 percent of GD… | PASS (S) | PASS (C) | PASS (B) | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#where-money-comes-from` | The United States collected 25.6% of GDP in tax in 2024, 3… | PASS (S) | PASS (C) | PASS (B) | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#by-state` | Federal gross tax collections against federal award spendi… | PASS (S) | PASS (C) | PASS (B), driven — basis toggle | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#by-state` | Each state's own tax collections by category as a share of… | PASS (S) | PASS (C) | PASS (B), driven — basis toggle | PASS (S) | PASS (S) | owned by **#78** |
+| /households `#what-a-household-earns` | Real median household income rose from $65,380 in 1995 to… | PASS (S) | PASS (C) | PASS (B), driven — year range | PASS (S) | PASS (S) | owned by **#78** |
+| /households `#the-spread` | The family Gini index rose from 0.421 in 1995 to 0.456 in… | PASS (S) | PASS (C) | PASS (B), driven — year range | PASS (S) | PASS (S) | owned by **#78** |
+| /households `#a-century-of-brackets` | In constant 2024 dollars, the income at which the top brac… | PASS (S) | PASS (C) | PASS (B) | PASS (S) | PASS (S) | owned by **#78** |
+| /households `#statutory-vs-effective` | Between 1979 and 2022 the top statutory income tax rate fe… | PASS (S) | PASS (C) | PASS (B) | PASS (S) | PASS (S) | owned by **#78** |
+| /households `#who-pays` | The top 1% earned 20.6% of adjusted gross income and paid… | PASS (S) | PASS (C) | PASS (B) | PASS (S) | PASS (S) | owned by **#78** |
+| /households `#who-pays` | Share of federal individual income tax paid by the top 1%… | PASS (S) | PASS (C) | PASS (B) | PASS (S) | PASS (S) | owned by **#78** |
+| /households `#the-bill-you-do-not-see` | Payroll tax and individual income tax, each as a share of… | PASS (S) | PASS (C) | PASS (B) | PASS (S) | PASS (S) | owned by **#78** |
 
 `/government` §1's scripting-off state is a **known FAIL** citing **#36**, recorded rather than
 skipped. Every other JS-off cell is **#78**'s, whose measurement is at `Known limitation:
@@ -1054,7 +1150,7 @@ crowding never occurred. That closes the DoD's "amend the Known limitation" item
 | 2 narrow-only panel titles over their 298-unit room | **Fixed here** |
 | `/government` §2's foreign label can no longer carry its percentage on the chart | **Parked** — `docs/parked-findings.md`. The full share is still on the figure's `aria-label`, in its live readout, and in both columns of its table |
 | `PricesAndRates`' converging series labels | **Parked** by #64, and stays parked: it is annotation text, and it collides at every width, so it is not a 390px defect |
-| Browser lane not run in this pass | **#67**, named in every affected cell |
+| Browser lane not run in this pass | **Asserted since #67** — `npm run test:browser`, every pull request |
 | Scripting-off geometry | **#78**; `/government` §1 specifically **#36** |
 
 #### The ways these guards could report healthy while blind
@@ -1180,8 +1276,10 @@ issue. At 1440×900 no affordance is needed and that is measured too: `.navbar` 
 `top 0` → `bottom 636` inside a 900px viewport with the **twelfth** of twelve contents links on
 screen. Chromium tab stops from load are `.skip-link` → the `<summary>` → inside `main` at 390×844.
 
-*Not executed:* whether a screen reader **reports** the restored position on return — #80. And
-nothing re-runs any of the above; #67 is the browser-driven regression guard that would.
+*Not executed:* whether a screen reader **reports** the restored position on return — #80. The
+44px tap targets, the `display: none` navbar at 1440x900 and the three tab stops above are
+**asserted since #67** — `tests/browser/smoke.test.ts`'s target-size and tab-order checks re-run all
+three on every pull request; the rail's sticky geometry is not, and stays with #80.
 
 ### Greyscale, per chart
 
