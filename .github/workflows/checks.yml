@@ -1,0 +1,93 @@
+# Pull-request checks — the browser lane, and the two lanes that precede it.
+#
+# THIS IS THIS REPOSITORY'S FIRST PULL-REQUEST-TRIGGERED WORKFLOW. Before it,
+# `deploy.yml` fired on push to main and `refresh-data.yml` was a monthly cron,
+# so `gh pr checks` reported nothing on every pull request. #67's capability —
+# "a layout regression fails a pull request" — cannot be delivered without one,
+# and `deploy.yml` cannot carry it, because a `pull_request`-triggered deploy
+# workflow deploys from pull requests.
+#
+# CONCURRENCY. Its OWN group, never `pages`. `deploy.yml` runs under
+# `{group: pages, cancel-in-progress: false}` precisely so a running deploy is
+# never cancelled; a workflow that joined that group and cancelled in progress
+# would silently take that guarantee away. This one supersedes only its own
+# stale runs, which is what a force-push should do.
+#
+# NOT A REQUIRED STATUS CHECK, deliberately, and not made one here. A required
+# check that never reports blocks every merge, permanently, with no error
+# message — and this repository had zero CI contexts until this file. The
+# precondition for requiring it is that it has reported green on a real pull
+# request. That is a repository-settings change, not a file in this diff; it is
+# parked in `docs/parked-findings.md`.
+name: Checks
+
+on:
+  pull_request:
+    branches: [main]
+  # `deploy.yml` calls this same definition rather than restating it, so the
+  # gate on a deploy and the gate on a pull request cannot drift apart.
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    name: Browser lane
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      # Resolve the browser build from the lockfile, not from
+      # `hashFiles('package-lock.json')`: that key busts on every unrelated
+      # dependency bump and re-downloads Chromium for no reason.
+      - id: playwright
+        run: |
+          version=$(node -p "require('./node_modules/playwright-core/package.json').version" 2>/dev/null || true)
+          if [ -z "$version" ]; then
+            version=$(node -p "require('./package-lock.json').packages['node_modules/playwright'].version")
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - env:
+          # The cache restore below provides the browsers; the npm postinstall
+          # must not download a second copy first.
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+        run: npm ci
+
+      - id: browser-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
+      # Chromium only. Firefox and WebKit are minutes of download for engines
+      # this lane does not drive — and Playwright's WebKit is not Safari.app, so
+      # installing it would not close the Safari focus-ring check either (#80).
+      - if: steps.browser-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      # `--with-deps` installs system libraries outside the cached directory, so
+      # a cache hit still needs them.
+      - if: steps.browser-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - run: npx astro check
+
+      - run: npm run build
+
+      # The unit lane first: it is seconds, and a failure there makes the
+      # browser lane's output noise.
+      - run: npm run test:unit
+
+      # The browser lane measures `dist/`; it does not build it.
+      - run: npm run test:browser
