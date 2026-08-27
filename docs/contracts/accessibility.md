@@ -528,6 +528,12 @@ path, changing only `global.css`.
 re-measured after each: the pinned column holds x 20 → 128 and `Net balance` holds x 192 → 303 in
 all five sorted orders. Sorting re-renders rows, not layout.
 
+**Keyboard, at 390×844.** Tab moves between the five `.sort-button`s in column order; **Enter** and
+**Space** both sort, `aria-sort` reads `descending` on exactly one `<th>` after each, and the
+browser brings the focused button inside the viewport by scrolling the wrapper (the second button
+lands at x 140 → 221). The pinned column does not intercept focus — it declares no `tabindex` and
+no role, which is **#71**'s scope, not this issue's.
+
 **`border-collapse` (E2).** `.sortable-table` is `border-collapse: collapse`, and a sticky cell can
 paint over a collapsed rule that belongs to the table rather than the cell. Screenshotted at both
 scroll positions: the `tbody tr` hairline and the `thead th` rule both still paint across and along
