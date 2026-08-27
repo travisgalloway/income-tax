@@ -544,7 +544,11 @@ figcaption .lead,
  * A trigger styled like the unit-toggle's baseline rule, not a boxed <select>,
  * so it reads as part of the same control language as the toggle groups. */
 
-.select-field { display: inline-flex; flex-direction: column; gap: 0.3rem; }
+/* The field and the trigger are flex items in `.filters`, which wraps but does
+ * not shrink its items below their content: with the longest control
+ * configuration selected, the chosen label would push the filter row past a
+ * 390px phone (#62). `min-width: 0` is what lets them shrink at all. */
+.select-field { display: inline-flex; flex-direction: column; gap: 0.3rem; min-width: 0; max-width: 100%; }
 
 .select-trigger {
   display: inline-flex;
@@ -558,7 +562,14 @@ figcaption .lead,
   padding: 0.15rem 0 0.25rem;
   color: var(--ink);
   cursor: pointer;
+  min-width: 0;
+  max-width: 100%;
 }
+/* Radix portals the selected item's text into a bare <span> inside the
+ * trigger, so it can only be reached positionally. It is a flex item, whose
+ * automatic minimum size is its content — the label wraps rather than
+ * widening the trigger past the row. */
+.select-trigger > span:first-child { min-width: 0; overflow-wrap: break-word; }
 .select-trigger:hover { border-bottom-color: var(--ink); }
 .select-icon { color: var(--ink-soft); font-size: 0.7em; }
 
@@ -568,17 +579,32 @@ figcaption .lead,
   font-family: var(--font-data);
   font-size: 0.8125rem;
   z-index: 20;
+  /* Radix sizes a popper to its widest option, so a long label opens a
+   * listbox wider than the phone it opens on, past the edge and unreachable
+   * (#62: 427px laid out x=10→437 in a 390px viewport). This var is the
+   * collision boundary minus the `collisionPadding` that `Select.tsx` passes;
+   * the fallback covers a popper that never mounts the var at all. Preferred
+   * over a bare `calc(100vw - …)` because `100vw` counts the desktop
+   * scrollbar and the var already accounts for the side the popper chose. */
+  max-width: var(--radix-select-content-available-width, calc(100vw - 1.5rem));
 }
 .select-viewport { padding: 0.25rem 0; }
 .select-item {
   display: flex;
-  align-items: center;
+  /* `start`, not `center`, so the ✓ sits on a wrapped label's first line. It
+   * is a no-op for a single-line item, whose height is its line box. */
+  align-items: start;
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.35rem 0.9rem 0.35rem 0.6rem;
   cursor: pointer;
   outline: none;
 }
+/* Same positional reach as the trigger's span: `RadixSelect.ItemText` drops
+ * any `className` it is given rather than forwarding it. Without `min-width:
+ * 0` the label refuses to shrink below its content and the clamp above has
+ * nothing to clamp. */
+.select-item > span:first-child { min-width: 0; overflow-wrap: break-word; }
 .select-item[data-highlighted] { background: var(--ground); }
 .select-indicator { color: var(--ink-soft); }
 
@@ -882,6 +908,10 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   padding: 0 0 0.1rem;
   color: var(--ink);
   cursor: pointer;
+  /* A flex item in `.controls`, same as `.select-trigger` in `.filters`.
+   * Jurisdiction names are short, so this is a guard rather than a repair. */
+  min-width: 0;
+  max-width: 100%;
 }
 .tax-mix-select-content {
   background: var(--panel);
@@ -890,10 +920,18 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   font-size: 0.8125rem;
   max-height: 20rem;
   overflow-y: auto;
+  /* CSS computes `overflow-x` to `auto` whenever `overflow-y` is not
+   * `visible`, so this listbox was already a two-axis scroll box — declaring
+   * the intent is what keeps it a one-axis one (#62). Nothing can be clipped
+   * by it: the clamp below stops the content exceeding the box. */
+  overflow-x: hidden;
+  /* The same viewport clamp as `.select-content`; see the note there. */
+  max-width: var(--radix-select-content-available-width, calc(100vw - 1.5rem));
 }
 .tax-mix-select-item {
   padding: 0.3rem 0.75rem;
   cursor: pointer;
+  overflow-wrap: break-word;
 }
 .tax-mix-select-item[data-highlighted] {
   background: var(--rule);

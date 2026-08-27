@@ -1113,3 +1113,22 @@ time. Appended to, never rewritten. None of these have been acted on.
   the first, since it is the register of the hand-offs it was matching. Cosmetic inconsistency in one
   derived-link surface. Found while writing the Households-to-Government hand-off for #61. Severity:
   cosmetic, non-blocking.
+- [2026-08-27] `src/components/islands/Select.tsx:41` — `RadixSelect.ItemText` destructures
+  `className` and `style` out of its props and never forwards them
+  (`node_modules/@radix-ui/react-select/dist/index.mjs:916`), so the item label can only be reached
+  positionally, as `.select-item > span:first-child`. The same is true of the trigger's value span.
+  Both selectors are load-bearing for #62's wrap and would break silently if Radix changed the
+  element order. Found while bounding the filter listbox for #62. Severity: fragile selector,
+  non-blocking.
+- [2026-08-27] `docs/contracts/accessibility.md` checklist item 8's opening paragraph said the
+  anticipated Radix consumers "never landed" — corrected for `Select` under #62's criterion 7, but
+  the same item still describes `Slider`, `Dialog` and `Tabs` in one sentence with `Tooltip`, whose
+  rejection was a decision rather than an absence, and `@radix-ui/react-dialog`, `-tabs`, `-slider`
+  and `-tooltip` remain installed dependencies nothing imports. The dependency half is already
+  parked above; the item's remaining staleness is the new part. Found while correcting the sentence
+  #62 owns. Severity: documentation drift, non-blocking.
+- [2026-08-27] `/government/` at 390×844 lays out a `<table>` whose right edge reaches x=2044,
+  contained by its own scroll container so `documentElement.scrollWidth` stays 390. It is the
+  widest element on the route by a factor of five and is the subject of #63; noted here only
+  because #62's page-overflow measurement had to attribute the number to something. Found while
+  measuring criterion 6 for #62. Severity: already owned by #63, non-blocking.

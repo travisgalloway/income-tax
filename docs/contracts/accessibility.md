@@ -378,7 +378,7 @@ same one.
 | M3 roving tabindex / focus trap | `/glossary` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. |
 | M3 roving tabindex / focus trap | `/contents` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. Its own edge case is the one `/sources/` failed (#79): every line on it is a derived string and the source lines are long, so the 390px rows are the ones that matter. |
 | M4 390px legibility, JS on | `/` | FAIL | Chrome 151, 390×844 | Body does not scroll horizontally (`scrollWidth` 390 = `clientWidth`). Right-edge annotations clipped — #64. Chart legibility sweep — #66. "Focus or hover" instruction with 3.3px hit targets — #73. Open tables uncapped, page 11,316px → 24,195px — #77. |
-| M4 390px legibility, JS on | `/government/` | FAIL | Chrome 151, 390×844 | No horizontal body scroll. Filter menu wider than the phone — #62. §11 by-state table hides four of five columns — #63. #64, #66, #73. §11 legend wraps a swatch away from its label — #74. |
+| M4 390px legibility, JS on | `/government/` | FAIL | Chrome 151, 390×844 | No horizontal body scroll. Filter menu wider than the phone — **fixed 2026-08-27 (#62)**, measurement below. §11 by-state table hides four of five columns — #63. #64, #66, #73. §11 legend wraps a swatch away from its label — #74. |
 | M4 390px legibility, JS on | `/households/` | FAIL | Chrome 151, 390×844 | No horizontal body scroll. §4 Figure 4 clipped at the right edge — #64. #66, #73. |
 | M4 390px legibility, JS on | `/sources/` | **PASS** (was FAIL) | Chromium (Playwright MCP), 390×844 | **Re-measured 2026-08-26 after #57.** `documentElement.scrollWidth` **390** against `clientWidth` **390** — no horizontal body scroll, against 520 vs 390 before. Widest of the 45 `<code>` spans is now **348px**, against 500px; none is clipped (`scrollWidth == clientWidth` on all 45) and none carries `text-overflow: ellipsis`, so nothing was bought by truncation. Fixed by `overflow-wrap: anywhere` on `.reference-doc code`, contained at the element and never at the page. **#79 closes as fixed-by-#57.** The route also gained 23 `main` hyperlinks, from zero. |
 | M4 390px legibility, JS on | `/glossary` | **PASS** (width only) | Chromium (Playwright MCP), 390×844 | **Executed 2026-08-26 (#57)**, for the width check only: `scrollWidth` **390** = `clientWidth` **390**, with the 25 new external source links in place. The rest of M4 — chart legibility, hit targets, table caps — is vacuous here (zero `<figure>`, zero `<svg>`, zero islands). The keyboard and screen-reader rows below are still NOT EXECUTED. |
@@ -442,6 +442,51 @@ environment and none can be driven from an exec agent — **NOT EXECUTED, human 
 same disposition as items 2, 9, 10 and 13. The machine-provable half is `aria-describedby` resolving
 to an in-DOM element inside the same wrapper carrying the term's `short` verbatim, with no portal
 and no live region, and it is asserted by the five `test_*term*` checks.
+
+### Radix `Select` popper width at 390px (#62)
+
+**A measured browser observation, not an automated assertion.** CSS width and overflow are
+*computed*, and Radix mounts `Content` only while a listbox is open — `dist/government/index.html`
+contains `select-content` **zero** times against `select-trigger` **3** times — so no static test in
+this repository can see this defect, and the three guards added in
+`pipeline/tests/test_accessibility.py` do not claim to: they assert the *declarations* are present,
+so a later sweep that deletes one turns red. Automating the observation below in CI is **#67**.
+
+**Executed 2026-08-27**, Chromium **151.0.0.0** (Playwright MCP), `dist/` served locally at
+**390×844**, `/government/`. Before and after are the same build path, changing only the CSS clamp
+in `.select-content` / `.tax-mix-select-content` and the `collisionPadding={8}` the two `Content`
+call sites now pass.
+
+| Measurement, at 390×844 | Before | After |
+|---|---|---|
+| §8 "Control at enactment" listbox | 426.6px wide, laid out **x=10 → 436.6** | 374px wide, **x=8 → 382** |
+| its 7 options' right edge | **435.6** — 45.6px past the 390px viewport, on every one | **381**, inside the viewport on every one |
+| `--radix-select-content-available-width` on the `Content` | 370px (Radix's own default padding of 10), unused — `max-width` computed `none` | 374px, and `max-width` computes to it |
+| option height | 32.2px, single line | 32.2px for the short option, **53.3px** for the six that now wrap to two lines |
+| §8 "Vote character" listbox | x=20 → 174 | unchanged, x=20 → 174 |
+| §8 "President" listbox | x=168 → 295.1 | unchanged, x=168 → 295.1 |
+| §11 jurisdiction listbox | x=126 → 268.3, computed **`overflow-x: auto`** | x=126 → 268.3, computed **`overflow-x: hidden`**, `scrollWidth == clientWidth` |
+| `documentElement.scrollWidth` with the longest option selected | 390, but the trigger's own label unbounded | **390**; the trigger wraps inside `.filters`, x=20 → 370, and `Clear filters` arrives at right=86.8 without pushing the row |
+
+**Distinguishability, the point of the issue.** All seven options render their full text with the
+trailing chamber and party intact and no truncation — `text-overflow` computes to `clip` on every
+one, and each of the six configuration labels still ends in `Senate (DRR)`, `(RRR)`, `(RDD)`,
+`(DDD)`, `(DRD)`, `(RDR)`. The strategy for long labels is **wrap**, not abbreviate and not
+truncate: right-truncation is the defect the issue was filed about, and an abbreviated label would
+need a copy decision the issue puts out of scope.
+
+**Consequence, recorded rather than presented as a fix.** A wrapped option is 53.3px tall against
+32.2px. That is a by-product of wrapping, **not** a target-size fix — thumb-sized hit targets are
+**#65**, still open, and the trigger's own 22px height is untouched here.
+
+**Fallback (E1).** Forcing `--radix-select-content-available-width` to the guaranteed-invalid value
+on the open `Content` makes `max-width` compute to **366px** — `calc(100vw - 1.5rem)` — with the
+listbox at x=16 → 382, every option's right edge at 381 and `documentElement.scrollWidth` still 390.
+The clamp does not depend on the var surviving a Radix upgrade.
+
+**Desktop (E4).** At **1280×900** the clamp is inert: the §8 listbox is **426.6px** wide before and
+after, x=639 → 1065.6 both times, every option 32.2px tall and unwrapped, with `max-width` computing
+to 1264px.
 
 ### Reading position in the contents list (#44)
 
@@ -630,17 +675,39 @@ say so.
 
 ### Per-consumer
 
-8. **Keyboard models for the interactive primitives that actually render.** The anticipated Radix
-   `Select`, `Slider`, `Dialog`, `Tabs` and `Tooltip` consumers **never landed**: the site renders
-   **zero `<input>` and zero `<select>` elements**, and there is no slider, no native select, no
-   modal and no tab strip in the DOM. Rewritten 2026-08-26 against the three control shapes that do
-   render:
+8. **Keyboard models for the interactive primitives that actually render.** Radix `Select` **did**
+   land — two consumers, both on `@radix-ui/react-select@2.3.7`: `src/components/islands/Select.tsx`
+   (the Government §8 filter bar's three dropdowns) and `src/components/islands/StateTaxMix.tsx`
+   (§11's jurisdiction picker). The anticipated `Slider`, `Dialog` and `Tabs` consumers **never
+   landed**, and `Tooltip` was rejected for the term markers on the reasoning in Conventions above:
+   the site renders **zero `<input>` and zero native `<select>` elements**, and there is no slider,
+   no modal and no tab strip in the DOM. Rewritten 2026-08-26 against the four control shapes that
+   do render:
    - **`role="radio"` button groups** (`UnitToggle`, and the Government route's four measure
      toggles) — 20 radios site-wide, roving tabindex, `aria-checked` on each. **EXECUTED**, PASS,
      Chrome 151, 2026-08-24. Their *naming* is a separate open defect (#72).
-   - **Filter dropdown buttons** — three of them, all on `/government/`. Escape closes and restores
-     focus to the trigger. **EXECUTED**, PASS, Chrome 151, 2026-08-24. The menu's width at 390px is
-     an open defect (#62).
+   - **Filter dropdown buttons** — the Radix `Select` consumers: three on `/government/` §8
+     (`Select.tsx`) and §11's jurisdiction picker (`StateTaxMix.tsx`). Escape closes and restores
+     focus to the trigger. **EXECUTED**, PASS, Chrome 151, 2026-08-24. The menu's width at 390px
+     **was** an open defect (#62) and is **fixed** — the measurement is in § Manual pass results
+     under *Radix `Select` popper width at 390px*.
+
+     The rest of the keyboard model, expected and actual, **EXECUTED 2026-08-27**, Chromium
+     **151.0.0.0** (Playwright MCP) against a local build of `dist/` at **390×844**, on
+     `/government/` §8's "Control at enactment" dropdown (7 options) and §11's jurisdiction
+     dropdown (51 options). **PASS on every line**:
+
+     | Key | Expected | Actual |
+     |---|---|---|
+     | Enter (on the trigger) | opens the listbox, highlight on the selected option | opened; `data-highlighted` on `Democratic president · Republican House · Republican Senate (DRR)`, the current value; `activeElement` is that `role="option"` |
+     | Space (on the trigger) | opens the same way; does not scroll the page | opened; highlight again on the selected option, `scrollY` unchanged |
+     | ArrowDown | highlight moves to the next option | `All control configurations` → `… Republican Senate (RRR)`, one step |
+     | ArrowUp | highlight moves back to the previous option | ArrowDown then ArrowUp returned to `All control configurations` — same option, not two steps |
+     | Home | highlight moves to the first option | `All control configurations` |
+     | End | highlight moves to the last option, scrolled into the box | §8: `… Republican Senate (RDR)`, the 7th of 7, inside the content box. §11: `Wyoming`, the 51st of 51, inside the box — the 20rem cap still scrolls to the end |
+     | type-ahead | typing `r` highlights the first option starting with it | `Republican president · Republican House · Republican Senate (RRR)` |
+     | Escape | closes; focus returns to the trigger; the value is unchanged | closed, `activeElement === trigger`, value still `… (DRR)` after a type-ahead highlight had moved off it. Same on §11: `activeElement === .tax-mix-select`, value still `Alaska` |
+     | Enter (on an option) | commits that option, closes, focus returns to the trigger | value became `… Republican Senate (RRR)`, listbox closed, `activeElement === trigger`, `documentElement.scrollWidth` still **390** |
    - **`<details>`/`<summary>` disclosures** — every `<TableView>`, present in the server-rendered
      HTML with scripting off (13 on `/government/`, 7 on `/households/`, 5 on `/`), and since #42
      the **narrow-viewport nav panel** (`details#navbar-disclosure`, one per page, below `62rem`).

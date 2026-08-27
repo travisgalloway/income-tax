@@ -59,7 +59,15 @@ export function StateTaxMix({ data }: { data: StatesTaxMix }) {
             <Select.Value />
           </Select.Trigger>
           <Select.Portal>
-            <Select.Content className="tax-mix-select-content" position="popper">
+            {/* `collisionPadding` is what `--radix-select-content-available-width`
+                is measured against, and that var is the `max-width` clamp in
+                `.tax-mix-select-content` — the two ship together, as in
+                `Select.tsx` (#62). `avoidCollisions` keeps its default `true`. */}
+            <Select.Content
+              className="tax-mix-select-content"
+              position="popper"
+              collisionPadding={8}
+            >
               <Select.Viewport>
                 {jurisdictions.map((j) => (
                   <Select.Item key={j.code} value={j.code} className="tax-mix-select-item">
