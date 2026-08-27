@@ -219,6 +219,12 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
               const idx = k === 'japan' ? 0 : k === 'uk' ? 1 : 2
               const cx = leaderX(i)
               const leaderLabel = `${d.top_foreign[idx].country} ${fmtT(d.top_foreign[idx].amount_t)}`
+              // One label per ROW, staggered down. The three leader points are
+              // 46.6 units apart and `United Kingdom $880B` alone is 136, so on
+              // a shared baseline they sat on top of each other — every
+              // clipping assertion green, and the figure unreadable (E8). A
+              // leader line is the idiom that makes a label at a different
+              // depth still name its own point.
               // <Annotation> does not accept tabIndex/role/handlers, and widening
               // it to would make the one sanctioned annotation path a props
               // grab-bag. So these three keep their own <text> and take their x
@@ -230,12 +236,12 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
               })
               return (
                 <g key={k}>
-                  <line x1={cx} y1={yB + barH} x2={cx} y2={leadersY} stroke="var(--ink-soft)" strokeWidth={0.5} />
+                  <line x1={cx} y1={yB + barH} x2={cx} y2={leadersY + i * 13} stroke="var(--ink-soft)" strokeWidth={0.5} />
                   <circle cx={cx} cy={yB + barH / 2} r={2.5} fill="var(--ink)" />
                   {placed && (
                     <text
                       className="datum holders-label"
-                      x={placed.x} y={leadersY + 12} textAnchor={placed.textAnchor}
+                      x={placed.x} y={leadersY + 12 + i * 13} textAnchor={placed.textAnchor}
                       tabIndex={0} role="img" aria-label={describe(k)}
                       onFocus={() => setFocus(k)} onBlur={() => setFocus(null)}
                       onMouseEnter={() => setFocus(k)} onMouseLeave={() => setFocus(null)}

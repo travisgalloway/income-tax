@@ -1158,6 +1158,19 @@ time. Appended to, never rewritten. None of these have been acted on.
   Found while probing every non-annotation `<text>` class in `dist/` for #64's criterion 1. Severity:
   **correctness** (a wrong number can render as a whole one), narrow and wide viewport, non-blocking
   for #64.
+  **Resolved 2026-08-27 by #66, and the entry understated it: there were TWO defects, not one.**
+  Measured against the shipped label strings the overruns are **+90.7** (`:151-161`, the foreign
+  label, whose real text carries both denominators and is longer than the string quoted above) and
+  **+24.8** (`:117-124`, `Intragovernmental $7.74T (19.4%)` — never previously recorded; this entry
+  estimated "~30" for it in passing but did not name it as its own defect). The one-line fix this
+  entry proposed was also not enough: routing the existing strings through `<Annotation>` would have
+  SHIFTED the long foreign label leftward until it overlapped its row-mate, trading a clipping defect
+  for a collision that every clipping assertion stays green on. Each segment label now picks the
+  first variant from a long-to-short ladder that fits `min(distance to the row-mate's centre, room to
+  the SVG edge)`, and renders nothing if none does. A third defect on the same figure — the three
+  foreign-holder leader labels, 46.6 units apart with `United Kingdom $880B` at 136 units wide, all
+  on one baseline — was found only by the new same-row overlap guard and is fixed by staggering them
+  one per row.
 - [2026-08-27] `docs/test-plan.md` GOV-2 and HH-1 listed `#64` among their open 390px failures, but
   neither row is reachable by #64's clamp: GOV-2's labels are `holders-label` (the finding above) and
   `MedianIncome.tsx` draws no direct label at all, only axis text. Both references were retired in
@@ -1199,3 +1212,36 @@ time. Appended to, never rewritten. None of these have been acted on.
   Noted because the same `{,households/,government/}` brace list appears in other plans and reads as
   "the three content routes" while actually naming the intro route. Found while running #65's
   Verification section. Severity: documentation drift, non-blocking.
+- [2026-08-27] `src/components/islands/DebtHolders.tsx` — `/government/` §2's foreign segment label
+  now reads `Foreign $9.64T` with no percentage. Its ladder has no middle rung: `foreignShare` must
+  name **both** denominators (discrepancies.yaml → `foreign_share_of_debt`), so a shorter variant
+  would have to orphan one, and the full string needs 416 units against the 231 that segment's
+  centre has. A two-line `<tspan>` variant would fit at 184 units per line but there is no vertical
+  room — the label sits 14 units above the staggered leader row. Growing Bar B's block by ~26 units
+  would create the room and let the chart state the share again. The full statement is still on the
+  figure's `aria-label`, in its live `aria-live` readout, and in both percentage columns of its
+  table, so nothing is unreachable. Found while fixing #66's assigned `holders-label` defect.
+  Severity: information density on the chart surface, non-blocking.
+- [2026-08-27] `src/components/islands/BracketHistory.tsx:42-44` and
+  `src/components/islands/HouseholdSpread.tsx:48-55` each define their own three-line `panelTitle`
+  fit chooser over `firstThatFits`, and `src/components/islands/BudgetChart.tsx:257` open-codes the
+  same idea for a row label. Three copies of one rule. A `<PanelTitle frame variants>` component in
+  `src/components/charts/` would hold it once, the way `<Annotation>` holds the clamp, and would give
+  the pytest audit a single file to grep for `className="panel-title"` — which is the invariant that
+  makes `test_every_annotation_is_placed_through_the_clamp` worth having. Found while fixing #66's
+  narrow-panel titles. Severity: duplication, non-blocking.
+- [2026-08-27] `narrow`-boolean label switching is still the idiom in several islands
+  (`DebtHolders.tsx:39` for bar geometry, `BudgetChart.tsx:117-120`'s `ERA_BANDS.labelNarrow`,
+  `AttributionSplit.tsx:157-160`'s anchor switch). #66 converted the two that were measurably wrong
+  — `BudgetChart`'s control-strip rows and `DebtHolders`' segment labels — and left the rest, but the
+  failure mode generalises: a breakpoint keyed on viewport width cannot see the gutter or the span a
+  label actually has, so it can be *correct at both presets and still wrong*, which is exactly how
+  `Presidency` shipped clipped at the WIDE preset for as long as it did. A sweep converting the
+  remaining ones to `firstThatFits` against the frame would close the class. Found while widening
+  #64's walker for #66. Severity: latent correctness, non-blocking.
+- [2026-08-27] `src/components/charts/format.ts:70-80` — `dollarsCompact`'s `>= 1e9` branch (`$4B`)
+  is unreachable from any current call site; the largest magnitude any axis passes it is `$30M`.
+  Kept because the alternative is a formatter that silently emits `$30000k` if a series ever grows,
+  and `axisFit.test.ts` exercises the branch. Noted so a later reader does not read it as dead code
+  and delete the guard rail. Found while generalising the formatter for #66. Severity: none,
+  informational.
