@@ -36,8 +36,9 @@ are one event, not two figures. Debt to the Penny stood at $39.89T on
 Instrument composition of marketable debt, May 2026 statement.
 `api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/debt/mspd/mspd_table_1`,
 machine-readable and fetched directly. Bills $6.76T (22%), notes $15.94T, bonds
-$5.41T against a $30.91T marketable total; the remaining $2.80T is TIPS and
-floating-rate notes, which the maturity chart does not draw. The pinned statement
+$5.41T against a $30.91T marketable total; the remaining $2.80T is mostly TIPS
+and floating-rate notes, plus a small Federal Financing Bank balance, which the
+maturity chart does not draw. The pinned statement
 month is recorded in `debt_maturity._meta.provenance.vintage` and moving it is an
 editorial act, not a refresh. Until #56 these figures were curated constants
 credited to the Peterson Foundation, and the total among them read $28.0T —

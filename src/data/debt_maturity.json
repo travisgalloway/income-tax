@@ -7,13 +7,13 @@
    "But average maturity is about 71 months, roughly six years. Roughly a third of debt matures within twelve months.",
    "This is why rate rises after 2021 repriced the whole stock within a few years. It is the causal link to the net interest chart.",
    "Savings bonds (Series EE and I) reach final maturity at 20-30 years and are non-marketable; excluded from these figures.",
-   "Bills, notes and bonds are three of the marketable instrument families, not all of them. They sum to about $28.1T against a $30.9T marketable total; the $2.8T difference is Treasury Inflation-Protected Securities and floating-rate notes, which this chart does not draw. The bills share_pct is the published 22 and reconciles with amount_t / marketable_total_t (21.9); geometry still comes from amount_t and the percentage only from the curated field, so no component derives a share.",
+   "Bills, notes and bonds are three of the marketable instrument families, not all of them. They sum to about $28.1T against a $30.9T marketable total; the $2.8T difference is mostly Treasury Inflation-Protected Securities and floating-rate notes, plus a small Federal Financing Bank balance, which this chart does not draw. The bills share_pct is the published 22 and reconciles with amount_t / marketable_total_t (21.9); geometry still comes from amount_t and the percentage only from the curated field, so no component derives a share.",
    "history_months is a four-point maturity time series and is deliberately NOT charted. sections.md is explicit that this section is not built as a time series; the field is kept in the data for reference but no component may reference it."
   ],
   "provenance": {
    "generator": "monthly/debt_maturity.py",
-   "git_sha": "90f110f",
-   "generated_at": "2026-08-27T02:58:53Z",
+   "git_sha": "47e4ec9",
+   "generated_at": "2026-08-27T03:15:29Z",
    "vintage": "2026-05",
    "retrieved_at": "2026-08-27T02:58:45Z"
   },
