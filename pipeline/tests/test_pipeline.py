@@ -18,7 +18,7 @@ from pathlib import Path
 import jsonschema
 import pytest
 
-from lib import curated, emit, validate
+from lib import curated, emit, tic, validate
 from lib import fetch as lib_fetch
 from lib.errors import SourceUnavailable
 from lib.fetch import fetch
@@ -2286,3 +2286,124 @@ def test_brief_file_list_names_the_brief_itself_and_every_root_json():
     assert set(root_json) <= set(entries), \
         f"BRIEF.md omits root inputs: {sorted(set(root_json) - set(entries))}"
     assert not [e for e in entries if e.startswith(("data/", "content/"))]
+
+
+# ---- #54: foreign holdings come from Treasury TIC, not from a report of it --
+
+LIB = ROOT / "lib"
+
+# A two-block slice of ticdata.treasury.gov/Publish/mfhhis01.txt, trimmed to the
+# rows this pipeline reads. Real values, real layout: the month abbreviations
+# sit on the line ABOVE the `Country` header, `China, Mainland` is quoted
+# because its label carries a comma, and the second block repeats every country
+# label with a different year's numbers -- which is what makes "the parser
+# selected the pinned month's block" a real assertion rather than a tautology.
+MFH_FIXTURE = "\n".join(
+    "\t".join(cells)
+    for cells in [
+        ["", "", "", "MAJOR FOREIGN HOLDERS OF TREASURY SECURITIES"],
+        ["", "", "", "    (in billions of dollars)"],
+        ["", "", "", "HOLDINGS 1/ AT END OF PERIOD"],
+        [""],
+        [""],
+        ["", "Dec", "Nov", "Oct"],
+        ["Country", "2025", "2025", "2025"],
+        ["", "------", "------", "------"],
+        [""],
+        ["Japan", "1185.5", "1202.7", "1200"],
+        ["United Kingdom", "863.1", "879.8", "875.4"],
+        ['"China, Mainland"', "684.4", "683.9", "687.7"],
+        ["All Other", "710.8", "700.4", "690.1"],
+        ["Grand Total", "9269.5", "9349.6", "9230.5"],
+        [""],
+        ["Of which:"],
+        ["For. Official", "3877.7", "3912.3", "3866.4"],
+        [""],
+        ["", "Dec", "Nov", "Oct"],
+        ["Country", "2024", "2024", "2024"],
+        ["", "------", "------", "------"],
+        ["Japan", "1061.5", "1087.1", "1101.5"],
+        ["United Kingdom", "722.8", "765.6", "769.4"],
+        ['"China, Mainland"', "759.0", "768.6", "760.2"],
+        ["Grand Total", "8619.3", "8723.3", "8693.5"],
+    ]
+)
+
+
+def _fixture_release(vintage: str):
+    return tic.read_release(MFH_FIXTURE, vintage, retrieved_at="2026-08-27T00:00:00Z")
+
+
+def test_tic_parser_selects_the_pinned_months_column():
+    """The vintage is DISCOVERED as a column, never assumed to be the first one.
+    Both blocks carry a `Nov` column and both carry every country label, so a
+    parser that took the first match, or the leftmost column, or the newest
+    block would read a different number here."""
+    nov25 = _fixture_release("2025-11")
+    assert nov25.vintage == "2025-11"
+    assert nov25.holdings == {"Japan": 1202.7, "United Kingdom": 879.8, "China": 683.9}
+    assert nov25.grand_total_b == 9349.6
+
+    nov24 = _fixture_release("2024-11")
+    assert nov24.holdings == {"Japan": 1087.1, "United Kingdom": 765.6, "China": 768.6}
+    assert nov24.grand_total_b == 8723.3
+
+    # Not the newest column either: Dec 2025 is a different, unpinned release.
+    assert _fixture_release("2025-12").holdings["Japan"] == 1185.5
+
+
+def test_tic_parser_rejects_a_missing_vintage():
+    """The pin is honoured or the run fails. A month the file does not carry
+    must never fall back to a neighbouring column -- that is the failure mode
+    that put a UK figure matching no TIC month on the page."""
+    with pytest.raises(SourceUnavailable) as exc:
+        _fixture_release("2026-03")
+    assert "no column for 2026-03" in str(exc.value)
+    assert "2024-10 to 2025-12" in str(exc.value)
+
+
+def test_tic_parser_rejects_a_malformed_vintage():
+    with pytest.raises(ValueError, match="YYYY-MM"):
+        _fixture_release("2025-13")
+    with pytest.raises(ValueError, match="YYYY-MM"):
+        _fixture_release("Nov 2025")
+
+
+@pytest.mark.parametrize(
+    "drop, missing",
+    [("United Kingdom", "'United Kingdom'"), ("Grand Total", "'Grand Total'")],
+)
+def test_tic_parser_refuses_a_block_with_a_row_missing(drop, missing):
+    """No silent skips: a country or the grand total vanishing from the release
+    is UNAVAILABLE, not a shorter table."""
+    mutilated = "\n".join(
+        line for line in MFH_FIXTURE.splitlines() if not line.startswith(drop + "\t")
+    )
+    with pytest.raises(SourceUnavailable) as exc:
+        tic.read_release(mutilated, "2025-11", retrieved_at="2026-08-27T00:00:00Z")
+    assert missing in str(exc.value)
+
+
+def test_tic_parser_refuses_a_cell_that_is_not_a_number():
+    mutilated = MFH_FIXTURE.replace("\t1202.7\t", "\t(*)\t")
+    with pytest.raises(SourceUnavailable, match="not a number"):
+        tic.read_release(mutilated, "2025-11", retrieved_at="2026-08-27T00:00:00Z")
+
+
+def test_tic_parser_refuses_a_body_it_could_not_parse_at_all():
+    """An empty parse is a failure, never 'no rows' -- lib/xlsx.py's contract,
+    applied to a text table. A truncated body that lost every header row would
+    otherwise read as a file with no months in it."""
+    with pytest.raises(SourceUnavailable, match="no 'Country' header row"):
+        tic.read_release("nothing\tuseful\there", "2025-11", retrieved_at="x")
+
+
+def test_tic_fetches_through_the_one_http_core():
+    """#40 unified three helpers behind lib/fetch.py. A parallel client here
+    would reintroduce the drift that unification closed, and would sidestep the
+    min_bytes truncation guard with it."""
+    src = (LIB / "tic.py").read_text()
+    assert "httpx" not in src, "lib/tic.py must fetch through lib.fetch, not its own client"
+    assert "from .fetch import fetch" in src
+    assert tic.MIN_BYTES >= 50_000, \
+        "a truncated MFH body would parse as 'the pinned month is not published yet'"
