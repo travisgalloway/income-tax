@@ -20,6 +20,11 @@ import { useRovingMarks } from '../charts/roving'
 import { useScrollableRegion } from './scrollRegion'
 import { dollars } from '../charts/format'
 import type { StateJurisdiction, StatesBalance } from '../../data/types'
+import { labelledByFigure } from './figureLabel'
+
+/** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
+ *  this key rather than typed — see `figureLabel.ts` (#72). */
+const FIGURE = 'state-give-get'
 
 type Basis = 'per_capita' | 'absolute'
 
@@ -141,7 +146,7 @@ export function StateGiveGet({ data }: { data: StatesBalance }) {
           type="single"
           value={basis}
           onValueChange={(v) => v && setBasis(v as Basis)}
-          aria-labelledby="state-basis"
+          aria-labelledby={labelledByFigure(FIGURE, 'state-basis')}
           className="basis-toggle"
         >
           {BASES.map((b) => (

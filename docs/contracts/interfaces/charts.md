@@ -135,12 +135,35 @@ The nominal/real/%-of-GDP toggle and its vocabulary:
   table/inspector text.
 - `fiscalYear(y)` — `FY{y}`.
 
-`UnitToggle`'s props are `{ value, onChange, label = 'Units', units? }`. `units` narrows the group
-to a subset of `Unit` for a series with no denominator for every unit — `units={['nominal', 'gdp']}`
-on §1's debt, which has no real-dollar series. Order always comes from the module's own `OPTIONS`,
-never from the caller, so a unit sits in the same place in every group on the page. The component is
-generic in its unit union (`UnitToggle<U extends Unit>`), so a narrowed caller's `onChange` stays
-typed to its own union instead of widening back to `Unit` and needing a cast.
+`UnitToggle`'s props are `{ value, onChange, figure, label = 'Measured in', labelId?, units? }`.
+`units` narrows the group to a subset of `Unit` for a series with no denominator for every unit —
+`units={['nominal', 'gdp']}` on §1's debt, which has no real-dollar series. Order always comes from
+the module's own `OPTIONS`, never from the caller, so a unit sits in the same place in every group
+on the page. The component is generic in its unit union (`UnitToggle<U extends Unit>`), so a
+narrowed caller's `onChange` stays typed to its own union instead of widening back to `Unit` and
+needing a cast.
+
+**`figure` is required, and it is a manifest key — not a name (#72).** It is the caller's own key in
+`src/data/figures.ts` (`'net-interest'`, `'whole-budget'`), declared once as a module-level `FIGURE`
+constant beside the chart. The component composes the group's accessible name from it via
+`labelledByFigure` in `src/components/islands/figureLabel.ts`, giving
+`aria-labelledby="fig-{key}-no {labelId}"` — the figure's own number span plus the control's visible
+label, announced as **"Figure 7 Measured in"**. `aria-label` is not used and must not return: four
+call sites passing `label="Measured in"` as an accessible name is the bug #72 removed, and a
+hand-typed replacement can be unique and still wrong. Omitting `figure` is a type error rather than
+a silently generic name.
+
+The component **renders its own visible `<span class="controls-label" id={labelId ?? `${figure}-units`}>`**
+as a fragment, so the label and the id the group references cannot drift apart; it lands in the
+caller's existing `.controls` flex row. A caller must not render a label span of its own — three did,
+each with an id nothing pointed at, and `BudgetChart` rendered none at all. `label` is the visible
+text and the second half of the name, never a name on its own: "Measured in" is what five of these
+legitimately say.
+
+Islands whose `View` union does not fit `Unit` (`RevenueChart`'s three-way `nominal | gdp | share`,
+`NetInterest`, `PayrollBill`) keep their own `ToggleGroup.Root` and share only the helper —
+`aria-labelledby={labelledByFigure(FIGURE, 'revenue-units')}`. The same applies to the basis toggles
+(`LawExplorer`, `StateGiveGet`), which keep their own visible text and label ids.
 
 Every unit-toggled chart on the site reads its toggle and its number text from this module; a
 section that re-derives an equivalent formatter inline is a defect, not a local style. The one

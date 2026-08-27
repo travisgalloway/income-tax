@@ -21,6 +21,10 @@ import { useChartSize } from '../charts/useChartSize'
 import { UNIT_LABEL, tick, value, fiscalYear, type Unit } from '../charts/format'
 import type { BudgetYear } from '../../data/types'
 
+/** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
+ *  this key rather than typed — see `figureLabel.ts` (#72). */
+const FIGURE = 'voted-and-not'
+
 const START = 1995
 const END = 2025
 const MARK_YEAR = 2015
@@ -99,8 +103,7 @@ export function VotedAndNot({ rows }: { rows: BudgetYear[] }) {
   return (
     <div ref={boxRef}>
       <div className="controls">
-        <span className="controls-label" id="voted-and-not-units">Measured in</span>
-        <UnitToggle value={unit} onChange={setUnit} label="What Congress votes on units" />
+        <UnitToggle figure={FIGURE} value={unit} onChange={setUnit} />
       </div>
 
       <Chart ariaLabel={shapeLabel(unit)} interactive width={W} height={H} margin={f}>
