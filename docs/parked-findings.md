@@ -1374,3 +1374,16 @@ time. Appended to, never rewritten. None of these have been acted on.
   worth a sweep: any programmatic focus set during `pointerdown` survives on desktop and is undone
   on touch. Found while debugging why #73's drag worked and its tap did not. Severity: latent
   defect, unverified elsewhere.
+- [2026-08-27] `tests/browser/scroll.test.ts` — `/government: the Tab order grows by exactly the
+  overflowing count @ 390px` (#71's B5) is **intermittently red under CPU contention**: 2 failures
+  in the first 7 full-suite runs on #73's branch, both while a `pytest` run competed for the machine,
+  reporting `11 !== 13` — the *overflow* count was right and two overflowing containers had not yet
+  become Tab stops when the walk ran. Not caused by #73, and measured rather than assumed: at 390px
+  with every `<details>` open, all 15 containers report **byte-identical** `scrollWidth -
+  clientWidth` margins on `main` and on the branch (50, 263, 161, 1674, 145, 72, 94, 0, 1131, 221,
+  0, 732, 78, 146, 660 — 13 overflowing, 13 focusable, none within 3px of the boundary), so no
+  layout moved. It then passed 8 consecutive full runs, 3 of them under the same deliberate load,
+  and 3 of 3 in isolation. The cause is that `settleContainers` waits a fixed interval for the
+  `ResizeObserver` to install `tabindex`, and a loaded machine can outlast it; the fix is to wait on
+  the observed count rather than on time. Left alone because it is #71's mechanism and #73 owns
+  chart marks. Found while running #73's full lane. Severity: CI reliability, non-blocking.
