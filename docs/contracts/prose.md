@@ -571,6 +571,54 @@ finding rather than an omission:
 recorded as `Shipped` on `ECO-6` in `docs/feature-matrix.md`. **Fail:** a terminal section that ends
 on its last caveat with nowhere to go. **Cited by #61.**
 
+**Its mechanical half is four tests**, under the `# 11.` banner in `pipeline/tests/test_prose.py`.
+All four assert **zero with no baseline** — method rule 3's fix-all road, taken at the counts below,
+which are the counts #61 measured against a clean `dist/` before it wrote a sentence.
+
+| Check | What it asserts | Measured before #61 |
+|---|---|---|
+| `test_every_in_prose_cross_reference_resolves_and_is_base_aware` | Every `/`- or `#`-rooted href inside a prose element begins with the served base path, names a route `dist/` actually built, and lands on an `id` that exists on that built page | **11 in-prose cross-references, 11 resolving, 0 not base-aware.** The issue's central premise — that three cross-route links skip the base — was **already discharged** by #43/#70, which fixed exactly those three, and by #49, which moved `join()` out of `BaseLayout.astro` so the site has one implementation of the base join |
+| `test_every_joint_of_the_route_ladder_is_written` | Each content route, in `routeSections` order, carries an **in-prose** link to the route after it | **1 of 2 joints written.** `/economy` §6 handed off to `/households`; `/households` carried **zero** links to `/government` in any sentence a reader reads |
+| `test_the_last_routes_ending_points_back_into_the_argument` | The closing `.prose` of the terminal section of the terminal route links something other than `/sources`, `/glossary` and `/contents` | **0 such links.** The site's last paragraph was a Sources line and nothing else |
+| `test_the_criterion_six_audit_covers_every_section` | Method rule 5: the audit table's `(route, section id)` set **equals** the set built from `dist/`, 29 today | 29 sections: 4 on `/`, 6 on `/economy`, 7 on `/households`, 12 on `/government` |
+
+The first three exist because a check that already passes is exactly what a copy pass needs: #61 added
+roughly ten new cross-references, and without them the next link written by hand reintroduces #70's
+production bug silently. **Prose-scoping is what makes the second and third non-trivial.** The rail
+and the narrow-viewport navbar link every route from every page, so an unscoped grep for
+`government` in the built Households page returned a non-zero count on the day the issue opened and
+would have passed vacuously. Two exclusions do the scoping, both taken from markup rather than from
+a list of hrefs: an `<a>` inside `Term.astro`'s `span.term` is a glossary marker, not a
+cross-reference, for the same reason `EXCLUDED_DESCENDANT_CLASS` keeps `.term-pop` out of prose text;
+and the rail, the navbar and a figure's source line carry no prose class, so scoping to
+`PROSE_CLASSES` excludes the whole of the site's furniture, and every `https://` source link with it,
+without naming one of them.
+
+**What they cannot see.** None of the four reads a sentence. They see that a link exists and that it
+resolves; they see nothing about whether the sentence around it hands the reader on, and nothing
+about whether the section it points at **delivers what the sentence promised** — which is this
+issue's own worst edge case, because a transition that promises what the target does not deliver is
+worse than no transition. Both halves are **Checklist item 14**, and Checklist item 1 says the same
+thing from the reader's side.
+
+**Coverage, and why it is not a quota.** Six of the twenty-nine sections named a destination in their
+closing prose before #61, and nine did anywhere in the section. The other twenty name nowhere, and
+that is recorded per section in the **Criterion 6 audit** table below rather than turned into an
+assertion — "ends here, and correctly: it is a construction caveat bounding the chart above, and the
+section's question is closed" is a legal answer in column 3 and is the answer for most of the twenty.
+No section on any of the four routes ends on a stub: `test_every_section_with_a_figure_answers_after_it`
+has made a closing `.prose` mandatory since #52, and the issue's own "ends on a bare `</Figure>`"
+snippet printed nothing.
+
+**Three checks were measured and refused**, and they are recorded here with their numbers so the
+small mechanical surface reads as a finding rather than an omission:
+
+| Check considered | Measured | Why it was not added |
+|---|---|---|
+| A **transition-word list** (`however`, `therefore`, `next`, `finally`, `so`, `which is why`) | The four hand-offs the issue itself names as its model — `/economy` §4 and §6, `/government` §3 and §7 — contain **none** of those words. Every one of them hands off by *naming the destination and linking it* | It would score **zero on all four of its own worked passes**, while passing any paragraph that says "finally" and goes nowhere. The half that is real is the link, and the three checks above are that half. This would have been the tenth not-looking check this repository has removed |
+| A **link quota**: every section's closing prose must contain a cross-reference | **20 of 29 sections** named no destination anywhere | Structural rather than lexical, so ruling 2 does not catch it; what catches it is the issue's own edge case. At twenty short, the quota manufactures twenty links to satisfy an assertion, and the ones with nowhere honest to point would point somewhere dishonest. Coverage is recorded in the audit table instead, where "this section ends, and here is why that is right" is a legal answer |
+| A **closing-prose word floor** | Shortest closing prose on the day the issue opened was **14 words**, `/government` §12's Sources line | That paragraph is one of this issue's two targets, and it is a target because of what it *said*, not its length. A floor set above 14 would have fired on the sentence the issue rewrote anyway, and on nothing else |
+
 ### Criterion 7 — drift and quoted material
 
 **Asks:** does the edit leave the registry, the source line and the accessible name where it found
@@ -842,6 +890,52 @@ coverage is — and reading a row against the page it judges is Checklist items 
 | /government | by-state | `state-give-get` and `state-tax-mix`, with the note defining give as gross IRS collections by filer address and get as USASpending award spending by place of performance | The whole section is the marking. Three paragraphs state what it is not (a balance of payments), that where a dollar is booked is not where it lands, and that neither side is complete, ending on "Read the ordering, not the arithmetic" | Pass |
 | /government | limits | The six limits, each naming the charts it bounds and the convention it breaks | Limit 1 is the route's own refusal of causation: "Every chart here records who was in office, not who caused what." Limit 2's "unprecedented" names the distortion nominal dollars produce, not the subject, and the sentence gives the arithmetic that makes it a distortion | Pass |
 
+### Criterion 6 audit
+
+One row per section on the four report routes, and the row set is asserted equal to `dist/`'s by
+`test_the_criterion_six_audit_covers_every_section`. **This is where the coverage count lands**, per
+method rule 5 and in place of the link quota Criterion 6 refuses: six of the twenty-nine named a
+destination in their closing prose before #61, nine did anywhere in the section, and the remaining
+twenty are recorded here one by one rather than swept.
+
+Column 3 is a reading. **"Ends here, and correctly" is a legal and expected answer**, and it is the
+answer for most of the twenty: a construction caveat that bounds the chart above has closed its
+section's question, and manufacturing a link out of it is precisely the dishonest transition the
+refused quota would have produced. What the test asserts is **coverage**, never the wording. Reading
+a row against the page it judges is Checklist item 14.
+
+| Route | Section id | Where it hands the reader next, or why it ends here | Criterion 6 |
+|---|---|---|---|
+| / | what-this-is | Ends here, and correctly. It states the site's refusal and the evidence standard behind it; naming destinations is the next section's whole job, and `#where-to-start` sits directly below it | Pass |
+| / | where-to-start | To all six destinations, as the card list under the prose. The links are `<h3><a>` inside `ol.cards`, so they carry no prose class and none of the `# 11.` checks counts them: this section's hand-off is its structure, not a sentence | Pass |
+| / | how-to-read-a-figure | Ends here, and correctly. It is an apparatus lesson, and its destination is every figure on the site rather than any one section | Pass |
+| / | where-the-numbers-come-from | To `/sources` and `/glossary`, both named and linked in the closing prose. The front door ends on the apparatus deliberately, because §2 above it has already handed the reader to the argument | Pass |
+| /economy | one-picture | Ends here. The closing prose is the fiscal-year convention and the log axis, construction caveats bounding the chart above. It names the government route as the holder of the same denominator without linking it, which is a boundary rather than a hand-off | Pass |
+| /economy | growth-shadow | Ends here, and correctly. The closing sentence is the route's refusal of causation, "It does not show why, and nothing here identifies a cause", which is a boundary and not a stop | Pass |
+| /economy | who-works | Ends here. A fiscal-year averaging caveat and two axis decisions, bounding the two panels above | Pass |
+| /economy | prices-rates | Forward to `/government` twice and by anchor: `#net-interest` for what repricing costs, `#how-old` for how fast it feeds through. The earliest cross-route hand-off on the site, and the register the two written by #61 follow | Pass |
+| /economy | labor-capital | Ends here. The closing prose is the fiscal 2020 denominator artefact, arithmetic bounding the two shares above | Pass |
+| /economy | limits | Forward to `/households`: the ladder's first joint, an unnumbered `.prose` after the numbered limits naming the three things the next route delivers | Pass |
+| /households | what-a-household-earns | Forward to the next section by name. The family Gini index "in the next section" runs back to 1947, which is the reason this series starts in 1984 | Pass |
+| /households | the-spread | Ends here, and correctly. The closing sentence refuses the causal claim two series on one timeline invite | Pass |
+| /households | a-century-of-brackets | Ends here. A scope caveat: ordinary income only, plus the surtax exception that makes three years read higher than the plain schedule | Pass |
+| /households | statutory-vs-effective | Ends here. The closing prose restates the gap between the two lines as the section's point and bounds it with the anchor-year caveat | Pass |
+| /households | who-pays | Back to `#the-spread` by anchor, in the prose above the closing paragraph. The closing prose itself is a dating and refundable-credit caveat, and correctly ends there | Pass |
+| /households | the-bill-you-do-not-see | Back to Section 5 by name, reconciling the two charts rather than leaving them in apparent conflict. Ends on the reading, not on a caveat | Pass |
+| /households | limits | Forward to `/government`: the ladder's second joint, written by #61. An unnumbered `.prose` after limit 5, in the shape `/economy` §6 uses so it cannot read as a sixth limit, naming three things the next route delivers — §10's revenue mix, §4's budget, §7's interest bill — and linking §10 by anchor | Pass |
+| /government | forty-trillion | Ends here. The closing prose is the CBO projection the series overtook by two years, a dating fact bounding the chart | Pass |
+| /government | who-holds-it | Ends here. The closing sentence bounds the intragovernmental share, which is the misreading this chart invites | Pass |
+| /government | how-old | Forward to `#net-interest` by anchor and by name, after saying outright that this section does not measure what the repricing cost | Pass |
+| /government | whole-budget | Forward to `#structural-gap` by anchor and by name, written by #61. The closing prose names the question this section does not ask and says which section asks it | Pass |
+| /government | structural-gap | Ends here, and correctly. The closing sentence is the structural-versus-circumstantial test and the four years the gap closed. Its standfirst, rewritten by #61, links back to `#whole-budget` instead of restating what §4 had just drawn | Pass |
+| /government | what-congress-votes-on | Ends here. The closing prose is the endpoints-hide-the-trajectory reading of the chart above | Pass |
+| /government | net-interest | Back to `#how-old` by anchor, closing the ring §3 opened, after the trough-is-not-the-low caveat | Pass |
+| /government | the-laws | Ends here, and correctly. The closing sentences name what a table of scored laws cannot reach and say the decomposition is not something this route measures | Pass |
+| /government | passed-signed | Ends here. The closing prose is the attribution caveat with its two roll calls: the reading the colouring invites, and this section's refusal of it | Pass |
+| /government | where-money-comes-from | Ends here, naming `/households` as the owner of the tax-year-2023 figure it does not draw, without linking it. A boundary rather than a hand-off, and correctly so: a reader arriving in route order has come from there | Pass |
+| /government | by-state | Back to `#limits` by anchor, in the prose above. The closing prose is the three-vintage caveat and the territory exclusion, and correctly ends there | Pass |
+| /government | limits | Forward to `/economy` and `/households`, and out to `/sources`. Written by #61: the site's last paragraph now says what the three routes draw together and links two of them, over and above the Sources line it already carried | Pass |
+
 ## Checklist — status per item
 
 What only a human reader can judge. Every item is **NOT EXECUTED** on landing, and that is a
@@ -849,8 +943,15 @@ statement about this contract's coverage, not a formality. Nothing below is enfo
 `pipeline/tests/test_prose.py`, and no agent in this loop has read the site as a reader.
 
 1. **Read each route end to end, once, without stopping to check anything.** Does the argument hold
-   together, and does each section earn the next? — **NOT EXECUTED.** Human required. Criterion 1 and
-   Criterion 6.
+   together, and does each section earn the next? #61 made as much of this mechanical as it goes and
+   no further. The three link checks under the `# 11.` banner see that a cross-reference **exists**
+   and that it **resolves** — every in-prose href base-aware and landing on an id that exists, both
+   joints of the route ladder written in prose rather than only in the rail, the site's last
+   paragraph pointing at something other than the reference pages. **None of them reads the sentence
+   around the link.** A paragraph that stops dead and then appends "See also: the government route"
+   satisfies all three; so does a section whose closing caveat hands the reader on perfectly and
+   happens to name no anchor. Neither the coverage count in the Criterion 6 audit nor a passing
+   `pytest` is this reading. — **NOT EXECUTED.** Human required. Criterion 1 and Criterion 6.
 2. **For each figure, read the standfirst, then the chart, then the finding, in that order.** Does
    the finding say something the chart shows, and could a reader disagree with it from the chart
    alone? — **NOT EXECUTED.** Human required. Criterion 2.
@@ -937,3 +1038,20 @@ statement about this contract's coverage, not a formality. Nothing below is enfo
     fiscal-year while the note beside it says calendar-year would pass every assertion in
     `test_prose.py`. This is #59's sixth definition-of-done item, and it is human-judged by method
     rule 4 rather than proxied. — **NOT EXECUTED.** Human required. Criterion 4 and Criterion 7.
+
+14. **Read each route end to end again, this time stopping at every boundary**, and ask two
+    questions. At each of the twenty-nine section boundaries: does the closing sentence hand the
+    reader on, or does it merely stop? At the two route boundaries, `/economy` to `/households` and
+    `/households` to `/government`: does the sentence carrying the link name what the next route
+    actually delivers? The second question is the one that matters most and the one nothing can be
+    built to answer, because **a transition that promises something the target section does not
+    deliver is worse than no transition** — it resolves, it passes
+    `test_every_in_prose_cross_reference_resolves_and_is_base_aware`, and it lies. Every forward
+    reference #61 wrote was read against the target section's content before it was written, and
+    that reading is recorded in the Criterion 6 audit's column 3; whether the reading is **right**
+    is this item. **No word list of any kind was added.** A transition-word list, a link quota and a
+    closing-prose word floor were each measured against the built site and each rejected on its
+    number, and the three numbers are in Criterion 6 above: the list scores zero on all four of the
+    hand-offs the site already writes well, the quota would manufacture twenty links with nowhere
+    honest to point, and the floor would fire only on the one sentence the issue was rewriting
+    anyway. — **NOT EXECUTED.** Human required. Criterion 6.
