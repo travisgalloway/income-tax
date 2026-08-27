@@ -456,8 +456,11 @@ test('the traversal guard bites when the key handler never runs', async () => {
 /* ------------------------------------------------------------------------- *
  * B4 — the active mark is visible. Criterion 4's second half.
  *
- * Asserts NON-ZERO, not >= 2px: the 1px ring is #75's named standing failure
- * and is not re-litigated here.
+ * Asserts NON-ZERO, not >= 2px, because B4's subject is WHETHER A RING PAINTS
+ * on a programmatically focused mark — an engine's :focus-visible heuristic is
+ * entitled to decline that focus, and #69's fallback is what covers it. The
+ * WIDTH is `focus.test.ts` F1's, over all seven ring-painting classes and both
+ * viewports, against the `--focus-ring` token. #75 is closed.
  * ------------------------------------------------------------------------- */
 
 interface Ring {
@@ -557,7 +560,9 @@ test('the focus-ring guard bites, and the data-roving fallback alone carries it'
     // keyboard-visible, and the mark must still be ringed for that reader.
     await page.addStyleTag({
       content:
-        '[data-roving] [data-mark]:focus { outline: 1.5px solid var(--ink); outline-offset: 1px; stroke: var(--ink); stroke-width: 2; }',
+        '[data-roving] [data-mark]:focus { outline: var(--focus-ring) solid var(--ink); ' +
+        'outline-offset: 1px; stroke: var(--ink); stroke-width: var(--focus-ring); ' +
+        'vector-effect: non-scaling-stroke; }',
     })
     await arrowTraversal(page, index, 1)
     const fallbackOnly = await ringOfActiveMark(page)

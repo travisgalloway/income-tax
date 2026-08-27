@@ -1420,3 +1420,44 @@ time. Appended to, never rewritten. None of these have been acted on.
   is how a guard stops biting. Severity: cosmetic today; it becomes user-visible the moment the page
   padding shrinks below 5px, and it is a live 5px of horizontal overflow inside the content column
   either way.
+- [2026-08-27] `.state-tile:focus-visible` (`src/styles/global.css`) declares **no `stroke`
+  fallback**, so in WebKit — which paints no `outline` on an SVG shape — a state tile focused by Tab
+  gets a ring only while `[data-roving]` is set on its group. A tile focused any other way paints
+  nothing at all in that engine. Measured 2026-08-27 on `/government` at 1440px while enumerating
+  #75's five ring rules: the focusable element is `<g class="state-tile" data-state-tile="AK"
+  tabindex="0" data-mark role="img">`, its `:focus-visible` rule sets `outline` and
+  `outline-offset` only, and #69's `[data-roving] [data-mark]:focus` is the sole rule that gives it
+  a `stroke`. `.datum:focus-visible` does not apply — the tile carries no `datum` class. Two more
+  groups on `/government` are in the same position for the same reason and were found the same way:
+  `BudgetChart`'s 64 transparent hit rects and `StateTaxMix`'s five segment `<g>`s, both
+  `[data-mark]` with no `.datum`. `focus.test.ts` F2 drives ArrowRight precisely so it measures the
+  state those three are actually in. Not acted on: a *missing* ring in one engine is a different
+  defect from a thickness disagreement, and #75's scope is thickness. Severity: accessibility,
+  WebKit only, keyboard only.
+- [2026-08-27] `/households`' `BracketHistory` at 390px: **113 marks at a 2.465px pitch** with
+  5.83px hit rects that already overlap each other by 3.4px, so a conformant 2px ring fully encloses
+  about two neighbouring hit rects per focused mark — **224 across the group**, against **0 at the
+  old 1.5px rule** and **0 at 1440px**. Measured 2026-08-27 while checking #75's adjacent-datum edge
+  case, at both ring widths so the comparison is a measurement and not an inference. Not acted on:
+  no ring that meets WCAG 2.2 SC 2.4.13 can be narrower than a 2.465px pitch, so this is mark
+  density (#73 measured 0.9px per datum at 390px), not ring width. Carried as one of two named
+  exceptions in `focus.test.ts` F4, pinned by group identity rather than by magnitude, so a third
+  chart crossing the line turns the guard red. Severity: cosmetic-to-accessibility, 390px only.
+- [2026-08-27] `/government`'s `OecdChart` encloses neighbouring marks at 390px **and did so before
+  #75** — 2 at the old 1.5px rule, 3 at 2px. The cause is not ring width: its first `[data-mark]` is
+  the OECD-average reference band, a `<rect>` **11.67px wide and 272.21px tall** spanning the whole
+  plot, so every country dot whose x falls inside that band's span sits fully inside the band's own
+  focus ring whatever the ring measures. Measured 2026-08-27 at both widths while checking #75's
+  adjacent-datum edge case; the plan for #75 predicted a single offending group and there are two.
+  Not acted on: making this right means changing what the reference band's focusable box is, which
+  is chart geometry and not focus-ring width. Carried as the second named exception in
+  `focus.test.ts` F4. Severity: cosmetic, 390px only.
+- [2026-08-27] `/government`'s `.sort-button` overhangs the right edge of its `.tableview-scroll`
+  container by **60.61px at 390px** and 0.17px at 1440px *before* #75, and by 61.61 / 1.17 after —
+  the widened ring adds exactly one device pixel to a pre-existing overhang. Separately,
+  `.navbar-panel`'s last link overhangs that panel's **bottom** edge by 2.48px before and 3.48px
+  after, on `/government` at 390px. Both are on their container's **scrollable** axis
+  (`overflow-x: auto` and `overflow-y: auto` respectively, the panel scrolling 117px), so the
+  control can be brought into view, and `focus.test.ts` F3a excludes each container's scrolling axes
+  by **computing** them rather than by naming an edge. Measured 2026-08-27 while checking #75's
+  clipping edge case. Severity: cosmetic, non-blocking.

@@ -65,6 +65,35 @@ keyboard reader that the arrow keys work inside a group (announcement is #30's t
 whether an index-based active mark reads sensibly across a filter change is a judgement, not a
 measurement.
 
+**The focus ring is one token wide.** `--focus-ring: 2px` in `src/styles/tokens.css`, and every
+ring rule in `global.css` reads it: the base `:focus-visible`, `.datum:focus-visible`, #69's
+`[data-roving] [data-mark]:focus` fallback, `.state-tile:focus-visible` and
+`.year-range-thumb:focus-visible`. **WCAG 2.2 SC 2.4.13 Focus Appearance** (Level AAA) sets the 2px
+minimum, and SC 2.4.11 (Focus Not Obscured) assumes a perimeter of that order. 2px and not 1.5px
+because **both engines round 1.5 down**: Chromium 151 and WebKit 26.5 each computed the old rule as
+**1 device pixel**, so what shipped was half what the stylesheet claimed. Before #75 four rules said
+`1.5px` and a fifth said `2px`; a token is what stops a sixth rule picking a seventh number, and
+`[data-roving] [data-mark]:focus` is `:focus` rather than `:focus-visible`, so it cannot inherit a
+width from the base rule and collapsing them was never available.
+
+`vector-effect: non-scaling-stroke` on the two SVG rules is **load-bearing, not cosmetic**. WebKit
+paints no `outline` on an SVG shape, so the `stroke` fallback *is* the ring there — and
+`stroke-width` resolves in **user units** while every chart `<svg>` is scaled to its container. A
+bare `stroke-width: 2` rendered **1.944 CSS px at 390px** (screen-CTM scale 0.9722) and 2.044 at
+1440px: under the minimum in the one engine that depends on it, and it would have stayed under it if
+only the `outline` had changed. With `non-scaling-stroke` every `.datum`-bearing chart on all three
+routes renders exactly **2.000** at both viewports.
+
+`outline-offset` stays **per-control** — 2px on the base rule, 1px on `.datum`, the roving fallback
+and `.state-tile`, 3px on `.year-range-thumb` — and the colour stays `var(--ink)`, measured at
+**13.65:1** against `--ground`. `.skip-link:focus-visible` overrides `outline-color` only, because it
+paints on `--ink` where an ink ring is invisible; it inherits the token width like everything else.
+Enforced by `tests/browser/focus.test.ts`, which reads `--focus-ring` from `:root` at runtime and
+never hardcodes 2 — the `--target-min` idiom — and which asserts over **computed style in a
+browser**, never over CSS source text: the minifier merges `.datum:focus-visible` with
+`[data-roving] [data-mark]:focus` because their declarations are identical, so no source-level check
+can tell those two apart.
+
 **Every figure has an accessible name, and it is the finding.** `Figure.astro`'s `ariaLabel` prop
 renders as the `<figure>`'s own `aria-label`, in addition to the `<svg>`'s. The two are
 deliberately the same sentence — a figure with no name announces as bare "figure", the worse
@@ -419,7 +448,7 @@ does not duplicate it.
 | 26 | #66: "Browser lane not run in this pass" as a standing FAIL disposition | **RESOLVED** — asserted since #67 |
 | 27 | #46/#42 contents affordance: 44px tap targets, tab order `.skip-link` -> `<summary>` -> `main` | **ASSERTED** — the 44px falls out of 17; the tab order is the first three stops below 62rem. The rail's sticky geometry stays **HUMAN** |
 | 28 | "nothing re-runs any of the above" | **RESOLVED** — rewritten in place to name the spec |
-| 29 | M8: the focus ring computes under WCAG 2.2's 2px minimum (a standing **FAIL**, #75) | **ASSERTED as a known failure** — a named expected-failure entry carrying #75, which flips to a plain assertion the day #75 lands. Chromium computes the `1.5px` rule as `1px` |
+| 29 | M8: the focus ring computes under WCAG 2.2's 2px minimum (was a standing **FAIL**, #75) | **RESOLVED** — #75 made the width a `--focus-ring: 2px` token that every ring rule reads, and `tests/browser/focus.test.ts` F1 asserts it over seven ring-painting classes at both viewports. The token is **read from `:root` at runtime**, not hardcoded, so F1's two halves fail apart: one asks whether every rule agrees with the token, the other whether the token clears the standard. `smoke.test.ts`'s expected-failure entry is retired, not inverted |
 | 30 | M1/M3/M5/M6/M7/M8 on `/glossary` and `/contents`: **NOT EXECUTED** | **PARTLY ASSERTED** — the spec covers all seven routes, so the width, overflow, target-size, console and skip-link halves close. The screen-reader and greyscale-reading halves stay **HUMAN** |
 | 31 | M2 screen-reader pass, every route | **HUMAN** — no assistive technology runs in CI. Explicitly out of #67's scope |
 | 32 | M6 greyscale render | **HUMAN** for the reading judgement. The luminance-ratio table below is mechanisable but is #30's artefact — **parked**, `docs/parked-findings.md` |
@@ -431,8 +460,9 @@ does not duplicate it.
 
 | 37 | #74: that every legend marker on the site shares a line with the label it belongs to, at 320, 390 and 414 | **ASSERTED** — `tests/browser/legend.test.ts` L1/L2. A generic marker rule (a painted box <= 26x26px outside a chart `<svg>`, or a top-level inline `<svg>`) over all three chart routes: 36 markers site-wide, pinned per route as **26 / 10 / 0** and per kind as `state-legend-swatch` 3, `character-swatch` 23, CBO `<svg>` 6, `year-range-thumb` 4 skipped, asserted as equalities **before** any geometry is read |
 | 38 | #74: that the label survives a longer, data-driven number | **ASSERTED (driven)** — L3 replaces the legend's two currency strings in the DOM at each of the three widths, with `$1,113,122,999` and again with a 45-character unbreakable token, and re-runs both the line-sharing and the overflow halves |
+| 39 | #75: that every author focus ring on the site is the same width, that the width clears WCAG 2.2 SC 2.4.13, and that widening it clips nothing | **ASSERTED** — `tests/browser/focus.test.ts`, four guards. F1: seven ring-painting classes on `/government` and `/households` at both viewports, the count of classes measured asserted as **7 before any width is compared**, each held to `isAuthorRing` (so Chromium's UA `outline-style: auto` ring cannot satisfy it) and to the runtime-read token, plus the skip link's `--panel` colour override. F2: every laid-out mark-bearing `<svg>` on the three chart routes (**5 / 8 / 13 of 5 / 8 / 14**, the one omission being `AttribChart`'s `display: none` second panel), driven by **ArrowRight** so #69's fallback is the rule under measurement, asserting `vector-effect: non-scaling-stroke` and `stroke-width === token`, and **refusing to run unless at least one chart's screen-CTM scale is not 1**. F3: no ring clipped on a container's **non-scrollable** axis, the scrollable axes computed per container rather than named; and `documentElement.scrollWidth - clientWidth === 0` while focusing every control on all seven routes, against per-route floors. F4: zero neighbouring marks fully enclosed by a focused ring at 390px, with a two-group carried exception pinned by **group identity** |
 
-**Of the 38, 25 are asserted, 3 are covered elsewhere, and 10 remain human-judged** — every one of
+**Of the 39, 26 are asserted, 3 are covered elsewhere, and 10 remain human-judged** — every one of
 the 10 for a stated reason that is not "we ran out of time": assistive technology that does not exist
 in CI, a pixel judgement, a copy judgement, a viewport outside this contract, or a probe whose
 assertion would pin us to a third-party internal.
@@ -539,16 +569,16 @@ same one.
 | M6 greyscale render | `/sources/` | PASS | Chrome 151, 1440×900 and 390×844, JS on | Vacuous — zero `<figure>`, zero `<svg>`, and every `main` text colour is `--ink` or `--ink-soft`. No colour-coded category renders on this route. |
 | M6 greyscale render | `/glossary` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. |
 | M6 greyscale render | `/contents` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. Its own edge case is the one `/sources/` failed (#79): every line on it is a derived string and the source lines are long, so the 390px rows are the ones that matter. |
-| M7 focus ring paints on SVG | `/` | PASS | WebKit 26.5 | Focused `rect.datum` (389 of them): `outline: 1px solid rgb(17,22,27)`, `outline-offset: 1px`, `stroke: rgb(17,22,27)`, `stroke-width: 2px`. A ring paints, confirmed by screenshot. WebKit computes the 1.5px rule as **1px** — evidence for #75. Safari.app itself NOT EXECUTED — #80. |
-| M7 focus ring paints on SVG | `/government/` | PASS | WebKit 26.5 | Focused `circle.datum` (249): same computed ring. Safari.app NOT EXECUTED — #80. |
-| M7 focus ring paints on SVG | `/households/` | PASS | WebKit 26.5 | Focused `circle.datum` (356): same computed ring. Safari.app NOT EXECUTED — #80. |
+| M7 focus ring paints on SVG | `/` | PASS | WebKit 26.5 | Focused `rect.datum` (389 of them): `outline: 1px solid rgb(17,22,27)`, `outline-offset: 1px`, `stroke: rgb(17,22,27)`, `stroke-width: 2px`. A ring paints, confirmed by screenshot. WebKit computed the 1.5px rule as **1px** — that was the evidence for #75, **now fixed**: the width is the `--focus-ring: 2px` token. And the `stroke` fallback — the ring WebKit actually paints here — was itself **under** the minimum, because `stroke-width` resolves in user units and every chart `<svg>` is scaled: **1.944 CSS px at 390px**, 2.044 at 1440px. `vector-effect: non-scaling-stroke` makes it render exactly **2.000** at both viewports on every `.datum`-bearing chart, measured. Safari.app itself NOT EXECUTED — #80: a headless engine is still not Safari.app. |
+| M7 focus ring paints on SVG | `/government/` | PASS | WebKit 26.5 | Focused `circle.datum` (249): same computed ring, and the same `non-scaling-stroke` correction — 2.000 CSS px at both viewports. Safari.app NOT EXECUTED — #80. |
+| M7 focus ring paints on SVG | `/households/` | PASS | WebKit 26.5 | Focused `circle.datum` (356): same computed ring, and the same `non-scaling-stroke` correction — 2.000 CSS px at both viewports. Safari.app NOT EXECUTED — #80. |
 | M7 focus ring paints on SVG | `/sources/` | PASS | WebKit 26.5 | Vacuous — no `.datum` renders on this route. Focus-ring visibility on the route's links in Safari.app NOT EXECUTED — #80. |
 | M7 focus ring paints on SVG | `/glossary` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. |
 | M7 focus ring paints on SVG | `/contents` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. Its own edge case is the one `/sources/` failed (#79): every line on it is a derived string and the source lines are long, so the 390px rows are the ones that matter. |
-| M8 measured rendered-pixel contrast | `/` | FAIL | Chrome 151 | Focus ring measured as `outline: 1.5px solid rgb(17,22,27)` at 13.65:1 against `rgb(221,224,219)`. The colour passes comfortably; the **thickness is under the WCAG 2.2 Focus Appearance 2px minimum** — #75. Text tokens measured against the shipped grounds pass (see the token table above). |
-| M8 measured rendered-pixel contrast | `/government/` | FAIL | Chrome 151 | Same shared-layer ring, same measurement — #75. |
-| M8 measured rendered-pixel contrast | `/households/` | FAIL | Chrome 151 | Same shared-layer ring, same measurement — #75. |
-| M8 measured rendered-pixel contrast | `/sources/` | FAIL | Chrome 151 | Same shared-layer ring, same measurement — #75. |
+| M8 measured rendered-pixel contrast | `/` | PASS | Chrome 151 / Chromium 151 | Focus ring measures `outline: 2px solid rgb(17,22,27)` at 13.65:1 against `rgb(221,224,219)`. Colour passed all along; the **thickness now meets the WCAG 2.2 Focus Appearance 2px minimum** — #75, fixed 2026-08-27 by the `--focus-ring: 2px` token. It previously read `1.5px`, which Chromium computed as `1px`. Asserted by `tests/browser/focus.test.ts` F1. Text tokens measured against the shipped grounds pass (see the token table above). |
+| M8 measured rendered-pixel contrast | `/government/` | PASS | Chrome 151 / Chromium 151 | Same shared-layer ring, same measurement — 2px at 13.65:1 since #75. |
+| M8 measured rendered-pixel contrast | `/households/` | PASS | Chrome 151 / Chromium 151 | Same shared-layer ring, same measurement — 2px at 13.65:1 since #75. |
+| M8 measured rendered-pixel contrast | `/sources/` | PASS | Chrome 151 / Chromium 151 | Same shared-layer ring, same measurement — 2px at 13.65:1 since #75. |
 | M8 measured rendered-pixel contrast | `/glossary` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. |
 | M8 measured rendered-pixel contrast | `/contents` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. Its own edge case is the one `/sources/` failed (#79): every line on it is a derived string and the source lines are long, so the 390px rows are the ones that matter. |
 
@@ -1646,10 +1676,10 @@ both fall green — caught, where before it would not have been.
 
 #### Boundaries
 
-**Not in scope, still open.** Focus-ring width **#75**; the visible at-rest scroll affordance
-**#76**; the open data-table height cap **#77**; how any of this *reads* in NVDA or JAWS
-**#30**/**#80**. (**#73**, chart-mark hit targets and hover affordance, and **#74**, §11's legend
-swatch wrapping, **have since shipped** — see below.)
+**Not in scope, still open.** The visible at-rest scroll affordance **#76**; the open data-table
+height cap **#77**; how any of this *reads* in NVDA or JAWS **#30**/**#80**. (**#73**, chart-mark
+hit targets and hover affordance, **#74**, §11's legend swatch wrapping, and **#75**, the focus-ring
+width, **have since shipped** — see below.)
 
 **`role="group"` is outside `CHOICE_SET_ROLES` by decision**, per the scope table above. Recorded
 here as a boundary, not an oversight: if a chart `<svg>` and a scroll container ever do collide on a
@@ -1932,9 +1962,9 @@ Behaviourally, DoD 4 is also carried by B3a, B3b, and by `tests/browser/keyboard
 
 #### Boundaries
 
-**Not in scope, still open.** Focus-ring width **#75**; the visible at-rest scroll affordance
-**#76**; the open data-table height cap **#77**; how any of this *reads* in NVDA or JAWS
-**#30**/**#80**. (**#74**, §11's legend swatch wrapping, **has since shipped** — see below.) **Control sizing is #65's and #73 owns chart marks only** —
+**Not in scope, still open.** The visible at-rest scroll affordance **#76**; the open data-table
+height cap **#77**; how any of this *reads* in NVDA or JAWS **#30**/**#80**. (**#74**, §11's legend
+swatch wrapping, and **#75**, the focus-ring width, **have since shipped** — see below.) **Control sizing is #65's and #73 owns chart marks only** —
 which is why the issue's "'View as table' is a 24px target" line is recorded as stale above rather
 than acted on.
 
@@ -2114,14 +2144,19 @@ say so.
 6. **Focus-ring visibility against every background it can appear on, in Safari specifically**,
    where the SVG `stroke` fallback (D6) is the ring that actually paints. — **PARTLY EXECUTED
    2026-08-26.** WebKit 26.5 (the Safari 26.5 engine, driven headless — *not* Safari.app) confirms a
-   ring paints on a focused `.datum` on all three chart routes, and computes the 1.5px `outline` rule
-   as `1px`, which is evidence for #75. **NOT EXECUTED**: visibility against every background in
-   Safari.app itself, and which of `outline` and `stroke` is the mechanism a sighted Safari user
-   sees. Human required: **#80**. Row `M7`.
+   ring paints on a focused `.datum` on all three chart routes, and computed the 1.5px `outline` rule
+   as `1px` — the evidence for #75, **fixed 2026-08-27**. The fix also caught what that pass did not
+   look for: the `stroke` fallback, the ring WebKit actually paints, rendered **1.944 CSS px at
+   390px** because `stroke-width` resolves in user units against a scaled `<svg>`, so it was under
+   the minimum too. `vector-effect: non-scaling-stroke` puts it at 2.000 at both viewports.
+   **NOT EXECUTED**: visibility against every background in Safari.app itself, and which of
+   `outline` and `stroke` is the mechanism a sighted Safari user sees. Human required: **#80**.
+   Row `M7`.
 7. **Measured contrast over rendered pixels**, including anti-aliased SVG text and any overlap
    between a series fill and text drawn on top of it. — **EXECUTED 2026-08-24**, Chrome 151. The
-   focus ring measures 13.65:1 against `rgb(221,224,219)` — colour passes, thickness fails the WCAG
-   2.2 Focus Appearance 2px minimum. FAIL: #75. Row `M8`.
+   focus ring measures 13.65:1 against `rgb(221,224,219)` — colour passes, and since #75 landed
+   (2026-08-27) the thickness is 2px and meets the WCAG 2.2 Focus Appearance minimum. PASS, asserted
+   by `tests/browser/focus.test.ts` F1 rather than re-walked by hand. Row `M8`.
 
 ### Per-consumer
 
