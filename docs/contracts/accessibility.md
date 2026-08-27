@@ -235,7 +235,8 @@ Enforced by the five `test_*term*` checks in `pipeline/tests/test_accessibility.
 The triggers are inline text inside sentences, so their hit area is the line box (~29px at
 17px/1.7) and they fall under WCAG 2.2 SC 2.5.8's explicit **Inline exception** — a genuinely
 different case from #73's 3.3px chart data points, which have no such exception. #73 is neither
-fixed nor worsened here.
+fixed nor worsened here; it has **since shipped**, and not by enlarging anything — see *Reading a
+datum with no hover* below.
 
 **Scroll restoration is the platform's, and four declarations would take it away.** Back and
 Forward return the reader to the place they were reading because `history.scrollRestoration` is at
@@ -517,9 +518,9 @@ same one.
 | M3 roving tabindex / focus trap | `/sources/` | PASS | Chrome 151 | Vacuous — no roving-tabindex control renders on this route. |
 | M3 roving tabindex / focus trap | `/glossary` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. |
 | M3 roving tabindex / focus trap | `/contents` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. Its own edge case is the one `/sources/` failed (#79): every line on it is a derived string and the source lines are long, so the 390px rows are the ones that matter. |
-| M4 390px legibility, JS on | `/` | FAIL | Chrome 151, 390×844 | Body does not scroll horizontally (`scrollWidth` 390 = `clientWidth`). Right-edge annotations clipped — #64. Chart legibility sweep — #66. "Focus or hover" instruction with 3.3px hit targets — #73. Open tables uncapped, page 11,316px → 24,195px — #77. |
-| M4 390px legibility, JS on | `/government/` | FAIL | Chrome 151, 390×844 | No horizontal body scroll. Filter menu wider than the phone — **fixed 2026-08-27 (#62)**, measurement below. §11's by-state table was unreadable at this width — every column was present and scrollable, but the name column scrolled away with the numbers and the caption's box was the table's 745px — **fixed 2026-08-27 (#63)**, measurement below. #64, #66, #73. §11 legend wraps a swatch away from its label — #74. Wide tables still give no at-rest sign that they scroll — #76. |
-| M4 390px legibility, JS on | `/households/` | FAIL | Chrome 151, 390×844 | No horizontal body scroll. §4 Figure 4 clipped at the right edge — #64. #66, #73. |
+| M4 390px legibility, JS on | `/` | FAIL | Chrome 151, 390×844 | Body does not scroll horizontally (`scrollWidth` 390 = `clientWidth`). Right-edge annotations clipped — #64. Chart legibility sweep — #66. "Focus or hover" instruction with 3.3px hit targets — **fixed 2026-08-27 (#73)**, measurement below. Open tables uncapped, page 11,316px → 24,195px — #77. |
+| M4 390px legibility, JS on | `/government/` | FAIL | Chrome 151, 390×844 | No horizontal body scroll. Filter menu wider than the phone — **fixed 2026-08-27 (#62)**, measurement below. §11's by-state table was unreadable at this width — every column was present and scrollable, but the name column scrolled away with the numbers and the caption's box was the table's 745px — **fixed 2026-08-27 (#63)**, measurement below. #64, #66. #73 **fixed 2026-08-27**, measurement below. §11 legend wraps a swatch away from its label — #74. Wide tables still give no at-rest sign that they scroll — #76. |
+| M4 390px legibility, JS on | `/households/` | FAIL | Chrome 151, 390×844 | No horizontal body scroll. §4 Figure 4 clipped at the right edge — #64. #66. #73 **fixed 2026-08-27**, measurement below. |
 | M4 390px legibility, JS on | `/sources/` | **PASS** (was FAIL) | Chromium (Playwright MCP), 390×844 | **Re-measured 2026-08-26 after #57.** `documentElement.scrollWidth` **390** against `clientWidth` **390** — no horizontal body scroll, against 520 vs 390 before. Widest of the 45 `<code>` spans is now **348px**, against 500px; none is clipped (`scrollWidth == clientWidth` on all 45) and none carries `text-overflow: ellipsis`, so nothing was bought by truncation. Fixed by `overflow-wrap: anywhere` on `.reference-doc code`, contained at the element and never at the page. **#79 closes as fixed-by-#57.** The route also gained 23 `main` hyperlinks, from zero. |
 | M4 390px legibility, JS on | `/glossary` | **PASS** (width only) | Chromium (Playwright MCP), 390×844 | **Executed 2026-08-26 (#57)**, for the width check only: `scrollWidth` **390** = `clientWidth` **390**, with the 25 new external source links in place. The rest of M4 — chart legibility, hit targets, table caps — is vacuous here (zero `<figure>`, zero `<svg>`, zero islands). The keyboard and screen-reader rows below are still NOT EXECUTED. |
 | M4 390px legibility, JS on | `/contents` | **PASS** (width only) | Chromium (Playwright MCP), 390×844 | **Executed 2026-08-26 (#57)**, for the width check only — the check this route's own edge case is about: `scrollWidth` **390** = `clientWidth` **390**, so the long derived source lines do not overflow the way `/sources`' did (#79). Zero external hyperlinks, which is #49's stated decision and not an omission. The rest of M4 is vacuous here, and the keyboard and screen-reader rows below are still NOT EXECUTED. |
@@ -1233,8 +1234,9 @@ Not touched, and not re-fixed: **#62** `Select`, **#63** by-state columns, **#64
 annotation classes and their NARROW coverage in `annotate.test.ts`, **#65** the **24px** target floor
 (**deliberately not 44px** — at these controls' 24px pitch that would create 20px ambiguous
 overlaps, E12; no target-size CSS is touched). Also out: **#71**/**#76** table scroll wrappers,
-**#73** chart marks, **#74** §11's legend swatch, **#77**
-the data-table height cap. (**#72**, the toggles' shared accessible name, **has since shipped** —
+**#74** §11's legend swatch, **#77**
+the data-table height cap. (**#73**, the chart marks, **has since shipped** — see *Reading a datum
+with no hover* below; it does not enlarge a mark, it stops the mark being the hit target.) (**#72**, the toggles' shared accessible name, **has since shipped** —
 see *Unique accessible names for choice-set controls* below.)
 
 ### Reading position in the contents list (#44)
@@ -1640,13 +1642,293 @@ both fall green — caught, where before it would not have been.
 
 #### Boundaries
 
-**Not in scope, still open.** Chart-mark hit targets and hover affordance **#73**; §11's legend
+**Not in scope, still open.** §11's legend
 swatch wrapping **#74**; focus-ring width **#75**; the visible at-rest scroll affordance **#76**; the
 open data-table height cap **#77**; how any of this *reads* in NVDA or JAWS **#30**/**#80**.
+(**#73**, chart-mark hit targets and hover affordance, **has since shipped** — see below.)
 
 **`role="group"` is outside `CHOICE_SET_ROLES` by decision**, per the scope table above. Recorded
 here as a boundary, not an oversight: if a chart `<svg>` and a scroll container ever do collide on a
 finding sentence, that is a different rule with a different remedy.
+
+### Reading a datum with no hover (#73)
+
+**SHIPPED 2026-08-27.** Every chart told a phone reader to do two things a phone cannot do, and its
+per-datum marks were too narrow to hit with a finger. The reader's only route to a number was
+"View as table" — a control the hint never mentioned, in a disclosure that doubles the page length.
+
+Now: **tap or drag anywhere on the chart, and the readout the keyboard already drives reports the
+nearest visible mark.**
+
+#### What was actually there, re-measured at `c6c867d`
+
+| Claim in #73 | Re-measured | Verdict |
+|---|---|---|
+| marks are `3.3px x 237px` | `3.317px x 237px` on `/economy` | stands, exactly |
+| 389 of them across ~350px of plot | 389 marks, plot width 350px | stands, exactly |
+| `/economy` grows `11,316px -> 24,195px` with tables open | `11,593px -> 24,671px` (6 `<details>`, 2.13x) | stands, numbers refreshed |
+| cartogram tiles ~30x30px | `28.6 x 29px` | stands |
+| hint text says `Focus or hover` | 24 occurrences in `dist/**/index.html` | stands |
+| "'View as table' is itself a 24px-tall target (#65)" | `summary.tableview-trigger` is `350 x 24px`; `--target-min` is 24px; the lane reports **0 of 6** controls under the floor on `/economy` | **STALE.** #65 set the floor at 24 and this control meets it. Not a defect, and not #73's |
+| "#66: annotations clipped at 390px, so a value read out near the right edge may have no visible label" | **0** clipped `<text>` nodes at 390x844 across `/economy` | **STALE.** The concern named in the issue's edge-case list no longer stands, and no work follows from it |
+
+Site-wide at 390px: **1,111 marks, 1,092 of them under 44px wide**, smallest 3.3px.
+
+**New, and not in the issue:** `/government` carries **7 zero-area `[data-mark]` elements** — 5
+presidential-term rects in `LawExplorer`, 2 "none levied" groups in `StateTaxMix` — focusable marks
+with no rendered box. The resolver skips them so a tap can never select an invisible datum. *Why*
+they exist is #30/#80 territory; parked in `docs/parked-findings.md`, not fixed here.
+
+#### The mechanism, and why the hit target stops being the mark
+
+389 marks across 350px is **0.9px per datum**. No per-mark enlargement reaches 24px, let alone 44px,
+so the honest answer to the issue's "reconsider the hit-target geometry" bullet is a negative one,
+stated rather than skipped: **on a device that cannot hover, the marks stop being hit targets and the
+plot becomes one 350x237px target**, with the datum resolved from the pointer's position.
+
+Chosen over two alternatives, against those measurements:
+
+- A **draggable scrubber** adds a control the reader must find first — the site already has 26
+  disclosures and 9 radiogroups per page competing for that attention — and it cannot answer "what
+  is *this* point": the reader must acquire the thumb before reading anything.
+- **Nearest-point readout on touchmove alone** gives nothing on first contact, which is the common
+  case: a reader taps a spike and wants that number.
+- **Tap-or-drag is one gesture family and one code path** — a tap is a drag of length zero. It
+  answers on first contact, and the drag is what makes a *specific* datum reachable: at 0.9px per
+  datum a tap resolves to a band of roughly four years, so without the drag a reader could obtain
+  *a* value but never *the* value they wanted. Both fit in one sentence of hint text.
+
+**Why it composes with #69 rather than fighting it.** The gesture's only effect is
+`.focus({ preventScroll: true })` on a mark. `useRovingMarks`'s existing `onFocusCapture` then sets
+`active` to that mark's index, so the roving state and the reader's finger can never disagree, and
+`Tab` afterwards leaves from where the finger last was. `moved.current` is still set only by the key
+handler, so `data-roving` — the keyboard-only focus-ring flag — is correctly **not** set by touch.
+And because activation runs through `focus`, every island's existing `onFocus` handler drives the
+readout unchanged: **live-region parity is structural, not a second code path that has to be kept in
+step**.
+
+**What "nearest" means, exactly.** Minimum Euclidean distance from the pointer's client coordinates
+to the mark's `getBoundingClientRect()`, zero when the point is inside it:
+
+```
+dx = max(left - x, 0, x - right)
+dy = max(top - y, 0, y - bottom)
+d  = hypot(dx, dy)
+```
+
+Ties resolve to the **lower index**, which is data order. Zero-area rects are skipped. The snap is
+**unconditional**: a pointerdown anywhere in the `<svg>` always selects a mark, because a reader who
+taps a chart wants a number, not silence. It does **not** snap to axis ticks — ticks are a drawing
+decision, not data, and snapping to them would make 60 of `/economy`'s 64 years unreachable, which is
+the opposite of the fix. The rule is geometric rather than scale-inverted per island because it is
+correct for every shape the site draws: full-height bands (it degenerates to nearest-in-x), cartogram
+tiles and treemap segments (true 2D), and scatter points.
+
+**Two dimensions, not one.** The naive resolver compares `x` only. It passes every band chart and is
+wrong on every cartogram, where a point below a tile must pick that tile and not the leftmost one in
+its row. `nearest.test.ts` carries that case (U1-e) because the wrong implementation is the tempting
+one.
+
+#### Two emulated-mouse clobbers, both measured
+
+A tap fires a whole emulated mouse sequence after the pointer events, and it costs the readout twice.
+`preventDefault()` on `pointerdown` was **spiked and disproved** as a fix for the first, and is not a
+candidate for either.
+
+| # | Measured sequence | Effect | Fix |
+|---|---|---|---|
+| 1 | `pointerdown` -> our `focus(N)` -> `mouseleave(previous mark)` -> the island's `setFocus(null)` | the readout the tap set is wiped one event later | `@media (hover: none) { .chart [data-mark] { pointer-events: none } }` — no emulated boundary event ever reaches a mark |
+| 2 | `pointerdown` -> `focusin(rect)` -> `pointerup` -> `mousedown` -> `focusin(MAIN)` | with the marks inert the click target is the `<svg>`, which is not focusable, so Chromium's default focus action resolves to `<main tabindex="-1">` and the readout resets | `preventDefault()` on a `mousedown` whose preceding `pointerdown` was not a mouse. It suppresses the focus action and nothing else — `click` still fires |
+
+Clobber 2 was **not predicted by the plan** and is the reason a drag worked while a tap did not on
+the first build of this. It is recorded because the failure is invisible in a drag test.
+
+The CSS route was chosen over threading activation callbacks through `mark()`, which would touch 32
+call sites across 25 islands for the same effect. `pointer-events` does not affect keyboard or
+programmatic focus, so #69's roving group is untouched; and on a device that cannot hover, a hover
+state was a lie anyway. B3b asserts the computed value in **both** directions.
+
+**`touch-action: pan-y`, not `none`.** Without any `touch-action`, Chromium swallows a horizontal
+gesture whole and the `<svg>` receives *nothing* — measured `[]`, so the scrub genuinely depends on
+this line. With `none`, a reader could no longer scroll the page past a chart, and `/government` is
+26,000px of mostly chart. B4 asserts a vertical swipe starting on a chart still scrolls.
+
+#### The hint text
+
+Three mutually exclusive spans, all in the served bytes, switched by CSS. `Focus or hover` goes from
+**24 occurrences to 0** site-wide.
+
+| Mode | Shown when | Sentence |
+|---|---|---|
+| `nojs` | `<noscript>` block in `BaseLayout.astro` | `Open "View as table" below for any value in this chart.` |
+| `hover` | `@media (hover: hover)` | `Hover a {noun}, or Tab to it, to read its value.` |
+| `touch` | `@media (hover: none)` | `Tap or drag across the chart to read a value.` |
+
+**It is CSS and not React state, deliberately.** The hint sits inside
+`<p aria-live="polite" class="readout">`. A `matchMedia`-driven hint would change that live region's
+text at hydration and announce "Hover a year…" on every chart as it scrolled into view. Served text
+and hydrated text are byte-identical here, so nothing fires. Do not refactor it into state.
+
+**`hover`, not `pointer: coarse`.** `pointer` describes precision; `hover` describes whether the
+sentence "hover a year" is a lie, and the criterion is about that sentence.
+
+**The hover sentence changed too**, not only the touch one: #73's own verification greps `dist/` for
+the literal `Focus or hover`, and a span still carrying it would be in the served bytes on every
+device. Dropping "Focus" for "Tab to it" also trades jargon for the key the reader presses.
+
+**24 of 25 chart readouts carry the hint.** The exception is `AttributionSplit`, whose idle readout
+is an announcement of the current tab ("By voting coalition. 3 coalitions, net total …") rather than
+an instruction. It never named a gesture, so it was never part of this defect; its chart takes the
+tap like every other. `BudgetChart`'s hint is a `<dd>` inside `<dl class="inspector">` rather than a
+`<p class="readout">`, because that figure reads out a breakdown and not a single value.
+
+#### The issue's four edge cases, each answered
+
+1. **"Detect the modality, not the viewport."** At two levels, and neither is a width. The
+   *interaction* keys on `e.pointerType !== 'mouse'` — the event itself says what it was, which beats
+   any media query. The *hint* keys on `@media (hover: …)`. **The touchscreen laptop**
+   (`hover: hover` **and** `any-pointer: coarse`) gets the hover hint — true for its primary input —
+   while the touch path still works, because the interaction never consults a media query. It is told
+   the thing that works; it is not told anything false. Its marks keep `pointer-events`, so hover
+   keeps working, and clobber 2 above can therefore still occur there on a gap-tap. Recorded as a
+   known limitation below rather than papered over.
+2. **"With JavaScript off there is no interaction at all."** The served bytes show only the `nojs`
+   sentence, pointing at the table — the one route that genuinely works without scripting (`TableView`
+   is a native `<details>`). Asserted by B2c and by
+   `test_the_noscript_block_points_a_scripting_off_reader_at_the_table`.
+3. **"389 targets across 350px means a tap resolves to a band of several points."** Answered under
+   "What 'nearest' means" above, and this is what the *drag* is for.
+4. **"This interacts with #66."** Re-measured to **0** clipped `<text>` nodes at 390x844. The premise
+   is stale and no work follows from it. Recorded so the next reader does not re-derive it.
+
+#### Guards
+
+| # | Where | Claim |
+|---|---|---|
+| U1 | `src/components/charts/nearest.test.ts` (9) | the resolver: inside, gap, tie-to-data-order, unconditional snap, zero-area skip, empty list, **2D grid**, diagonal |
+| U2 | `src/components/charts/hint.test.ts` (9) | three modes; no non-`hover` string matches `/hover/i`; no string carries `Focus or hover`; class names derived per mode; `HINT_MODES` and `HINTS` agree as sets |
+| B1a | `tests/browser/touch.test.ts` | a tap at 30% and at 70% of every one of the **26** tappable charts moves its readout off the hint |
+| B1b | ″ | tapping the centre of 5 marks spread across each chart's index range focuses **exactly** the mark the geometry forces, and yields as many distinct readouts as there were distinct marks |
+| B1c | ″ | the readout carries the identifier of the mark that actually holds focus, and a `<td>` in that figure's own table carries it too |
+| B2a/b/c | ″ | the **visible** hint (`innerText`) is the touch / hover / nojs sentence under `hasTouch` / 1440x900 / `javaScriptEnabled: false` |
+| B3a | ″ | a desktop mouse press on empty plot fires **no** focus event on any mark, and produces no readout |
+| B3b | ″ | `pointer-events` is `none` under `hasTouch` and **not** `none` on desktop; `touch-action` is `pan-y` and **not** `pan-y` respectively |
+| B4 | ″ | a vertical CDP swipe starting on a chart increases `window.scrollY` |
+| P1-G1 | `pipeline/tests/test_accessibility.py` | the literal `Focus or hover` appears **0** times in `dist/**/index.html` |
+| P1-G2 | ″ | every hint carrier ships one span per mode, in order |
+| P1-G3 | ″ | the floor: **23** `p.readout` carriers and **24** total, as equalities |
+| P1-G4 | ″ | the three `.hint-*` switches, both `@media (hover: …)` queries, the `pointer-events: none` rule and `touch-action: pan-y` survive the build |
+
+**B1b's oracle is not a second copy of `nearestBox`.** It taps a mark's own centre, so the point is
+inside at least one mark and the answer is forced by a far simpler rule — *the lowest-index visible
+mark whose rect contains the point*. That formulation is necessary as well as cleaner: the site's
+marks **overlap**. `MedianIncome`'s dots are 15.5px wide on a 7.2px stride, so a dot's centre sits
+inside its left neighbour too, and "tapping mark N focuses mark N" is simply false there. The tie
+rule is observed, not assumed.
+
+**P1-G2 and P1-G3 count through `HINT_CLASSES`, derived from `hint.ts`'s own `HINT_MODES`, and
+recognise a hint span by *shape* (`^hint-[a-z]+$`) rather than by membership in that list.** The
+combination is #72's lesson applied directly: a mode deleted from the component shrinks the
+expectation but not the observation, so G2 fails instead of sweeping one mode fewer.
+
+#### Mutation proofs — EXECUTED 2026-08-27
+
+Every mutation was applied, observed red, and reverted; `git status --porcelain` empty afterwards.
+
+| # | Mutation | Predicted | Observed |
+|---|---|---|---|
+| U1-a | `nearestBox` returns `0` unconditionally | inside-the-box case | **7 of 9 red** |
+| U1-b | `d < best` becomes `d > best` | the gap case | **8 of 9 red** |
+| U1-c | remove the zero-area skip | the degenerate-box case | **red on exactly the 3 cases about degeneracy** |
+| U1-d | `-1` becomes `0` for an empty list | empty and all-degenerate | **red, that case only** |
+| U1-e | drop `dy`, comparing `x` only | the 2D grid case | **red, that case only** |
+| U2-a | `HINTS.touch` gets the hover sentence | "no non-`hover` mode mentions hovering" | **red, plus the tap/drag assertion** |
+| U2-b | restore `Focus or hover` in `HINTS.hover` | the literal assertion | **red, plus the placeholder assertion** |
+| U2-c | delete a member of `HINT_MODES` | arity and set equality | **red, plus the derived-class-name assertion** |
+| G1 | one island's pre-#73 string restored | G1 | **G1 red** (G3 too: the carrier count drops) |
+| G2 | one island ships 2 spans instead of 3 | G2 | **G2 red; G1 and the floor green** |
+| G3(i) | one island's `<ChartHint>` deleted | the floor | **floor red; G1 and G2 green** |
+| G3(ii) | **`READOUT_CLASS` -> `"readoutX"`** (the guard's own selector) | the floor, by name | **floor red, reporting `readout carriers 0`** |
+| G4 | the `@media (hover: none)` block deleted from `global.css` | G4 | **G4 red** |
+| B1a | `onPointerDown` removed from `groupProps` | B1a | **B1a red on all 3 routes** (B1b/c too) |
+| B1b | resolve to index 0 unconditionally | B1b | **B1b/c red on all 3 routes; B1a green** |
+| B1c | one island's `onFocus` reports the next datum | B1c | **red on `/economy` only** — the parity assertion, in isolation |
+| B2a | the `(hover: none)` hint rule deleted | B2a | **B2a red** (B1a too: with no visible hint there is no idle text to move off) |
+| B2b | the two media queries swapped | B2b | **B2a and B2b both red** |
+| B2c | the `<noscript>` rules removed | B2c | **B2c red on all 3 routes; B2a and B2b green** |
+| B3a | the `pointerType === 'mouse'` bail dropped | B3a | **GREEN at first — see below** |
+| B3b | `pointer-events` rule unscoped from its media query | B3b's desktop half | **B3b red** |
+| B4 | `touch-action: pan-y` -> `none` | B4 | **B4 and B3b both red** |
+| blind-a | `svg.chart` -> `svg.chartX` throughout the lane | `TAPPABLE_CHARTS` | **red, reporting `0 tappable charts, expected 5`** |
+| blind-b | the hint-carrier selector emptied | `HINT_CARRIERS` | **B2a/b/c red on all 3 routes** |
+| blind-c | B3b's mark selector emptied | B3b | **red, `no chart mark to measure`** |
+
+**B3a was a hollow check as first written, and the mutation is what found it.** It read
+`document.activeElement` after the press. With the mouse bail removed, the pointer path *does* focus
+a mark on `pointerdown` — and clobber 2 above then resolves focus away from it a moment later,
+because the `<svg>` is not focusable. The end state is identical either way, and the mutation went
+green through all eighteen tests. The guard now records `focusin` events landing on a mark during the
+press, which is what actually differs; the mutation turns it red, naming the mark it focused. This is
+the fourteenth hollow check removed in this run.
+
+**B3a asserts that no *datum* is selected, not that focus lands on `<body>`.** Chromium resolves a
+press on a non-focusable element to the nearest focusable ancestor, so some presses land on `<main>`
+and always did. Measuring that would be measuring Chromium.
+
+#### DoD 4: the desktop DOM diff — EXECUTED 2026-08-27
+
+`main` @ `c6c867d` and this branch, both built fresh, hydrated at 1440x900 in a non-touch context,
+all three chart routes, every element under `<main>` serialised one node per line with sorted
+attributes.
+
+| | main | branch |
+|---|---|---|
+| nodes | 12,426 | 12,498 |
+
+**Differences inside any `<svg>`: 0.** Asserted directly, not eyeballed.
+
+| Change | Count |
+|---|---|
+| `<span class="hint-nojs">` added | 24 |
+| `<span class="hint-hover">` added | 24 |
+| `<span class="hint-touch">` added | 24 |
+| hint carriers whose own text node was replaced (`p.readout` x23, `dd` x1) | 24 |
+| **span parents outside that carrier set** | **0** |
+| **carriers that gained no spans** | **0** |
+
+Two build identifiers also differ and are named rather than hidden: each edited island's
+`astro-island` `component-url` (a content hash — the island's source changed, so it must) and its
+`uid` (Astro's per-island hydration id). Neither is rendered content. Normalising those two leaves
+**120 changed lines, all of them the table above**.
+
+Behaviourally, DoD 4 is also carried by B3a, B3b, and by `tests/browser/keyboard.test.ts` and
+`tests/browser/driven.test.ts` passing **unmodified**.
+
+#### Known limitations — human-judged, and named as such
+
+1. **Whether the drag *feels* like a scrub on real hardware is not asserted and is not claimed.**
+   The lane proves that a CDP touch drag re-resolves the mark and that the readout follows; it cannot
+   prove that a thumb moving across a 350px plot at 0.9px per year feels controllable. That needs a
+   person and a phone.
+2. **The hybrid touchscreen-laptop gap-tap.** A device reporting `hover: hover` keeps
+   `pointer-events` on its marks, by design — its primary input is a mouse and hover must keep
+   working. A *finger* tap landing in a gap there can still hit clobber 1: the emulated `mouseleave`
+   reaches the previously hovered mark and clears the readout the tap just set. The tap on a mark
+   works; the tap in a gap may not. Not fixed, because every available fix costs the mouse its hover.
+
+#### Boundaries
+
+**Not in scope, still open.** §11's legend swatch wrapping **#74**; focus-ring width **#75**; the
+visible at-rest scroll affordance **#76**; the open data-table height cap **#77**; how any of this
+*reads* in NVDA or JAWS **#30**/**#80**. **Control sizing is #65's and #73 owns chart marks only** —
+which is why the issue's "'View as table' is a 24px target" line is recorded as stale above rather
+than acted on.
+
+**Parked, not fixed** (`docs/parked-findings.md`): the 7 zero-area `[data-mark]` elements on
+`/government`; and `StatutoryVsEffective`, whose chart draws 44 years and whose table carries only
+the CBO anchor years, so three of the values a tap can read out are genuinely absent from the table
+below it. B1c names that figure as an explicit exception rather than softening the rule to "where
+present", which would pass over any number of charts losing their tables.
 
 ### Greyscale, per chart
 
@@ -1723,7 +2005,7 @@ say so.
    enlarged annotation text collides with the plotted curve. — **EXECUTED**: JavaScript on
    2026-08-24, JavaScript off 2026-08-26, Chrome 151 at 390×844. The collision question is moot:
    the `<noscript>` mitigation never applies (#78), so with scripting off the text is *too small*
-   rather than too large — 5.10–5.59px rendered. FAILs: #62, #63, #64, #66, #73, #74, #77, #78, #79.
+   rather than too large — 5.10–5.59px rendered. FAILs: #62, #63, #64, #66, #74, #77, #78, #79 (#73 **fixed 2026-08-27** — see *Reading a datum with no hover*).
    Rows `M4` and `M5`.
 5. **Greyscale render**, confirming no distinction a reader needs is carried by colour alone. —
    **EXECUTED 2026-08-26**, Chrome 151, both viewports, JavaScript on, with a computed per-panel

@@ -1339,3 +1339,38 @@ time. Appended to, never rewritten. None of these have been acted on.
   (`pipeline/tests/test_accessibility.py`) has several floors — `test_the_label_coverage_did_not_narrow`
   among them — whose guards may read selectors the floor never counts through. Found while executing
   #72's M9. Severity: hollow-check risk, non-blocking.
+- [2026-08-27] `/government` renders **7 zero-area `[data-mark]` elements**: 5 presidential-term
+  rects in `src/components/islands/LawExplorer.tsx` and 2 "none levied" groups in
+  `src/components/islands/StateTaxMix.tsx`. Each is focusable and each has `width: 0` or `height: 0`
+  in the rendered box, so a keyboard reader arrowing through the group arrives at a datum with
+  nothing on screen to look at. #73 makes the touch resolver skip them, and asserts that skip in
+  `nearest.test.ts`, so a tap can never select one — but that is a defence, not a fix. Why they are
+  rendered at all, and what a keyboard reader should hear on reaching one, is #30/#80 territory.
+  Found while measuring the mark population for #73. Severity: accessibility, user-visible,
+  keyboard only.
+- [2026-08-27] `src/components/islands/StatutoryVsEffective.tsx` — the chart plots **44** years of
+  the top statutory rate and its `TableView` carries only the CBO anchor years, so a value the chart
+  can read out (1990, 2001 and 2011 among them) is genuinely absent from the table below it. Every
+  other figure on the site ties: #73's B1c checks 26 charts and this is the only one where a tapped
+  identifier is not in a `<td>` of its own figure. It matters because the table is the site's
+  declared non-visual equivalent for every chart (`Chart.tsx`'s header comment), and here it is a
+  subset. `tests/browser/touch.test.ts` names it in `TABLE_INCOMPLETE` as an explicit exception
+  rather than softening the rule to "where present". Found while writing #73's B1c. Severity:
+  accessibility, non-visual equivalent, non-blocking.
+- [2026-08-27] `src/components/islands/AttributionSplit.tsx:276` — the one `p.readout` on the site
+  that carries no `<ChartHint>`. Its idle text is `announcement(view, buckets)`, a summary of the
+  current tab ("By voting coalition. 3 coalitions, net total …"), so it never told anyone to hover
+  and was correctly outside #73's defect. But it is also the one chart whose readout never names any
+  gesture: a reader who does not already know they can tap is not told. Whether a live-region
+  announcement and an interaction hint can share one element, or whether that figure needs both, is
+  a question about the readout's design rather than about touch. Found while counting hint carriers
+  for #73. Severity: discoverability, non-blocking.
+- [2026-08-27] Chromium's emulated `mousedown` after a touch tap resolves focus to the nearest
+  focusable ancestor when the tap's target is not focusable, which on this site is
+  `<main tabindex="-1">`. #73 defuses it in `src/components/charts/roving.ts` with a
+  `preventDefault()` scoped to the chart `<svg>`, but the same shape would bite any *other* element
+  that takes focus in a `pointerdown` handler and is not itself focusable — `YearRange`'s thumbs and
+  the scroll containers #71 made focusable are the candidates, neither checked. The general form is
+  worth a sweep: any programmatic focus set during `pointerdown` survives on desktop and is undone
+  on touch. Found while debugging why #73's drag worked and its tap did not. Severity: latent
+  defect, unverified elsewhere.
