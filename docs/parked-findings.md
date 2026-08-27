@@ -1387,3 +1387,20 @@ time. Appended to, never rewritten. None of these have been acted on.
   `ResizeObserver` to install `tabindex`, and a loaded machine can outlast it; the fix is to wait on
   the observed count rather than on time. Left alone because it is #71's mechanism and #73 owns
   chart marks. Found while running #73's full lane. Severity: CI reliability, non-blocking.
+- [2026-08-27] **Correction to the zero-area-marks entry above, and it changes what the finding is.**
+  That entry says the 7 zero-area `[data-mark]` elements on `/government` are 5 presidential-term
+  rects in `LawExplorer` plus 2 "none levied" groups in `StateTaxMix`, and that all 7 are focusable.
+  Re-measured in the hydrated page while answering a question about it: **`LawExplorer` has none —
+  all 31 of its marks render.** The 5 belong to `AttributionSplit`'s by-president panel, which Radix
+  keeps mounted (`forceMount`) and hides with `display: none` while the other tab is selected; that
+  subtree is **not focusable** (measured: `.focus()` on its first mark leaves `document.activeElement`
+  elsewhere) and its whole `<svg>` measures 0x0, so nothing there is reachable by keyboard or by
+  touch. Those 5 are correct as they stand and are **not** a defect. The finding is the other **2**:
+  `StateTaxMix`'s "none levied" categories are in a live, visible chart and **are** focusable, so a
+  keyboard reader can arrow onto "Individual income tax: none levied" with nothing on screen. The
+  resolver skips both kinds because the rule is geometric, and a 78-tap sweep across the two `<svg>`s
+  that own them selected a zero-area mark 0 times. `nearest.ts` and
+  `docs/contracts/accessibility.md` are corrected; the entry above is left as written, per this
+  file's append-only rule. The wrong attribution came from #73's plan and was carried into the first
+  draft of the contract unchecked. Severity: accessibility, user-visible, keyboard only — and
+  narrower than first recorded.

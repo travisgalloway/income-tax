@@ -19,12 +19,22 @@
  *  tile must pick that tile and not the leftmost one in the row. `nearest.test.ts`
  *  carries that case (U1-e) because the wrong implementation is the tempting one.
  *
- *  ZERO-AREA BOXES ARE SKIPPED. `/government` renders 7 focusable `[data-mark]`
- *  elements with no rendered box (5 presidential-term rects in `LawExplorer`,
- *  2 "none levied" groups in `StateTaxMix`, measured at `c6c867d`). They are
- *  reachable by keyboard and invisible on screen; a tap must never select one,
- *  because the reader would be told about a datum they cannot see. WHY they
- *  exist is #30/#80's question, parked, not this module's.
+ *  ZERO-AREA BOXES ARE SKIPPED. `/government` renders 7 `[data-mark]` elements
+ *  with no rendered box, and they are two different things — re-measured, because
+ *  the plan for #73 attributed all seven to one island and was wrong:
+ *
+ *    5  `AttributionSplit`'s by-president panel, which Radix keeps mounted
+ *       (`forceMount`) and hides with `display: none` while the other tab is
+ *       selected. NOT focusable — a `display: none` subtree never is — and its
+ *       whole `<svg>` measures 0x0, so nothing here is reachable by any route.
+ *       Correct as it stands; skipped only because the rule is geometric.
+ *    2  `StateTaxMix`'s "none levied" categories, in a LIVE and visible chart.
+ *       These ARE focusable, and this is the real case: a keyboard reader can
+ *       arrow onto "Individual income tax: none levied" with nothing on screen
+ *       to look at. Parked as a finding; WHY they render is #30/#80's question.
+ *
+ *  A tap must never select either kind, because the reader would be told about a
+ *  datum they cannot see.
  *
  *  THE SNAP IS UNCONDITIONAL. There is no "missed" outcome and no maximum
  *  distance: a pointerdown anywhere inside the `<svg>` selects a mark, because a

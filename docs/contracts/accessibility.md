@@ -1674,10 +1674,20 @@ nearest visible mark.**
 
 Site-wide at 390px: **1,111 marks, 1,092 of them under 44px wide**, smallest 3.3px.
 
-**New, and not in the issue:** `/government` carries **7 zero-area `[data-mark]` elements** — 5
-presidential-term rects in `LawExplorer`, 2 "none levied" groups in `StateTaxMix` — focusable marks
-with no rendered box. The resolver skips them so a tap can never select an invisible datum. *Why*
-they exist is #30/#80 territory; parked in `docs/parked-findings.md`, not fixed here.
+**New, and not in the issue:** `/government` carries **7 zero-area `[data-mark]` elements**. The
+resolver skips them so a tap can never select an invisible datum — verified by sweeping 78 taps
+across the two `<svg>`s that own them, 0 of which selected one.
+
+**The plan attributed all seven to `LawExplorer`, and that was wrong.** Re-measured in the hydrated
+page, they are two unrelated things:
+
+| Count | Where | Focusable? | Verdict |
+|---|---|---|---|
+| 5 | `AttributionSplit`'s by-president panel, which Radix keeps mounted (`forceMount`) and hides with `display: none` while the other tab is selected | **No** — a `display: none` subtree never is, and the whole `<svg>` measures 0x0 | Correct as it stands. Not a defect, and not reachable by any route |
+| 2 | `StateTaxMix`'s "none levied" categories, in a live and visible chart | **Yes** | **The real case.** A keyboard reader can arrow onto "Individual income tax: none levied" with nothing on screen to look at |
+
+`LawExplorer` has no zero-area marks: all 31 render. Only the second row is a finding, and it is
+parked in `docs/parked-findings.md`; *why* those two render is #30/#80 territory, not fixed here.
 
 #### The mechanism, and why the hit target stops being the mark
 
@@ -1924,8 +1934,9 @@ visible at-rest scroll affordance **#76**; the open data-table height cap **#77*
 which is why the issue's "'View as table' is a 24px target" line is recorded as stale above rather
 than acted on.
 
-**Parked, not fixed** (`docs/parked-findings.md`): the 7 zero-area `[data-mark]` elements on
-`/government`; and `StatutoryVsEffective`, whose chart draws 44 years and whose table carries only
+**Parked, not fixed** (`docs/parked-findings.md`): `StateTaxMix`'s 2 focusable zero-area marks on
+`/government` (the other 5 are an inactive Radix tab panel and are not a defect — see the table
+above); and `StatutoryVsEffective`, whose chart draws 44 years and whose table carries only
 the CBO anchor years, so three of the values a tap can read out are genuinely absent from the table
 below it. B1c names that figure as an explicit exception rather than softening the rule to "where
 present", which would pass over any number of charts losing their tables.
