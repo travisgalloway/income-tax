@@ -27,8 +27,9 @@ the second.
 not `<=` is the load-bearing choice: `<=` would let a check pass because it is not looking, and it
 would let a fix leave a stale exemption behind forever. With `==`, adding a violation fails on the
 new fingerprint and *fixing* one fails on the missing entry, so the baseline can only shrink
-deliberately, in the same commit as the fix. Reaching zero is #58's definition of done, plus #102
-and #103 for the two surfaces no prose edit can reach.
+deliberately, in the same commit as the fix. #58 has taken its own share of both to zero; what is
+left is #102's four island-generated accessible names and #103's five curated-data shouts, the two
+surfaces no prose edit to a page source can reach.
 
 Standard library only, and the HTML tree comes from `test_accessibility`'s parser rather than a
 third copy of one — the idiom `pipeline/tests/test_contents_index.py` established.
@@ -182,39 +183,17 @@ def prose_strings() -> list[tuple[str, str, str]]:
 # removal, and both are asserted with `==`.
 # ---------------------------------------------------------------------------
 
-#: #58 owns every prose-class entry: it is the sentence-craft issue, and it edits `src/pages/**`.
-#: #102 owns the two `aria-label` entries, which are island `.tsx` templates outside #58's remit.
+#: #58 held every prose-class entry and discharged all 23 of them: it was the sentence-craft issue,
+#: and it edited `src/pages/**` (plus one `.prose` element inside `StateGiveGet.tsx`, which is page
+#: prose the island happens to render). What is left is #102's, and only #102's: island-generated
+#: **accessible names**, which are `.tsx` templates no prose edit to a page source can reach.
 KNOWN_DASH_DEBT: dict[str, str] = {
-    # --- #58, sentence craft: the em dash and ` -- ` in the page sources. 23 fingerprints over
-    #     30 rendered occurrences, across five built pages. Zeroing this block is #58's own
-    #     definition of done, and it is machine-checkable. It was 26 over 33 until #53 rewrote
-    #     three sentences it independently owned under Criterion 2 (`households#what-a-household-earns`'s
-    #     standfirst, and the findings of `households#a-century-of-brackets` and
-    #     `households#statutory-vs-effective`); the dash went with the rewrite and the fingerprint
-    #     went with it, in the same commit, as this baseline's contract requires.
-    'contents/index.html|standfirst|The whole of the site on one page: # sections across # desti': "#58",
-    'economy/index.html|prose|National aggregates say nothing about distribution. Every se': "#58",
-    'government/index.html|figure-caveat|Note. Give is gross IRS collections by filer address; get is': "#58",
-    'government/index.html|prose|Give (IRS), get (USASpending) and this state tax mix (Census': "#58",
-    'government/index.html|prose|In real terms mandatory spending— net of offsetting receipts': "#58",
-    'government/index.html|prose|Midpoint: zero net balance, equivalently $# received per $# ': "#58",
-    'government/index.html|prose|Where the money is counted is not where it lands. The two si': "#58",
-    'government/index.html|standfirst|Every state pays federal tax and every state receives federa': "#58",
-    "households/index.html|figure-caveat|Note. CBO's average federal tax rate includes payroll tax, c": "#58",
-    'households/index.html|figure-caveat|Note. Constant # dollars. The budget series elsewhere on thi': "#58",
-    'households/index.html|figure-caveat|Note. The Gini is for families, not households; household se': "#58",
-    'households/index.html|figure-caveat|Note. This chart counts the federal individual income tax on': "#58",
-    'households/index.html|figure-caveat|Note. This figure is on fiscal years, while sections # throu': "#58",
-    'households/index.html|figure-caveat|Note. Twelve years show a published top rate that differs fr': "#58",
-    'households/index.html|prose|# Distributional data is by tax unit, not by person or by ho': "#58",
-    'households/index.html|prose|The series begins in # because that is where the Census/FRED': "#58",
-    'households/index.html|prose|Two things move independently here. The bracket COUNT is a p': "#58",
-    'households/index.html|standfirst|Nobody pays the top rate on their whole income. The top brac': "#58",
-    'index.html|prose|Each section opens the same way: a section number, a heading': "#58",
-    'index.html|prose|Its through-line is that the popular story — that one party ': "#58",
-    'index.html|prose|The debt, who holds it, the whole budget behind it, and the ': "#58",
-    'index.html|prose|The three routes are meant to be read in order — the economy': "#58",
-    'index.html|prose|Where a series can honestly be shown in more than one unit, ': "#58",
+    # --- #58's block is gone. It opened at 26 fingerprints over 33 rendered occurrences on the day
+    #     #51 landed; #53 retired three by rewriting the sentences under Criterion 2; #58 retired
+    #     the remaining 23 (24 em dashes and 6 ` -- ` across five built pages) by applying Ruling
+    #     1's replacement table. Nothing was exempted and no assertion was weakened: the block was
+    #     deleted entry by entry, in the same commits as the edits, which is the only way the `==`
+    #     below lets a baseline shrink.
     # --- #102, island-generated accessible names. Two `.tsx` templates, outside #58's remit
     #     because #58 edits `src/pages/**` prose only.
     #     `src/components/islands/BudgetChart.tsx:84` — 31 per-fiscal-year `aria-label`s on the
@@ -227,18 +206,14 @@ KNOWN_DASH_DEBT: dict[str, str] = {
     'households/index.html|aria-label:svg|The top statutory income tax rate ran from #% in # to #% in ': "#102",
 }
 
-#: #58 owns the three shouts in the page sources. #103 owns the curated-data shouts: they reach the
-#: page through generated JSON, so retiring them means regenerating data and re-running validation,
-#: which is a pipeline change and not a prose edit.
+#: #58 held the three shouts in the page sources and discharged all three. #103 owns the
+#: curated-data shouts: they reach the page through generated JSON, so retiring them means
+#: regenerating data and re-running validation, which is a pipeline change and not a prose edit.
 KNOWN_SHOUT_DEBT: dict[str, str] = {
-    # --- #58, the three shouts in the page sources: `src/pages/households/index.astro:122`
-    #     ("bracket COUNT"), `:134` ("Surtaxes ARE folded") and `:159`, the figure note
-    #     ("it INCLUDES PAYROLL TAX"), which Ruling 2 rules in explicitly.
-    'households/index.html|prose:ARE|Ordinary income only: capital gains have been taxed at separ': "#58",
-    'households/index.html|prose:COUNT|Two things move independently here. The bracket COUNT is a p': "#58",
-    "households/index.html|figure-caveat:INCLUDES|Note. CBO's average federal tax rate includes payroll tax, c": "#58",
-    "households/index.html|figure-caveat:PAYROLL|Note. CBO's average federal tax rate includes payroll tax, c": "#58",
-    "households/index.html|figure-caveat:TAX|Note. CBO's average federal tax rate includes payroll tax, c": "#58",
+    # --- #58's block is gone. The three shouts Ruling 2 assigned to it — "the bracket COUNT",
+    #     "Surtaxes ARE folded" and the figure note's "it INCLUDES PAYROLL TAX" — took a
+    #     `<strong>` on the load-bearing noun phrase and two recasts. The note took a recast
+    #     because a `note=` prop is a plain attribute rendered as text and cannot carry markup.
     # --- #103, curated pipeline data. `src/data/party_splits.json:22`'s "AT LEAST ONE" and
     #     `pipeline/curated/laws.yaml:287`'s "VOICE VOTE" reach the page through generated JSON,
     #     so retiring them means regenerating data and re-running validation — a pipeline change,
@@ -800,3 +775,4 @@ def test_the_criterion_two_audit_covers_every_finding():
         "as the finding:\n  " + "\n  ".join(f"{r}#{s}" for r, s in stale)
     )
     assert declared == actual
+

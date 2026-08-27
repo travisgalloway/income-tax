@@ -137,7 +137,7 @@ const sourcesHref = join('/sources')
       fig={fig('debt-maturity')}
       xUnit="Years to maturity"
       yUnit="amount outstanding, $ trillions"
-      note="Bills, notes and bonds are three of the marketable instrument families, not all of them: they sum to about $28.1 trillion against a $30.9 trillion marketable total, with the difference mostly in inflation-protected and floating-rate securities, plus a small Federal Financing Bank balance, that this chart does not draw. Savings bonds (Series EE and I) are non-marketable and excluded throughout."
+      note="Bills, notes and bonds are three of the marketable instrument families, not all of them. They sum to about $28.1 trillion against a $30.9 trillion marketable total. The difference, which this chart does not draw, is mostly inflation-protected and floating-rate securities plus a small Federal Financing Bank balance. Savings bonds (Series EE and I) are non-marketable and excluded throughout."
     >
       <DebtMaturity client:visible d={debtMaturity.data} />
     </Figure>
@@ -232,11 +232,11 @@ const sourcesHref = join('/sources')
     </Figure>
 
     <p class="prose">
-      In <Term id="real">real</Term> terms <Term id="mandatory-spending">mandatory spending</Term>
-      — net of offsetting receipts, the basis used throughout this section — grew 194% over this
-      span and discretionary grew 79%. Mandatory runs on permanent law and
-      <Term id="net-interest">net interest</Term> is set by past borrowing; neither requires an
-      annual vote.
+      In <Term id="real">real</Term> terms <Term id="mandatory-spending">mandatory spending</Term>,
+      net of offsetting receipts, the basis used throughout this section, grew 194% over this
+      span and discretionary grew 79%. Mandatory runs on permanent law
+      and <Term id="net-interest">net interest</Term> is set by past borrowing; neither requires
+      an annual vote.
     </p>
     <p class="prose">
       Net interest looks flat endpoint to endpoint, 3.1% to 3.2%. It is not. It fell to
@@ -427,7 +427,7 @@ const sourcesHref = join('/sources')
     <h2>By state, and which states give more than they get</h2>
     <p class="standfirst">
       Every state pays federal tax and every state receives federal spending. Comparing the
-      two by state is not the balance-of-payments question it sounds like — what follows is
+      two by state is not the balance-of-payments question it sounds like: what follows is
       narrower on both sides, and says so before it says anything else.
     </p>
     <p class="finding">
@@ -440,7 +440,7 @@ const sourcesHref = join('/sources')
       fig={fig('state-give-get')}
       xUnit="State or territory"
       yUnit="federal gross tax collections against federal award spending, per person or in total"
-      note="Give is gross IRS collections by filer address; get is USASpending award spending by place of performance. This is narrower than a balance of payments on both sides — read the paragraphs below before comparing states."
+      note="Give is gross IRS collections by filer address; get is USASpending award spending by place of performance. This is narrower than a balance of payments on both sides. Read the paragraphs below before comparing states."
     >
       <StateGiveGet client:visible data={statesBalance.data} />
     </Figure>
@@ -455,7 +455,7 @@ const sourcesHref = join('/sources')
     <p class="prose">
       <strong>Where the money is counted is not where it lands.</strong> The two sides are
       booked to different places, and neither location is a claim about who bore the cost or got
-      the benefit — <a href="#limits">limit 6 in section 12</a> states the principle in full.
+      the benefit. <a href="#limits">Limit 6 in section 12</a> states the principle in full.
       What it means for these two charts: a corporation's tax follows its principal office and
       withholding follows the employer's location, which for a border employer may sit in a
       different state from the people it withholds from. Award spending goes to the state
@@ -484,17 +484,17 @@ const sourcesHref = join('/sources')
 
     <p class="prose">
       Give (IRS), get (USASpending) and this state tax mix (Census) are three separately
-      discovered <Term id="vintage">vintages</Term>, not one dataset: the IRS and USASpending figures above are both
-      FY2025 by construction, and this Census survey is also its FY2025 vintage — none of the
-      three shares a publication schedule, and a future run of this pipeline may find them out
-      of step again. Territories (Puerto Rico, Guam, the US Virgin Islands, the Northern
-      Mariana Islands and American Samoa) appear in the award-spending "get" figures but have
-      no state-level breakdown in IRS Table 5, so they carry a give figure of "no data" rather
-      than zero and are not drawn on the map above. Washington DC is drawn on the map and
-      counted in the table, but is excluded from the colour range: as the seat of the federal
+      discovered <Term id="vintage">vintages</Term>, not one dataset. The IRS and USASpending
+      figures above are both FY2025 by construction, and this Census survey is also its FY2025
+      vintage. None of the three shares a publication schedule, and a future run of this pipeline
+      may find them out of step again. Territories (Puerto Rico, Guam, the US Virgin Islands, the
+      Northern Mariana Islands and American Samoa) appear in the award-spending "get" figures but
+      have no state-level breakdown in IRS Table 5. They therefore carry a give figure of "no
+      data" rather than zero, and are not drawn on the map above. Washington DC is drawn on the
+      map and counted in the table, but is excluded from the colour range: as the seat of the federal
       government it is an outlier by construction, and including it would compress the scale
       for all 50 states. In the tax-mix table below, "none levied" means the state does not
-      collect that tax at all — not that the figure is missing.
+      collect that tax at all, not that the figure is missing.
     </p>
   </section>
 

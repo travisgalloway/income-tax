@@ -207,7 +207,7 @@ export function StateGiveGet({ data }: { data: StatesBalance }) {
       <p className="prose">
         Midpoint: zero net balance, equivalently $1.00 received per $1.00 paid. Washington DC is
         drawn but excluded from the colour range; its balance is an outlier by construction. Grid
-        squares are equal size regardless of population or land area — the shape is a locator, not
+        squares are equal size regardless of population or land area: the shape is a locator, not
         a measure.
       </p>
 
