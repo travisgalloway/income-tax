@@ -618,58 +618,102 @@ for (const route of CHART_ROUTES) {
  * F3(b) — no focused control adds page overflow. Definition of done 6, and
  * `scroll.test.ts`'s E10 assertion held at the wider ring.
  *
- * The per-route counts are FLOORS and not equalities, and the precedent is
- * #69's `MAX_STOPS_*`: a content route gains a link and an equality goes red
- * for a reason that has nothing to do with focus rings. IF A MEASURED VALUE
- * FALLS BELOW A FLOOR, DO NOT LOWER IT — it means controls stopped being
- * focusable, and this sweep would then be passing over a smaller site than the
- * one it claims to cover.
+ * The overflow assertion runs over EVERY element that takes focus, scroll
+ * containers included — that sweep is the point of the guard and nothing is
+ * excluded from it. What is FLOORED is a narrower population, and deliberately.
  *
- * Measured at a0eec29+#75, counting only elements that actually took focus.
- * The narrow numbers are lower because the contents rail is `display: none`
- * below 62rem and its links cannot be focused at all there.
+ * WHY THE FLOOR EXCLUDES #71's SCROLL CONTAINERS. They are focusable **exactly
+ * when they overflow**, and overflow is a text-width property. `tokens.css:4-5`
+ * commits to a system-font stack with no webfont, so macOS and Linux metrics
+ * differ by design and will keep differing — the same fact that makes
+ * `harness.ts` carry a tolerance rather than pin a container. Measured:
+ * `/government` at 1440px has **two** focusable containers in the default
+ * (disclosures-closed) state on macOS and **one** on CI's Linux runner, so an
+ * all-in floor of 176 was a macOS number Linux could not meet, and it failed on
+ * the first CI run of this spec. Padding the floor with a margin would have
+ * hidden a real platform dependence behind a fudge factor; dropping the
+ * font-dependent members from the counted population removes it at the source.
+ * Their existence is still guarded — a one-sided `>= 1` on the routes that have
+ * any, and `scroll.test.ts` in full.
+ *
+ * The counts below are FLOORS and not equalities, and the precedent is #69's
+ * `MAX_STOPS_*`: a content route gains a link and an equality goes red for a
+ * reason that has nothing to do with focus rings. IF A MEASURED VALUE FALLS
+ * BELOW A FLOOR, DO NOT LOWER IT — controls have stopped being focusable, and
+ * this sweep would then be passing over a smaller site than it claims to cover.
+ * That instruction now means what it says, because platform drift can no longer
+ * be the explanation for crossing one.
+ *
+ * Measured at a0eec29+#75, counting only elements that actually took focus. The
+ * narrow numbers are lower because the contents rail is `display: none` below
+ * 62rem and its links cannot be focused at all there.
  * ------------------------------------------------------------------------- */
 const FOCUS_FLOOR: Record<string, Record<string, number>> = {
   '/': { narrow: 10, wide: 20 },
   '/economy': { narrow: 41, wide: 53 },
   '/households': { narrow: 68, wide: 81 },
-  '/government': { narrow: 158, wide: 176 },
+  '/government': { narrow: 156, wide: 174 },
   '/sources': { narrow: 25, wide: 31 },
   '/glossary': { narrow: 97, wide: 116 },
   '/contents': { narrow: 96, wide: 109 },
 }
+
+/** #71's containers, excluded from the floor above and asserted separately. */
+const SCROLL_CONTAINER = '.tableview-scroll, .law-table-scroll'
+
+/** The routes carrying at least one focusable #71 scroll container in the
+ *  default state, so the population the floor excludes is not left unchecked.
+ *  A `>= 1`, never a count: how many overflow is the font-dependent part. */
+const HAS_FOCUSABLE_SCROLLER = new Set(['/government'])
 
 for (const viewport of VIEWPORTS) {
   test(`F3b ${viewport.name}: focusing every control on every route adds no page overflow`, async () => {
     for (const route of ROUTES) {
       const { context, page } = await open(route, viewport)
       try {
-        const { focused, worst, offender } = await page.evaluate((sel) => {
-          const els = Array.from(document.querySelectorAll(sel as string)) as HTMLElement[]
-          let focused = 0
-          let worst = 0
-          let offender = ''
-          for (const el of els) {
-            el.focus()
-            if (document.activeElement !== el) continue
-            focused += 1
-            const root = document.documentElement
-            const over = root.scrollWidth - root.clientWidth
-            if (over > worst) {
-              worst = over
-              offender = `${el.tagName.toLowerCase()}.${(el.getAttribute('class') ?? '').split(' ')[0] || '(none)'}`
+        const { focused, floored, scrollers, worst, offender } = await page.evaluate(
+          ({ sel, scr }) => {
+            const els = Array.from(document.querySelectorAll(sel as string)) as HTMLElement[]
+            let focused = 0
+            let floored = 0
+            let scrollers = 0
+            let worst = 0
+            let offender = ''
+            for (const el of els) {
+              el.focus()
+              if (document.activeElement !== el) continue
+              focused += 1
+              if (el.matches(scr as string)) scrollers += 1
+              else floored += 1
+              const root = document.documentElement
+              const over = root.scrollWidth - root.clientWidth
+              if (over > worst) {
+                worst = over
+                offender = `${el.tagName.toLowerCase()}.${(el.getAttribute('class') ?? '').split(' ')[0] || '(none)'}`
+              }
             }
-          }
-          return { focused, worst, offender }
-        }, FOCUSABLE)
+            return { focused, floored, scrollers, worst, offender }
+          },
+          { sel: FOCUSABLE, scr: SCROLL_CONTAINER },
+        )
 
         const floor = FOCUS_FLOOR[route.path][viewport.name]
         assert.ok(
-          focused >= floor,
-          `${route.path} at ${viewport.name} focused ${focused} controls, below the recorded ` +
-            `floor of ${floor}. Do not lower the floor: controls have stopped being focusable, ` +
-            `and this sweep is now covering less of the site than it says it does.`,
+          floored >= floor,
+          `${route.path} at ${viewport.name} focused ${floored} controls outside #71's scroll ` +
+            `containers (${focused} in total), below the recorded floor of ${floor}. Do not lower ` +
+            `the floor: controls have stopped being focusable, and this sweep is now covering ` +
+            `less of the site than it says it does.`,
         )
+        if (HAS_FOCUSABLE_SCROLLER.has(route.path)) {
+          assert.ok(
+            scrollers >= 1,
+            `${route.path} at ${viewport.name} focused no #71 scroll container. How many of them ` +
+              `overflow is font-metric dependent and is deliberately not pinned here, but zero ` +
+              `means the focusable-when-it-overflows wiring is gone, not that a column got ` +
+              `narrower.`,
+          )
+        }
         assert.equal(
           worst,
           0,
