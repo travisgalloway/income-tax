@@ -353,7 +353,7 @@ alone. Cross-cutting, and **cited by all six** C-issues. Its surfaces are
 |---|---|---|
 | 1 | **#52** | The `.kicker` + heading + `.standfirst` block opening each section across the three route pages. Prose only: no figure, no data and no `aria-label` change |
 | 2 | **#53** | `.standfirst` and `.finding` elements — 13 and 11 on `/government`, 8 and 6 on `/households`, 7 and 5 on `/economy`. Constrained by the pairing rule above |
-| 3 | **#58** | The whole day-one baseline: 26 prose-class dash fingerprints over 37 rendered occurrences, ten of them ` -- ` on `/households`, and the three shouts at `src/pages/households/index.astro:121`, `:133` and `:159`. Each fix deletes its fingerprint from `KNOWN_DASH_DEBT` or `KNOWN_SHOUT_DEBT` in the same commit |
+| 3 | **#58** | The whole day-one baseline: 26 prose-class dash fingerprints over 33 rendered occurrences, eight of them ` -- ` on `/households`, and the three shouts at `src/pages/households/index.astro:121`, `:133` and `:159`. Each fix deletes its fingerprint from `KNOWN_DASH_DEBT` or `KNOWN_SHOUT_DEBT` in the same commit |
 | 4 | **#59** | `src/content/glossary/` (23 entries), `src/components/Term.astro`, and each route's first use of each term. Owns any move of `REGISTERED_INITIALISMS` onto the glossary |
 | 5 | **#60** | `.prose` bodies and `.figure-caveat` notes across all three routes, plus the Government route's section 12 limits block |
 | 6 | **#61** | The closing paragraph of each section and the terminal section of each route: Economy section 6, Households section 7, Government section 12 |

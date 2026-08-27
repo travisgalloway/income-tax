@@ -181,7 +181,7 @@ def prose_strings() -> list[tuple[str, str, str]]:
 #: #102 owns the two `aria-label` entries, which are island `.tsx` templates outside #58's remit.
 KNOWN_DASH_DEBT: dict[str, str] = {
     # --- #58, sentence craft: the em dash and ` -- ` in the page sources. 26 fingerprints over
-    #     37 rendered occurrences, across five built pages. Zeroing this block is #58's own
+    #     33 rendered occurrences, across five built pages. Zeroing this block is #58's own
     #     definition of done, and it is machine-checkable.
     'contents/index.html|standfirst|The whole of the site on one page: # sections across # desti': "#58",
     'economy/index.html|prose|National aggregates say nothing about distribution. Every se': "#58",
