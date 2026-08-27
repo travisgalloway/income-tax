@@ -378,7 +378,7 @@ same one.
 | M3 roving tabindex / focus trap | `/glossary` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. |
 | M3 roving tabindex / focus trap | `/contents` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. Its own edge case is the one `/sources/` failed (#79): every line on it is a derived string and the source lines are long, so the 390px rows are the ones that matter. |
 | M4 390px legibility, JS on | `/` | FAIL | Chrome 151, 390×844 | Body does not scroll horizontally (`scrollWidth` 390 = `clientWidth`). Right-edge annotations clipped — #64. Chart legibility sweep — #66. "Focus or hover" instruction with 3.3px hit targets — #73. Open tables uncapped, page 11,316px → 24,195px — #77. |
-| M4 390px legibility, JS on | `/government/` | FAIL | Chrome 151, 390×844 | No horizontal body scroll. Filter menu wider than the phone — **fixed 2026-08-27 (#62)**, measurement below. §11 by-state table hides four of five columns — #63. #64, #66, #73. §11 legend wraps a swatch away from its label — #74. |
+| M4 390px legibility, JS on | `/government/` | FAIL | Chrome 151, 390×844 | No horizontal body scroll. Filter menu wider than the phone — **fixed 2026-08-27 (#62)**, measurement below. §11's by-state table was unreadable at this width — every column was present and scrollable, but the name column scrolled away with the numbers and the caption's box was the table's 745px — **fixed 2026-08-27 (#63)**, measurement below. #64, #66, #73. §11 legend wraps a swatch away from its label — #74. Wide tables still give no at-rest sign that they scroll — #76. |
 | M4 390px legibility, JS on | `/households/` | FAIL | Chrome 151, 390×844 | No horizontal body scroll. §4 Figure 4 clipped at the right edge — #64. #66, #73. |
 | M4 390px legibility, JS on | `/sources/` | **PASS** (was FAIL) | Chromium (Playwright MCP), 390×844 | **Re-measured 2026-08-26 after #57.** `documentElement.scrollWidth` **390** against `clientWidth` **390** — no horizontal body scroll, against 520 vs 390 before. Widest of the 45 `<code>` spans is now **348px**, against 500px; none is clipped (`scrollWidth == clientWidth` on all 45) and none carries `text-overflow: ellipsis`, so nothing was bought by truncation. Fixed by `overflow-wrap: anywhere` on `.reference-doc code`, contained at the element and never at the page. **#79 closes as fixed-by-#57.** The route also gained 23 `main` hyperlinks, from zero. |
 | M4 390px legibility, JS on | `/glossary` | **PASS** (width only) | Chromium (Playwright MCP), 390×844 | **Executed 2026-08-26 (#57)**, for the width check only: `scrollWidth` **390** = `clientWidth` **390**, with the 25 new external source links in place. The rest of M4 — chart legibility, hit targets, table caps — is vacuous here (zero `<figure>`, zero `<svg>`, zero islands). The keyboard and screen-reader rows below are still NOT EXECUTED. |
@@ -487,6 +487,84 @@ The clamp does not depend on the var surviving a Radix upgrade.
 **Desktop (E4).** At **1280×900** the clamp is inert: the §8 listbox is **426.6px** wide before and
 after, x=639 → 1065.6 both times, every option 32.2px tall and unwrapped, with `max-width` computing
 to 1264px.
+
+### Government §11's by-state table at 390px (#63)
+
+**A measured browser observation, not an automated assertion.** Width, `overflow`, sticky offsets
+and `cqi` resolution are all *computed*; `dist/` carries markup and a stylesheet, not a layout, so
+no static test in this repository can see this defect. The four guards added to
+`pipeline/tests/test_accessibility.py` do not claim to — three assert the *declarations* are
+present (`test_the_by_state_row_header_column_is_pinned`,
+`test_the_by_state_caption_is_bound_to_its_scroll_container`,
+`test_no_stylesheet_rule_hides_a_table_cell_at_a_breakpoint`) so a later sweep that deletes one
+turns red, and the fourth
+(`test_the_by_state_table_serves_all_five_columns_with_scripting_off`) reads the built bytes.
+`test_the_by_state_guards_bite_the_ways_the_fix_can_regress` is their negative test. Automating the
+observation below in CI is **#67**.
+
+**The defect class, established before the fix and worth recording**: this was never hidden
+columns. `global.css` had no width breakpoint at all — its only two `@media` blocks were `62rem`
+for the navbar and `prefers-reduced-motion` — and none of its nine `display: none` rules touched a
+table cell. The 745px came from `.sortable-table th, .sortable-table td { white-space: nowrap }`
+over five columns with four long headers.
+
+**Executed 2026-08-27**, Chromium **151.0.0.0** (Playwright MCP), `dist/` served locally under
+its `/income-tax/` base at **390×844**, `/government/` §11. Before and after are the same build
+path, changing only `global.css`.
+
+| Measurement, at 390×844 | Before | After |
+|---|---|---|
+| `.tableview-scroll` (§11's) `clientWidth` / `scrollWidth` | 350 / **745** | 350 / **496** — the header and row-name wrap inside `@media (max-width: 30rem)` removes 249px of scroll without removing a column |
+| cells whose right edge is past x=390, at `scrollLeft: 0` | **171** | 171 — unchanged **by design**: this is a scroll, and the fix is that scrolling now works, not that the table shrank to fit |
+| `Wyoming (WY)` row header, scrolled fully right | x **−375 → −168** — entirely off-screen while its numbers were readable | x **20 → 128**, pinned; its text runs 32 → 88 |
+| `Net balance` cell of the same row, at that scroll position | x 149 → 260 | x 192 → 303; its text runs 222 → **291**. **Name and value are inside the viewport simultaneously** — the issue's criterion 2 |
+| `Get / give ratio` cell of the same row, at that scroll position | off the right of the 745px table | x 303 → 370, text 332 → 358 — the *last* column is reachable with the name still pinned |
+| pinned column's share of the window | — | **108px of 350 = 31%**. It was 59% before the row header was allowed to wrap (E3, which is why that declaration is there) |
+| `<caption>` box | **745px wide**, x 20 → **765** — 375px of its first line past the phone | **350px** wide, x 20 → **370**, at `scrollLeft: 0` **and** at full right |
+| five `<th scope="col">` sort buttons | four off-screen at rest | all five fully inside the viewport at some scroll offset; `display`/`visibility` hidden on **0** of the table's cells, captions and buttons |
+| `documentElement.scrollWidth` / `clientWidth` | 390 / 390 | **390 / 390** — the pinned column did not convert a contained scroll into a page scroll |
+
+**Sorting while scrolled right (E4).** Each of the five sort buttons clicked at full-right scroll,
+re-measured after each: the pinned column holds x 20 → 128 and `Net balance` holds x 192 → 303 in
+all five sorted orders. Sorting re-renders rows, not layout.
+
+**`border-collapse` (E2).** `.sortable-table` is `border-collapse: collapse`, and a sticky cell can
+paint over a collapsed rule that belongs to the table rather than the cell. Screenshotted at both
+scroll positions: the `tbody tr` hairline and the `thead th` rule both still paint across and along
+the pinned column, so no `box-shadow` substitute was needed and the table's borders are untouched.
+
+**Scripting off (E6).** Same build, `javaScriptEnabled: false`, 390×844: five `<th scope="col">`,
+five `.sort-button`s, **56** `<th scope="row">`, wrapper 350 / 496, caption 350 wide at x 20 → 370,
+and `Wyoming (WY)` at x 20 → 128 with `Net balance` at x 192 → 303 scrolled fully right. Identical
+to the scripted numbers — none of this fix is scripted.
+
+**320px (E9).** Nothing hardcodes 390. At **320×568** the wrapper is 280 / 496, the caption is
+280px wide at x 20 → 300, and the name (x 20 → 128) and `Net balance` (x 122 → 233) are both inside
+the viewport at full-right scroll, with `documentElement.scrollWidth` **320**.
+
+**Desktop (check 7), 1280×900.** The table is unchanged: all five column rects identical before and
+after (x 336 → 543, 543 → 706, 706 → 860, 860 → 971, 971 → 1081), no breakpoint active, and the
+pinned column visually identical because the scroll range is 9px. **One box did move, and it is
+recorded rather than glossed**: the caption is now bound to the wrapper's 736px rather than the
+table's 745px, so its right edge is 1072 instead of 1081. It stays a single line at both widths.
+
+**Another route (check 9), `/economy/`.** `container-type` on the shared `.tableview-scroll` is the
+only site-wide declaration #63 adds, and it costs nothing elsewhere. The route's first three
+wrappers measure 350 / 534, 350 / 578 and 350 / 628 at 390×844 and 736 / 736 at 1280×900 — identical
+before and after — each still scrolls (`scrollWidth > clientWidth`), their captions keep the table's
+own width, their body cells compute `position: static` and their headers keep `white-space: nowrap`.
+The pinned column and the header wrap are `.sortable-table` rules, and `.sortable-table` is §11's
+alone.
+
+**Themes (E8).** The sticky cell paints `var(--ground)`, the same token `body` uses, and the diff
+adds no literal colour; the stylesheet declares no `prefers-color-scheme` or `data-theme` variant
+today, so there is one palette to match and it matches it.
+
+**Not fixed here, deliberately.** The table still gives **no at-rest sign that it scrolls** — no
+fade, no shadow, no persistent scrollbar, no text hint — on this wrapper or on §10's
+`.law-table-scroll`. That is **#76**, which scopes it site-wide; two of #63's Definition-of-done
+boxes were moved there on 2026-08-27 rather than implemented under this number. Keyboard
+operability of the scroll wrappers is **#71**, and the `.sort-button`'s 21px height is **#65**.
 
 ### Reading position in the contents list (#44)
 
