@@ -362,7 +362,10 @@ def test_prose_contract_cites_lines_that_resolve():
 # 5. The rubric the six C-issues cite
 # ---------------------------------------------------------------------------
 
-CRITERION_RE = re.compile(r"^### Criterion (\d+)\b", re.MULTILINE)
+#: A rubric heading is `### Criterion N — <name>`, and the em dash is part of the match. Without it
+#: this also collects `### Criterion 1 audit`, the per-section table #52 added below the rubric, and
+#: the consecutive-numbering assertion then fails on a second 1 that is not a criterion at all.
+CRITERION_RE = re.compile(r"^### Criterion (\d+) —", re.MULTILINE)
 
 
 def test_prose_contract_has_a_numbered_rubric():
@@ -376,3 +379,210 @@ def test_prose_contract_has_a_numbered_rubric():
         f"Rubric criteria are not consecutively numbered from 1: {numbers}. A C-issue cites a "
         "criterion by number, so a gap or a repeat sends it to the wrong rule."
     )
+
+
+# ---------------------------------------------------------------------------
+# 6. Criterion 1 — the question comes first
+# ---------------------------------------------------------------------------
+
+#: The four report routes. Named, never globbed. `/contents`, `/glossary` and `/sources` also carry
+#: `<section id>` elements, but those are index entries and letter groups rather than report
+#: sections, and holding an alphabet group to "a standfirst before its first figure" would be
+#: nonsense. Adding a report route is a deliberate act and should touch this tuple.
+REPORT_PAGES = ("index.html", "economy/index.html", "households/index.html", "government/index.html")
+
+#: Jaccard overlap of number tokens at or above which a standfirst counts as having pre-empted its
+#: finding. Deliberately loose: the highest passing section today is `economy#growth-shadow` at
+#: 0.429, so the margin is one section wide. A threshold with no headroom is a threshold that fires
+#: on every honest edit and gets raised until it means nothing.
+PREEMPTION_CEILING = 0.5
+
+#: Words that name the drawing rather than the subject. Word-boundary, case-insensitive.
+CONSTRUCTION_WORDS = frozenset(
+    {"axis", "axes", "chart", "charts", "graph", "graphs", "plot", "panel", "panels",
+     "scale", "series", "bars", "legend"}
+)
+
+#: `<section …>…</section>`, non-greedy. A regex is honest here only because no `<section>` nests
+#: inside another on the four report pages — every one is a direct child of `<main>`. If that ever
+#: changes, this silently mis-splits, which is why `sections()` asserts the id set it finds against
+#: the parsed tree rather than trusting the regex alone.
+#: The opening tag's attributes are captured as a blob rather than anchoring `id` in place, because
+#: `id` is not guaranteed to be the first attribute — `<section class="…" id="…">` is valid markup
+#: today even though no current page writes it that way.
+SECTION_RE = re.compile(r'<section\b([^>]*)>(.*?)</section>', re.DOTALL)
+
+#: `id="..."` pulled out of a `<section>` opening tag's attribute blob, wherever it falls.
+SECTION_ID_RE = re.compile(r'\bid="([^"]*)"')
+
+
+def sections() -> list[tuple[str, str, str, Node]]:
+    """Every report section, as `(page, section_id, body_html, node)`.
+
+    Two views of the same section on purpose. The raw `body_html` answers the positional questions
+    — does a standfirst appear *before* the first `<figure`, does a `.prose` appear *after* the
+    last `</figure>` — which a tree walk answers only by re-deriving document order. The parsed
+    `node` answers the textual ones, through the same `_deep_text` the rest of this file uses.
+    """
+    out: list[tuple[str, str, str, Node]] = []
+    for page in REPORT_PAGES:
+        path = DIST / page
+        assert path.exists(), (
+            f"REPORT_PAGES names {page}, which does not exist under {DIST}. A route was renamed or "
+            "removed. Fix the tuple deliberately: a missing entry does not fail this suite, it "
+            "silently shrinks what it checks."
+        )
+        raw = path.read_text()
+        by_id = {n.get("id"): n for n in nodes_of(parse_html(path), "section") if n.get("id")}
+        found: list[tuple[str, str]] = []
+        for attrs, body in SECTION_RE.findall(raw):
+            id_match = SECTION_ID_RE.search(attrs)
+            if id_match:
+                found.append((id_match.group(1), body))
+        assert {sid for sid, _ in found} == set(by_id), (
+            f"{page}: the regex-based section extractor found {sorted(sid for sid, _ in found)} but "
+            f"the parsed tree carries {sorted(by_id)}. A `<section>` now nests inside another and "
+            "the non-greedy split is wrong. Replace the regex with a tree walk."
+        )
+        for section_id, body in found:
+            out.append((page, section_id, body, by_id[section_id]))
+    return out
+
+
+def _numbers(node: Node, cls: str) -> set[str]:
+    """The set of number tokens in the first element of class `cls` inside `node`.
+
+    Trailing `.` and `,` are stripped: `DIGIT_RUN` swallows a sentence-final full stop, so without
+    this `2025,` and `2025.` are two different numbers and the overlap measure is mostly noise.
+    """
+    for d in node.iter_descendants():
+        if cls in d.classes():
+            return {t.rstrip(".,") for t in DIGIT_RUN.findall(_deep_text(d))} - {""}
+    return set()
+
+
+def test_every_section_with_a_figure_states_its_question_first():
+    """Dimension A: a `.standfirst` precedes the section's first `<figure`.
+
+    Scope is structural. A section with no `<figure>` is not exempted, it is simply not asked —
+    the three Limits sections and the `/` intro's four sections fall out with no list to maintain.
+    """
+    offenders = [
+        f"{page}#{sid}"
+        for page, sid, body, _ in sections()
+        if "<figure" in body
+        and not (0 <= body.find('class="standfirst"') < body.find("<figure"))
+    ]
+    assert not offenders, (
+        "A section shows its figure before it says what question the figure answers. "
+        "docs/contracts/prose.md Criterion 1: the question lives in the standfirst, before the "
+        "chart. Sections:\n  " + "\n  ".join(offenders)
+    )
+
+
+def test_every_section_with_a_figure_answers_after_it():
+    """Dimension B: a `.prose` follows the section's **last** `</figure>`.
+
+    "Last, not first" is the whole of the two-figure edge case: `government#where-money-comes-from`,
+    `government#by-state` and `households#who-pays` each carry prose between their two figures, and
+    a first-figure split would pass them on a paragraph the reader meets before the evidence is in.
+    """
+    offenders = [
+        f"{page}#{sid}"
+        for page, sid, body, _ in sections()
+        if "<figure" in body and 'class="prose"' not in body.rsplit("</figure>", 1)[-1]
+    ]
+    assert not offenders, (
+        "A section ends on a bare figure. docs/contracts/prose.md Criterion 1: the chart is the "
+        "answer's evidence, and the closing prose is where the section says what the reader is "
+        "looking at. Sections:\n  " + "\n  ".join(offenders)
+    )
+
+
+def test_no_standfirst_preempts_its_finding():
+    """Dimension C: the standfirst has not already given the finding away.
+
+    Measured as the Jaccard overlap of number tokens. A standfirst that quotes the finding's exact
+    figures posed no question: the reader arrives at the chart already told the answer, and the
+    figure becomes decoration. Both sets empty scores 0.0 and passes, which is a real limit and a
+    deliberate one: a numberless restatement in words is invisible here and is Checklist item 8.
+    """
+    scored = []
+    for page, sid, _, node in sections():
+        a, b = _numbers(node, "standfirst"), _numbers(node, "finding")
+        if not a or not b:
+            continue
+        scored.append((len(a & b) / len(a | b), f"{page}#{sid}"))
+    offenders = [f"{name} at {score:.3f}" for score, name in sorted(scored, reverse=True)
+                 if score >= PREEMPTION_CEILING]
+    assert not offenders, (
+        f"A standfirst repeats its finding's numbers at or above {PREEMPTION_CEILING} overlap. "
+        "docs/contracts/prose.md Criterion 1: the standfirst poses the question and the finding "
+        "answers it. Rewrite the standfirst, never the finding — a finding edit drags its chart "
+        "`aria-label` with it under Criterion 7. Sections:\n  " + "\n  ".join(offenders)
+    )
+
+
+def test_no_section_heading_names_the_charts_construction():
+    """Dimension D: no `<h2>` names the drawing instead of the subject.
+
+    **This test sees half of what Criterion 1 asks.** It catches a heading that names the apparatus
+    — an axis, a panel, a scale. It cannot catch a heading that names the *variables*: "Prices and
+    rates" and "Labor and capital" are headings that tell the reader what was plotted rather than
+    what was found, and both pass this test on every word list anyone would write. That failure
+    mode is human-judged, it is Checklist item 8 in docs/contracts/prose.md, and no word list is
+    added here to fake it.
+    """
+    offenders = []
+    for page in REPORT_PAGES:
+        for h in nodes_of(parse_html(DIST / page), "h2"):
+            text = " ".join(_deep_text(h).split())
+            hits = sorted(w for w in CONSTRUCTION_WORDS
+                          if re.search(rf"\b{w}\b", text, re.IGNORECASE))
+            if hits:
+                offenders.append(f"{page}: {text!r} names {', '.join(hits)}")
+    assert not offenders, (
+        "A section heading names the chart's construction. docs/contracts/prose.md Criterion 1: a "
+        "heading states the question the section answers or the claim it supports, not how the "
+        "picture was drawn. Headings:\n  " + "\n  ".join(offenders)
+    )
+
+
+#: A row of the `### Criterion 1 audit` table: `| /route | section-id | question | Pass |`.
+AUDIT_ROW_RE = re.compile(r"^\|\s*(/[a-z]*)\s*\|\s*([a-z0-9-]+)\s*\|", re.MULTILINE)
+
+
+def _route_of(page: str) -> str:
+    return "/" + page[: -len("index.html")].rstrip("/")
+
+
+def test_the_criterion_one_audit_covers_every_section():
+    """The audit table's row set **equals** the section set built from `dist/`.
+
+    Equality, not containment, in the idiom of the two `==`-asserted baselines above. Containment
+    would let a new section ship without declaring the question it answers, and would let a deleted
+    section leave a stale row asserting a judgement about a page nobody can read any more. What the
+    test asserts is the table's *coverage*; the wording of each question is a reviewer's paraphrase
+    and is exactly the part no machine can check.
+    """
+    text = PROSE_DOC.read_text()
+    start = text.find("### Criterion 1 audit")
+    assert start != -1, (
+        "docs/contracts/prose.md has no `### Criterion 1 audit` section. The per-section judgement "
+        "lives in the contract, where it can be re-read, not in a PR body, where it cannot."
+    )
+    end = text.find("\n## ", start)
+    table = text[start : end if end != -1 else len(text)]
+    declared = {(route, sid) for route, sid in AUDIT_ROW_RE.findall(table)}
+    actual = {(_route_of(page), sid) for page, sid, _, _ in sections()}
+    missing = sorted(actual - declared)
+    stale = sorted(declared - actual)
+    assert not missing, (
+        "Sections on the built site with no row in the Criterion 1 audit table. Add a row naming "
+        "the question the section answers:\n  " + "\n  ".join(f"{r}#{s}" for r, s in missing)
+    )
+    assert not stale, (
+        "Criterion 1 audit rows for sections that no longer exist. Delete them in the same commit "
+        "as the section:\n  " + "\n  ".join(f"{r}#{s}" for r, s in stale)
+    )
+    assert declared == actual

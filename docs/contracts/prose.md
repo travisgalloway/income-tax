@@ -288,9 +288,29 @@ the numbering is for.
 
 **Asks:** does the section state the question it answers before its first figure appears?
 **Pass:** the kicker, heading and standfirst together name a question a reader could have asked, and
-the chart then answers it. **Fail:** the standfirst summarises the chart the reader has not seen yet,
-so the figure arrives as evidence for a claim rather than as an answer to a question.
-**Cited by #52.**
+the chart then answers it. `src/pages/households/index.astro:222-225` poses it and
+`src/pages/households/index.astro:241-247` answers it after the chart. **Fail:** the standfirst
+summarises the chart the reader has not seen yet, so the figure arrives as evidence for a claim
+rather than as an answer to a question. **Cited by #52.**
+
+**The mechanical half.** Four positional and textual facts, over the four report routes' built
+pages. **Enforced by** `pipeline/tests/test_prose.py:464`, `:483`, `:502` and `:526`: a
+`.standfirst` before the section's first `<figure>`; a `.prose` after its **last** `</figure>`; a
+standfirst whose number tokens overlap its finding's by less than `PREEMPTION_CEILING`
+(`pipeline/tests/test_prose.py:398`, 0.5) on Jaccard, because a standfirst quoting the finding's
+exact figures posed no question; and no `<h2>` containing a word from `CONSTRUCTION_WORDS`. Scope is
+structural, with no exemption list anywhere: a section is asked the first two questions **because it
+carries a `<figure>`**, which is what silently and correctly discharges the three Limits sections
+and the `/` intro's four. There is no baseline either. #52 found four violations and fixed all four,
+which is the choice the rule below says to make at that count.
+
+**What they cannot see.** They cannot see a heading that names the section's *variables* rather than
+its question: "Prices and rates" and "Labor and capital" told the reader what was plotted, not what
+was found, and both passed every word list anyone would write. #52 rewrote them by reading, to
+`src/pages/economy/index.astro:165` and `src/pages/economy/index.astro:221`. They cannot see a
+standfirst that restates its finding **in words** rather than in numbers, and they cannot judge
+whether the closing prose answers the question the standfirst actually posed. That is Checklist
+item 8, and it is human-judged.
 
 ### Criterion 2 — the standfirst sets up, the finding claims
 
@@ -347,6 +367,39 @@ alone. Cross-cutting, and **cited by all six** C-issues. Its surfaces are
 `pipeline/curated/prose_figures.yaml`, `src/components/Figure.astro:45-46` and
 `src/components/Figure.astro:61`, and `pipeline/tests/test_accessibility.py:283-300`.
 
+### How a C-issue lands its criterion
+
+Five rules, set by #52 and followed by #53, #58, #59, #60 and #61. They exist so that six issues
+against one contract produce one checker and one contract, not six of each.
+
+1. **One checker.** A criterion's mechanical half becomes tests in `pipeline/tests/test_prose.py`,
+   under a numbered `# N. Criterion N — <name>` banner matching the ones already there, reusing
+   `parse_html`, `nodes_of`, `PROSE_CLASSES` and `_deep_text`, and reading `dist/**/index.html`. No
+   new test file, no second extractor, no source-level grep. The served bytes are the subject, for
+   the reason the module docstring gives.
+2. **Scope is derived from structure, never from a hand-kept list.** A section with no `<figure>` is
+   outside "a `.prose` after the last figure" *because it has no figure*, not because it is named in
+   an exemption set. A list that must be maintained is a list that rots, and a rotted list reads as
+   a passing check.
+3. **The exemption policy is chosen by the violation count, and the choice is stated.** Few live
+   violations, and the issue **fixes them all and asserts zero with no baseline** — #52's road, at
+   four. Many, and the issue **baselines them as `fingerprint -> "#owner"` asserted with `==`** —
+   #51's road, at 26 dash fingerprints, with the baseline reaching zero becoming #58's definition of
+   done. Neither is the default. The count decides and the plan says which and why.
+4. **The human-judged half is written into the Checklist below as a numbered item marked
+   NOT EXECUTED, citing its criterion by number**, and the mechanical check's docstring says out
+   loud what it cannot see. It is never dressed up as automation. A word list invented to make a
+   human judgement look mechanical is worse than no check, because it reports green.
+5. **The per-surface judgement is recorded here, one row per surface, and gated by a test** that
+   asserts the table's row set **equals** the set built from `dist/`. Not in a PR body, which
+   nothing can re-read and nothing can fail on. A new section then cannot ship without declaring
+   what question it answers, and a deleted one cannot leave a stale judgement behind.
+
+Contract, `docs/feature-matrix.md` and `docs/test-plan.md` move in the same commits as the code, as
+they do everywhere in this repository. It is restated here because all six of these issues are
+docs-adjacent and the temptation to batch the docs into a trailing commit is strongest where the
+docs are most of the diff.
+
 ### What each downstream issue attaches to
 
 | Criterion | Issue | Attaches to |
@@ -367,6 +420,53 @@ Two surfaces no C-issue can reach, each filed and each named beside the baseline
   Both are `.tsx` edits, outside #58's prose-editing remit.
 - **#103** — the curated-data shouts. `pipeline/curated/laws.yaml:287` and
   `src/data/party_splits.json:22`. A pipeline change requiring regeneration and revalidation.
+
+### Criterion 1 audit
+
+One row per `<section id>` on the four report routes, twenty-nine of them. The question is a
+reviewer's one-line paraphrase of what the section's kicker, heading and standfirst pose before the
+reader meets a chart. `pipeline/tests/test_prose.py:588` asserts this table's `Route` and
+`Section id` set **equals** the set built from `dist/`, so a section cannot ship without declaring
+its question and a deleted section cannot leave its judgement behind. What the test asserts is the
+**coverage**, never the wording: whether the paraphrase is honest, and whether the closing prose
+answers it, is Checklist item 8.
+
+| Route | Section id | The question it answers | Criterion 1 |
+|---|---|---|---|
+| / | what-this-is | What is this site for, and what does it refuse to do? | Pass |
+| / | where-to-start | Which route should a reader open first, and in what order do the three fit together? | Pass |
+| / | how-to-read-a-figure | What are the parts of a figure here, and how does a reader check one against its source? | Pass |
+| / | where-the-numbers-come-from | Where does the data come from, and what happens when it stops reconciling? | Pass |
+| /economy | one-picture | How much more does the economy produce than it did in 1950? | Pass |
+| /economy | growth-shadow | Did what a household got keep up with what an hour of work produces? | Pass |
+| /economy | who-works | How many people are working, and who does the unemployment rate leave out? | Pass |
+| /economy | prices-rates | Was a given interest rate high or low, and against what were prices doing at the time? | Pass |
+| /economy | labor-capital | Which way has each of the wage share and the profit share of GDP moved since 1950? | Pass |
+| /economy | limits | What can this route not tell you, and where does the reader go next? | Pass |
+| /households | what-a-household-earns | What does a household in the middle earn, and how far back can that be measured? | Pass |
+| /households | the-spread | How far apart are households, and has the distance grown? | Pass |
+| /households | a-century-of-brackets | How many brackets has the income tax had, and where has the top one started? | Pass |
+| /households | statutory-vs-effective | Does anybody actually pay the top rate? | Pass |
+| /households | who-pays | Who pays the federal individual income tax, and in what proportion to what they earn? | Pass |
+| /households | the-bill-you-do-not-see | Which of the two federal bills on a wage is the larger, and for which households? | Pass |
+| /households | limits | What can this route not tell you, before its charts are used in an argument? | Pass |
+| /government | forty-trillion | How fast has the debt grown, and does it look the same measured against the economy? | Pass |
+| /government | who-holds-it | Who is the federal debt actually owed to? | Pass |
+| /government | how-old | How soon does the debt outstanding have to be refinanced? | Pass |
+| /government | whole-budget | What went out, what came in, and how big is the gap next to the budget that produced it? | Pass |
+| /government | structural-gap | Over three decades, which side of the budget moved: revenue or spending? | Pass |
+| /government | what-congress-votes-on | How much of the budget does an annual appropriation actually set? | Pass |
+| /government | net-interest | What does every prior year's borrowing cost now, and who votes on that cost? | Pass |
+| /government | the-laws | Which laws moved the deficit since 1995, and what was each scored to cost? | Pass |
+| /government | passed-signed | Who voted for the scored cost, and who signed it? | Pass |
+| /government | where-money-comes-from | Where does federal revenue come from, and has the mix changed? | Pass |
+| /government | by-state | Which states pay in more federal tax than they receive in federal spending? | Pass |
+| /government | limits | What can this data not settle, whatever the charts appear to show? | Pass |
+
+Seven of these rows carry no `<figure>`: the four `/` intro sections, and the Limits section closing
+each of the three routes. They are scored on the question alone, because "a standfirst before the
+first figure" and "prose after the last figure" are not asked of a section that has no figure. That
+is the structural scope of rule 2 above, and it is why this contract has no exemption list.
 
 ## Checklist — status per item
 
@@ -395,3 +495,9 @@ statement about this contract's coverage, not a formality. Nothing below is enfo
 7. **Read the figure notes as a sceptical reader**, asking of each one whether it tells the reader
    what the chart cannot do or merely restates what it does. — **NOT EXECUTED.** Human required.
    Criterion 5.
+8. **Read each section in the order standfirst, chart, closing prose.** Does the standfirst pose a
+   question a reader could have asked, does the closing prose answer that question rather than
+   describe the chart again, and does the heading name a question or a claim rather than the
+   section's variables? The last of the three is the half no word list reaches: a heading naming
+   what was plotted passes `test_no_section_heading_names_the_charts_construction` and fails this
+   criterion on any human reading. — **NOT EXECUTED.** Human required. Criterion 1.

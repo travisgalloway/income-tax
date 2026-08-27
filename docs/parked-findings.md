@@ -855,3 +855,22 @@ time. Appended to, never rewritten. None of these have been acted on.
   also why `grep '—' src/content/glossary/` finds nothing, which is how these survived every earlier
   dash census. #59's territory. Found while measuring #51's baseline. Severity: prose rule
   unenforced on one surface, non-blocking.
+- [2026-08-26] `pipeline/tests/test_prose.py:315` is named
+  `test_the_dash_baseline_is_declining` but is parametrized over `KNOWN_DASH_DEBT` **and**
+  `KNOWN_SHOUT_DEBT`, so its name describes half of what it checks and a `-k dash` selection reads
+  as covering only one baseline. Renaming it is a one-line change but it is #58's file to move,
+  since #58 owns both baselines to zero. Found while adding Criterion 1's checks under the same
+  banner scheme for #52. Severity: naming, non-blocking.
+- [2026-08-26] `docs/test-plan.md` repeats the identical two-sentence #51 prose-coverage paragraph
+  verbatim in 29 rows, and #52 has now appended a second repeated paragraph to five of them. The
+  duplication is per-row by the file's design (one row, one complete account), but the prose-contract
+  text is route-wide rather than row-specific, so a single per-route note above each table would say
+  the same thing once. Restructuring the file is nobody's current issue. Found while recording #52's
+  new cases. Severity: documentation duplication, non-blocking.
+- [2026-08-26] `src/pages/economy/index.astro:25-28`, `src/pages/households/index.astro:31-34` and
+  `src/pages/government/index.astro` each carry a route-level `<p class="standfirst">` that sits
+  outside every `<section>`. It is correct markup and reads correctly, but it means `.standfirst` is
+  not a section-scoped class, so any future check that assumes one standfirst per section will
+  mis-count by one per route. #52's checks read standfirsts only from inside a section node and are
+  unaffected. Recorded because the assumption is easy to make. Found while writing the Criterion 1
+  section extractor. Severity: latent assumption, non-blocking.
