@@ -8,6 +8,7 @@
 import { useMemo, useState } from 'react'
 import { line as d3line, area as d3area, curveMonotoneX } from 'd3-shape'
 import { Chart } from '../charts/Chart'
+import { Annotation } from '../charts/Annotation'
 import { AxisBottom, AxisLeft } from '../charts/Axis'
 import { linear, niceExtent } from '../charts/scales'
 import { UnitToggle } from './UnitToggle'
@@ -112,16 +113,17 @@ export function DebtChart({ rows }: { rows: DebtYear[] }) {
                     y1={y(get(r)) - 6} y2={y(get(r)) - (isLast ? 18 : 30)}
                     stroke="var(--ink)" strokeWidth={0.75}
                   />
-                  <text
+                  <Annotation
+                    frame={fr}
                     x={x(r.y) - 6}
                     y={y(get(r)) - (isLast ? 22 : 34)}
-                    textAnchor="end"
-                    className="annotation"
-                  >
-                    {narrow
-                      ? `${fiscalYear(r.y)} ${unit === 'gdp' ? percent(r.gdp_share as number, 0) : trillions(r.debt, 1)}`
-                      : `${fiscalYear(r.y)} ${full(r)}`}
-                  </text>
+                    anchor="end"
+                    label={
+                      narrow
+                        ? `${fiscalYear(r.y)} ${unit === 'gdp' ? percent(r.gdp_share as number, 0) : trillions(r.debt, 1)}`
+                        : `${fiscalYear(r.y)} ${full(r)}`
+                    }
+                  />
                 </g>
               )
             })}

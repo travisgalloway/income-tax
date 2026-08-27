@@ -18,6 +18,21 @@ const NARROW: ChartSize = { width: 360, height: 316, margin: { top: 22, right: 1
  * the viewBox to the container keeps label text at its intended size at every
  * width. Returns the wide preset before measurement so the server render and
  * the desktop case agree.
+ *
+ * `NARROW.margin.right` stays 12, revisited under #64 and deliberately kept.
+ * Widening it to hold a label like `Mandatory (net)` (~90 units) would spend
+ * 30% of a 296-unit plot on empty gutter at exactly the width where plot area
+ * is scarcest. It is also the wrong lever: annotations are clamped to the SVG's
+ * edges by `placeAnnotation` (annotate.ts), which flips a right-edge label
+ * inward rather than relying on a gutter wide enough to hold it, so no
+ * annotation's legibility depends on this number at all. 12 is a margin for the
+ * axis rule to breathe in, not a label reservoir.
+ *
+ * Note that these two presets are NOT symmetric in what the test suite can see:
+ * this hook returns WIDE before measurement, so the server render — and every
+ * assertion `pipeline/tests/test_accessibility.py` makes against `dist/` — only
+ * ever observes 720. The 360 geometry is reachable only from the browser and
+ * from `annotate.test.ts` over the pure helper.
  */
 export function useChartSize(breakpoint = 560): [React.RefObject<HTMLDivElement | null>, ChartSize] {
   const ref = useRef<HTMLDivElement | null>(null)

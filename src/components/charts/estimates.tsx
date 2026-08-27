@@ -8,6 +8,7 @@
  *  Economy-route chart that touches economy.json (currently §1 and §3).
  */
 import type { Frame } from './scales'
+import { Annotation } from './Annotation'
 
 export const PROJECTED_DASH = '6 4'
 export const PROJECTED_OPACITY = 0.55
@@ -42,7 +43,22 @@ export function splitAtBoundary<T extends Estimated>(rows: T[], lastActualFy: nu
 }
 
 /** A vertical rule marking the last actual fiscal year, with its own label so
- *  the boundary is legible without relying on the dash pattern alone. */
+ *  the boundary is legible without relying on the dash pattern alone.
+ *
+ *  The rule marks the last ACTUAL fiscal year, so it sits near the right edge by
+ *  construction and its label always overran it (#64). `placeAnnotation` flips
+ *  the label to the left of the rule rather than sliding it, so it stays read as
+ *  belonging to the rule. The placement is computed from the label and the
+ *  frame, never from FY2025's current x, so next year's vintage cannot regress
+ *  it. On `null` — a label too wide to fit at all — the rule still draws and the
+ *  label is omitted; a truncated boundary year would be worse than none.
+ *
+ *  The 4-unit clearance is a `gap`, not a pre-offset baked into `x`. Written as
+ *  `x + 4` it means "4 right of the rule" while the anchor is `start` and
+ *  "overlap the rule by 4" the moment the clamp flips it to `end` — which it
+ *  always does here. As a `gap` it flips sign with the anchor and keeps meaning
+ *  clearance. On `/economy` §1 that difference is visible: without it the label
+ *  sits on its own rule and collides with `CBO projection`. */
 export function BoundaryRule({ frame, x, label }: { frame: Frame; x: number; label: string }) {
   return (
     <g>
@@ -55,9 +71,7 @@ export function BoundaryRule({ frame, x, label }: { frame: Frame; x: number; lab
         strokeWidth={1}
         strokeDasharray="2 2"
       />
-      <text x={x + 4} y={10} className="annotation">
-        {label}
-      </text>
+      <Annotation frame={frame} x={x} gap={4} y={10} label={label} />
     </g>
   )
 }

@@ -10,6 +10,7 @@
 import { useState } from 'react'
 import { line as d3line } from 'd3-shape'
 import { Chart } from '../charts/Chart'
+import { Annotation } from '../charts/Annotation'
 import { AxisBottom, AxisLeft } from '../charts/Axis'
 import { linear, niceExtent } from '../charts/scales'
 import { TableView } from './TableView'
@@ -67,12 +68,8 @@ export function LaborAndCapital({ rows, lastActualFy }: { rows: EconomyYear[]; l
 
             {lastActualRow && (
               <>
-                <text x={x(lastActualRow.y) - 4} y={y(lastActualRow.wage_share as number) - 8} textAnchor="end" className="annotation">
-                  Wages and salaries
-                </text>
-                <text x={x(lastActualRow.y) - 4} y={y(lastActualRow.profit_share as number) + 14} textAnchor="end" className="annotation">
-                  Corporate profits
-                </text>
+                <Annotation frame={fr} x={x(lastActualRow.y) - 4} y={y(lastActualRow.wage_share as number) - 8} anchor="end" label="Wages and salaries" />
+                <Annotation frame={fr} x={x(lastActualRow.y) - 4} y={y(lastActualRow.profit_share as number) + 14} anchor="end" label="Corporate profits" />
               </>
             )}
 

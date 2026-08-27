@@ -323,6 +323,13 @@ never enlarged.
 area still uses the wide viewBox with scripting off, so it is proportionally smaller than the
 JS-enabled narrow layout. Degraded but readable, not equivalent.
 
+**This section owns the scripting-OFF case only (#78).** It used to be read as covering annotation
+legibility generally, and that reading is now wrong: with scripting **on**, chart annotations are
+clamped to their SVG's edges by `src/components/charts/annotate.ts` and asserted by five guards in
+`pipeline/tests/test_accessibility.py` (#64, § Right-edge annotation clipping below). Enlarging
+`.annotation` under `<noscript>` was never the fix for #64 and would not have been — the defect was
+placement past the viewBox edge, not type size, and larger type at the same `x` clips *sooner*.
+
 ## Manual pass results
 
 Issue #30's sweep, in two sittings. **2026-08-24**: keyboard traversal, roving tabindex and focus
@@ -571,6 +578,194 @@ fade, no shadow, no persistent scrollbar, no text hint — on this wrapper or on
 `.law-table-scroll`. That is **#76**, which scopes it site-wide; two of #63's Definition-of-done
 boxes were moved there on 2026-08-27 rather than implemented under this number. Keyboard
 operability of the scroll wrappers is **#71**, and the `.sort-button`'s 21px height is **#65**.
+
+### Right-edge annotation clipping (#64)
+
+**Asserted statically, unlike #62 and #63 — and this is the part worth reading first.** Those two
+were CSS-layout defects: `dist/` carries markup and a stylesheet, not a layout, so no static test in
+this repository could see them and the guards could only assert that the *declarations* were
+present. #64 is different in kind. An annotation's `x`, its `text-anchor`, its ancestor
+`transform`s, its text content and its SVG's `viewBox` are **all in the served bytes**, so
+`pipeline/tests/test_accessibility.py` reproduces the clip arithmetic directly over `dist/` and
+asserts the geometry itself. Only the text *width* is estimated, and it is estimated with the same
+constant the runtime clamp uses — so the guard proves the clamp was **applied**, using the
+arithmetic the clamp is built on.
+
+**This is a correctness defect, not a layout blemish.** `Chart.tsx` renders with a `viewBox` and no
+`overflow: visible`, so an annotation drawn past the SVG edge is **clipped, not spilled**: cut
+mid-glyph, with no ellipsis, no scrollbar and no visual cue that anything is missing. Households §5
+rendered `2022: top 1% 31.5%` as **`2022: top 19`** — a complete-looking label carrying a number
+that is not the number, on a site whose whole claim is that every figure traces to a source. The fix
+is therefore stronger than "make annotations visible": `placeAnnotation` returns `null` for a label
+too wide to fit its span, and `<Annotation>` renders nothing on `null`. **A label that cannot fit is
+absent, never truncated.** The finding stays reachable either way — every figure carries a
+`TableView` and a finding-stating `aria-label`, both already enforced
+(`test_every_chart_has_a_real_table_in_the_static_html`, `test_every_chart_svg_states_a_finding`).
+
+**Measured before the fix**, walking `dist/` with the suite's own `parse_html` at a 720-unit
+viewBox. All fifteen were clipped in the shipped build:
+
+| Route | x | anchor | painted box | over | label |
+|---|---|---|---|---|---|
+| `/economy` | 620.4 | start | [620, 756] | **+36** | `Last actual, FY2025` (x6) |
+| `/households` | 702.0 | start | [702, 830] | **+110** | `Top statutory rate` |
+| `/households` | 696.0 | middle | [632, 760] | **+40** | `2022: top 1% 31.5%` -> `2022: top 19` |
+| `/households` | 687.8 | start | [688, 752] | **+32** | `2022, 18%` |
+| `/households` | 696.0 | middle | [657, 735] | **+15** | `2023: 38.4%` |
+| `/government` | 696.0 | middle | [592, 800] | **+80** | `Longest instrument, 30-year bond` |
+| `/government` | 524.2 | start | [518, 746] | **+26** | `OECD average, 34.1% of GDP` |
+| `/government` | 644.0 | start | [644, 751] | **+31** | `Mandatory (net)` |
+| `/government` | 644.0 | start | [644, 737] | **+17** | `Discretionary` |
+| `/government` | 644.0 | start | [644, 730] | **+10** | `Net interest` |
+
+After the fix: **zero overruns across all 63 annotation nodes**, and the per-route counts are
+unchanged (19 / 24 / 12 `class="annotation"`, six `Last actual, FY`, one dotplot average) — so
+nothing was dropped from the server render to achieve it, which is the failure mode a clipping fix
+invites.
+
+#### What is asserted, and what is only measured
+
+This distinction is the point of the section; the three lanes cover different geometry and only one
+of them is a browser.
+
+| Geometry | Lane | Status |
+|---|---|---|
+| **WIDE, 720 units** — every annotation in `dist/` | `pytest -k annotation`, five guards over the served bytes | **ASSERTED**, and unattended |
+| **NARROW, 360 units** — client-only, the worst case, and the only place a label clips off the LEFT edge | `npm run test:unit` over the pure helper (`src/components/charts/annotate.test.ts`) | **ASSERTED**, at the unit level |
+| **Rendered pixels**, real `getBoundingClientRect()` and `getComputedTextLength()` at 390x844 and 1440x900 | browser | **MEASURED**, recorded below. Automating it in CI is **#67** |
+
+SSR cannot reach NARROW at all: `useChartSize.ts` returns the WIDE preset before the first client
+measurement, so the server render — and therefore every assertion any pytest guard can make — only
+ever observes 720. That is why the unit lane exists for this issue rather than being optional.
+
+#### Executed 2026-08-27 (the browser lane)
+
+Chromium **151.0.0.0** (Playwright MCP) against a local `npm run preview` of this branch's `dist/`,
+under its `/income-tax/` base, at **1440x900** and **390x844**. Islands are `client:visible`, so the
+page was scrolled end to end before measuring; at 390 the charts then report a **360**-unit viewBox,
+confirming the NARROW path was genuinely exercised and not just SSR scaled down.
+
+| Route | Viewport | Annotations | Overrunning their SVG | `documentElement` scrollWidth / clientWidth |
+|---|---|---|---|---|
+| `/economy` | 1440x900 | 19 | **0** | 1440 / 1440 |
+| `/households` | 1440x900 | 24 | **0** | 1440 / 1440 |
+| `/government` | 1440x900 | 20 | **0** | 1440 / 1440 |
+| `/economy` | 390x844 | 19 | **0** | 390 / 390 |
+| `/households` | 390x844 | 24 | **0** | 390 / 390 |
+| `/government` | 390x844 | 16 | **0** | 390 / 390 |
+
+`/government` drops from 20 to 16 by design, not by clipping: `BudgetChart` replaces its four
+in-chart series labels with a text legend below the figure at narrow, which it already did.
+
+#### Criterion 4: a clamped label must not land on what it names
+
+This one is not provable from the bytes, and looking at the numbers was not enough — the first pass
+of the fix satisfied every clipping assertion above **and broke this**. Three `BudgetChart` labels
+and Households §4's `Top statutory rate` flipped from the right margin into the plot and came to
+rest on the series they name. The clip guard was green throughout. It is recorded here because the
+lesson generalises: "the annotation is visible now" and "the annotation is correct now" are
+different claims, and only one of them has a static test.
+
+Checked by hit-testing real paint (`elementsFromPoint` across nine points along each label, at three
+heights), restricted to the labels the clamp actually **moved** — a label that already fitted is
+returned unchanged by `placeAnnotation` and cannot have been pushed anywhere. Results after the fix:
+
+| Route | Labels moved by the clamp | On their own series | Label-on-label collisions |
+|---|---|---|---|
+| `/economy` | 6 | **0** | 1, pre-existing — see below |
+| `/households` | 4 | **0** | **0** |
+| `/government` | 5 | **0** | **0** |
+
+Three changes were needed to get there, and each is a different answer because the charts differ:
+
+- **`BudgetChart` (stacked area).** A stacked area chart has no "just above the line" free space —
+  every point inside the plot is inside some band. Flipping the labels there put them on the bands.
+  They now sit inside the plot right-anchored **with a panel-coloured halo**, which is the treatment
+  `RevenueChart`'s `.legend-label` band labels two sections down already used for exactly this
+  problem. The plan named `VotedAndNot` as the shape to converge on; that is right for a line chart
+  and wrong for this one.
+- **`StatutoryVsEffective` (line).** Here `VotedAndNot`'s idiom does apply: end-anchored at the last
+  point and lifted 8 units clear of the curve. Flipping it in place had laid it along the flat
+  right-hand end of the very line it names.
+- **`BoundaryRule`'s clearance became a `gap`.** `x + 4` reads as "4 units right of the rule" while
+  the anchor is `start`, and inverts to "overlap the rule by 4" the moment the clamp flips it to
+  `end` — which it always does, since the rule marks the last actual year and sits near the right
+  edge by construction. A `gap` flips its sign with the anchor. On `/economy` §1 the difference is
+  visible: without it all six boundary labels sat on their own dashed rule and the top one collided
+  with `CBO projection`. All six now clear the rule (label right edge 538.4, rule at 542.4).
+
+`BudgetChart`'s own label-collision guard was generalised in passing: it spaced the net-interest and
+revenue labels alone, and on FY2025 data it is **discretionary** and revenue whose centres fall 0.24T
+apart. Naming a specific pair was the bug; the labels are now sorted and spaced. The minimum gap is
+**15** units, not the font's 11.5, because an `.annotation`'s painted box measures 13.3 units tall.
+
+**One collision is left, and it is not this issue's.** `/economy` §4's `Fed funds` and `10-year note`
+overlap each other. Both are `end`-anchored at the same x with y offsets of -8 and -20, both fit
+their SVG comfortably, and `placeAnnotation` returns them unchanged — their positions are identical
+to `main`'s. Recorded in `docs/parked-findings.md`.
+
+**No annotation moves between the SSR paint and hydration.** At 1440x900 the hydrated preset is the
+same WIDE preset SSR emitted, so every placement must be byte-identical; comparing each annotation's
+`x` and `text-anchor` before and after forcing hydration gives **0 of 20 changed**. That is
+criterion 5, and it holds by construction — placement is a pure function of `(x, label, frame,
+anchor)`, with no `getBBox`, no `getComputedTextLength`, no `useEffect` and no measurement of any
+kind. `test_annotation_placement_is_not_measured_at_runtime` keeps it that way.
+
+#### The advance-width constant
+
+`ADVANCE_EM = 0.62` in `src/components/charts/annotate.ts`, mirrored in
+`pipeline/tests/test_accessibility.py` and pinned to it by
+`test_the_annotation_constants_match_the_source_and_the_stylesheet`.
+
+Worst measured `getComputedTextLength() / (chars x fontPx)` across all six route/viewport
+combinations above:
+
+| Route | Viewport | Worst ratio | Carried by |
+|---|---|---|---|
+| `/households` | 1440x900 | **0.5889** | `60.0%` |
+| `/economy` | 1440x900 | 0.5878 | `Unemployment` |
+| `/government` | 1440x900 | 0.5578 | `Revenue` |
+| `/households` | 390x844 | 0.5601 | `60.0%` |
+| `/economy` | 390x844 | 0.5591 | `Unemployment` |
+| `/government` | 390x844 | 0.5306 | `Revenue` |
+
+**0.5889 against 0.62 — the constant over-estimates by 5.3%.** That is the safe direction and the
+whole reason it is written as an over-estimate: clamping a little too early costs a few units of
+whitespace, while clamping a little too late reproduces the defect. **The rule is that this constant
+is raised, never lowered.** If a future measurement here exceeds 0.62, raise it in both files; if a
+future measurement comes in lower, leave it alone.
+
+#### Boundaries
+
+- **#66** owns chart legibility at 390px generally — axis tick and axis-title text, tick density,
+  hit-target size, and the direct labels that are **not** in the annotation family. `holders-label`
+  on `/government` §2 is the live example: `Foreign $9.64T (30% of publicly held debt)` still paints
+  past its SVG. It is recorded in `docs/parked-findings.md` and deliberately not fixed here.
+  `test_no_annotation_class_ships_outside_the_guarded_set` is an `==` audit over every `<text>` class
+  in `dist/`, so that boundary is explicit in the suite rather than implied.
+- **#67** owns wiring a browser probe into CI. The measurement above is recorded, not automated.
+- **#78** owns the scripting-off `<noscript>` geometry; see § Known limitation above.
+- **`overflow: visible` on the SVG is not the fix** and was not used. It would spill annotations into
+  adjacent prose and could reintroduce page-level horizontal overflow; `Chart.tsx` is untouched, and
+  `documentElement.scrollWidth == clientWidth` still holds at both viewports (table above).
+- **`NARROW.margin.right` stays 12**, revisited under this issue. Widening it to hold `Mandatory
+  (net)` (~90 units) would spend 30% of a 296-unit plot on gutter, and it is the wrong lever anyway:
+  with the clamp in place, no annotation's legibility depends on the right margin's width. The reason
+  is written into `useChartSize.ts`.
+
+#### The two ways this guard could report healthy while blind
+
+Both cost a cycle during the investigation, both are silent, and both are now covered by
+`test_the_annotation_clipping_guard_sees_the_whole_corpus` plus the negative test:
+
+1. **`html.parser` lowercases attribute names.** `svg.get("viewBox")` returns `None` for every SVG
+   in `dist/`; the attribute is `viewbox`. Reading it the obvious way finds **zero** annotations and
+   passes green on a broken tree. Demonstrated: with the camelCase read restored, the corpus check
+   reports `found only 0 nodes` and the negative test reports `a start-anchored label running off the
+   right edge passed`.
+2. **A `<text>` with no `x` attribute.** `BracketHistory` emitted one, positioned entirely by an
+   ancestor `<g transform>`. Skipping it would drop a real node; a missing `x` is **0**, not "not my
+   problem". That label is now placed explicitly, and the guard reads absent `x` as 0.
 
 ### Reading position in the contents list (#44)
 

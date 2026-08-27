@@ -7,6 +7,7 @@
 import { useMemo, useState } from 'react'
 import { line as d3line } from 'd3-shape'
 import { Chart } from '../charts/Chart'
+import { Annotation } from '../charts/Annotation'
 import { AxisBottom, AxisLeft } from '../charts/Axis'
 import { linear } from '../charts/scales'
 import { dollars } from '../charts/format'
@@ -109,14 +110,10 @@ export function GrowthAndShadow({ economyRows, incomeRows }: { economyRows: Econ
             <path d={mhiLine(shown) ?? ''} fill="none" stroke="var(--int)" strokeWidth={2} />
 
             {lastShown?.prodIndex != null && (
-              <text x={x(lastShown.y) - 4} y={y(lastShown.prodIndex) - 6} textAnchor="end" className="annotation">
-                Output per hour
-              </text>
+              <Annotation frame={fr} x={x(lastShown.y) - 4} y={y(lastShown.prodIndex) - 6} anchor="end" label="Output per hour" />
             )}
             {lastShown?.mhiIndex != null && (
-              <text x={x(lastShown.y) - 4} y={y(lastShown.mhiIndex) + 14} textAnchor="end" className="annotation">
-                Real median household income
-              </text>
+              <Annotation frame={fr} x={x(lastShown.y) - 4} y={y(lastShown.mhiIndex) + 14} anchor="end" label="Real median household income" />
             )}
 
             {shown.map((r) => (

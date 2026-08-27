@@ -12,6 +12,7 @@
 import { useMemo, useState } from 'react'
 import { line as d3line, area as d3area, curveMonotoneX } from 'd3-shape'
 import { Chart } from '../charts/Chart'
+import { Annotation } from '../charts/Annotation'
 import { AxisBottom, AxisLeft } from '../charts/Axis'
 import { linear, niceExtent } from '../charts/scales'
 import { TableView } from './TableView'
@@ -168,26 +169,24 @@ export function StructuralGap({ rows }: { rows: BudgetYear[] }) {
               strokeDasharray="4 3"
             />
 
-            <text x={x(bandMid.y)} y={bandY - 10} textAnchor="middle" className="annotation">
-              Surplus, FY1998-2001
-            </text>
+            <Annotation frame={fr} x={x(bandMid.y)} y={bandY - 10} anchor="middle" label="Surplus, FY1998-2001" />
 
-            <text
+            <Annotation
+              frame={fr}
               x={x(last.y) - 4}
               y={y(outlaysOf(last, unit)) - 8}
-              textAnchor="end"
-              className="annotation series-label"
-            >
-              Outlays
-            </text>
-            <text
+              anchor="end"
+              seriesLabel
+              label="Outlays"
+            />
+            <Annotation
+              frame={fr}
               x={x(last.y) - 4}
               y={y(revenueOf(last, unit)) - 8}
-              textAnchor="end"
-              className="annotation series-label"
-            >
-              Revenue
-            </text>
+              anchor="end"
+              seriesLabel
+              label="Revenue"
+            />
 
             {/* Every year is a focusable datum reporting revenue, outlays,
                 the gap and the word surplus or deficit. */}

@@ -1999,3 +1999,498 @@ def test_the_by_state_guards_bite_the_ways_the_fix_can_regress():
     assert not hidden_table_cell_failures(
         css + "\n.tableview .tv-close { display: none; }\n"
     ), "a non-cell `display: none` was reported as a hidden column"
+
+
+# ---------------------------------------------------------------------------
+# Chart annotations clipped at the plot edge (#64)
+#
+# Unlike the CSS-layout defects in #62 and #63, this one is fully provable from
+# the served bytes: an annotation's `x`, its `text-anchor`, its ancestor
+# `transform`s, its text content and its SVG's `viewBox` are ALL in `dist/`.
+# Only the text width is estimated — and it is estimated with the same constant
+# `src/components/charts/annotate.ts` clamps against, so these guards prove the
+# clamp was APPLIED, using the arithmetic the clamp itself is built on.
+#
+# What is NOT provable here: the 360-unit NARROW geometry. `useChartSize`
+# returns the WIDE preset before measurement, so SSR only ever emits 720. That
+# half is covered by `src/components/charts/annotate.test.ts` under
+# `npm run test:unit`. A browser probe with real `getBoundingClientRect()` is
+# #67's; `docs/contracts/accessibility.md` records it as measured, not asserted.
+# ---------------------------------------------------------------------------
+
+# The annotation family: direct labels that name a datum or a series. Keyed on
+# class because that is what survives into the built HTML.
+ANNOTATION_CLASSES = {
+    "annotation",
+    "series-label",
+    "dotplot-average-label",
+    "maturity-marker-label",
+}
+
+# global.css font sizes, asserted against the stylesheet below rather than
+# trusted, because a size change silently changes every width in this file.
+ANNOTATION_FONT_PX = {
+    "annotation": 11.5,
+    "series-label": 11.5,
+    "dotplot-average-label": 10.5,
+    "maturity-marker-label": 10.5,
+}
+
+# Must equal ADVANCE_EM in src/components/charts/annotate.ts — asserted below.
+ADVANCE_EM = 0.62
+
+# Every other `<text>` class that ships today. This is an `==` audit, not an
+# ignore list: a class that appears in neither set fails the audit, so a new
+# annotation cannot ship unguarded (E10). Splitting the corpus this way is
+# deliberate — axis text, tick text and the labels named here belong to the
+# broad 390px legibility sweep in #66, NOT to #64, and a later reader should
+# not "complete" this guard into that issue's scope.
+#
+# `holders-label` is a genuine direct data label that overruns /government
+# today (Foreign $9.64T … at +100 units). It is recorded in
+# docs/parked-findings.md and left to #66; it is listed here so the audit still
+# bites when something NEW appears.
+NON_ANNOTATION_TEXT_CLASSES = {
+    "attrib-row-label",
+    "axis-label",
+    "axis-title",
+    "control-strip-glyph",
+    "datum",
+    "dotplot-label",
+    "dotplot-label-us",
+    "dotplot-value",
+    "dotplot-value-us",
+    "holders-label",
+    "legend-label",
+    "maturity-label",
+    "panel-title",
+    "state-tile-code",
+    "state-tile-mark",
+}
+
+ANNOTATE_TS = SRC / "components" / "charts" / "annotate.ts"
+ANNOTATION_TSX = SRC / "components" / "charts" / "Annotation.tsx"
+CHARTS_DIR = SRC / "components" / "charts"
+
+_TRANSLATE = re.compile(r"translate\(\s*(-?[\d.]+)")
+
+_TS_COMMENT = re.compile(r"/\*.*?\*/|//[^\n]*", re.S)
+
+
+def _without_comments(source: str) -> str:
+    """Source with comments removed.
+
+    These guards forbid CALLING `getBBox` and friends; annotate.ts's own header
+    NAMES them, in the sentence explaining why it does not use them. Scanning
+    raw text would fail on the documentation of the rule it is enforcing — and
+    the obvious "fix" for that is to delete the explanation.
+    """
+    return _TS_COMMENT.sub("", source)
+
+
+def _font_px_for(node: Node) -> float:
+    for token in node.classes():
+        if token in ANNOTATION_FONT_PX:
+            return ANNOTATION_FONT_PX[token]
+    return 11.5
+
+
+def _label_and_width(node: Node) -> tuple[str, float]:
+    """The label's text, and an upper bound on its rendered advance width.
+
+    A multi-line label (`<tspan>` children, as OecdChart's two-line average
+    marker) is as wide as its WIDEST LINE, never the concatenation of them —
+    reading the parent's flattened text would over-estimate by 2x and report a
+    fictitious overrun (E9).
+    """
+    font_px = _font_px_for(node)
+    tspans = [c for c in node.iter_descendants() if c.tag == "tspan"]
+    if tspans:
+        lines = [(s.text() or "").strip() for s in tspans]
+        widest = max(lines, key=len) if lines else ""
+        return widest, max((len(line) for line in lines), default=0) * font_px * ADVANCE_EM
+    label = (node.text() or "").strip()
+    return label, len(label) * font_px * ADVANCE_EM
+
+
+def _local_x(node: Node, svg: Node) -> float:
+    """`x`, plus every ancestor `translate()` up to the SVG.
+
+    An absent `x` is 0, NOT "skip this node". BracketHistory emitted exactly
+    that shape — a `<text>` positioned entirely by an ancestor `<g transform>`
+    — and a guard that skipped it would pass green over a real overrun (E7).
+    """
+    dx = float(node.get("x") or 0)
+    parent = node.parent
+    while parent is not None and parent is not svg:
+        match = _TRANSLATE.search(parent.get("transform") or "")
+        if match:
+            dx += float(match.group(1))
+        parent = parent.parent
+    return dx
+
+
+def _annotated_svgs(root: Node) -> list[tuple[Node, float]]:
+    """Every `<svg>` carrying a numeric viewBox, with its width in user units.
+
+    `html.parser` LOWERCASES attribute names, so the attribute in `dist/` is
+    `viewbox`, and `svg.get("viewBox")` returns None for every SVG on the site.
+    A guard written the obvious way finds zero annotations and passes green on a
+    broken tree — which is what `..._sees_the_whole_corpus` below exists to
+    catch (E8).
+    """
+    out = []
+    for svg in root.iter_descendants():
+        if svg.tag != "svg":
+            continue
+        viewbox = (svg.get("viewbox") or "").split()
+        if len(viewbox) != 4:
+            continue
+        out.append((svg, float(viewbox[2])))
+    return out
+
+
+def _annotation_nodes(root: Node) -> list[tuple[Node, Node, float]]:
+    found = []
+    for svg, width in _annotated_svgs(root):
+        for node in svg.iter_descendants():
+            if node.tag == "text" and (set(node.classes()) & ANNOTATION_CLASSES):
+                found.append((node, svg, width))
+    return found
+
+
+def annotation_clipping_failures(root: Node) -> list[str]:
+    """Annotations whose painted box leaves their own SVG, in units."""
+    failures = []
+    for node, svg, width in _annotation_nodes(root):
+        label, text_width = _label_and_width(node)
+        x = _local_x(node, svg)
+        anchor = node.get("text-anchor") or "start"
+        if anchor == "end":
+            left = x - text_width
+        elif anchor == "middle":
+            left = x - text_width / 2
+        else:
+            left = x
+        right = left + text_width
+        if left < -0.5:
+            failures.append(
+                f'"{label}" ({anchor}) starts at {left:.1f}, {-left:.1f} units past the left edge'
+            )
+        elif right > width + 0.5:
+            failures.append(
+                f'"{label}" ({anchor}) ends at {right:.1f}, {right - width:.1f} units past '
+                f"the right edge of a {width:.0f}-unit viewBox"
+            )
+    return failures
+
+
+def test_no_chart_annotation_is_clipped_by_its_svg(page):
+    """Chart.tsx renders with a viewBox and no `overflow: visible`, so a label
+    drawn past the SVG edge is CLIPPED, not spilled — cut mid-glyph, with no
+    ellipsis and no scrollbar.
+
+    That is a correctness defect, not a layout one. `2022: top 1% 31.5%` was
+    rendering as `2022: top 19`: a complete-looking label carrying a number that
+    is not the number, on a site whose whole claim is that every figure traces
+    to a source.
+    """
+    path, root = page
+    failures = annotation_clipping_failures(root)
+    assert not failures, f"{path}: annotation clipped by its own SVG:\n  " + "\n  ".join(failures)
+
+
+def test_the_annotation_clipping_guard_sees_the_whole_corpus():
+    """The anti-blindness check.
+
+    Both ways the guard above can go blind are silent and both cost a cycle
+    during this investigation: `viewBox` lowercased to `viewbox` by
+    `html.parser`, and a `<text>` with no `x` attribute. Either one turns
+    `test_no_chart_annotation_is_clipped_by_its_svg` into a test that walks zero
+    nodes and passes on a broken tree. So assert it saw the corpus.
+    """
+    seen = 0
+    parsed_svgs = 0
+    per_route: dict[str, int] = {}
+    for path in PAGES:
+        root = parse_html(path)
+        nodes = _annotation_nodes(root)
+        parsed_svgs += len(_annotated_svgs(root))
+        seen += len(nodes)
+        if nodes:
+            per_route[path.parent.name] = len(nodes)
+
+    assert seen >= 63, (
+        f"the annotation walk found only {seen} nodes across dist/; it found 63 when #64 "
+        f"landed. Either annotations were dropped from the server render, or the walk has "
+        f"gone blind (viewBox/viewbox, or a <text> with no x). Per route: {per_route}"
+    )
+    assert parsed_svgs >= 20, (
+        f"only {parsed_svgs} SVGs yielded a numeric viewBox width — the attribute in dist/ "
+        f"is lowercase `viewbox`, and reading `viewBox` returns None for every one of them"
+    )
+    # Every one of the three chart routes must be represented. A walk that
+    # silently lost a whole route would still clear the total on the other two.
+    for route in ("economy", "households", "government"):
+        assert per_route.get(route), f"no annotations found on /{route}"
+
+
+def test_no_annotation_class_ships_outside_the_guarded_set():
+    """`==` audit over every `<text>` class in `dist/` (E10).
+
+    A new direct-label class must be sorted into one bucket or the other by
+    hand. It cannot ship unnoticed into neither, which is how a clamp gets
+    quietly bypassed a year from now.
+    """
+    seen: set[str] = set()
+    for path in PAGES:
+        root = parse_html(path)
+        for svg, _ in _annotated_svgs(root):
+            for node in svg.iter_descendants():
+                if node.tag == "text":
+                    seen.update(node.classes())
+
+    known = ANNOTATION_CLASSES | NON_ANNOTATION_TEXT_CLASSES
+    unknown = seen - known
+    assert not unknown, (
+        f"unclassified <text> class(es) in dist/: {sorted(unknown)}. Add each to "
+        f"ANNOTATION_CLASSES if it is a direct label that must be clamped by "
+        f"annotate.ts, or to NON_ANNOTATION_TEXT_CLASSES if it is axis text or "
+        f"belongs to #66's broader 390px sweep."
+    )
+    stale = known - seen
+    assert not stale, (
+        f"class(es) listed here no longer ship: {sorted(stale)}. Remove them, so this "
+        f"audit keeps meaning what it says."
+    )
+
+
+def test_the_annotation_constants_match_the_source_and_the_stylesheet():
+    """The width arithmetic above is only a proof of the clamp while it uses the
+    clamp's own numbers. Three copies exist — this file, annotate.ts, and
+    global.css — so pin them to each other."""
+    ts = ANNOTATE_TS.read_text()
+
+    advance = re.search(r"export const ADVANCE_EM = ([\d.]+)", ts)
+    assert advance, "annotate.ts no longer exports ADVANCE_EM"
+    assert float(advance.group(1)) == ADVANCE_EM, (
+        f"annotate.ts has ADVANCE_EM = {advance.group(1)}, this suite has {ADVANCE_EM}. "
+        f"They must move together — and only ever upward: the constant is a deliberate "
+        f"OVER-estimate, because clamping early costs whitespace while clamping late "
+        f"reproduces #64."
+    )
+
+    css = GLOBAL_CSS.read_text()
+    for cls, expected in ANNOTATION_FONT_PX.items():
+        rule = re.search(rf"\.{re.escape(cls)}\s*\{{(.*?)\}}", css, re.S)
+        if cls == "series-label":
+            continue  # inherits .annotation's size; it only adds font-style
+        assert rule, f"global.css has no .{cls} rule"
+        size = re.search(r"font-size:\s*([\d.]+)px", rule.group(1))
+        assert size and float(size.group(1)) == expected, (
+            f".{cls} is {size.group(1) if size else 'unset'}px in global.css but "
+            f"{expected}px here; every width in this file would be wrong"
+        )
+
+
+def test_annotation_placement_is_not_measured_at_runtime():
+    """Criterion 5: the server render and the hydrated render must agree, so
+    nothing shifts under the reader on hydration.
+
+    Guaranteed by construction — placement is a pure function of `(x, label,
+    frame, anchor)` — and that is what this pins. A `getBBox()` introduced later
+    to "measure it properly" would produce a server placement and a client
+    placement that differ, and the difference would be a visible jump.
+    """
+    measured = re.compile(r"getBBox|getComputedTextLength|getExtentOfChar")
+    for path in sorted(CHARTS_DIR.glob("*.ts*")) + ISLANDS:
+        source = _without_comments(path.read_text())
+        assert not measured.search(source), (
+            f"{path.name} measures text at runtime; annotation placement must stay pure "
+            f"so the server and the client agree"
+        )
+
+    # `getBoundingClientRect` has exactly one legitimate use in this tree:
+    # useChartSize measures the CONTAINER to choose between two presets. It
+    # never touches text. Pinned by name so a second use has to argue for
+    # itself here.
+    rect_users = {
+        path.name
+        for path in sorted(CHARTS_DIR.glob("*.ts*")) + ISLANDS
+        if "getBoundingClientRect" in _without_comments(path.read_text())
+    }
+    assert rect_users == {"useChartSize.ts"}, (
+        f"getBoundingClientRect is used in {sorted(rect_users)}; only useChartSize.ts "
+        f"may measure, and only the container, never text"
+    )
+
+    helper = _without_comments(ANNOTATE_TS.read_text())
+    for forbidden in ("window", "document", "useEffect", "useState", "useRef"):
+        assert forbidden not in helper, (
+            f"annotate.ts references `{forbidden}`; the placement helper must be pure"
+        )
+
+
+def test_every_annotation_is_placed_through_the_clamp():
+    """Criterion 2, in greppable form.
+
+    `placeAnnotation` returns `null` for a label too wide to fit anywhere, and
+    the caller must then render NOTHING — absent beats truncated. A call site
+    that emitted a bare `<text className="annotation">` would have skipped both
+    the clamp and the `null`, i.e. would be free to draw exactly the partial
+    number this issue is about. So every annotation class appears in exactly one
+    file under src/components/: Annotation.tsx, which honours `null` for all of
+    them.
+    """
+    offenders: dict[str, set[str]] = {}
+    for path in sorted(CHARTS_DIR.glob("*.ts*")) + ISLANDS:
+        if path.name == ANNOTATION_TSX.name:
+            continue
+        source = _without_comments(path.read_text())
+        for cls in ANNOTATION_CLASSES:
+            for match in re.finditer(rf"\b{re.escape(cls)}\b", source):
+                tag = _enclosing_jsx_tag(source, match.start())
+                if tag != "Annotation":
+                    offenders.setdefault(cls, set()).add(f"{path.name} (<{tag}>)")
+
+    assert not offenders, (
+        f"annotation classes written outside Annotation.tsx: "
+        f"{ {k: sorted(v) for k, v in offenders.items()} }. Every annotation must go "
+        f"through <Annotation>, which applies the clamp and renders nothing when the "
+        f"label cannot fit."
+    )
+
+    # The classes are not merely absent elsewhere — Annotation.tsx really does
+    # emit all of them, so the check above is about routing, not about the
+    # family having quietly emptied out.
+    component = _without_comments(ANNOTATION_TSX.read_text())
+    for cls in ANNOTATION_CLASSES:
+        assert cls in component, (
+            f"`{cls}` is in ANNOTATION_CLASSES but Annotation.tsx never emits it; either "
+            f"it moved somewhere unclamped, or this suite's family list is stale"
+        )
+
+    # And Annotation.tsx must actually honour the null.
+    assert "if (!placed) return null" in component, (
+        "Annotation.tsx no longer renders nothing on an unplaceable label; a truncated "
+        "number would become reachable again"
+    )
+
+
+def _enclosing_jsx_tag(source: str, index: int) -> str:
+    """The JSX element whose attribute list contains `source[index]`.
+
+    Naming a class on `<Annotation className="…">` is fine — that prop still
+    goes through the clamp. Naming it on a bare `<text>` is the escape hatch
+    this audit exists to close, and the two are textually identical apart from
+    the tag. Regexing `<text …>` cannot tell them apart either, because these
+    components carry arrow-function handlers whose `=>` ends the attribute
+    match early, so walk back to the opening tag instead.
+    """
+    open_bracket = source.rfind("<", 0, index)
+    if open_bracket == -1:
+        return "?"
+    name = re.match(r"<\s*([A-Za-z][\w.]*)", source[open_bracket:])
+    return name.group(1) if name else "?"
+
+
+def _parse_html_string(markup: str) -> Node:
+    builder = _TreeBuilder()
+    builder.feed(markup)
+    return builder.root
+
+
+def test_the_annotation_clipping_guard_bites():
+    """The negative test: the guard against the mutants it exists to catch.
+
+    Every anchor, both edges, and the two shapes that made earlier drafts of
+    this guard report healthy while blind.
+    """
+    # A clean corpus flags nothing.
+    clean = _parse_html_string(
+        '<svg viewBox="0 0 720 396">'
+        '<text x="100" class="annotation">2022: top 1% 31.5%</text>'
+        '<text x="600" text-anchor="end" class="annotation">Last actual, FY2025</text>'
+        '<text x="300" text-anchor="middle" class="annotation">2023: 38.4%</text>'
+        "</svg>"
+    )
+    assert not annotation_clipping_failures(clean), "a within-bounds corpus was flagged"
+
+    over_right_start = _parse_html_string(
+        '<svg viewBox="0 0 720 396">'
+        '<text x="694" class="annotation">Last actual, FY2025</text></svg>'
+    )
+    failures = annotation_clipping_failures(over_right_start)
+    assert failures and "Last actual, FY2025" in failures[0], (
+        "a start-anchored label running off the right edge passed"
+    )
+
+    over_right_middle = _parse_html_string(
+        '<svg viewBox="0 0 720 396">'
+        '<text x="696" text-anchor="middle" class="annotation">2022: top 1% 31.5%</text></svg>'
+    )
+    assert annotation_clipping_failures(over_right_middle), (
+        "the exact defect #64 reported — `2022: top 1% 31.5%` clipped to `2022: top 19` — passed"
+    )
+
+    over_left_end = _parse_html_string(
+        '<svg viewBox="0 0 720 396">'
+        '<text x="10" text-anchor="end" class="annotation">Unemployment</text></svg>'
+    )
+    failures = annotation_clipping_failures(over_left_end)
+    assert failures and "left edge" in failures[0], (
+        "an end-anchored label running off the LEFT edge passed"
+    )
+
+    # E7: no `x` attribute at all, positioned by an ancestor's translate. An
+    # earlier draft skipped these; missing x is 0, not "not my problem".
+    no_x = _parse_html_string(
+        '<svg viewBox="0 0 720 396"><g transform="translate(700,20)">'
+        '<text text-anchor="middle" class="annotation">1981: 69.125% (part-year cut)</text>'
+        "</g></svg>"
+    )
+    assert annotation_clipping_failures(no_x), (
+        "a <text> with no x, carried past the edge by its ancestor's translate, passed"
+    )
+    assert _local_x(
+        [n for n in no_x.iter_descendants() if n.tag == "text"][0],
+        [n for n in no_x.iter_descendants() if n.tag == "svg"][0],
+    ) == 700, "the ancestor translate was not accumulated"
+
+    # E9: two lines are as wide as the widest, not their concatenation. This one
+    # must NOT be flagged — over-reading here would be a false alarm that a
+    # later reader "fixes" by loosening the guard.
+    two_lines = _parse_html_string(
+        '<svg viewBox="0 0 720 396">'
+        '<text x="380" class="dotplot-average-label">'
+        '<tspan x="380">OECD average, 34.1% of GDP</tspan>'
+        '<tspan x="380" dy="1.15em">(mean of 38 members, not a country)</tspan>'
+        "</text></svg>"
+    )
+    assert not annotation_clipping_failures(two_lines), (
+        "a two-line label was measured as the concatenation of its lines"
+    )
+    label, width = _label_and_width(
+        [n for n in two_lines.iter_descendants() if n.tag == "text"][0]
+    )
+    assert label == "(mean of 38 members, not a country)", "the widest line was not chosen"
+
+    # E8: the lowercasing trap, demonstrated rather than described. A camelCase
+    # read finds no SVG at all, so every mutant above would pass.
+    assert _annotated_svgs(
+        _parse_html_string(
+            '<svg VIEWBOX="0 0 720 396"><text x="900" class="annotation">off the edge</text></svg>'
+        )
+    ), "an uppercase VIEWBOX in source, lowercased by html.parser, was not found by the guard"
+    svg_node = [n for n in over_right_start.iter_descendants() if n.tag == "svg"][0]
+    assert svg_node.get("viewBox") is None and svg_node.get("viewbox") is not None, (
+        "html.parser stopped lowercasing attribute names; the guard reads `viewbox` and "
+        "would now find zero SVGs"
+    )
+
+    # A class outside the guarded family is not this issue's business (#66).
+    other = _parse_html_string(
+        '<svg viewBox="0 0 720 396">'
+        '<text x="600" class="axis-title">Percent of the labour force</text></svg>'
+    )
+    assert not annotation_clipping_failures(other), "axis text was swept into #64's scope"

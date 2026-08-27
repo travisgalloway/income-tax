@@ -12,6 +12,7 @@
 import { useMemo, useState } from 'react'
 import { line as d3line, curveMonotoneX } from 'd3-shape'
 import { Chart } from '../charts/Chart'
+import { Annotation } from '../charts/Annotation'
 import { AxisBottom, AxisLeft } from '../charts/Axis'
 import { linear, niceExtent } from '../charts/scales'
 import { TableView } from './TableView'
@@ -112,27 +113,20 @@ export function VotedAndNot({ rows }: { rows: BudgetYear[] }) {
             <path d={discretionaryLine(span) ?? ''} fill="none" stroke="var(--disc)" strokeWidth={2} />
             <path d={netInterestLine(span) ?? ''} fill="none" stroke="var(--int)" strokeWidth={2} />
 
-            <text x={x(last.y) - 4} y={y(mandatoryNetOf(last, unit)) - 8} textAnchor="end" className="annotation series-label">
-              Mandatory (net)
-            </text>
-            <text x={x(last.y) - 4} y={y(discretionaryOf(last, unit)) - 8} textAnchor="end" className="annotation series-label">
-              Discretionary
-            </text>
-            <text x={x(last.y) - 4} y={y(netInterestOf(last, unit)) - 8} textAnchor="end" className="annotation series-label">
-              Net interest
-            </text>
+            <Annotation frame={fr} x={x(last.y) - 4} y={y(mandatoryNetOf(last, unit)) - 8} anchor="end" seriesLabel label="Mandatory (net)" />
+            <Annotation frame={fr} x={x(last.y) - 4} y={y(discretionaryOf(last, unit)) - 8} anchor="end" seriesLabel label="Discretionary" />
+            <Annotation frame={fr} x={x(last.y) - 4} y={y(netInterestOf(last, unit)) - 8} anchor="end" seriesLabel label="Net interest" />
 
             {marked && (
               <>
                 <circle cx={x(marked.y)} cy={y(netInterestOf(marked, unit))} r={3.5} fill="var(--int)" />
-                <text
+                <Annotation
+                  frame={fr}
                   x={x(marked.y)}
                   y={y(netInterestOf(marked, unit)) + 18}
-                  textAnchor="middle"
-                  className="annotation"
-                >
-                  {`FY2015: ${value(netInterestOf(marked, unit), unit)}`}
-                </text>
+                  anchor="middle"
+                  label={`FY2015: ${value(netInterestOf(marked, unit), unit)}`}
+                />
               </>
             )}
 

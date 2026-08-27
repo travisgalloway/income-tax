@@ -1143,3 +1143,37 @@ time. Appended to, never rewritten. None of these have been acted on.
   before #63 and unchanged by it. Small enough to read as a rendering artefact rather than a
   scroll, which is the case an at-rest affordance (#76) would make legible or a `min-width: 0`
   pass would remove. Found while running #63's desktop check. Severity: cosmetic, non-blocking.
+- [2026-08-27] `src/components/islands/DebtHolders.tsx:151-161` — `/government/` §2's bar labels
+  carry `className="holders-label"`, which is outside #64's annotation family, and they are clipped
+  by their own SVG exactly the way #64 describes: `Foreign $9.64T (30% of publicly held debt)` is
+  `middle`-anchored at the centre of its bar segment and paints roughly **[385, 820] against a
+  720-unit viewBox, +100 units past the right edge**. `Intragovernmental $7.74T (19.4%)` overruns by
+  ~30. This is the same correctness shape #64 exists to close — a direct label carrying a number,
+  cut mid-glyph with no cue, so a reader can see a complete-looking figure that is not the figure —
+  but on a class #64's plan deliberately scoped out, and #66 ("charts are legible and do not overflow
+  at 390px, on every route") owns it. The fix is one line per label: route them through
+  `<Annotation>` like every other direct label, which applies the existing clamp. #64's
+  `test_no_annotation_class_ships_outside_the_guarded_set` lists `holders-label` in its excluded set,
+  with a comment naming this finding, so the `==` audit still bites when a *new* label class appears.
+  Found while probing every non-annotation `<text>` class in `dist/` for #64's criterion 1. Severity:
+  **correctness** (a wrong number can render as a whole one), narrow and wide viewport, non-blocking
+  for #64.
+- [2026-08-27] `docs/test-plan.md` GOV-2 and HH-1 listed `#64` among their open 390px failures, but
+  neither row is reachable by #64's clamp: GOV-2's labels are `holders-label` (the finding above) and
+  `MedianIncome.tsx` draws no direct label at all, only axis text. Both references were retired in
+  #64's docs commit with the reason stated in the row, rather than left to read as an open failure
+  the annotation work had silently skipped. Noted here because the same drift is likely on other
+  rows: several 390px FAIL lists were written when the issues they cite were broader than the work
+  that eventually closed them, so an issue number in a Manual cell is weaker evidence than it looks.
+  Found while removing #64 from the Manual cells. Severity: documentation drift, non-blocking.
+- [2026-08-27] `src/components/islands/PricesAndRates.tsx:175-181` — `/economy` §4's bottom panel
+  draws `Fed funds`, `3-month bill` and `10-year note` all `end`-anchored at
+  `x(lastActualRow.y) - 4`, separated only by y offsets of -8, +14 and -20 against their own series'
+  values. When two of those series converge, the labels collide: on current data `Fed funds` and
+  `10-year note` overlap, measured by bounding box in Chromium 151. This is **not** caused by #64
+  and was not changed by it — both labels fit their SVG comfortably, so `placeAnnotation` returns
+  them unchanged and their positions are identical to `main`'s. It is the same class of problem
+  `BudgetChart` has a sort-and-space guard for; the fix is to give this panel one too, rather than
+  hand-picked y offsets that assume the series stay apart. Found while checking #64's criterion 4
+  (no clamped label lands on what it names) across all three routes. Severity: legibility,
+  non-blocking.

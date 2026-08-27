@@ -13,6 +13,7 @@ import { useMemo, useState } from 'react'
 import { line as d3line, curveMonotoneX } from 'd3-shape'
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
 import { Chart } from '../charts/Chart'
+import { Annotation } from '../charts/Annotation'
 import { AxisLeft, AxisBottom } from '../charts/Axis'
 import { linear, niceExtent } from '../charts/scales'
 import { percent } from '../charts/format'
@@ -114,12 +115,8 @@ export function PayrollBill({ rows }: { rows: RevenueYear[] }) {
             <path d={prPath} fill="none" stroke="var(--mand)" strokeWidth={2} />
             <path d={iiPath} fill="none" stroke="var(--disc)" strokeWidth={2} />
 
-            <text x={x(last.y) - 6} y={y(prOf(last)) - 8} textAnchor="end" className="annotation">
-              Payroll
-            </text>
-            <text x={x(last.y) - 6} y={y(iiOf(last)) - 8} textAnchor="end" className="annotation">
-              Individual income
-            </text>
+            <Annotation frame={fr} x={x(last.y) - 6} y={y(prOf(last)) - 8} anchor="end" label="Payroll" />
+            <Annotation frame={fr} x={x(last.y) - 6} y={y(iiOf(last)) - 8} anchor="end" label="Individual income" />
 
             {/* One focusable element per YEAR, reporting both series together. */}
             {rows.map((r) => (

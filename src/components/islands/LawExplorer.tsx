@@ -14,6 +14,7 @@ import { useMemo, useState } from 'react'
 import { area as d3area, line as d3line, curveMonotoneX } from 'd3-shape'
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
 import { Chart } from '../charts/Chart'
+import { Annotation } from '../charts/Annotation'
 import { AxisBottom, AxisLeft, ZeroLine } from '../charts/Axis'
 import { linear, niceExtent } from '../charts/scales'
 import { useChartSize } from '../charts/useChartSize'
@@ -272,9 +273,13 @@ export function LawExplorer({
                     <line x1={px} x2={px} y1={0} y2={ih} stroke="var(--mix)" strokeWidth={1.5} />
                     <circle cx={px} cy={2} r={3} fill="var(--mix)" />
                     {!narrow && (
-                      <text x={px + 6} y={12} className="annotation" fill="var(--mix)">
-                        {activeRow.law.name}, {activeRow.law.date}
-                      </text>
+                      <Annotation
+                        frame={f}
+                        x={px + 6}
+                        y={12}
+                        fill="var(--mix)"
+                        label={`${activeRow.law.name}, ${activeRow.law.date}`}
+                      />
                     )}
                     <title>{`${activeRow.law.name}, ${activeRow.law.date}`}</title>
                   </g>

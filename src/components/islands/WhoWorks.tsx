@@ -10,6 +10,7 @@
 import { useState } from 'react'
 import { line as d3line } from 'd3-shape'
 import { Chart } from '../charts/Chart'
+import { Annotation } from '../charts/Annotation'
 import { AxisBottom, AxisLeft } from '../charts/Axis'
 import { linear, niceExtent, extent } from '../charts/scales'
 import { TableView } from './TableView'
@@ -86,12 +87,8 @@ export function WhoWorks({ rows, lastActualFy }: { rows: EconomyYear[]; lastActu
 
             {lastActualRow && (
               <>
-                <text x={x(lastActualRow.y) - 4} y={yTop(lastActualRow.unemp as number) - 8} textAnchor="end" className="annotation">
-                  Unemployment
-                </text>
-                <text x={x(lastActualRow.y) - 4} y={yTop(lastActualRow.nairu as number) + 14} textAnchor="end" className="annotation">
-                  Noncyclical rate
-                </text>
+                <Annotation frame={fr} x={x(lastActualRow.y) - 4} y={yTop(lastActualRow.unemp as number) - 8} anchor="end" label="Unemployment" />
+                <Annotation frame={fr} x={x(lastActualRow.y) - 4} y={yTop(lastActualRow.nairu as number) + 14} anchor="end" label="Noncyclical rate" />
               </>
             )}
 
@@ -141,9 +138,7 @@ export function WhoWorks({ rows, lastActualFy }: { rows: EconomyYear[]; lastActu
             <path d={lfprLine(actual) ?? ''} fill="none" stroke="var(--mand)" strokeWidth={2} />
             <path d={lfprLine(projected) ?? ''} fill="none" stroke="var(--mand)" strokeWidth={2} strokeDasharray={PROJECTED_DASH} opacity={PROJECTED_OPACITY} />
             {lastActualRow && (
-              <text x={x(lastActualRow.y) - 4} y={yBottom(lastActualRow.lfpr as number) - 8} textAnchor="end" className="annotation">
-                Labour force participation
-              </text>
+              <Annotation frame={fr} x={x(lastActualRow.y) - 4} y={yBottom(lastActualRow.lfpr as number) - 8} anchor="end" label="Labour force participation" />
             )}
             <BoundaryRule frame={fr} x={x(lastActualFy)} label={`Last actual, FY${lastActualFy}`} />
           </>

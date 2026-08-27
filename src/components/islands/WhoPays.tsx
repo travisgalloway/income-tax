@@ -10,6 +10,7 @@
  */
 import { useState } from 'react'
 import { Chart } from '../charts/Chart'
+import { Annotation } from '../charts/Annotation'
 import { AxisBottom } from '../charts/Axis'
 import { linear } from '../charts/scales'
 import { percent } from '../charts/format'
@@ -114,14 +115,13 @@ export function WhoPays({ rows }: { rows: IncomeTaxGroup[] }) {
                         onMouseEnter={() => setActive({ g: g.g, metric: 'agi' })}
                         onMouseLeave={() => setActive(null)}
                       />
-                      <text
+                      <Annotation
+                        frame={fr}
                         x={x(g.income_share_pct) + 6}
                         y={agiCenter}
                         dy="0.32em"
-                        className="annotation"
-                      >
-                        {percent(g.income_share_pct, 1)}
-                      </text>
+                        label={percent(g.income_share_pct, 1)}
+                      />
                     </>
                   ) : (
                     <text x={4} y={agiCenter} dy="0.32em" className="axis-label">
@@ -148,14 +148,13 @@ export function WhoPays({ rows }: { rows: IncomeTaxGroup[] }) {
                     onMouseEnter={() => setActive({ g: g.g, metric: 'tax' })}
                     onMouseLeave={() => setActive(null)}
                   />
-                  <text
+                  <Annotation
+                    frame={fr}
                     x={x(g.tax_share_pct) + 6}
                     y={taxCenter}
                     dy="0.32em"
-                    className="annotation"
-                  >
-                    {percent(g.tax_share_pct, 1)}
-                  </text>
+                    label={percent(g.tax_share_pct, 1)}
+                  />
                 </g>
               )
             })}

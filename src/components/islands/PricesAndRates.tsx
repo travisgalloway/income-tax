@@ -14,6 +14,7 @@
 import { useState } from 'react'
 import { line as d3line } from 'd3-shape'
 import { Chart } from '../charts/Chart'
+import { Annotation } from '../charts/Annotation'
 import { AxisBottom, AxisLeft, ZeroLine } from '../charts/Axis'
 import { linear, niceExtent } from '../charts/scales'
 import { TableView } from './TableView'
@@ -111,12 +112,8 @@ export function PricesAndRates({ rows, lastActualFy }: { rows: EconomyYear[]; la
 
             {lastActualInf && (
               <>
-                <text x={x(lastActualInf.y) - 4} y={yTop(lastActualInf.cpiYoy as number) - 8} textAnchor="end" className="annotation">
-                  CPI-U
-                </text>
-                <text x={x(lastActualInf.y) - 4} y={yTop(lastActualInf.pceYoy as number) + 14} textAnchor="end" className="annotation">
-                  Core PCE
-                </text>
+                <Annotation frame={fr} x={x(lastActualInf.y) - 4} y={yTop(lastActualInf.cpiYoy as number) - 8} anchor="end" label="CPI-U" />
+                <Annotation frame={fr} x={x(lastActualInf.y) - 4} y={yTop(lastActualInf.pceYoy as number) + 14} anchor="end" label="Core PCE" />
               </>
             )}
 
@@ -172,15 +169,9 @@ export function PricesAndRates({ rows, lastActualFy }: { rows: EconomyYear[]; la
 
             {lastActualRow && (
               <>
-                <text x={x(lastActualRow.y) - 4} y={yBottom(lastActualRow.ff as number) - 8} textAnchor="end" className="annotation">
-                  Fed funds
-                </text>
-                <text x={x(lastActualRow.y) - 4} y={yBottom(lastActualRow.t3m as number) + 14} textAnchor="end" className="annotation">
-                  3-month bill
-                </text>
-                <text x={x(lastActualRow.y) - 4} y={yBottom(lastActualRow.t10 as number) - 20} textAnchor="end" className="annotation">
-                  10-year note
-                </text>
+                <Annotation frame={fr} x={x(lastActualRow.y) - 4} y={yBottom(lastActualRow.ff as number) - 8} anchor="end" label="Fed funds" />
+                <Annotation frame={fr} x={x(lastActualRow.y) - 4} y={yBottom(lastActualRow.t3m as number) + 14} anchor="end" label="3-month bill" />
+                <Annotation frame={fr} x={x(lastActualRow.y) - 4} y={yBottom(lastActualRow.t10 as number) - 20} anchor="end" label="10-year note" />
               </>
             )}
 

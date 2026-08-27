@@ -10,6 +10,7 @@
 import { useState } from 'react'
 import { line as d3line } from 'd3-shape'
 import { Chart } from '../charts/Chart'
+import { Annotation } from '../charts/Annotation'
 import { AxisBottom, AxisLeft } from '../charts/Axis'
 import { linear, scaleLog } from '../charts/scales'
 import { TableView } from './TableView'
@@ -91,14 +92,13 @@ export function RealGdpLogScale({ rows, lastActualFy }: { rows: EconomyYear[]; l
               opacity={PROJECTED_OPACITY}
             />
             {lastProjected && (
-              <text
+              <Annotation
+                frame={fr}
                 x={x(lastProjected.y)}
                 y={y(lastProjected.rgdp as number) - 10}
-                textAnchor="end"
-                className="annotation"
-              >
-                CBO projection
-              </text>
+                anchor="end"
+                label="CBO projection"
+              />
             )}
 
             <BoundaryRule frame={fr} x={x(lastActualFy)} label={`Last actual, FY${lastActualFy}`} />

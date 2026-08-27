@@ -11,6 +11,7 @@ import { useMemo, useState } from 'react'
 import { area as d3area, curveMonotoneX } from 'd3-shape'
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
 import { Chart } from '../charts/Chart'
+import { Annotation } from '../charts/Annotation'
 import { AxisBottom, AxisLeft } from '../charts/Axis'
 import { linear, niceExtent } from '../charts/scales'
 import { trillions, percentGdp, percent, tick } from '../charts/format'
@@ -220,14 +221,13 @@ export function RevenueChart({ rows }: { rows: RevenueYear[] }) {
                     y1={y(s.total) - 6} y2={y(s.total) - (isLast ? 16 : 28)}
                     stroke="var(--ink)" strokeWidth={0.75}
                   />
-                  <text
+                  <Annotation
+                    frame={fr}
                     x={x(s.y) - (isLast ? 4 : 0)}
                     y={y(s.total) - (isLast ? 20 : 32)}
-                    textAnchor={isLast ? 'end' : 'middle'}
-                    className="annotation"
-                  >
-                    {`FY${s.y} ${fmtView(s.total, view)}`}
-                  </text>
+                    anchor={isLast ? 'end' : 'middle'}
+                    label={`FY${s.y} ${fmtView(s.total, view)}`}
+                  />
                 </g>
               )
             })}
