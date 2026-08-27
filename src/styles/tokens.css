@@ -81,4 +81,13 @@
   --gap: 1.5rem;
   --rule-width: 1px;
   --rule-hair: 0.5px;
+  /* WCAG 2.2 SC 2.5.8 Target Size (Minimum), Level AA. 24px, not the 44px of
+     SC 2.5.5 (Enhanced, AAA): the controls sit in `.controls` rows whose
+     row-gap is 0.5rem, and a 44px hit area centred on a 16px control would
+     reach 14px past it — provably into the row above when the row wraps at
+     390px. At 24px the pitch of 24 exactly accommodates the floor: the areas
+     tile, touching but not overlapping. The nav bar's own 44px floor
+     (`test_nav_bar_tap_targets_clear_44px`) is not lowered; that bar is a
+     dedicated surface with no dense control rows. */
+  --target-min: 1.5rem;
 }
