@@ -403,11 +403,17 @@ CONSTRUCTION_WORDS = frozenset(
      "scale", "series", "bars", "legend"}
 )
 
-#: `<section id="...">…</section>`, non-greedy. A regex is honest here only because no `<section>`
-#: nests inside another on the four report pages — every one is a direct child of `<main>`. If that
-#: ever changes, this silently mis-splits, which is why `sections()` asserts its own count against
-#: the raw `<section id=` count and against the parsed tree.
-SECTION_RE = re.compile(r'<section id="([^"]+)"[^>]*>(.*?)</section>', re.DOTALL)
+#: `<section …>…</section>`, non-greedy. A regex is honest here only because no `<section>` nests
+#: inside another on the four report pages — every one is a direct child of `<main>`. If that ever
+#: changes, this silently mis-splits, which is why `sections()` asserts the id set it finds against
+#: the parsed tree rather than trusting the regex alone.
+#: The opening tag's attributes are captured as a blob rather than anchoring `id` in place, because
+#: `id` is not guaranteed to be the first attribute — `<section class="…" id="…">` is valid markup
+#: today even though no current page writes it that way.
+SECTION_RE = re.compile(r'<section\b([^>]*)>(.*?)</section>', re.DOTALL)
+
+#: `id="..."` pulled out of a `<section>` opening tag's attribute blob, wherever it falls.
+SECTION_ID_RE = re.compile(r'\bid="([^"]*)"')
 
 
 def sections() -> list[tuple[str, str, str, Node]]:
@@ -427,15 +433,18 @@ def sections() -> list[tuple[str, str, str, Node]]:
             "silently shrinks what it checks."
         )
         raw = path.read_text()
-        found = SECTION_RE.findall(raw)
-        assert len(found) == raw.count("<section id="), (
-            f"{page}: the section extractor found {len(found)} sections but the page carries "
-            f"{raw.count('<section id=')} `<section id=` openings. A `<section>` now nests inside "
-            "another and the non-greedy split is wrong. Replace the regex with a tree walk."
-        )
         by_id = {n.get("id"): n for n in nodes_of(parse_html(path), "section") if n.get("id")}
+        found: list[tuple[str, str]] = []
+        for attrs, body in SECTION_RE.findall(raw):
+            id_match = SECTION_ID_RE.search(attrs)
+            if id_match:
+                found.append((id_match.group(1), body))
+        assert {sid for sid, _ in found} == set(by_id), (
+            f"{page}: the regex-based section extractor found {sorted(sid for sid, _ in found)} but "
+            f"the parsed tree carries {sorted(by_id)}. A `<section>` now nests inside another and "
+            "the non-greedy split is wrong. Replace the regex with a tree walk."
+        )
         for section_id, body in found:
-            assert section_id in by_id, f"{page}: parsed tree has no <section id={section_id!r}>."
             out.append((page, section_id, body, by_id[section_id]))
     return out
 

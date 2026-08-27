@@ -294,10 +294,10 @@ summarises the chart the reader has not seen yet, so the figure arrives as evide
 rather than as an answer to a question. **Cited by #52.**
 
 **The mechanical half.** Four positional and textual facts, over the four report routes' built
-pages. **Enforced by** `pipeline/tests/test_prose.py:452`, `:471`, `:490` and `:514`: a
+pages. **Enforced by** `pipeline/tests/test_prose.py:464`, `:483`, `:502` and `:526`: a
 `.standfirst` before the section's first `<figure>`; a `.prose` after its **last** `</figure>`; a
 standfirst whose number tokens overlap its finding's by less than `PREEMPTION_CEILING`
-(`pipeline/tests/test_prose.py:395`, 0.5) on Jaccard, because a standfirst quoting the finding's
+(`pipeline/tests/test_prose.py:398`, 0.5) on Jaccard, because a standfirst quoting the finding's
 exact figures posed no question; and no `<h2>` containing a word from `CONSTRUCTION_WORDS`. Scope is
 structural, with no exemption list anywhere: a section is asked the first two questions **because it
 carries a `<figure>`**, which is what silently and correctly discharges the three Limits sections
@@ -425,7 +425,7 @@ Two surfaces no C-issue can reach, each filed and each named beside the baseline
 
 One row per `<section id>` on the four report routes, twenty-nine of them. The question is a
 reviewer's one-line paraphrase of what the section's kicker, heading and standfirst pose before the
-reader meets a chart. `pipeline/tests/test_prose.py:547` asserts this table's `Route` and
+reader meets a chart. `pipeline/tests/test_prose.py:588` asserts this table's `Route` and
 `Section id` set **equals** the set built from `dist/`, so a section cannot ship without declaring
 its question and a deleted section cannot leave its judgement behind. What the test asserts is the
 **coverage**, never the wording: whether the paraphrase is honest, and whether the closing prose
