@@ -23,7 +23,7 @@ glossary: defineCollection({
     short:      z.string().min(20).max(180),
     long:       z.string().min(80),
     source:     z.array(z.enum(REGISTER_KEYS)).min(1)
-                  .transform((keys) => ({ keys, text: sourceLine(keys) })),
+                  .transform((keys) => ({ keys, text: sourceLine(keys), links: sourceLinks(keys) })),
     abbr:       z.array(z.string().min(1)).default([]),
     see_also:   z.array(z.string()).default([]),
     first_used: z.object({
@@ -39,7 +39,7 @@ glossary: defineCollection({
 | `term` | Display text. Recasing or rewording it must never move an anchor — see the slug rule below. |
 | `short` | One sentence. Floored at 20 characters so a stub is a build failure, **capped at 180 so it fits an in-prose popover**. The cap is the schema's job: a definition that will not fit in place is caught now, not discovered later by #47. |
 | `long` | The full entry, plain text. |
-| `source` | A **non-empty YAML block sequence of `pipeline/curated/sources.yaml` `registry:` keys**, never prose (#50). The rendered line is each key's `registered_as`, verbatim, joined by `"; "`, produced at build time by `src/data/source-register.ts` and never stored under `src/`. `z.enum` over the register's keys makes an unresolvable key a schema failure, so the raw key has no code path to the page; `.min(1)` covers an empty list and a missing `source` is Zod's own required-field failure. The rendered text is never a URL, which is how "zero external hyperlinks" stays true. |
+| `source` | A **non-empty YAML block sequence of `pipeline/curated/sources.yaml` `registry:` keys**, never prose (#50). The rendered line is each key's `registered_as`, verbatim, joined by `"; "`; `links` carries the same citations resolved into followable links, with each source's tier (#57) — an addition beside `text`, never a replacement. Both are produced at build time by `src/data/source-register.ts` and never stored under `src/`. `z.enum` over the register's keys makes an unresolvable key a schema failure, so the raw key has no code path to the page; `.min(1)` covers an empty list and a missing `source` is Zod's own required-field failure. The rendered text is never a URL, which is how "zero external hyperlinks" stays true. |
 | `abbr` | The short forms a reader meets **in place of** `term`: an acronym (`CBO`), an initialism with a suffix (`CPI-U`), a clipped noun (`intragovernmental`). Never a synonym, never a related word. Added by #59, and load-bearing twice. It is what makes "defined at first use" mechanical — `pipeline/tests/test_prose.py`'s Criterion 4 checker searches the served prose for `term` **plus every `abbr`**, so declaring one can turn a green page red, which is the field working: it means a reader was meeting the term before the marker. And every **all-caps** surface form in this collection is derived out of it into `REGISTERED_INITIALISMS`, whose remaining hand-named half the same file asserts is **disjoint** from it — so an acronym that gains an entry leaves the hand-named list in the same commit. Optional, defaults to `[]`. |
 | `see_also` | Sibling term **ids** (filename slugs), not display text. Optional, defaults to `[]`. |
 | `first_used` | Where a reader first meets the term. The route enum is the three routes that carry a contents list; the anchor is checked against `routeSections` at build time. |
