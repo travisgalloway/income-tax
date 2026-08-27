@@ -18,6 +18,11 @@ import { trillions, percentGdp, percent, tick } from '../charts/format'
 import { TableView } from './TableView'
 import { useChartSize } from '../charts/useChartSize'
 import type { RevenueYear } from '../../data/types'
+import { labelledByFigure } from './figureLabel'
+
+/** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
+ *  this key rather than typed — see `figureLabel.ts` (#72). */
+const FIGURE = 'revenue'
 
 type View = 'nominal' | 'gdp' | 'share'
 
@@ -177,7 +182,7 @@ export function RevenueChart({ rows }: { rows: RevenueYear[] }) {
           type="single"
           value={view}
           onValueChange={(v) => v && setView(v as View)}
-          aria-labelledby="revenue-units"
+          aria-labelledby={labelledByFigure(FIGURE, 'revenue-units')}
           className="unit-toggle"
         >
           {VIEWS.map((v) => (

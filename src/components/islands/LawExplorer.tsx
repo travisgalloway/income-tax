@@ -35,6 +35,11 @@ import {
 } from '../laws/derive'
 import { joinLawsToSplits, type Row } from '../laws/join'
 import type { BudgetYear, Law, PartySplit } from '../../data/types'
+import { labelledByFigure } from './figureLabel'
+
+/** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
+ *  this key rather than typed — see `figureLabel.ts` (#72). */
+const FIGURE = 'law-explorer'
 
 const FY_START = 1995
 const FY_END = 2025
@@ -225,7 +230,7 @@ export function LawExplorer({
           type="single"
           value={basis}
           onValueChange={(v) => v && setBasis(v as Basis)}
-          aria-labelledby="law-basis"
+          aria-labelledby={labelledByFigure(FIGURE, 'law-basis')}
           className="unit-toggle"
         >
           <ToggleGroup.Item value="caucus" className="unit-toggle-item">

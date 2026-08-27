@@ -24,6 +24,10 @@ import { useChartSize } from '../charts/useChartSize'
 import { UNIT_LABEL, UNIT_PREFIX, fiscalYear, tick, value, type Unit } from '../charts/format'
 import type { BudgetYear, Control, Law } from '../../data/types'
 
+/** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
+ *  this key rather than typed — see `figureLabel.ts` (#72). */
+const FIGURE = 'whole-budget'
+
 interface Row {
   y: number
   mand: number
@@ -219,7 +223,7 @@ export function BudgetChart({ rows: source }: { rows: BudgetYear[] }) {
   return (
     <div ref={boxRef}>
       <div className="controls">
-        <UnitToggle value={unit} onChange={setUnit} label="Measured in" />
+        <UnitToggle figure={FIGURE} value={unit} onChange={setUnit} />
       </div>
 
       <Chart ariaLabel={label} interactive width={W} height={H} margin={margin}>

@@ -25,6 +25,10 @@ import {
 } from '../charts/format'
 import type { DebtYear } from '../../data/types'
 
+/** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
+ *  this key rather than typed — see `figureLabel.ts` (#72). */
+const FIGURE = 'debt'
+
 /** Debt has no real-dollar series — deflating a stock of borrowing to FY2025
  *  dollars would answer no question this section asks — so §1 offers two of the
  *  three shared units, not all three. */
@@ -77,8 +81,7 @@ export function DebtChart({ rows }: { rows: DebtYear[] }) {
   return (
     <div ref={boxRef}>
       <div className="controls">
-        <span className="controls-label" id="debt-units">Measured in</span>
-        <UnitToggle units={UNITS} value={unit} onChange={setUnit} label="Measured in" />
+        <UnitToggle figure={FIGURE} units={UNITS} value={unit} onChange={setUnit} />
       </div>
 
       <Chart ariaLabel={label} interactive width={W} height={H} margin={f}>

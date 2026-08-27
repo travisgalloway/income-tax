@@ -140,13 +140,70 @@ def has_aria_hidden_ancestor(n: Node) -> bool:
     return any(a.get("aria-hidden") == "true" for a in n.ancestors())
 
 
-def has_accessible_name(n: Node, root: Node) -> bool:
-    if (n.get("aria-label") or "").strip():
-        return True
+def deep_text(n: Node) -> str:
+    """All text in a node's subtree, whitespace-collapsed.
+
+    `Node.text()` reads only direct `#text` children, which is right for a leaf
+    but wrong for a label span that a build step has split — Astro's island
+    boundaries and comment markers routinely break one authored string across
+    several text nodes. A name resolver that read only direct children would
+    return `""` for such a span, and an empty name is indistinguishable from a
+    correct one to any assertion phrased as "not a duplicate".
+    """
+    out: list[str] = []
+
+    def walk(x: Node) -> None:
+        for c in x.children:
+            if c.tag == "#text":
+                out.append(c.attrs.get("__text__", ""))
+            else:
+                walk(c)
+
+    walk(n)
+    return " ".join("".join(out).split())
+
+
+def accessible_name(n: Node, root: Node) -> str:
+    """The element's accessible name, resolved from the SERVED BYTES.
+
+    A deliberately partial model of the accname algorithm, covering exactly the
+    two steps this site's choice-set controls use: an `aria-labelledby` ID
+    reference list, resolved token by token and concatenated in order, falling
+    back to `aria-label`. Not implemented, because nothing here reaches them:
+    `<label>` association, content fallback, `title`, or the hidden-subtree
+    rules.
+
+    Why a model at all, rather than asking a browser? Because the names must be
+    right in the bytes Astro ships, with scripting off. Islands mount
+    `client:visible`, so a browser reading a hydrated page agrees with a build
+    whose server-rendered names are wrong — the exact failure #69's browser lane
+    had, passing 59/59 while 113 data points sat in the scripting-off tab order.
+    `tests/browser/smoke.test.ts` calibrates this model against Chromium's real
+    accessibility tree (#72) so the approximation cannot drift unnoticed.
+
+    Note the fallback order matters: a `labelledby` whose tokens ALL dangle
+    resolves to nothing, and the element falls back to `aria-label` exactly as a
+    real engine would.
+    """
     labelledby = n.get("aria-labelledby")
-    if labelledby and id_map(root).get(labelledby) is not None:
-        return True
-    return False
+    if labelledby:
+        ids = id_map(root)
+        parts = [deep_text(ids[t]) for t in labelledby.split() if t in ids]
+        joined = " ".join(p for p in parts if p)
+        if joined:
+            return joined
+    return (n.get("aria-label") or "").strip()
+
+
+def has_accessible_name(n: Node, root: Node) -> bool:
+    """Sits on top of `accessible_name` rather than re-deriving it.
+
+    It used to look up the whole `aria-labelledby` attribute as a single id,
+    which silently reported "no name" for any multi-token list. #72 made
+    two-token lists the norm for every choice-set control on the site, so the
+    two readings would have diverged from here on.
+    """
+    return bool(accessible_name(n, root))
 
 
 # ---------------------------------------------------------------------------
@@ -650,6 +707,437 @@ def test_the_one_tab_stop_guard_bites(page):
     static = parse_fragment('<svg role="img"><path d="M0 0"></path></svg>')
     assert not tab_stop_failures(static), (
         "a static role=\"img\" figure with no marks was reported as a failure"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Unique, figure-bound accessible names for choice-set controls (#72)
+#
+# Four unit toggles on /government were all named "Measured in". A screen
+# reader announces a radiogroup's name on entry, so four groups controlling
+# four different figures were indistinguishable by name alone.
+#
+# Three guards, because uniqueness alone is a hollow property. G1 on its own is
+# satisfied by naming the groups "A", "B" and "C" — unique and useless. G2 ties
+# each name to the figure it controls BY DOM ANCESTRY, so a copy-pasted key
+# naming the wrong figure fails rather than passing on a technicality. G3 keeps
+# the name containing what the reader can see, which is both WCAG 2.5.3 and
+# what stops a "fix" that renames a control away from its own visible label.
+#
+# The three are not redundant, and the mutation proofs recorded in
+# `docs/contracts/accessibility.md` show it: M3 turns G2 red while G1 stays
+# green (one hardcoded "Measured in" is unique among "Figure N Measured in"
+# names), M6 turns G3 red while G1 and G2 both stay green, and M7 turns G3 red
+# while G1 stays green. Each guard catches something no other one sees.
+#
+# SCOPE, measured before it was chosen. A page-wide all-roles rule is
+# unenforceable and would have to be allowlisted into decoration: /glossary has
+# 136 links under 57 distinct names (the nav is rendered twice by design,
+# "Full entry in the glossary" appears 16 times), /government has 13 legitimate
+# "View as table" buttons, one per figure, and 20 radios named "Nominal" or
+# "% of GDP" — those are disambiguated by their GROUP, which is the thing this
+# section makes unique.
+#
+# So the scope is the choice-set container roles. `role="group"` is
+# DELIBERATELY EXCLUDED: 28 of them on /government are the chart `<svg>`s and
+# #71's scroll regions, whose names are long finding sentences that two similar
+# figures could legitimately share. That is a boundary, not an oversight.
+# ---------------------------------------------------------------------------
+
+#: The container roles whose accessible name must be unique per page: a control
+#: that wraps a set of choices, where the name is what a reader hears on entry
+#: and the only thing distinguishing one set from the next.
+#:
+#: `radiogroup` is the mandatory floor — it is where the bug was. `combobox`
+#: (LawExplorer's three filters, StateGiveGet's jurisdiction picker) and
+#: `tablist` have zero violations today and are included precisely because they
+#: cost nothing to include: they lock the same bug out of `Select.tsx` and the
+#: Radix tabs before it can be written.
+#: The one role G2 and G3 speak about. Named rather than written as a literal
+#: in each of them, because a typo in a bare `"radiogroup"` inside a guard body
+#: would make that guard sweep an empty set while the coverage floor — counting
+#: through `CHOICE_SET_ROLES` — went on reporting 9. The floor asserts THIS
+#: constant, so the two cannot drift apart. Found by M9 (2026-08-27), which
+#: proved the floor caught a typo in `CHOICE_SET_ROLES` but would not have
+#: caught one here.
+FIGURE_BOUND_ROLE = "radiogroup"
+
+CHOICE_SET_ROLES = frozenset({FIGURE_BOUND_ROLE, "combobox", "tablist"})
+
+
+def choice_sets(root: Node, roles=CHOICE_SET_ROLES) -> list[Node]:
+    return [n for n in root.iter_descendants() if n.get("role") in roles]
+
+
+def duplicate_choice_set_name_failures(root: Node) -> list[str]:
+    """G1 — no two choice-set controls of the same role share a name on a page.
+
+    Grouped by role, not globally: a `tablist` and a `radiogroup` that happened
+    to share a name are still told apart by the role a screen reader announces
+    alongside it.
+    """
+    failures: list[str] = []
+    for role in sorted({n.get("role") for n in choice_sets(root)}):
+        seen: dict[str, int] = {}
+        for n in choice_sets(root, {role}):
+            name = accessible_name(n, root)
+            if not name:
+                failures.append(
+                    f"a [role={role!r}] has no accessible name at all — "
+                    f"aria-labelledby={n.get('aria-labelledby')!r}, "
+                    f"aria-label={n.get('aria-label')!r}. A dangling id "
+                    "reference leaves the control anonymous, and an anonymous "
+                    "control cannot collide, so this is checked before "
+                    "uniqueness rather than after it."
+                )
+                continue
+            seen[name] = seen.get(name, 0) + 1
+        for name, count in seen.items():
+            if count > 1:
+                failures.append(
+                    f"{count} [role={role!r}] controls share the accessible "
+                    f"name {name!r}. A reader entering the second one hears "
+                    "exactly what they heard entering the first."
+                )
+    return failures
+
+
+def figure_bound_name_failures(root: Node) -> list[str]:
+    """G2 — a radiogroup inside a figure is named by THAT figure's number span.
+
+    Ancestry, not string matching. `aria-labelledby` must name a node whose
+    class is `figure-no` and whose own nearest `<figure>` ancestor is the same
+    `<figure>` the group sits in. A group pointing at a real figure-number span
+    belonging to some other figure produces a unique, plausible, wrong name —
+    "Figure 10 Measured in" on Figure 1's toggle — which G1 would happily pass.
+
+    This is also what forbids `aria-label` from returning to these controls: a
+    hardcoded string has no figure ancestry to check, so it fails here. M3
+    proves exactly that, and proves G1 does not: reverting ONE toggle to
+    `aria-label="Measured in"` leaves a name no other group holds.
+    """
+
+    def own_figure(n: Node) -> Node | None:
+        return next((a for a in n.ancestors() if a.tag == "figure"), None)
+
+    failures: list[str] = []
+    ids = id_map(root)
+    for i, group in enumerate(choice_sets(root, {FIGURE_BOUND_ROLE})):
+        fig = own_figure(group)
+        if fig is None:
+            # Every radiogroup on the site today is inside a figure. One that is
+            # not has no figure to be named by, and is out of this guard's
+            # reach by construction rather than by exemption.
+            continue
+        labelledby = group.get("aria-labelledby")
+        if not labelledby:
+            failures.append(
+                f"radiogroup[{i}] inside a <figure> carries no "
+                f"aria-labelledby (aria-label={group.get('aria-label')!r}). A "
+                "name typed at the call site can be unique and still wrong; "
+                "the name must be composed from the figure."
+            )
+            continue
+        bound = [
+            t
+            for t in labelledby.split()
+            if t in ids
+            and "figure-no" in ids[t].classes()
+            and own_figure(ids[t]) is fig
+        ]
+        if not bound:
+            named = [
+                (t, "figure-no" in ids[t].classes() if t in ids else None)
+                for t in labelledby.split()
+            ]
+            failures.append(
+                f"radiogroup[{i}]: aria-labelledby={labelledby!r} names no "
+                "`.figure-no` span belonging to this group's OWN ancestor "
+                f"figure (tokens resolved: {named}). Either the token is "
+                "missing, or it points at another figure's number — which "
+                "would read as a plausible name for the wrong figure."
+            )
+    return failures
+
+
+def label_in_name_failures(root: Node) -> list[str]:
+    """G3 — WCAG 2.5.3 Label in Name (Level A).
+
+    A radiogroup's accessible name must contain the text of the
+    `.controls-label` span sitting in its own `.controls` container. Found live
+    during #72's planning: `StructuralGap` and `VotedAndNot` displayed
+    "Measured in" while named "Structural gap units" and "What Congress votes
+    on units", so a voice-control user saying the words in front of them could
+    not target either control.
+
+    Beyond the conformance point, this is what stops the cheap fix: renaming a
+    control to something unique but unrelated to its visible label satisfies G1
+    and G2 and breaks the reader's ability to say what they see. M6 is that
+    mutation, and it turns only this guard red.
+    """
+    failures: list[str] = []
+    for i, group in enumerate(choice_sets(root, {FIGURE_BOUND_ROLE})):
+        controls = next(
+            (a for a in group.ancestors() if "controls" in a.classes()), None
+        )
+        if controls is None:
+            continue
+        visible = [
+            deep_text(n)
+            for n in controls.iter_descendants()
+            if "controls-label" in n.classes()
+        ]
+        visible = [v for v in visible if v]
+        if not visible:
+            failures.append(
+                f"radiogroup[{i}] sits in a `.controls` row with no visible "
+                "`.controls-label`. Every choice set on this site is labelled "
+                "in the page; one without a visible label has nothing for a "
+                "voice-control user to say."
+            )
+            continue
+        name = accessible_name(group, root)
+        for v in visible:
+            if v.lower() not in name.lower():
+                failures.append(
+                    f"radiogroup[{i}]: visible label {v!r} is not contained "
+                    f"in the accessible name {name!r} (WCAG 2.5.3 Label in "
+                    "Name, Level A) — a voice-control user saying what they "
+                    "can see cannot target this control."
+                )
+    return failures
+
+
+def test_choice_set_names_are_unique_per_page(page):
+    path, root = page
+    failures = duplicate_choice_set_name_failures(root)
+    assert not failures, f"{path}: " + "; ".join(failures)
+
+
+def test_radiogroup_names_are_bound_to_their_own_figure(page):
+    path, root = page
+    failures = figure_bound_name_failures(root)
+    assert not failures, f"{path}: " + "; ".join(failures)
+
+
+def test_radiogroup_names_contain_their_visible_label(page):
+    path, root = page
+    failures = label_in_name_failures(root)
+    assert not failures, f"{path}: " + "; ".join(failures)
+
+
+def test_the_duplicate_choice_set_guard_bites():
+    """G1's mutants: two ids with identical text, two groups on one id, and a
+    returning hardcoded `aria-label` pair."""
+    two_ids_same_text = parse_fragment(
+        '<span id="a">Measured in</span>'
+        '<div role="radiogroup" aria-labelledby="a"></div>'
+        '<span id="b">Measured in</span>'
+        '<div role="radiogroup" aria-labelledby="b"></div>'
+    )
+    assert duplicate_choice_set_name_failures(two_ids_same_text), (
+        "two radiogroups pointing at DIFFERENT ids whose text is identical "
+        "passed — the guard is comparing ids rather than resolved names, and "
+        "this is the exact shape #72 found on /government"
+    )
+
+    same_id = parse_fragment(
+        '<span id="a">Measured in</span>'
+        '<div role="radiogroup" aria-labelledby="a"></div>'
+        '<div role="radiogroup" aria-labelledby="a"></div>'
+    )
+    assert duplicate_choice_set_name_failures(same_id), (
+        "two radiogroups sharing one id passed"
+    )
+
+    hardcoded = parse_fragment(
+        '<div role="radiogroup" aria-label="Measured in"></div>'
+        '<div role="radiogroup" aria-label="Measured in"></div>'
+    )
+    assert duplicate_choice_set_name_failures(hardcoded), (
+        "two radiogroups with identical hardcoded aria-labels passed"
+    )
+
+    dangling = parse_fragment('<div role="radiogroup" aria-labelledby="nope"></div>')
+    assert duplicate_choice_set_name_failures(dangling), (
+        "a radiogroup whose aria-labelledby resolves to nothing passed — an "
+        "anonymous control never collides, so uniqueness alone would call it "
+        "correct"
+    )
+
+    # Same name, different roles: told apart by the role announced with it.
+    across_roles = parse_fragment(
+        '<div role="radiogroup" aria-label="Measured in"></div>'
+        '<div role="combobox" aria-label="Measured in"></div>'
+    )
+    assert not duplicate_choice_set_name_failures(across_roles)
+
+    ok = parse_fragment(
+        '<span id="f1">Figure 1</span><span id="u1">Measured in</span>'
+        '<div role="radiogroup" aria-labelledby="f1 u1"></div>'
+        '<span id="f4">Figure 4</span><span id="u4">Measured in</span>'
+        '<div role="radiogroup" aria-labelledby="f4 u4"></div>'
+    )
+    assert not duplicate_choice_set_name_failures(ok)
+
+
+def test_the_figure_bound_name_guard_bites():
+    """G2's mutants. The middle one is the whole reason this guard exists: a
+    name that is unique, well-formed, and about the wrong figure."""
+    correct = (
+        '<figure class="figure">'
+        '<span class="figure-no" id="fig-debt-no">Figure 1</span>'
+        '<div class="controls"><span class="controls-label" id="debt-units">Measured in</span>'
+        '<div role="radiogroup" aria-labelledby="fig-debt-no debt-units"></div>'
+        "</div></figure>"
+    )
+    assert not figure_bound_name_failures(parse_fragment(correct))
+
+    wrong_figure = parse_fragment(
+        '<figure class="figure">'
+        '<span class="figure-no" id="fig-revenue-no">Figure 10</span>'
+        "</figure>"
+        '<figure class="figure">'
+        '<span class="figure-no" id="fig-debt-no">Figure 1</span>'
+        '<span class="controls-label" id="debt-units">Measured in</span>'
+        '<div role="radiogroup" aria-labelledby="fig-revenue-no debt-units"></div>'
+        "</figure>"
+    )
+    assert figure_bound_name_failures(wrong_figure), (
+        "a radiogroup naming ANOTHER figure's number span passed. Its name — "
+        "\"Figure 10 Measured in\" on Figure 1's toggle — is unique and "
+        "plausible, so G1 cannot catch it; only ancestry can"
+    )
+
+    no_figure_token = parse_fragment(
+        '<figure class="figure">'
+        '<span class="figure-no" id="fig-debt-no">Figure 1</span>'
+        '<span class="controls-label" id="debt-units">Measured in</span>'
+        '<div role="radiogroup" aria-labelledby="debt-units"></div>'
+        "</figure>"
+    )
+    assert figure_bound_name_failures(no_figure_token), (
+        "a radiogroup named only by its local label passed — that is the "
+        "pre-#72 state, where four toggles were all called \"Measured in\""
+    )
+
+    hardcoded = parse_fragment(
+        '<figure class="figure">'
+        '<span class="figure-no" id="fig-debt-no">Figure 1</span>'
+        '<div role="radiogroup" aria-label="Measured in"></div>'
+        "</figure>"
+    )
+    assert figure_bound_name_failures(hardcoded), (
+        "a radiogroup inside a figure using aria-label passed — G2 is what "
+        "forbids the call-site string from coming back"
+    )
+
+    not_a_figure_no = parse_fragment(
+        '<figure class="figure">'
+        '<span id="fig-debt-no">Figure 1</span>'
+        '<span class="controls-label" id="debt-units">Measured in</span>'
+        '<div role="radiogroup" aria-labelledby="fig-debt-no debt-units"></div>'
+        "</figure>"
+    )
+    assert figure_bound_name_failures(not_a_figure_no), (
+        "a token resolving to a span WITHOUT class `figure-no` passed — the "
+        "guard is matching on the id's spelling rather than on what it names"
+    )
+
+
+def test_the_label_in_name_guard_bites():
+    """G3's mutants, including the two live failures #72 found."""
+    ok = parse_fragment(
+        '<div class="controls">'
+        '<span class="controls-label" id="u">Measured in</span>'
+        '<span id="f">Figure 5</span>'
+        '<div role="radiogroup" aria-labelledby="f u"></div>'
+        "</div>"
+    )
+    assert not label_in_name_failures(ok)
+
+    # The live StructuralGap failure at 6827f0b, reconstructed.
+    structural_gap = parse_fragment(
+        '<div class="controls">'
+        '<span class="controls-label">Measured in</span>'
+        '<div role="radiogroup" aria-label="Structural gap units"></div>'
+        "</div>"
+    )
+    assert label_in_name_failures(structural_gap), (
+        "the shipped StructuralGap shape — visible \"Measured in\", named "
+        "\"Structural gap units\" — passed"
+    )
+
+    renamed_away = parse_fragment(
+        '<div class="controls">'
+        '<span class="controls-label" id="u">Measured in</span>'
+        '<span id="f">Figure 5</span>'
+        '<div role="radiogroup" aria-labelledby="f"></div>'
+        "</div>"
+    )
+    assert label_in_name_failures(renamed_away), (
+        "a radiogroup named only \"Figure 5\", with the visible label dropped "
+        "from its token list, passed — unique, figure-bound, and unsayable"
+    )
+
+    no_visible_label = parse_fragment(
+        '<div class="controls">'
+        '<span id="f">Figure 4</span>'
+        '<div role="radiogroup" aria-labelledby="f"></div>'
+        "</div>"
+    )
+    assert label_in_name_failures(no_visible_label), (
+        "a controls row with no visible label at all passed — that was "
+        "BudgetChart before #72"
+    )
+
+
+def test_the_choice_set_coverage_did_not_narrow():
+    """The anti-hollow proof, and the one that has to be here.
+
+    All three guards above are phrased as "no failures". A selector that
+    matches NOTHING produces no failures, and reports exactly the same green as
+    a selector that matches everything and finds it correct. This suite has
+    removed that shape a dozen times; the counts below are what make the
+    difference visible.
+
+    Proved by M8 and M9. M8 narrows `CHOICE_SET_ROLES` to `{"radiogroup"}` and
+    M9 typos every role string; both leave G1, G2 and G3 reporting green, and
+    both turn this red. That is the whole argument for its existence.
+
+    Asserted as equalities, per role, site-wide. Re-baseline only alongside a
+    figure that genuinely gained or lost a choice-set control — never to make a
+    number go green.
+    """
+    counts: dict[str, int] = {}
+    for path in PAGES:
+        root = parse_html(path)
+        for n in choice_sets(root):
+            counts[n.get("role")] = counts.get(n.get("role"), 0) + 1
+
+    assert counts.get(FIGURE_BOUND_ROLE) == 9, (
+        f"{counts.get(FIGURE_BOUND_ROLE)} [role={FIGURE_BOUND_ROLE}] across "
+        "dist/, expected 9 (8 on /government, 1 on /households). This is the "
+        "role the done contract names, and a drop means the uniqueness "
+        "assertion above went quiet rather than clean. Reading it through "
+        "FIGURE_BOUND_ROLE is deliberate: it is the same constant G2 and G3 "
+        "filter on, so a typo there fails HERE rather than silently emptying "
+        "both guards."
+    )
+    assert counts.get("combobox") == 4, (
+        f"{counts.get('combobox')} [role=combobox] across dist/, expected 4 "
+        "(LawExplorer's vote character, signing president and control at "
+        "enactment; StateGiveGet's jurisdiction)."
+    )
+    assert counts.get("tablist") == 1, (
+        f"{counts.get('tablist')} [role=tablist] across dist/, expected 1 "
+        "(BudgetChart's breakdown tabs)."
+    )
+    assert set(counts) == set(CHOICE_SET_ROLES), (
+        f"the roles actually found in dist/ are {sorted(counts)}, but "
+        f"CHOICE_SET_ROLES declares {sorted(CHOICE_SET_ROLES)}. A role in the "
+        "constant that appears nowhere is a typo — every guard filtering on it "
+        "silently checks an empty set."
     )
 
 

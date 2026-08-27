@@ -20,6 +20,11 @@ import { percent } from '../charts/format'
 import { TableView } from './TableView'
 import { useChartSize } from '../charts/useChartSize'
 import type { RevenueYear } from '../../data/types'
+import { labelledByFigure } from './figureLabel'
+
+/** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
+ *  this key rather than typed — see `figureLabel.ts` (#72). */
+const FIGURE = 'payroll-bill'
 
 type View = 'gdp' | 'revenue'
 
@@ -78,12 +83,12 @@ export function PayrollBill({ rows }: { rows: RevenueYear[] }) {
   return (
     <div ref={boxRef}>
       <div className="controls">
-        <span className="controls-label" id="payroll-units">Measured in</span>
+        <span className="controls-label" id="payroll-bill-units">Measured in</span>
         <ToggleGroup.Root
           type="single"
           value={view}
           onValueChange={(v) => v && setView(v as View)}
-          aria-labelledby="payroll-units"
+          aria-labelledby={labelledByFigure(FIGURE, 'payroll-bill-units')}
           className="unit-toggle"
         >
           {VIEWS.map((v) => (

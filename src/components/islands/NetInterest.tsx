@@ -24,6 +24,11 @@ import { TableView } from './TableView'
 import { useChartSize } from '../charts/useChartSize'
 import { value, fiscalYear } from '../charts/format'
 import type { BudgetYear } from '../../data/types'
+import { labelledByFigure } from './figureLabel'
+
+/** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
+ *  this key rather than typed — see `figureLabel.ts` (#72). */
+const FIGURE = 'net-interest'
 
 const START = 1995
 const END = 2025
@@ -117,7 +122,7 @@ export function NetInterest({ rows }: { rows: BudgetYear[] }) {
           type="single"
           value={view}
           onValueChange={(v) => v && setView(v as View)}
-          aria-labelledby="net-interest-units"
+          aria-labelledby={labelledByFigure(FIGURE, 'net-interest-units')}
           className="unit-toggle"
         >
           {VIEWS.map((v) => (

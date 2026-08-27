@@ -24,6 +24,7 @@
  * typed here or at any call site.
  */
 import type { FigureEntry } from '../data/figures'
+import { figureNoId } from './islands/figureLabel'
 
 interface Props {
   /** The finding, in a sentence. Not a description of the shape. */
@@ -55,7 +56,7 @@ if (!xUnit?.trim() || !yUnit?.trim()) throw new Error('Figure: both axes must na
 
 <figure class="figure" aria-label={ariaLabel} id={id}>
   <div class="figure-head">
-    <span class="figure-no">Figure {fig.n}</span>
+    <span class="figure-no" id={figureNoId(fig.key)}>Figure {fig.n}</span>
     <span class="figure-title">{fig.title}</span>
   </div>
 
