@@ -51,7 +51,14 @@ export function splitAtBoundary<T extends Estimated>(rows: T[], lastActualFy: nu
  *  belonging to the rule. The placement is computed from the label and the
  *  frame, never from FY2025's current x, so next year's vintage cannot regress
  *  it. On `null` — a label too wide to fit at all — the rule still draws and the
- *  label is omitted; a truncated boundary year would be worse than none. */
+ *  label is omitted; a truncated boundary year would be worse than none.
+ *
+ *  The 4-unit clearance is a `gap`, not a pre-offset baked into `x`. Written as
+ *  `x + 4` it means "4 right of the rule" while the anchor is `start` and
+ *  "overlap the rule by 4" the moment the clamp flips it to `end` — which it
+ *  always does here. As a `gap` it flips sign with the anchor and keeps meaning
+ *  clearance. On `/economy` §1 that difference is visible: without it the label
+ *  sits on its own rule and collides with `CBO projection`. */
 export function BoundaryRule({ frame, x, label }: { frame: Frame; x: number; label: string }) {
   return (
     <g>
@@ -64,7 +71,7 @@ export function BoundaryRule({ frame, x, label }: { frame: Frame; x: number; lab
         strokeWidth={1}
         strokeDasharray="2 2"
       />
-      <Annotation frame={frame} x={x + 4} y={10} label={label} />
+      <Annotation frame={frame} x={x} gap={4} y={10} label={label} />
     </g>
   )
 }

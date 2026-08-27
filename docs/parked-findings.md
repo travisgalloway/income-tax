@@ -1166,3 +1166,14 @@ time. Appended to, never rewritten. None of these have been acted on.
   rows: several 390px FAIL lists were written when the issues they cite were broader than the work
   that eventually closed them, so an issue number in a Manual cell is weaker evidence than it looks.
   Found while removing #64 from the Manual cells. Severity: documentation drift, non-blocking.
+- [2026-08-27] `src/components/islands/PricesAndRates.tsx:175-181` — `/economy` §4's bottom panel
+  draws `Fed funds`, `3-month bill` and `10-year note` all `end`-anchored at
+  `x(lastActualRow.y) - 4`, separated only by y offsets of -8, +14 and -20 against their own series'
+  values. When two of those series converge, the labels collide: on current data `Fed funds` and
+  `10-year note` overlap, measured by bounding box in Chromium 151. This is **not** caused by #64
+  and was not changed by it — both labels fit their SVG comfortably, so `placeAnnotation` returns
+  them unchanged and their positions are identical to `main`'s. It is the same class of problem
+  `BudgetChart` has a sort-and-space guard for; the fix is to give this panel one too, rather than
+  hand-picked y offsets that assume the series stay apart. Found while checking #64's criterion 4
+  (no clamped label lands on what it names) across all three routes. Severity: legibility,
+  non-blocking.

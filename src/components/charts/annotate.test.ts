@@ -228,3 +228,51 @@ test('the helper touches no DOM API', () => {
     placeAnnotation({ x: 696, label: '2022: top 1% 31.5%', frame: WIDE, anchor: 'middle' }),
   )
 })
+
+test('gap is clearance in the anchor\'s own direction, so it survives a flip', () => {
+  // The bug this exists to prevent, from /economy §1: BoundaryRule wants its
+  // label 4 units clear of the rule. Written as a pre-offset (`x: rule + 4`)
+  // that reads correctly while the anchor is `start` and inverts the moment the
+  // clamp flips it to `end` — the label then overlaps the rule by 4 and runs
+  // into its neighbour.
+  const rule = 620
+
+  const naive = placeAnnotation({ x: rule + 4, label: 'Last actual, FY2025', frame: WIDE, anchor: 'start' })
+  assert.equal(naive?.textAnchor, 'end')
+  assert.equal(naive?.x, rule + 4, 'the pre-offset survives the flip pointing the wrong way')
+
+  const withGap = placeAnnotation({ x: rule, gap: 4, label: 'Last actual, FY2025', frame: WIDE, anchor: 'start' })
+  assert.equal(withGap?.textAnchor, 'end')
+  assert.equal(withGap?.x, rule - 4, 'a gap flips its sign with the anchor')
+  assertInside(withGap, 'Last actual, FY2025', WIDE)
+
+  // Unflipped, a gap means exactly what the pre-offset meant.
+  const roomy = placeAnnotation({ x: 100, gap: 4, label: 'Last actual, FY2025', frame: WIDE, anchor: 'start' })
+  assert.deepEqual(roomy, { x: 104, textAnchor: 'start' })
+
+  // And an `end`-anchored label gaps leftward, flipping rightward.
+  const left = placeAnnotation({ x: -40, gap: 4, label: 'Unemployment', frame: NARROW, anchor: 'end' })
+  assert.equal(left?.textAnchor, 'start')
+  assert.equal(left?.x, -36, 'the gap points right once the anchor does')
+  assertInside(left, 'Unemployment', NARROW)
+
+  // Far enough out that neither anchor fits, the gap must not stop the shift
+  // from rescuing it — the label still lands wholly inside the span.
+  const hopeless = placeAnnotation({ x: -60, gap: 4, label: 'Unemployment', frame: NARROW, anchor: 'end' })
+  assert.equal(hopeless?.textAnchor, 'end', 'a shift keeps the anchor it was given')
+  assertInside(hopeless, 'Unemployment', NARROW)
+})
+
+test('gap does not break idempotence or the null contract', () => {
+  const anchors: Anchor[] = ['start', 'middle', 'end']
+  for (const f of [WIDE, NARROW]) {
+    for (const anchor of anchors) {
+      for (const x of [-200, -50, 0, 150, 296, 622, 800]) {
+        const label = 'Last actual, FY2025'
+        const p = placeAnnotation({ x, gap: 4, label, frame: f, anchor })
+        assertInside(p, label, f)
+      }
+    }
+  }
+  assert.equal(placeAnnotation({ x: 0, gap: 4, label: 'z'.repeat(200), frame: NARROW }), null)
+})

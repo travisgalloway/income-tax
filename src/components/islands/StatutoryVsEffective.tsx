@@ -116,7 +116,19 @@ export function StatutoryVsEffective({
             <AxisBottom frame={fr} ticks={xTicks} format={(t) => `${t}`} label="Tax / calendar year" scale={x} />
 
             <path d={path} fill="none" stroke="var(--ink)" strokeWidth={2} />
-            <Annotation frame={fr} x={x(span[span.length - 1].y) + 6} y={y(span[span.length - 1].top)} label="Top statutory rate" />
+            {/* End-anchored and lifted clear of the curve, which is
+                VotedAndNot's idiom for naming a line. At `+ 6` past the last
+                point this overran the SVG by 110 units and was clipped to two
+                characters (#64); letting the clamp flip it in place would have
+                laid it along the flat right-hand end of the very line it
+                names. */}
+            <Annotation
+              frame={fr}
+              x={x(span[span.length - 1].y) - 4}
+              y={y(span[span.length - 1].top) - 8}
+              anchor="end"
+              label="Top statutory rate"
+            />
 
             {cbo.rows.map((r) =>
               GROUPS.map((g) => (

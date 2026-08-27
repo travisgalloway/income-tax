@@ -186,12 +186,29 @@ export function BudgetChart({ rows: source }: { rows: BudgetYear[] }) {
     int: y(last.mand + last.disc + last.int / 2),
     rev: y(last.rev),
   }
-  // Keep the net-interest and revenue labels from colliding when the top
-  // band is thin (edge case: net interest is the smallest segment in most
-  // years, and the revenue line often sits close above it).
-  if (Math.abs(seriesLabelY.rev - seriesLabelY.int) < 11) {
-    seriesLabelY.rev = seriesLabelY.int - 11
+  // Keep the four labels from colliding when two series' last values sit close
+  // together. This used to guard the net-interest/revenue pair alone, on the
+  // reasoning that net interest is the smallest segment and the revenue line
+  // often sits just above it. On FY2025 data it is DISCRETIONARY and revenue
+  // that collide — their centres are 0.24T apart — so the specific pair was the
+  // wrong thing to name. Sorting and spacing covers whichever pair the current
+  // vintage happens to bring together.
+  //
+  // This became visible with #64: the labels now sit inside the plot, so a
+  // collision is legible as a collision. Before, they hung past the SVG's right
+  // edge and the overlap was hidden by the clipping that issue removed.
+  // 15, not the font's 11.5: the painted box of an `.annotation` measures 13.3
+  // units tall (ascenders and descenders), so spacing baselines by the font
+  // size still leaves the boxes touching. Measured in Chromium 151.
+  const MIN_LABEL_GAP = 15
+  const ordered = (['mand', 'disc', 'int', 'rev'] as const)
+    .map((k) => ({ k, at: seriesLabelY[k] }))
+    .sort((a, b) => a.at - b.at)
+  for (let i = 1; i < ordered.length; i++) {
+    const gap = ordered[i].at - ordered[i - 1].at
+    if (gap < MIN_LABEL_GAP) ordered[i].at = ordered[i - 1].at + MIN_LABEL_GAP
   }
+  for (const { k, at } of ordered) seriesLabelY[k] = at
 
   const label = `Federal outlays stacked into mandatory (net), discretionary and net interest, with revenue drawn across them and the deficit below zero, fiscal 1962 to 2025, shown in ${UNIT_LABEL[unit].toLowerCase()}.`
 
@@ -304,13 +321,22 @@ export function BudgetChart({ rows: source }: { rows: BudgetYear[] }) {
             <path d={revLine(rows) ?? ''} fill="none" stroke="var(--ink)" strokeWidth={2} />
 
             {/* 5. In-chart series labels at wide; a text legend below the
-                figure replaces these at narrow (see the <p> after </Chart>). */}
+                figure replaces these at narrow (see the <p> after </Chart>).
+
+                These sit INSIDE the plot, right-anchored with a halo, which is
+                the treatment RevenueChart's band labels already use two
+                sections down. They used to hang at `iw + 6` in a 24-unit right
+                margin and were clipped by 10 to 31 units (#64). Letting the
+                clamp flip them there would have satisfied the clip guard and
+                broken something else: a stacked area chart has no "just above
+                the line" free space, so a flipped label lands on the band it
+                names. The halo is what makes sitting on the band legible. */}
             {!narrow && (
               <>
-                <Annotation frame={fr} x={iw + 6} y={seriesLabelY.mand} dy="0.32em" label="Mandatory (net)" />
-                <Annotation frame={fr} x={iw + 6} y={seriesLabelY.disc} dy="0.32em" label="Discretionary" />
-                <Annotation frame={fr} x={iw + 6} y={seriesLabelY.int} dy="0.32em" label="Net interest" />
-                <Annotation frame={fr} x={iw + 6} y={seriesLabelY.rev} dy="0.32em" label="Revenue" />
+                <Annotation frame={fr} x={iw - 6} y={seriesLabelY.mand} dy="0.32em" anchor="end" halo label="Mandatory (net)" />
+                <Annotation frame={fr} x={iw - 6} y={seriesLabelY.disc} dy="0.32em" anchor="end" halo label="Discretionary" />
+                <Annotation frame={fr} x={iw - 6} y={seriesLabelY.int} dy="0.32em" anchor="end" halo label="Net interest" />
+                <Annotation frame={fr} x={iw - 6} y={seriesLabelY.rev} dy="0.32em" anchor="end" halo label="Revenue" />
               </>
             )}
 

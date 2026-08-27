@@ -58,8 +58,17 @@ export interface AnnotationProps {
    *  `test_every_annotation_is_placed_through_the_clamp` greps for. */
   seriesLabel?: boolean
   fill?: string
+  /** Paint a panel-coloured halo behind the glyphs, so the label stays legible
+   *  where it necessarily sits ON a filled band or a line rather than beside
+   *  it. This is `RevenueChart`'s existing `.legend-label` treatment, lifted
+   *  here so the two agree; it is the answer for a stacked area chart, where
+   *  there is no "just above the line" that is not inside another band. */
+  halo?: boolean
   /** Set false where flipping the anchor would read worse than sliding. */
   flip?: boolean
+  /** Clearance from the reference point, applied in the anchor's own direction
+   *  so it survives a flip. See `placeAnnotation`. */
+  gap?: number
   pad?: number
 }
 
@@ -74,17 +83,27 @@ export function Annotation({
   className = 'annotation',
   seriesLabel = false,
   fill,
+  halo = false,
   flip,
+  gap,
   pad,
 }: AnnotationProps) {
   const cls = seriesLabel ? `${className} series-label` : className
   const fontPx = fontPxFor(cls)
   const all = lines?.length ? [label, ...lines] : [label]
   const width = Math.max(...all.map((line) => estimateTextWidth(line, fontPx)))
-  const placed = placeAnnotation({ x, label, width, frame, anchor, fontPx, flip, pad })
+  const placed = placeAnnotation({ x, label, width, frame, anchor, fontPx, flip, gap, pad })
   if (!placed) return null
   return (
-    <text x={placed.x} y={y} dy={dy} textAnchor={placed.textAnchor} className={cls} fill={fill}>
+    <text
+      x={placed.x}
+      y={y}
+      dy={dy}
+      textAnchor={placed.textAnchor}
+      className={cls}
+      fill={fill}
+      style={halo ? { paintOrder: 'stroke', stroke: 'var(--panel)', strokeWidth: 3 } : undefined}
+    >
       {lines?.length
         ? all.map((line, i) => (
             <tspan key={line} x={placed.x} dy={i === 0 ? undefined : '1.15em'}>

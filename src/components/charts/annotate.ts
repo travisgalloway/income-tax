@@ -95,29 +95,44 @@ export function placeAnnotation(opts: {
   fontPx?: number
   pad?: number
   flip?: boolean
+  /** Clearance between the reference point `x` and the near edge of the label,
+   *  applied in whichever direction the anchor points.
+   *
+   *  This exists because a fixed pre-offset does NOT survive a flip. Writing
+   *  `x: rule + 4` for a `start`-anchored label reads as "4 units right of the
+   *  rule"; flip it to `end` and the same number becomes "overlap the rule by
+   *  4", because the label now grows leftward from a point past its reference.
+   *  A `gap` flips its sign with the anchor, so the clearance means the same
+   *  thing on both sides. */
+  gap?: number
   /** Override the measured width, for multi-line `<tspan>` labels whose width
    *  is the widest LINE, not the concatenation of them. */
   width?: number
 }): Placement | null {
-  const { x, label, frame, anchor = 'start', fontPx = ANNOTATION_FONT_PX, pad = 2, flip = true } = opts
+  const {
+    x, label, frame, anchor = 'start', fontPx = ANNOTATION_FONT_PX, pad = 2, flip = true, gap = 0,
+  } = opts
   const w = opts.width ?? estimateTextWidth(label, fontPx)
   const [lo, hi] = visibleSpan(frame, pad)
 
   // Wider than everything there is. Absent beats truncated — see the header.
   if (w > hi - lo) return null
 
-  const fits = (a: Anchor, at: number) => {
-    const [l, r] = boxFor(at, w, a)
+  /** Where the label's reference sits once `gap` is applied for anchor `a`. */
+  const at = (a: Anchor) => (a === 'start' ? x + gap : a === 'end' ? x - gap : x)
+
+  const fits = (a: Anchor) => {
+    const [l, r] = boxFor(at(a), w, a)
     return l >= lo - EPS && r <= hi + EPS
   }
 
-  if (fits(anchor, x)) return { x, textAnchor: anchor }
+  if (fits(anchor)) return { x: at(anchor), textAnchor: anchor }
 
-  if (flip && anchor !== 'middle' && fits(OPPOSITE[anchor], x)) {
-    return { x, textAnchor: OPPOSITE[anchor] }
+  if (flip && anchor !== 'middle' && fits(OPPOSITE[anchor])) {
+    return { x: at(OPPOSITE[anchor]), textAnchor: OPPOSITE[anchor] }
   }
 
-  const [l, r] = boxFor(x, w, anchor)
+  const [l, r] = boxFor(at(anchor), w, anchor)
   const dx = l < lo ? lo - l : hi - r
-  return { x: x + dx, textAnchor: anchor }
+  return { x: at(anchor) + dx, textAnchor: anchor }
 }

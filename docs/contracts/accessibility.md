@@ -657,6 +657,53 @@ confirming the NARROW path was genuinely exercised and not just SSR scaled down.
 `/government` drops from 20 to 16 by design, not by clipping: `BudgetChart` replaces its four
 in-chart series labels with a text legend below the figure at narrow, which it already did.
 
+#### Criterion 4: a clamped label must not land on what it names
+
+This one is not provable from the bytes, and looking at the numbers was not enough — the first pass
+of the fix satisfied every clipping assertion above **and broke this**. Three `BudgetChart` labels
+and Households §4's `Top statutory rate` flipped from the right margin into the plot and came to
+rest on the series they name. The clip guard was green throughout. It is recorded here because the
+lesson generalises: "the annotation is visible now" and "the annotation is correct now" are
+different claims, and only one of them has a static test.
+
+Checked by hit-testing real paint (`elementsFromPoint` across nine points along each label, at three
+heights), restricted to the labels the clamp actually **moved** — a label that already fitted is
+returned unchanged by `placeAnnotation` and cannot have been pushed anywhere. Results after the fix:
+
+| Route | Labels moved by the clamp | On their own series | Label-on-label collisions |
+|---|---|---|---|
+| `/economy` | 6 | **0** | 1, pre-existing — see below |
+| `/households` | 4 | **0** | **0** |
+| `/government` | 5 | **0** | **0** |
+
+Three changes were needed to get there, and each is a different answer because the charts differ:
+
+- **`BudgetChart` (stacked area).** A stacked area chart has no "just above the line" free space —
+  every point inside the plot is inside some band. Flipping the labels there put them on the bands.
+  They now sit inside the plot right-anchored **with a panel-coloured halo**, which is the treatment
+  `RevenueChart`'s `.legend-label` band labels two sections down already used for exactly this
+  problem. The plan named `VotedAndNot` as the shape to converge on; that is right for a line chart
+  and wrong for this one.
+- **`StatutoryVsEffective` (line).** Here `VotedAndNot`'s idiom does apply: end-anchored at the last
+  point and lifted 8 units clear of the curve. Flipping it in place had laid it along the flat
+  right-hand end of the very line it names.
+- **`BoundaryRule`'s clearance became a `gap`.** `x + 4` reads as "4 units right of the rule" while
+  the anchor is `start`, and inverts to "overlap the rule by 4" the moment the clamp flips it to
+  `end` — which it always does, since the rule marks the last actual year and sits near the right
+  edge by construction. A `gap` flips its sign with the anchor. On `/economy` §1 the difference is
+  visible: without it all six boundary labels sat on their own dashed rule and the top one collided
+  with `CBO projection`. All six now clear the rule (label right edge 538.4, rule at 542.4).
+
+`BudgetChart`'s own label-collision guard was generalised in passing: it spaced the net-interest and
+revenue labels alone, and on FY2025 data it is **discretionary** and revenue whose centres fall 0.24T
+apart. Naming a specific pair was the bug; the labels are now sorted and spaced. The minimum gap is
+**15** units, not the font's 11.5, because an `.annotation`'s painted box measures 13.3 units tall.
+
+**One collision is left, and it is not this issue's.** `/economy` §4's `Fed funds` and `10-year note`
+overlap each other. Both are `end`-anchored at the same x with y offsets of -8 and -20, both fit
+their SVG comfortably, and `placeAnnotation` returns them unchanged — their positions are identical
+to `main`'s. Recorded in `docs/parked-findings.md`.
+
 **No annotation moves between the SSR paint and hydration.** At 1440x900 the hydrated preset is the
 same WIDE preset SSR emitted, so every placement must be byte-identical; comparing each annotation's
 `x` and `text-anchor` before and after forcing hydration gives **0 of 20 changed**. That is
