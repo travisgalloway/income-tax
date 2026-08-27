@@ -44,9 +44,22 @@ import type { Page } from 'playwright'
 
 /** Tab presses from the top of `/government` to the first stop inside §11.
  *
- *  Measured at 1440x900 over `d69e4e6`+#69: **141** hydrated (landing on
+ *  Measured at 1440x900 over `02fcd95`+#71: **142** hydrated (landing on
  *  `.basis-toggle-item`, §11's per-person/in-total control) and **118** with
  *  scripting off. Before #69 it was **438**.
+ *
+ *  The hydrated number moved 141 -> 142 in #71, which made every horizontal
+ *  scroll container focusable exactly when it overflows: one such container is
+ *  above §11 and rendered in the page's default state (§10's law table, 1481px
+ *  in a 736px box). The scripting-off number is UNCHANGED, and that is an
+ *  asserted invariant rather than a coincidence — overflow is a computed
+ *  property, so no container is focusable in the served bytes
+ *  (`test_the_served_bytes_carry_no_focusable_scroll_container`).
+ *
+ *  The worst state the site can reach — every one of `/government`'s thirteen
+ *  tables open, where eleven containers above §11 overflow at 390px — is
+ *  measured by `tests/browser/scroll.test.ts` against this same bound: 144 at
+ *  1440px and 153 at 390px.
  *
  *  The headroom to 160 is deliberate: this must not go red when a section gains
  *  a link, while a chart that loses its roving jumps by 30 to 113 stops and
@@ -54,9 +67,15 @@ import type { Page } from 'playwright'
  *  IT — it means a figure is not roving, and the fix is the figure. */
 const MAX_STOPS_TO_SECTION_11 = 160
 
-/** Tab stops on the whole of `/government`. Measured **161** hydrated and
- *  **136** with scripting off, at 1440x900; **143** hydrated at 390x844.
- *  Before #69 it was **512**. Same rule about the headroom. */
+/** Tab stops on the whole of `/government`. Measured **163** hydrated and
+ *  **136** with scripting off, at 1440x900; **145** hydrated at 390x844.
+ *  Before #69 it was **512**. Same rule about the headroom.
+ *
+ *  161 -> 163 and 143 -> 145 are #71's two always-visible scroll containers
+ *  (§10's law table and §11's by-state table), both of which genuinely overflow
+ *  at both viewports, so neither is an empty stop. The other thirteen sit
+ *  inside a closed `<details>`, which contributes zero Tab stops. With every
+ *  table open the numbers are 166 and 175, asserted in `scroll.test.ts`. */
 const MAX_STOPS_GOVERNMENT = 200
 
 /** The walk's ceiling. Above any plausible bound and far below the pre-#69
