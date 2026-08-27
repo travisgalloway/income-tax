@@ -809,7 +809,16 @@ SENTENCE_WORDS_MAX = 45
 #: `(?<!\b[A-Z]\.)` exists for exactly one live string: `government#passed-signed` writes "G.W.
 #: Bush", which a naive `(?<=[.!?])\s+(?=[A-Z])` cuts in half. It is a lookbehind on a *single*
 #: capital at a word boundary, so `GDP.` is unaffected: there is no word boundary before the `P`.
-SENTENCE_SPLIT = re.compile(r'(?<=[.!?])(?<!\b[A-Z]\.)["’”)]?\s+(?=[A-Z0-9$])')
+#:
+#: The closing quote/bracket is matched via a second, fixed-width lookbehind branch rather than
+#: consumed as an ordinary (optional) character — Python's `re` forbids variable-width lookbehind,
+#: so the two cases (bare terminal punctuation, and terminal punctuation plus a closer) are spelled
+#: out separately. Consuming the closer outright would drop it from the split delimiter and, with
+#: it, from the returned sentence string — `sentences()` callers, including this file's offender
+#: excerpts, would then show `He said "hi.` instead of `He said "hi."`.
+SENTENCE_SPLIT = re.compile(
+    r'(?:(?<=[.!?])(?<!\b[A-Z]\.)|(?<=[.!?]["’”)]))\s+(?=[A-Z0-9$])'
+)
 
 
 def sentences(text: str) -> list[str]:
