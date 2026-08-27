@@ -12,18 +12,20 @@
         "title": { "type": "string", "minLength": 1 },
         "provenance": {
           "type": "object",
-          "required": ["generator", "git_sha", "generated_at"],
+          "required": ["generator", "git_sha", "generated_at", "vintage", "retrieved_at"],
           "properties": {
             "generator": { "type": "string", "minLength": 1 },
             "git_sha": { "type": "string", "minLength": 7 },
-            "generated_at": { "type": "string", "minLength": 1 }
+            "generated_at": { "type": "string", "minLength": 1 },
+            "vintage": { "type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$" },
+            "retrieved_at": { "type": "string", "minLength": 1 }
           }
         },
         "refresh": {
           "type": "object",
           "required": ["mode", "reason"],
           "properties": {
-            "mode": { "const": "curated" },
+            "mode": { "const": "mixed" },
             "reason": { "type": "string", "minLength": 1 }
           }
         }
@@ -32,12 +34,13 @@
     "data": {
       "type": "object",
       "required": [
-        "avg_maturity_months", "avg_maturity_as_of", "longest_instrument_years",
-        "marketable_total_t", "composition", "history_months"
+        "avg_maturity_months", "avg_maturity_as_of", "mspd_as_of",
+        "longest_instrument_years", "marketable_total_t", "composition", "history_months"
       ],
       "properties": {
         "avg_maturity_months": { "type": "integer", "minimum": 1 },
         "avg_maturity_as_of": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}$" },
+        "mspd_as_of": { "type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$" },
         "longest_instrument_years": { "type": "integer", "minimum": 1 },
         "marketable_total_t": { "type": "number", "exclusiveMinimum": 0 },
         "composition": {

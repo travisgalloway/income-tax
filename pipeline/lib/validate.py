@@ -19,6 +19,7 @@ import yaml
 
 from . import curated
 from .errors import ValidationFailed
+from .mspd import REQUIRED_CLASSES as MSPD_REQUIRED_CLASSES
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent / "src" / "data"
 SCHEMA_DIR = Path(__file__).resolve().parent.parent / "schemas"
@@ -727,7 +728,9 @@ def check_income(c: Checks) -> None:
 
 # A TIC release month. Deliberately month-bounded rather than `\d{2}`: a fetch
 # that read a column header wrong would otherwise publish "2025-13" as a vintage.
-_TIC_VINTAGE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
+# A release month, YYYY-MM. Shared by the TIC and MSPD guards: both pin a
+# statement month rather than a day, and both fail on anything else.
+_RELEASE_MONTH = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 
 # The three countries the site publishes, and the only ones lib/tic.py returns.
 FOREIGN_HOLDERS = {"Japan", "United Kingdom", "China"}
@@ -757,7 +760,7 @@ def _check_foreign_holdings(
     # it. A fetch that fell back to a different column would leave these two
     # disagreeing.
     c.ok(
-        isinstance(vintage, str) and bool(_TIC_VINTAGE.match(vintage))
+        isinstance(vintage, str) and bool(_RELEASE_MONTH.match(vintage))
         and vintage == d.get("tic_as_of"),
         f"debt_holders: _meta.provenance.vintage must be a YYYY-MM TIC release month and "
         f"must equal data.tic_as_of; got {vintage!r} and {d.get('tic_as_of')!r}. A figure "
@@ -838,6 +841,97 @@ def _check_foreign_holdings(
     )
 
 
+def _check_debt_maturity(c: Checks, maturity: dict[str, Any]) -> None:
+    """The six guards over the fetched instrument composition (#56).
+
+    Written to bite the defect that was actually shipped, not a hypothetical
+    one. `marketable_total_t` read $28.0T for as long as it was a curated
+    constant, and $28.0T is bills + notes + bonds ($28.11T), not the marketable
+    total ($30.91T). Two published claims rested on that denominator and were
+    artefacts of it, so the checks that asserted them are inverted here rather
+    than kept: the three instruments really are not an exhaustive partition, but
+    by $2.80T of TIPS and floating-rate notes rather than by a $0.05T rounding
+    residue; and the published 22% bills share does not "disagree on purpose"
+    with the total beside it, it reconciles with the right one.
+    """
+    d = maturity["data"]
+    meta = maturity["_meta"]
+    comp = {row["k"]: row for row in d["composition"]}
+    vintage = meta.get("provenance", {}).get("vintage")
+    pin = curated._load("snapshots")["snapshots"]["debt_maturity"].get("mspd_vintage")
+
+    # G1 -- the statement month is present, well formed, and describes the data
+    # beside it. A fetch that resolved a different month would leave these two
+    # disagreeing.
+    c.ok(
+        isinstance(vintage, str) and bool(_RELEASE_MONTH.match(vintage))
+        and vintage == d.get("mspd_as_of"),
+        f"debt_maturity: _meta.provenance.vintage must be a YYYY-MM MSPD statement month "
+        f"and must equal data.mspd_as_of; got {vintage!r} and {d.get('mspd_as_of')!r}. A "
+        f"figure without its release month is the trap SOURCES.md exists to prevent.",
+    )
+
+    # G2 -- the pin is honoured. MSPD publishes monthly, so "whatever is newest"
+    # would move three published figures and the marketable total on every
+    # re-run without anyone deciding to.
+    c.ok(
+        d.get("mspd_as_of") == pin,
+        f"debt_maturity: data.mspd_as_of is {d.get('mspd_as_of')!r} but "
+        f"curated/snapshots.yaml pins debt_maturity.mspd_vintage: {pin!r}. The builder "
+        f"adopted a statement nobody chose.",
+    )
+
+    # G3 (was EC2) -- the three instruments are NOT the marketable total, and
+    # the gap is the two families the chart does not draw. The old tolerance was
+    # `> 0.01`, which a $0.05T rounding residue satisfied: the check passed for
+    # eighteen months while the total beside it was the subtotal. A floor of
+    # 2.0 is what would have caught that.
+    total_amt = sum(row["amount_t"] for row in d["composition"])
+    gap = d["marketable_total_t"] - total_amt
+    c.ok(
+        gap >= 2.0,
+        f"debt_maturity: bills + notes + bonds is ${total_amt:.2f}T against a marketable "
+        f"total of ${d['marketable_total_t']:.2f}T, a gap of ${gap:.2f}T. TIPS and "
+        f"floating-rate notes alone are about $2.8T, so a gap this small means the total "
+        f"is the three-instrument subtotal wearing the total's label -- the $28.0T defect "
+        f"#56 removed. It is not a rounding residue and must not be tolerated as one.",
+    )
+
+    # G4 (was EC3, inverted) -- bills' published share must RECONCILE with the
+    # amounts beside it. The old check asserted the two must DISAGREE, which was
+    # true only of the wrong denominator; 6.76/30.91 is 21.9% against a
+    # published 22%. Keeping that assertion would forbid the correct state.
+    bills = comp["bills"]
+    derived = 100 * bills["amount_t"] / d["marketable_total_t"]
+    c.ok(
+        abs(derived - bills["share_pct"]) <= 0.5,
+        f"debt_maturity: bills are ${bills['amount_t']}T of a ${d['marketable_total_t']}T "
+        f"marketable total, {derived:.1f}%, against a published share_pct of "
+        f"{bills['share_pct']}. More than 0.5pp apart means one of the two moved and the "
+        f"other did not.",
+    )
+    # The other half of EC3 is real and stands: only bills carries a share, so
+    # DebtMaturity.tsx has nothing to derive one from for notes and bonds.
+    c.ok(
+        "share_pct" in comp["bills"] and "share_pct" not in comp["notes"]
+        and "share_pct" not in comp["bonds"],
+        "debt_maturity: share_pct must be present on bills only",
+    )
+
+    # G5 -- the class set is the published one. A query that silently narrowed
+    # to the three drawn families would make G3 fail loudly, but one that
+    # narrowed to five would make it pass for the wrong reason, so the set the
+    # total was summed over is recorded and checked rather than inferred.
+    classes = meta.get("mspd_classes")
+    c.ok(
+        isinstance(classes, list)
+        and set(MSPD_REQUIRED_CLASSES) <= set(classes),
+        f"debt_maturity: _meta.mspd_classes is {classes!r} and does not carry all of "
+        f"{list(MSPD_REQUIRED_CLASSES)}. The marketable total was summed over a narrower "
+        f"class set than Treasury publishes, which is what the $28.0T total looked like.",
+    )
+
+
 def check_snapshots(c: Checks) -> None:
     holders = _load("debt_holders")
     d = holders["data"]
@@ -868,20 +962,7 @@ def check_snapshots(c: Checks) -> None:
 
     _check_foreign_holdings(c, holders, split, latest_foreign)
 
-    maturity = _load("debt_maturity")["data"]
-    comp = {row["k"]: row for row in maturity["composition"]}
-    total_amt = sum(row["amount_t"] for row in maturity["composition"])
-    # EC2: bills/notes/bonds are NOT an exhaustive partition of the marketable
-    # total, and must never be presented as one.
-    c.ok(abs(total_amt - maturity["marketable_total_t"]) > 0.01,
-         "debt_maturity: composition now sums to the marketable total; if this is no "
-         "longer true the 'not an exhaustive partition' note and test are stale")
-    # EC3: bills.share_pct (curated) disagrees with amount_t / total on purpose;
-    # only bills carries a curated share, and it must never be silently derived
-    # for notes or bonds from amount_t / marketable_total_t.
-    c.ok("share_pct" in comp["bills"] and "share_pct" not in comp["notes"]
-         and "share_pct" not in comp["bonds"],
-         "debt_maturity: share_pct must be present on bills only")
+    _check_debt_maturity(c, _load("debt_maturity"))
 
     oecd = _load("oecd")["data"]
     c.ok(oecd["us_pct_gdp"] == 25.6 and oecd["oecd_average_pct_gdp"] == 34.1,

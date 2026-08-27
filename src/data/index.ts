@@ -134,12 +134,29 @@ function longMonth(isoMonth: string): string {
  *  those two dates and letting the reader assume it covers both is the failure;
  *  this names both.
  *
- *  The two source labels are written in because `debt_holders` is the only mixed
- *  dataset. A second one takes them as parameters rather than copying this
- *  sentence. Throws when the mode is not `'mixed'`, and when the vintage is
- *  missing — a mixed dataset with no release month has nothing to render here,
- *  and a blank date is worse than a loud failure. */
-export function mixedVintage(meta: Meta, asOf: string): string {
+ *  `debt_maturity` is the second (#56): its instrument composition comes from
+ *  the Monthly Statement of the Public Debt month pinned in the same place,
+ *  while its average maturity is curated from the Joint Economic Committee's
+ *  monthly update — and that second date is a MONTH, not a day, which is why
+ *  `curatedAs` says which of the two to render. Passing a `YYYY-MM` to the
+ *  day-precision branch is what put "as of **undefined** June 2026" on the
+ *  published source line for as long as this figure used `curatedVintage`.
+ *
+ *  Throws when the mode is not `'mixed'`, and when the vintage is missing — a
+ *  mixed dataset with no release month has nothing to render here, and a blank
+ *  date is worse than a loud failure. */
+export function mixedVintage(
+  meta: Meta,
+  asOf: string,
+  labels: {
+    /** the fetched half's publisher, named before its pinned release month */
+    fetched: string
+    /** the curated half's publisher, named before its own as-of date */
+    curated: string
+    /** whether `asOf` is a full `YYYY-MM-DD` day or a `YYYY-MM` release month */
+    curatedAs?: 'day' | 'month'
+  } = { fetched: 'Treasury International Capital', curated: 'Debt to the Penny' },
+): string {
   if (meta.refresh?.mode !== 'mixed') {
     throw new Error(
       `mixedVintage called on a dataset whose _meta.refresh.mode is ` +
@@ -153,9 +170,11 @@ export function mixedVintage(meta: Meta, asOf: string): string {
         'release month is the trap SOURCES.md exists to prevent.',
     )
   }
+  const curatedDate =
+    labels.curatedAs === 'month' ? longMonth(asOf) : longDate(asOf)
   return (
-    `Treasury International Capital, ${longMonth(vintage)} release. ` +
-    `Debt to the Penny as of ${longDate(asOf)}.`
+    `${labels.fetched}, ${longMonth(vintage)} release. ` +
+    `${labels.curated} as of ${curatedDate}.`
   )
 }
 

@@ -314,12 +314,24 @@ export interface DebtHolders {
 
 export interface DebtMaturity {
   avg_maturity_months: number
+  /** The Joint Economic Committee update's month, `YYYY-MM`, for the average
+   *  maturity, the longest instrument and `history_months`. */
   avg_maturity_as_of: string
+  /** The pinned Monthly Statement of the Public Debt month, `YYYY-MM`, for
+   *  `composition` and `marketable_total_t`. A SECOND date, deliberately: the
+   *  instrument amounts are fetched from a different release with a different
+   *  vintage, and presenting one date for both is the failure. `mixedVintage()`
+   *  renders the pair. */
+  mspd_as_of: string
   longest_instrument_years: number
+  /** The total over EVERY marketable class, TIPS and floating-rate notes
+   *  included — NOT the bills + notes + bonds subtotal. It read `28.0` while it
+   *  was a curated constant, which was the subtotal wearing this label (#56). */
   marketable_total_t: number
-  /** `share_pct` is present on bills only and DISAGREES with amount_t /
-   *  marketable_total_t. Geometry comes from amount_t; a percentage is
-   *  rendered only where this field supplies one. */
+  /** `share_pct` is present on bills only, and RECONCILES with amount_t /
+   *  marketable_total_t to within half a point. Geometry comes from amount_t; a
+   *  percentage is rendered only where this field supplies one, so notes and
+   *  bonds have nothing to derive one from. */
   composition: { k: string; label: string; maturity: string; share_pct?: number; amount_t: number }[]
   /** NOT rendered. sections.md §3: "Do not build this as a time series." */
   history_months: { date: string; v: number }[]

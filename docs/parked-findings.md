@@ -945,3 +945,33 @@ time. Appended to, never rewritten. None of these have been acted on.
   for a reason unrelated to its content (the "118 of 118 prose figures reconcile" body was
   unchanged). Found while regenerating `bracket_history` for #55. Severity: reporting accuracy,
   non-blocking.
+- [2026-08-26] **Found and FIXED in #56, recorded so it is not re-derived.**
+  `pipeline/curated/snapshots.yaml:66` published `debt_maturity.marketable_total_t: 28.0`, which is
+  not a stale total from an earlier month: it is bills + notes + bonds (`6.8 + 15.9 + 5.4 = 28.1`)
+  wearing the marketable total's label. MSPD Table 1 for 2026-05 reads 6.759 / 15.943 / 5.412 plus
+  TIPS 2.118, floating-rate notes 0.678 and Federal Financing Bank 0.004, a marketable total of
+  **30.914**. The three published component figures were correct; only the total was not. Two
+  curated claims sat on top of it and were therefore artefacts rather than editorial judgements:
+  that the three families "do not sum exactly" to the total (a $0.05T rounding residue that the
+  `> 0.01` guard accepted, against a real gap of $2.80T), and that the 22% bills share "disagrees
+  on purpose" with `6.8/28.0 = 24.3%` (it reconciles with the right denominator, at 21.9%). Both
+  guards are inverted and both are now proved to bite by `pytest -k mspd`. Found while executing
+  #56, whose Definition of done required the composition be traceable to an MSPD release; 28.0 is
+  traceable to none. Severity: a wrong published figure, corrected in the same PR.
+- [2026-08-26] `src/data/index.ts:102` `curatedVintage()` is now called by nothing.
+  `debt_maturity` was its last consumer and moved to `mixedVintage()` in #56; `oecd`,
+  `income_tax_by_group` and `cbo_effective_rates` are still `refresh.mode: "curated"` but their
+  figure-manifest entries call `vintageOf()`, which returns `null` for them — so those three ship
+  with no freshness stamp, which is the gap `curatedVintage` was written for (issue #6, edge case
+  1). Deleting the helper and wiring those three up are opposite fixes and only one is right.
+  Found while retargeting figure 3's vintage in `src/data/figures.ts`. Severity: three published
+  figures with no vintage line, non-blocking.
+- [2026-08-26] `src/data/figures.ts:174-186` — a mixed dataset's rendered source line names its
+  publishers twice, once from `_meta.source` and once from `mixedVintage()`: "Treasury
+  International Capital, Major Foreign Holders … (foreign holdings, November 2025). Treasury
+  International Capital, November 2025 release. …" #56's `debt_maturity` line has the same shape
+  ("… (instrument composition, May 2026). Treasury Monthly Statement of the Public Debt, May 2026
+  release."). Pre-existing since #54 and not reachable from #56's scope, which had to match the
+  established register rather than change it. Found while checking figure 3's rendered source line
+  in `dist/government/index.html`. Severity: prose redundancy on two published source lines,
+  non-blocking.

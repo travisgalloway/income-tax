@@ -137,7 +137,7 @@ const sourcesHref = join('/sources')
       fig={fig('debt-maturity')}
       xUnit="Years to maturity"
       yUnit="amount outstanding, $ trillions"
-      note="Bills, notes and bonds are the three instrument families and their amounts do not sum exactly to the $28.0 trillion marketable total; they are not presented as an exhaustive partition. The 22% bills figure is the curated share and is not derived from the amounts beside it. Savings bonds (Series EE and I) are non-marketable and excluded throughout."
+      note="Bills, notes and bonds are three of the marketable instrument families, not all of them: they sum to about $28.1 trillion against a $30.9 trillion marketable total, with the difference mostly in inflation-protected and floating-rate securities, plus a small Federal Financing Bank balance, that this chart does not draw. Savings bonds (Series EE and I) are non-marketable and excluded throughout."
     >
       <DebtMaturity client:visible d={debtMaturity.data} />
     </Figure>

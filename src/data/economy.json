@@ -32,10 +32,10 @@
   ],
   "provenance": {
    "generator": "monthly/cbo.py",
-   "git_sha": "0b59625",
-   "generated_at": "2026-08-26T17:48:32Z",
+   "git_sha": "cb8a42a",
+   "generated_at": "2026-08-27T03:04:05Z",
    "vintage": "2026-02",
-   "retrieved_at": "2026-08-26T14:59:26Z"
+   "retrieved_at": "2026-08-26T22:12:18Z"
   },
   "coverage": {
    "start": 1950,

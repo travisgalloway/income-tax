@@ -63,21 +63,26 @@ snapshots:
     avg_maturity_months: 71
     avg_maturity_as_of: 2026-06
     longest_instrument_years: 30
-    marketable_total_t: 28.0
+    # The MSPD statement month, pinned by hand (#56). monthly/debt_maturity.py
+    # fetches Table 1 for exactly this month and fails if it is absent; it never
+    # adopts whatever Treasury published most recently. Moving this line is an
+    # editorial change to three published figures and the marketable total, so
+    # it is a decision, not a refresh.
+    mspd_vintage: 2026-05
+    # No marketable_total_t and no amount_t here: both come from MSPD. The
+    # curated copies read 28.0 / 6.8 / 15.9 / 5.4, and 28.0 was bills + notes +
+    # bonds wearing the marketable total's label (#56).
     composition:
     - k: bills
       label: Bills
       maturity: under 1 year
       share_pct: 22
-      amount_t: 6.8
     - k: notes
       label: Notes
       maturity: 2 to 10 years
-      amount_t: 15.9
     - k: bonds
       label: Bonds
       maturity: 20 to 30 years
-      amount_t: 5.4
     history_months:
     - date: 2023-05
       v: 75

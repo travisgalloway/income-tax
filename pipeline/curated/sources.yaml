@@ -53,6 +53,17 @@ not_a_source:
       matches no TIC month in 2025). The figures now come from
       ticdata.treasury.gov directly. A news report of an agency's data is not the
       agency's data, and the reader cannot trace it.
+  - name: "Peter G Peterson Foundation"
+    reason: >-
+      Until #56, debt_maturity._meta.source credited the instrument shares to the
+      Peterson Foundation while naming the Monthly Statement of the Public Debt
+      first in the same string -- a compiler of Treasury's release standing in for
+      the release. The composition is now fetched from mspd_table_1 directly, and
+      the figure the curated constants carried had already drifted:
+      marketable_total_t read $28.0T, which is bills + notes + bonds, not the
+      $30.91T marketable total. Peterson stays named in SOURCES.md as one side of
+      the Federal Reserve holdings discrepancy, which is a different thing from
+      sourcing a published value.
 
 registry:
   cbo_historical_budget:
@@ -86,6 +97,11 @@ registry:
   treasury_mspd:
     registered_as: "US Treasury, Monthly Statement of the Public Debt"
     cited_as: "Treasury Monthly Statement of the Public Debt"
+    # Table 1, fetched from
+    # api.fiscaldata.treasury.gov/.../v1/debt/mspd/mspd_table_1 by
+    # pipeline/lib/mspd.py (#56). The statement month is pinned in
+    # curated/snapshots.yaml as debt_maturity.mspd_vintage and recorded in the
+    # output's _meta.provenance.vintage.
 
   treasury_tic:
     registered_as: "US Treasury, Treasury International Capital"
@@ -104,6 +120,14 @@ registry:
   peterson_foundation:
     registered_as: "Peter G Peterson Foundation"
     cited_as: "Peter G Peterson Foundation"
+    # Since #56 it sources no published figure: the instrument shares it used to
+    # supply are fetched from the Monthly Statement of the Public Debt, which it
+    # was a compiler of. It survives in the register only because SOURCES.md
+    # names it as one side of the unresolved Federal Reserve holdings
+    # discrepancy (curated/discrepancies.yaml -> federal_reserve_holdings),
+    # which #56 does not reopen. It is also in not_a_source: above, so it can
+    # never source an emitted value again.
+    cited_in_prose_only: true
 
   oecd_revenue_statistics:
     registered_as: "OECD, Revenue Statistics 2025, United States country note"
@@ -190,8 +214,8 @@ outputs:
     source_shape: "{treasury_debt_to_the_penny} (public vs intragovernmental, ); {treasury_tic}, Major Foreign Holders of Treasury Securities (foreign holdings, )"
 
   debt_maturity:
-    cites: [treasury_mspd, jec_debt_update, peterson_foundation]
-    source_shape: "{treasury_mspd}; {jec_debt_update} ( average maturity); {peterson_foundation} for instrument shares"
+    cites: [treasury_mspd, jec_debt_update]
+    source_shape: "{treasury_mspd} (instrument composition, ); {jec_debt_update} ( average maturity)"
 
   economy:
     cites: [cbo_historical_economic]
