@@ -806,6 +806,15 @@ def test_focus_and_motion_rules_survive_the_build():
     built_css = "\n".join(f.read_text() for f in css_files)
     assert "prefers-reduced-motion" in built_css, "built CSS lost the reduced-motion rule"
     assert re.search(r":focus-visible", built_css), "built CSS lost the :focus-visible rule"
+    # #69's roving fallback. Arrow keys move focus with `.focus()`, and an
+    # engine may decline to treat programmatic focus as `:focus-visible`; this
+    # selector is what paints the ring for that reader, so it has to survive
+    # the build as a selector and not only as a source line.
+    assert "[data-roving] [data-mark]:focus" in built_css, (
+        "built CSS lost the [data-roving] [data-mark]:focus ring (#69) — the "
+        "active mark's ring now depends entirely on the engine's "
+        ":focus-visible heuristic"
+    )
     assert "skip-link:focus-visible" in built_css, (
         "built CSS lost .skip-link:focus-visible (D4)"
     )
