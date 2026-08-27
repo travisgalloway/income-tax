@@ -132,7 +132,7 @@ export function StructuralGap({ rows }: { rows: BudgetYear[] }) {
       </div>
 
       <Chart ariaLabel={shapeLabel(unit)} interactive width={W} height={H} margin={f}>
-        {(fr) => (
+        {(fr, mark) => (
           <>
             <defs>
               <pattern
@@ -198,7 +198,7 @@ export function StructuralGap({ rows }: { rows: BudgetYear[] }) {
                 cy={(y(revenueOf(r, unit)) + y(outlaysOf(r, unit))) / 2}
                 r={active?.y === r.y ? 5 : 9}
                 fill={active?.y === r.y ? 'var(--ink)' : 'transparent'}
-                tabIndex={0}
+                {...mark()}
                 role="img"
                 aria-label={readoutFor(r)}
                 onFocus={() => setFocus(r.y)}

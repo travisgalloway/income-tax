@@ -1271,3 +1271,22 @@ time. Appended to, never rewritten. None of these have been acted on.
   computed from the rendered DOM and is mechanisable by the browser lane, but it is #30's artefact
   and automating it from #67 would widen that issue's scope. Found while cataloguing the deferred
   measurements for #67. Severity: coverage, non-blocking.
+- [2026-08-27] Nothing tells a keyboard reader that the arrow keys work inside a chart. #69 made each
+  chart `<svg>` a roving-tabindex group — one Tab stop per figure, arrows/Home/End between its marks
+  — but a reader who Tabs into a group and Tabs straight out again meets one datum and never learns
+  the other 112 are there. The `<details>` "View as table" is still the complete equivalent, so
+  nothing is unreachable; what is missing is the announcement, and announcement is **#30**'s
+  territory. Found while implementing #69. Severity: accessibility, user-visible.
+- [2026-08-27] `src/components/charts/roving.ts` — the active mark is an **index**, so a filter that
+  shrinks a group clamps the reader from (say) mark 40 of 51 to mark 11 of 12 rather than to the mark
+  nearest where they were. Mechanically correct and asserted by `keyboard.test.ts`'s driven pass
+  (exactly one stop after every filter option and both `YearRange` extremes); whether it *reads*
+  sensibly is a judgement no assertion settles. Found while implementing #69. Severity: usability,
+  non-blocking.
+- [2026-08-27] `src/components/islands/StateGiveGet.tsx:139` — with scripting off, Radix's
+  `ToggleGroup` server-renders **every** `.basis-toggle-item` at `tabindex="-1"` and only installs
+  roving focus at hydration, so §11's "per person / in total" control is not keyboard-reachable at
+  all without JavaScript. Pre-existing at `d69e4e6` and unrelated to #69, but #69's scripting-off Tab
+  walk is what made it visible: the walk had to target the section rather than the control. The same
+  shape applies to `.unit-toggle-item` and `.attrib-tabs`. Found while measuring the scripting-off
+  tab order for #69. Severity: accessibility, user-visible.

@@ -111,7 +111,7 @@ export function HouseholdSpread({ rows, top1 }: { rows: IncomeYear[]; top1: Top1
 
       {/* Panel A: family Gini index. */}
       <Chart ariaLabel={giniLabel} interactive width={W} height={giniHeight} margin={f}>
-        {(fr) => (
+        {(fr, mark) => (
           <>
             <text x={0} y={-6} className="panel-title">{panelTitle([`${giniLabelWord} Gini index`])}</text>
             <AxisLeft
@@ -131,7 +131,7 @@ export function HouseholdSpread({ rows, top1 }: { rows: IncomeYear[]; top1: Top1
                 cy={yGini(r.gini as number)}
                 r={activeGini?.y === r.y ? 5 : 7}
                 fill={activeGini?.y === r.y ? 'var(--ink)' : 'transparent'}
-                tabIndex={0}
+                {...mark()}
                 role="img"
                 aria-label={giniFmtFull(r)}
                 onFocus={() => setFocus({ series: 'gini', year: r.y })}
@@ -148,7 +148,7 @@ export function HouseholdSpread({ rows, top1 }: { rows: IncomeYear[]; top1: Top1
           generator, no connector. A future revision that adds a third point
           still draws correctly; it never implies more than were published. */}
       <Chart ariaLabel={top1Label} interactive width={W} height={top1Height} margin={f}>
-        {(fr) => (
+        {(fr, mark) => (
           <>
             <text x={0} y={-6} className="panel-title">
               {panelTitle([
@@ -178,7 +178,7 @@ export function HouseholdSpread({ rows, top1 }: { rows: IncomeYear[]; top1: Top1
                     cy={yTop1(p.v)}
                     r={activeTop1?.year === p.year ? 6 : 5}
                     fill="var(--int)"
-                    tabIndex={0}
+                    {...mark()}
                     role="img"
                     aria-label={top1FmtFull(p)}
                     onFocus={() => setFocus({ series: 'top1', point: p })}

@@ -7,6 +7,7 @@
 import { useMemo, useState } from 'react'
 import * as Select from '@radix-ui/react-select'
 import { TableView, type Column } from './TableView'
+import { useRovingMarks } from '../charts/roving'
 import type { StatesTaxMix, TaxMixJurisdiction } from '../../data/types'
 
 function cellText(j: TaxMixJurisdiction, k: string): string {
@@ -19,6 +20,7 @@ export function StateTaxMix({ data }: { data: StatesTaxMix }) {
   const jurisdictions = data.jurisdictions
   const [code, setCode] = useState(jurisdictions.find((j) => j.code !== 'DC')?.code ?? jurisdictions[0].code)
   const [focusedK, setFocusedK] = useState<string | null>(null)
+  const { groupProps, mark } = useRovingMarks()
 
   const selected = useMemo(
     () => jurisdictions.find((j) => j.code === code) ?? jurisdictions[0],
@@ -81,6 +83,7 @@ export function StateTaxMix({ data }: { data: StatesTaxMix }) {
       </div>
 
       <svg
+        {...groupProps}
         role="group"
         aria-label={`${selected.name}'s state tax collections by category, FY${data.fy}, as a share of its own total.`}
         viewBox="0 0 440 60"
@@ -95,7 +98,7 @@ export function StateTaxMix({ data }: { data: StatesTaxMix }) {
             const rect = (
               <g
                 key={seg.k}
-                tabIndex={0}
+                {...mark()}
                 role="img"
                 aria-label={`${seg.label}: ${cellText(selected, seg.k)}`}
                 onFocus={() => setFocusedK(seg.k)}

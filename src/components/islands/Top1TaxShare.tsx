@@ -42,7 +42,7 @@ export function Top1TaxShare({ rows }: { rows: Top1IncomeSharePoint[] }) {
   return (
     <div ref={boxRef}>
       <Chart ariaLabel={ariaLabel} interactive width={W} height={H} margin={f}>
-        {(fr) => (
+        {(fr, mark) => (
           <>
             <AxisLeft
               frame={fr}
@@ -71,7 +71,7 @@ export function Top1TaxShare({ rows }: { rows: Top1IncomeSharePoint[] }) {
                     fill={isActive ? 'var(--ink)' : 'transparent'}
                     stroke="var(--ink)"
                     strokeWidth={isActive ? 0 : 1.5}
-                    tabIndex={0}
+                    {...mark()}
                     role="img"
                     aria-label={describe(p)}
                     onFocus={() => setFocus(p.year)}

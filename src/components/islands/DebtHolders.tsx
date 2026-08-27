@@ -120,7 +120,7 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
   return (
     <div ref={boxRef}>
       <Chart ariaLabel={ariaLabel} interactive width={W} height={leadersY + (narrow ? 30 : 46)} margin={f}>
-        {(fr) => {
+        {(fr, mark) => {
           const centreA = [xA(split.public.amount_t) / 2, xA(split.public.amount_t) + (iw - xA(split.public.amount_t)) / 2]
           const centreB = [xB(domesticAmt) / 2, xB(domesticAmt) + (iw - xB(domesticAmt)) / 2]
           const gapA = centreA[1] - centreA[0]
@@ -161,7 +161,7 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
               className="datum"
               x={0} y={yA} width={xA(split.public.amount_t)} height={barH}
               fill="var(--public)"
-              tabIndex={0} role="img" aria-label={describe('public')}
+              {...mark()} role="img" aria-label={describe('public')}
               onFocus={() => setFocus('public')} onBlur={() => setFocus(null)}
               onMouseEnter={() => setFocus('public')} onMouseLeave={() => setFocus(null)}
             />
@@ -169,7 +169,7 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
               className="datum"
               x={xA(split.public.amount_t)} y={yA} width={iw - xA(split.public.amount_t)} height={barH}
               fill="var(--intragov)"
-              tabIndex={0} role="img" aria-label={describe('intragov')}
+              {...mark()} role="img" aria-label={describe('intragov')}
               onFocus={() => setFocus('intragov')} onBlur={() => setFocus(null)}
               onMouseEnter={() => setFocus('intragov')} onMouseLeave={() => setFocus(null)}
             />
@@ -192,7 +192,7 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
               className="datum"
               x={0} y={yB} width={xB(domesticAmt)} height={barH}
               fill="var(--domestic)"
-              tabIndex={0} role="img" aria-label={describe('domestic')}
+              {...mark()} role="img" aria-label={describe('domestic')}
               onFocus={() => setFocus('domestic')} onBlur={() => setFocus(null)}
               onMouseEnter={() => setFocus('domestic')} onMouseLeave={() => setFocus(null)}
             />
@@ -200,7 +200,7 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
               className="datum"
               x={xB(domesticAmt)} y={yB} width={iw - xB(domesticAmt)} height={barH}
               fill="var(--foreign)"
-              tabIndex={0} role="img" aria-label={describe('foreign')}
+              {...mark()} role="img" aria-label={describe('foreign')}
               onFocus={() => setFocus('foreign')} onBlur={() => setFocus(null)}
               onMouseEnter={() => setFocus('foreign')} onMouseLeave={() => setFocus(null)}
             />
@@ -242,7 +242,7 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
                     <text
                       className="datum holders-label"
                       x={placed.x} y={leadersY + 12 + i * 13} textAnchor={placed.textAnchor}
-                      tabIndex={0} role="img" aria-label={describe(k)}
+                      {...mark()} role="img" aria-label={describe(k)}
                       onFocus={() => setFocus(k)} onBlur={() => setFocus(null)}
                       onMouseEnter={() => setFocus(k)} onMouseLeave={() => setFocus(null)}
                     >

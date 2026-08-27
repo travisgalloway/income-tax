@@ -104,7 +104,7 @@ export function VotedAndNot({ rows }: { rows: BudgetYear[] }) {
       </div>
 
       <Chart ariaLabel={shapeLabel(unit)} interactive width={W} height={H} margin={f}>
-        {(fr) => (
+        {(fr, mark) => (
           <>
             <AxisLeft frame={fr} ticks={yTicks} format={tickFmt} label={UNIT_LABEL[unit]} scale={y} />
             <AxisBottom frame={fr} ticks={xTicks} format={(t) => `${t}`} label="Fiscal year" scale={x} />
@@ -139,7 +139,7 @@ export function VotedAndNot({ rows }: { rows: BudgetYear[] }) {
                 cy={y(mandatoryNetOf(r, unit))}
                 r={active?.y === r.y ? 5 : 9}
                 fill={active?.y === r.y ? 'var(--ink)' : 'transparent'}
-                tabIndex={0}
+                {...mark()}
                 role="img"
                 aria-label={readoutFor(r)}
                 onFocus={() => setFocus(r.y)}

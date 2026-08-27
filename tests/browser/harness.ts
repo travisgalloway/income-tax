@@ -388,3 +388,73 @@ export function collectConsole(page: Page): string[] {
   page.on('pageerror', (err) => messages.push(`pageerror: ${err.message}`))
   return messages
 }
+
+/** Per chart `<svg>`: how many marks it draws, and how many Tab stops it
+ *  offers. DOM enumeration, not a Tab walk — exact for the one-stop invariant
+ *  and cheap enough to run on every route, viewport and driven state.
+ *
+ *  `stops` counts EVERY `tabindex="0"` descendant, not only the ones carrying
+ *  `data-mark`. That distinction is the whole value of this helper: a mark that
+ *  goes back to a hardcoded `tabIndex={0}` loses its `data-mark` in the same
+ *  edit, so a `[data-mark][tabindex="0"]` count would report the regressed
+ *  figure as `0 marks, 0 stops` and pass. It was written that way first, and a
+ *  mutation of `BracketHistory` — 113 marks back in the Tab order — went
+ *  straight through the lane while the static suite caught it.
+ *
+ *  Returned as plain data so a failure can name the offending svg. The caller
+ *  asserts; this file owns no assertions. */
+export async function markStopsPerSvg(
+  page: Page,
+): Promise<{ svgIndex: number; label: string; marks: number; stops: number; role: string }[]> {
+  return page.evaluate(() =>
+    Array.from(document.querySelectorAll('svg')).map((svg, svgIndex) => ({
+      svgIndex,
+      label: (svg.getAttribute('aria-label') ?? '').slice(0, 60),
+      marks: svg.querySelectorAll('[data-mark]').length,
+      stops: svg.querySelectorAll('[tabindex="0"]').length,
+      role: svg.getAttribute('role') ?? '',
+    })),
+  )
+}
+
+/** A REAL Tab walk: press Tab, read `document.activeElement`, repeat.
+ *
+ *  Not a count of selector matches. The two disagree by around 10% — disabled
+ *  controls, `inert` subtrees and elements the engine declines to focus are all
+ *  invisible to a selector and decisive to a person — and the walk is the one
+ *  that matches what a keyboard reader experiences.
+ *
+ *  Stops when `stopAt` matches the focused element, when `max` presses have been
+ *  made, or when focus leaves the document (Tab reaching the browser chrome).
+ *  `reached` says which of those happened; a caller that asserts a bound must
+ *  check it, because "ran out of presses" and "arrived" produce the same count. */
+export async function tabWalk(
+  page: Page,
+  opts: { max: number; stopAt?: string },
+): Promise<{ stops: number; reached: boolean; trail: string[] }> {
+  const trail: string[] = []
+  await page.evaluate(() => {
+    // Start from the very top of the document, so the first Tab lands on the
+    // skip link exactly as it does for a reader who has just loaded the page.
+    const body = document.body as HTMLElement
+    body.setAttribute('tabindex', '-1')
+    body.focus()
+    body.removeAttribute('tabindex')
+  })
+  for (let i = 1; i <= opts.max; i += 1) {
+    await page.keyboard.press('Tab')
+    const here = await page.evaluate((sel) => {
+      const el = document.activeElement
+      if (!el || el === document.body || el === document.documentElement) return null
+      const cls = (el.getAttribute('class') ?? '').split(' ')[0] ?? ''
+      return {
+        desc: `${el.tagName.toLowerCase()}${cls ? `.${cls}` : ''}`,
+        matches: sel !== undefined && el.matches(sel),
+      }
+    }, opts.stopAt)
+    if (here === null) return { stops: i - 1, reached: false, trail }
+    trail.push(here.desc)
+    if (here.matches) return { stops: i, reached: true, trail }
+  }
+  return { stops: opts.max, reached: opts.stopAt === undefined, trail }
+}

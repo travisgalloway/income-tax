@@ -101,7 +101,7 @@ export function GrowthAndShadow({ economyRows, incomeRows }: { economyRows: Econ
         height={H}
         margin={f}
       >
-        {(fr) => (
+        {(fr, mark) => (
           <>
             <AxisLeft frame={fr} ticks={yTicks} format={(v) => `${v}`} label="Index, 1984 = 100" scale={y} />
             <AxisBottom frame={fr} ticks={xTicks} format={(t) => `${t}`} label="Year" scale={x} />
@@ -125,7 +125,7 @@ export function GrowthAndShadow({ economyRows, incomeRows }: { economyRows: Econ
                   width={iw / shown.length}
                   height={ih}
                   fill="transparent"
-                  tabIndex={0}
+                  {...mark()}
                   role="img"
                   aria-label={describe(r)}
                   onFocus={() => setFocus(r.y)}

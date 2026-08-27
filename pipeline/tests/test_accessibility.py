@@ -450,24 +450,304 @@ def test_government_section_1_renders_its_whole_apparatus_without_scripting(page
     )
 
 
+def keyboard_reachable_points(svg: Node) -> list[Node]:
+    """Every mark a keyboard can reach inside one chart `<svg>`.
+
+    WIDENED IN #69, deliberately and once, from `tabindex == "0"` to
+    `tabindex in {"0", "-1"}`. Before #69 every mark shipped `tabindex="0"`, so
+    the two readings agreed. Since #69 each `<svg>` is a roving-tabindex group:
+    exactly one mark carries `"0"` and the rest carry `"-1"`, and a `"-1"` mark
+    is reached by an arrow key rather than by Tab — it is not one bit less
+    reachable, and its `aria-label` is what a reader hears when they get there.
+
+    Reading only `"0"` here would silently collapse this suite's label coverage
+    from all 369 marks to 14, which is the failure mode where a guard keeps
+    passing while it stops looking. `test_the_label_coverage_did_not_narrow`
+    below pins the count so the collapse cannot happen quietly.
+    """
+    return [n for n in svg.iter_descendants() if n.get("tabindex") in {"0", "-1"}]
+
+
+def labelled_and_grouped_failures(root: Node) -> list[str]:
+    failures: list[str] = []
+    for i, svg in enumerate(nodes_of(root, "svg")):
+        points = keyboard_reachable_points(svg)
+        if not points:
+            continue
+        for pt in points:
+            if not (pt.get("aria-label") or "").strip():
+                failures.append(
+                    f"svg[{i}]: a keyboard-reachable data point has no "
+                    f"aria-label: {pt.attrs}"
+                )
+        if svg.get("role") != "group":
+            failures.append(
+                f"svg[{i}]: an svg with keyboard-reachable children carries "
+                f"role={svg.get('role')!r} instead of role=\"group\" — its "
+                "subtree is presentational to assistive tech and the "
+                "reachable children go unannounced"
+            )
+    return failures
+
+
 def test_focusable_data_points_are_labelled_and_grouped(page):
     path, root = page
-    for svg in nodes_of(root, "svg"):
-        focusable_points = [
-            n for n in svg.iter_descendants() if n.get("tabindex") == "0"
-        ]
-        if not focusable_points:
-            continue
-        for pt in focusable_points:
-            assert (pt.get("aria-label") or "").strip(), (
-                f"{path}: a focusable data point has no aria-label: {pt.attrs}"
+    failures = labelled_and_grouped_failures(root)
+    assert not failures, f"{path}: " + "; ".join(failures)
+
+
+def test_the_labelled_and_grouped_guard_bites():
+    """The widening in `keyboard_reachable_points` is only worth having if an
+    unlabelled `tabindex="-1"` mark — the shape every mark but one per figure
+    now has — actually turns it red."""
+    unlabelled_roving = parse_fragment(
+        '<svg role="group">'
+        '<rect data-mark="" tabindex="0" aria-label="a"></rect>'
+        '<rect data-mark="" tabindex="-1"></rect>'
+        "</svg>"
+    )
+    failures = labelled_and_grouped_failures(unlabelled_roving)
+    assert any("aria-label" in f for f in failures), (
+        "an unlabelled tabindex=\"-1\" mark passed — the assertion is reading "
+        "only the one mark that still carries tabindex=\"0\""
+    )
+
+    wrong_role = parse_fragment(
+        '<svg role="img">'
+        '<rect data-mark="" tabindex="-1" aria-label="a"></rect>'
+        "</svg>"
+    )
+    assert any("role" in f for f in labelled_and_grouped_failures(wrong_role)), (
+        "an svg with reachable children and role=\"img\" passed"
+    )
+
+    ok = parse_fragment(
+        '<svg role="group">'
+        '<rect data-mark="" tabindex="0" aria-label="a"></rect>'
+        '<rect data-mark="" tabindex="-1" aria-label="b"></rect>'
+        "</svg>"
+    )
+    assert not labelled_and_grouped_failures(ok)
+
+
+def test_the_label_coverage_did_not_narrow():
+    """#69 made most marks `tabindex="-1"`. This is the count that proves the
+    widening above kept every one of them under the aria-label assertion,
+    rather than the roving change quietly reducing the corpus to one mark per
+    figure. Re-baseline only alongside a figure that genuinely gained or lost
+    data points."""
+    counted = 0
+    for path in PAGES:
+        root = parse_html(path)
+        for svg in nodes_of(root, "svg"):
+            counted += len(keyboard_reachable_points(svg))
+    assert counted == 1114, (
+        f"{counted} keyboard-reachable chart marks across dist/, expected 1114 "
+        "(369 on /government, 389 on /economy, 356 on /households). A large "
+        "drop means the roving change removed marks rather than re-tabbing "
+        "them; a rise means a new figure landed. Either way this is a "
+        "deliberate re-baseline, not a number to nudge."
+    )
+
+
+# ---------------------------------------------------------------------------
+# One tab stop per chart svg (#69)
+#
+# The roving-tabindex rule, asserted over the SERVED BYTES. That boundary is
+# the whole point: islands mount `client:visible`, which server-renders the
+# markup and defers only hydration, so a bypass installed at hydration would
+# leave the scripting-off tab order untouched. `dist/` is where the claim has
+# to hold, and `dist/` is what this file reads.
+# ---------------------------------------------------------------------------
+
+
+def parse_fragment(html: str) -> Node:
+    """A tree from a string, for the mutation proofs below."""
+    builder = _TreeBuilder()
+    builder.feed(html)
+    return builder.root
+
+
+def tab_stop_failures(root: Node) -> list[str]:
+    """Every way a chart `<svg>` can break the one-stop rule, named."""
+    failures: list[str] = []
+    for i, svg in enumerate(nodes_of(root, "svg")):
+        descendants = list(svg.iter_descendants())
+        marks = [n for n in descendants if n.get("data-mark") is not None]
+        stops = [n for n in descendants if n.get("tabindex") == "0"]
+        if marks:
+            if len(stops) != 1:
+                failures.append(
+                    f"svg[{i}] draws {len(marks)} mark(s) but offers "
+                    f"{len(stops)} tabindex=\"0\" descendant(s), expected "
+                    "exactly 1. Zero is the worse of the two: the figure falls "
+                    "out of the tab order entirely and its data becomes "
+                    "unreachable."
+                )
+            for m in marks:
+                if svg.get("role") == "img" or any(
+                    a.get("role") == "img" for a in m.ancestors()
+                ):
+                    failures.append(
+                        f"svg[{i}]: a [data-mark] sits inside role=\"img\", "
+                        "whose subtree is presentational to assistive tech — "
+                        "the mark is focusable and unannounced"
+                    )
+                    break
+        elif stops:
+            failures.append(
+                f"svg[{i}] draws no [data-mark] but has {len(stops)} "
+                "tabindex=\"0\" descendant(s) — a focusable thing inside a "
+                "chart that the roving group does not know about"
             )
-        assert svg.get("role") == "group", (
-            f"{path}: an svg with Tab-focusable children carries "
-            f"role={svg.get('role')!r} instead of role=\"group\" — its "
-            "subtree is presentational to assistive tech and the focusable "
-            "children go unannounced"
+    return failures
+
+
+def test_each_chart_svg_offers_exactly_one_tab_stop(page):
+    path, root = page
+    failures = tab_stop_failures(root)
+    assert not failures, f"{path}: " + "; ".join(failures)
+
+
+def test_the_one_tab_stop_guard_bites(page):
+    """Three synthetic inputs, one per clause. Run per page so the guard is
+    proved against the same parser that reads the real build."""
+    _path, root = page
+    assert not tab_stop_failures(root)
+
+    two_stops = parse_fragment(
+        '<svg role="group">'
+        '<rect data-mark="" tabindex="0" aria-label="a"></rect>'
+        '<rect data-mark="" tabindex="0" aria-label="b"></rect>'
+        "</svg>"
+    )
+    assert tab_stop_failures(two_stops), "an svg with two tab stops passed"
+
+    no_stop = parse_fragment(
+        '<svg role="group">'
+        '<rect data-mark="" tabindex="-1" aria-label="a"></rect>'
+        '<rect data-mark="" tabindex="-1" aria-label="b"></rect>'
+        "</svg>"
+    )
+    assert tab_stop_failures(no_stop), (
+        "an svg whose marks are ALL tabindex=\"-1\" passed — that is the "
+        "active-index-past-the-end state, and the figure is out of the tab "
+        "order altogether"
+    )
+
+    presentational = parse_fragment(
+        '<svg role="img">'
+        '<rect data-mark="" tabindex="0" aria-label="a"></rect>'
+        "</svg>"
+    )
+    assert tab_stop_failures(presentational), (
+        "a [data-mark] inside role=\"img\" passed"
+    )
+
+    # And the guard must not report an svg that draws no marks at all: the
+    # static figures are role="img" with nothing focusable inside, and they are
+    # correct as they stand.
+    static = parse_fragment('<svg role="img"><path d="M0 0"></path></svg>')
+    assert not tab_stop_failures(static), (
+        "a static role=\"img\" figure with no marks was reported as a failure"
+    )
+
+
+# ---------------------------------------------------------------------------
+# `tabIndex={0}` is no longer writable on a chart mark (#69)
+# ---------------------------------------------------------------------------
+
+#: The only lines under `src/components/` that may write the literal
+#: `tabIndex={0}`, keyed by path relative to `src/`. Matched VERBATIM on the
+#: stripped line, so a rename of the symbol turns the guard red rather than
+#: leaving a stale entry silently excusing whatever takes its place (P4).
+TAB_INDEX_ALLOWLIST: dict[str, tuple[str, str]] = {
+    "components/islands/AttributionSplit.tsx": (
+        '<Tabs.Content key={v.value} value={v.value} forceMount tabIndex={0} className="attrib-panel">',
+        "a Radix tab panel, outside every <svg> and not a data mark. The panel "
+        "scrolls, so it has to be a Tab stop in its own right.",
+    ),
+}
+
+
+def hardcoded_mark_failures(sources: dict[str, str]) -> list[str]:
+    """`sources` maps a path relative to `src/` to its text."""
+    failures: list[str] = []
+    matched: set[str] = set()
+    for name in sorted(sources):
+        allowed = TAB_INDEX_ALLOWLIST.get(name)
+        for lineno, line in enumerate(sources[name].split("\n"), 1):
+            if "tabIndex={0}" not in line:
+                continue
+            if allowed is not None and line.strip() == allowed[0]:
+                matched.add(name)
+                continue
+            failures.append(
+                f"{name}:{lineno} writes tabIndex={{0}} directly: "
+                f"{line.strip()[:90]}. A chart mark spreads {{...mark()}} from "
+                "useRovingMarks() instead — a hardcoded 0 puts the figure's "
+                "every datum back into the Tab order (#69)."
+            )
+    for name, (line, _reason) in TAB_INDEX_ALLOWLIST.items():
+        if name in sources and name not in matched:
+            failures.append(
+                f"{name}: the allowlisted line is no longer present verbatim, "
+                f"so the entry is stale and excuses nothing: {line}"
+            )
+    return failures
+
+
+def test_no_island_hardcodes_a_focusable_chart_mark():
+    sources = {
+        p.relative_to(SRC).as_posix(): p.read_text()
+        for p in sorted((SRC / "components").glob("**/*.tsx"))
+    }
+    assert sources, "no components found under src/components"
+    failures = hardcoded_mark_failures(sources)
+    assert not failures, "\n".join(failures)
+
+
+def test_the_hardcoded_mark_guard_bites():
+    allowed_line, _reason = TAB_INDEX_ALLOWLIST[
+        "components/islands/AttributionSplit.tsx"
+    ]
+
+    real_mark = (
+        "components/islands/Fake.tsx",
+        '        <rect className="datum" tabIndex={0} aria-label={describe(r)} />\n',
+    )
+    assert hardcoded_mark_failures(dict([real_mark])), (
+        "a mark writing tabIndex={0} passed"
+    )
+
+    # The allowlist must excuse its one line and nothing else in the same file.
+    both = {
+        "components/islands/AttributionSplit.tsx": (
+            f"          {allowed_line}\n"
+            '          <rect className="datum" tabIndex={0} aria-label="x" />\n'
         )
+    }
+    failures = hardcoded_mark_failures(both)
+    assert len(failures) == 1 and "Fake" not in failures[0], (
+        f"the allowlist swallowed a real mark in the allowlisted file: {failures}"
+    )
+    assert 'className="datum"' in failures[0], failures
+
+    # P4: rename the allowlisted symbol. The entry must go stale loudly.
+    renamed = {
+        "components/islands/AttributionSplit.tsx": (
+            "          "
+            + allowed_line.replace("Tabs.Content", "Tabs.Panel")
+            + "\n"
+        )
+    }
+    stale = hardcoded_mark_failures(renamed)
+    assert any("stale" in f for f in stale), (
+        f"a renamed allowlisted symbol did not report the entry stale: {stale}"
+    )
+
+    # A file with no tabIndex={0} at all is not a failure.
+    assert not hardcoded_mark_failures({"components/islands/Clean.tsx": "const a = 1\n"})
 
 
 def test_every_chart_has_a_real_table_in_the_static_html(page):
@@ -526,6 +806,15 @@ def test_focus_and_motion_rules_survive_the_build():
     built_css = "\n".join(f.read_text() for f in css_files)
     assert "prefers-reduced-motion" in built_css, "built CSS lost the reduced-motion rule"
     assert re.search(r":focus-visible", built_css), "built CSS lost the :focus-visible rule"
+    # #69's roving fallback. Arrow keys move focus with `.focus()`, and an
+    # engine may decline to treat programmatic focus as `:focus-visible`; this
+    # selector is what paints the ring for that reader, so it has to survive
+    # the build as a selector and not only as a source line.
+    assert "[data-roving] [data-mark]:focus" in built_css, (
+        "built CSS lost the [data-roving] [data-mark]:focus ring (#69) — the "
+        "active mark's ring now depends entirely on the engine's "
+        ":focus-visible heuristic"
+    )
     assert "skip-link:focus-visible" in built_css, (
         "built CSS lost .skip-link:focus-visible (D4)"
     )

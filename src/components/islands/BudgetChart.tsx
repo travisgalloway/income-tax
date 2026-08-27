@@ -223,7 +223,7 @@ export function BudgetChart({ rows: source }: { rows: BudgetYear[] }) {
       </div>
 
       <Chart ariaLabel={label} interactive width={W} height={H} margin={margin}>
-        {(fr) => (
+        {(fr, mark) => (
           <>
             <defs>
               <pattern id="gop-hatch" width={4} height={4} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -360,7 +360,7 @@ export function BudgetChart({ rows: source }: { rows: BudgetYear[] }) {
                   width={bw}
                   height={ih}
                   fill="transparent"
-                  tabIndex={0}
+                  {...mark()}
                   // NOT role="button": focusing a year reveals its
                   // breakdown, it does not activate anything.
                   role="img"

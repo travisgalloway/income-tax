@@ -129,7 +129,7 @@ export function NetInterest({ rows }: { rows: BudgetYear[] }) {
       </div>
 
       <Chart ariaLabel={shapeLabel(view)} interactive width={W} height={H} margin={f}>
-        {(fr) => (
+        {(fr, mark) => (
           <>
             <AxisLeft
               frame={fr}
@@ -189,7 +189,7 @@ export function NetInterest({ rows }: { rows: BudgetYear[] }) {
                 height={ih}
                 fill={active?.y === r.y ? 'var(--ink)' : 'transparent'}
                 opacity={active?.y === r.y ? 0.08 : 0}
-                tabIndex={0}
+                {...mark()}
                 role="img"
                 aria-label={readoutFor(r)}
                 onFocus={() => setFocus(r.y)}

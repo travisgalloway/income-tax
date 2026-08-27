@@ -867,6 +867,19 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
  * `outline` for engines that honour it, `stroke` for those that do not. */
 .datum:focus-visible { outline: 1.5px solid var(--ink); outline-offset: 1px; stroke: var(--ink); stroke-width: 2; }
 
+/* Roving marks (#69). Arrow keys move focus with `.focus()`, and an engine's
+ * `:focus-visible` heuristic is entitled to decline PROGRAMMATIC focus — which
+ * would leave the reader arrowing through a chart with nothing painted. So the
+ * ring is also keyed on `data-roving`, which the hook sets on the group only
+ * while the last move came from a key. NOT on bare `:focus`: that would ring a
+ * mouse click, which is the thing `:focus-visible` exists to avoid. */
+[data-roving] [data-mark]:focus {
+  outline: 1.5px solid var(--ink);
+  outline-offset: 1px;
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
 .skip-link {
   position: absolute; left: -9999px;
   background: var(--ink); color: var(--panel);

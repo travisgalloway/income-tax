@@ -75,7 +75,7 @@ export function WhoWorks({ rows, lastActualFy }: { rows: EconomyYear[]; lastActu
         height={H}
         margin={f}
       >
-        {(fr) => (
+        {(fr, mark) => (
           <>
             <AxisLeft frame={fr} ticks={yTopTicks} format={(v) => `${v}%`} label="Percent of the labour force" scale={yTop} />
             <AxisBottom frame={fr} ticks={xTicks} format={(t) => `${t}`} label="Fiscal year" scale={x} />
@@ -104,7 +104,7 @@ export function WhoWorks({ rows, lastActualFy }: { rows: EconomyYear[]; lastActu
                   width={iw / rows.length}
                   height={ih}
                   fill="transparent"
-                  tabIndex={0}
+                  {...mark()}
                   role="img"
                   aria-label={describe(r)}
                   onFocus={() => setFocus(r.y)}

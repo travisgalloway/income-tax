@@ -64,7 +64,7 @@ export function DebtMaturity({ d }: { d: DebtMaturityData }) {
   return (
     <div ref={boxRef}>
       <Chart ariaLabel={ariaLabel} interactive width={W} height={baselineY + (narrow ? 40 : 50)} margin={f}>
-        {(fr) => (
+        {(fr, mark) => (
           <>
             {(Object.keys(RANGES) as BandKey[]).map((k) => {
               const [y0, y1] = RANGES[k]
@@ -79,7 +79,7 @@ export function DebtMaturity({ d }: { d: DebtMaturityData }) {
                     className="datum"
                     x={x0} y={y} width={x1 - x0} height={h}
                     fill="var(--public)"
-                    tabIndex={0} role="img" aria-label={describe(k)}
+                    {...mark()} role="img" aria-label={describe(k)}
                     onFocus={() => setFocus(k)} onBlur={() => setFocus(null)}
                     onMouseEnter={() => setFocus(k)} onMouseLeave={() => setFocus(null)}
                   />

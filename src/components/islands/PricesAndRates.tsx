@@ -99,7 +99,7 @@ export function PricesAndRates({ rows, lastActualFy }: { rows: EconomyYear[]; la
         height={H}
         margin={f}
       >
-        {(fr) => (
+        {(fr, mark) => (
           <>
             <AxisLeft frame={fr} ticks={yTopTicks} format={(v) => `${v.toFixed(0)}%`} label="Percent change from the previous fiscal year" scale={yTop} />
             <AxisBottom frame={fr} ticks={xTicks} format={(t) => `${t}`} label="Fiscal year" scale={x} />
@@ -129,7 +129,7 @@ export function PricesAndRates({ rows, lastActualFy }: { rows: EconomyYear[]; la
                   width={iw / rows.length}
                   height={ih}
                   fill="transparent"
-                  tabIndex={0}
+                  {...mark()}
                   role="img"
                   aria-label={describe(r, infByYear.get(r.y) as InflationRow)}
                   onFocus={() => setFocus(r.y)}

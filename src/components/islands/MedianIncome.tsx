@@ -67,7 +67,7 @@ export function MedianIncome({ rows }: { rows: IncomeYear[] }) {
       />
 
       <Chart ariaLabel={label} interactive width={W} height={H} margin={f}>
-        {(fr) => (
+        {(fr, mark) => (
           <>
             <AxisLeft
               frame={fr}
@@ -94,7 +94,7 @@ export function MedianIncome({ rows }: { rows: IncomeYear[] }) {
                 cy={y(r.mhi as number)}
                 r={active?.y === r.y ? 5 : 8}
                 fill={active?.y === r.y ? 'var(--ink)' : 'transparent'}
-                tabIndex={0}
+                {...mark()}
                 // NOT role="button": focusing a point reveals its value, it does
                 // not activate anything.
                 role="img"

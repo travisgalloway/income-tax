@@ -189,7 +189,7 @@ export function RevenueChart({ rows }: { rows: RevenueYear[] }) {
       </div>
 
       <Chart ariaLabel={chartLabel} interactive width={W} height={H} margin={f}>
-        {(fr) => (
+        {(fr, mark) => (
           <>
             <AxisLeft
               frame={fr}
@@ -266,7 +266,7 @@ export function RevenueChart({ rows }: { rows: RevenueYear[] }) {
                 width={bandWidth}
                 height={ih}
                 fill="transparent"
-                tabIndex={0}
+                {...mark()}
                 role="img"
                 aria-label={describeYear(s, view)}
                 onFocus={() => setFocus(s.y)}
