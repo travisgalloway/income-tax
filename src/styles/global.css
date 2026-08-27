@@ -347,6 +347,20 @@ figcaption .lead,
   color: var(--ink);
 }
 .figure-caveat { color: var(--ink); }
+/* The Follow line (#57): the caption's citations as links, each naming what kind
+   of source it is. Set quieter than the verbatim Source line above it, because
+   the sentence is the claim and these are the way out of it. `anywhere` for the
+   same reason `/sources` needs it -- a registered source name runs long and this
+   line sits under a chart that already owns the width. */
+.figure-sources,
+.term-follow {
+  overflow-wrap: anywhere;
+}
+.source-tier {
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
 
 /* ---- Chart furniture ----------------------------------------------------- */
 
@@ -981,6 +995,20 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 .limits > li > h3 + .prose { display: inline; text-indent: 0; }
 .reference-doc { max-width: var(--measure-wide); }
 .reference-doc table { border-collapse: collapse; font-variant-numeric: var(--num-table); }
+/* #79. `/sources` overflowed a 390px viewport by 130px: three `<code>` spans
+   carrying unbreakable identifiers -- an API path, a Census filename template, a
+   FRED series -- measured 459 to 500px against a 390px client width, and the
+   whole page scrolled sideways because of them.
+
+   Contained at the `<code>` element, never at the page, and never by truncation:
+   the reader must still be able to read the whole identifier, which is the point
+   of printing it. `overflow-wrap: anywhere` rather than `overflow-x: auto`,
+   following `.index-source` at the /contents block below, because these are
+   prose-embedded identifiers inside a paragraph and a scroll box inside a
+   sentence has no affordance a reader would find. The `overflow-x` idiom in this
+   file is for tables; this route has none. */
+.reference-doc code,
+.reference-doc a { overflow-wrap: anywhere; }
 
 /* ---- Glossary -----------------------------------------------------------
  * A definition list, set the way a reference work sets one: the term in the

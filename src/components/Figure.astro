@@ -16,6 +16,12 @@
  * same figure this page numbers 13. And the manifest is the one place a
  * figure's provenance is written, read both by this component and by the index,
  * so the two cannot disagree.
+ *
+ * The Source line stays VERBATIM (BRIEF.md rule 1). Since #57 a Follow line sits beneath it,
+ * carrying the same citations as links to the source's registered URL and naming what kind of
+ * source each one is. It is an addition to the apparatus, never a replacement for the sentence:
+ * `fig.sources` is resolved from `pipeline/curated/sources.yaml` at build time and no URL is
+ * typed here or at any call site.
  */
 import type { FigureEntry } from '../data/figures'
 
@@ -59,5 +65,25 @@ if (!xUnit?.trim() || !yUnit?.trim()) throw new Error('Figure: both axes must na
     <span><span class="lead">Units.</span> {xUnit} against {yUnit}.</span>
     {note && <span class="figure-caveat"><span class="lead">Note.</span> {note}</span>}
     <span><span class="lead">Source.</span> {fig.sourceLine}</span>
+    {
+      fig.sources.length > 0 && (
+        <span class="figure-sources">
+          <span class="lead">Follow.</span>{' '}
+          {fig.sources.map((s, i) => (
+            <>
+              {i > 0 && ' · '}
+              {s.href ? (
+                <a href={s.href} rel="noopener">
+                  {s.text}
+                </a>
+              ) : (
+                <span>{s.text}</span>
+              )}
+              <span class="source-tier"> ({s.tier})</span>
+            </>
+          ))}
+        </span>
+      )
+    }
   </figcaption>
 </figure>

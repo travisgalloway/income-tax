@@ -975,3 +975,33 @@ time. Appended to, never rewritten. None of these have been acted on.
   established register rather than change it. Found while checking figure 3's rendered source line
   in `dist/government/index.html`. Severity: prose redundancy on two published source lines,
   non-blocking.
+- [2026-08-26] `SOURCES.md:30` — **Congressional Budget Office, Estimates of Automatic
+  Stabilizers, November 2024** is a bold source lead-in with no entry in
+  `pipeline/curated/sources.yaml`'s `registry:`. No output cites it, so rules B, C and the new I
+  say nothing about it: its tier is hand-typed and gated by nothing, and the file it names could
+  move without any check noticing. Either register it as `cited_in_prose_only` or delete the
+  block. Found while writing a tier onto every lead-in for #57, which gates only the 24 that are
+  registered. Severity: one unchecked source block on a reference page, non-blocking.
+- [2026-08-26] `pipeline/curated/sources.yaml` `jec_debt_update` — the Joint Economic Committee's
+  monthly debt update restates an average-maturity figure Treasury's Office of Debt Management
+  computes, which is the compiler-standing-in-for-the-release shape #56 removed for the Peterson
+  Foundation. #57 records that honestly (`tier: official republication`) but cannot act on it:
+  WHICH source `debt_maturity` cites is the issue's stated "Out". Whether the figure should come
+  from Treasury directly is an editorial call with a fetch behind it. Found while assigning tiers.
+  Severity: one figure sourced to a republisher, non-blocking.
+- [2026-08-26] `pipeline/curated/sources.yaml` `treasury_tic.url` points at
+  `ticdata.treasury.gov/Publish/mfhhis01.txt`, a fixed-width data file rather than a page — it is
+  what `SOURCES.md` already named and what the pipeline fetches, so it is truthful, but a reader
+  following it from a figure caption gets a wall of text instead of a release page.
+  `home.treasury.gov/data/treasury-international-capital-tic-system` is the human landing page and
+  resolves 200. Swapping it means editing the `SOURCES.md` block rule I pins the URL to, which is
+  a content decision rather than a gate. Found while filling in `url` for #57. Severity: one
+  unfriendly link, non-blocking.
+- [2026-08-26] `cbo.gov` and `oecd.org` return **403 to every automated request**, root path
+  included and regardless of user agent, so the three URLs the register carries for
+  `cbo_jct_scores`, `cbo_household_income_distribution` and `oecd_revenue_statistics` cannot be
+  verified by any check that could run here — they were confirmed against Wayback snapshots
+  instead (2026-06, 2026-05, 2026-08). A future link-checker over `registry.*.url` must special-case
+  those hosts or it will report three false failures forever, which is how a check gets disabled.
+  Found while probing every candidate URL for #57. Severity: a trap for the link-checker that does
+  not exist yet, non-blocking.
