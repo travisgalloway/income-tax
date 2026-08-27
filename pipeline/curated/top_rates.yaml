@@ -1,7 +1,14 @@
 _comment: |-
   Curated. NEVER machine-written.
   Top STATUTORY marginal federal individual income tax rate on ORDINARY income,
-  tax years 1913-2025. Source: IRS SOI Historical Table 23; Tax Policy Center.
+  tax years 1913-2025.
+  Source: IRS SOI Historical Table 23 for 1913-2018, corroborated year by year
+  against curated/top_rates_soi_anchor.yaml (Table 23's own highest-bracket
+  column, transcribed with its SHA-256) by validate.check_top_rates_anchor --
+  all 106 years agree to the digit, and the check fails the build if that ever
+  stops being true. PL 115-97 and IRS Revenue Procedures 2018-57 through 2024-40
+  for 2019-2025, which is past where Table 23 ends; those schedules are
+  transcribed in curated/brackets_modern.yaml.
   TRAPS:
     - Statutory is not effective. Nobody pays this rate on their whole income, and
       the income threshold it applies at has moved enormously. A chart of this line

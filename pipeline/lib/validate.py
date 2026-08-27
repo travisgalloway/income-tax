@@ -1021,6 +1021,46 @@ def check_bracket_history(c: Checks) -> None:
             "bracket_history: 2024 top bracket real vs nominal (base-year fixed point)")
 
 
+def check_top_rates_anchor(c: Checks) -> None:
+    """Every top rate the site publishes for 1913-2018 equals IRS SOI Historical
+    Table 23's highest-bracket rate for that year (#55).
+
+    curated/top_rates.yaml used to cite "IRS SOI Historical Table 23; Tax Policy
+    Center" and nothing checked either claim -- the anchor was a sentence in a
+    comment. curated/top_rates_soi_anchor.yaml is Table 23's column transcribed
+    with its SHA-256, and this is the check that makes the citation an
+    OBSERVATION. It runs unconditionally, not behind an `if "bracket_history" in
+    outputs` gate: a check skipped because its output was not in the tier reads
+    exactly like a check that passed (#37).
+
+    Table 23 stops at 2018, so 2019-2025 are out of its reach by construction and
+    are anchored on PL 115-97 and Rev. Proc. 2018-57 through 2024-40 instead. The
+    anchor must cover 1913-2018 with NO GAPS -- a year silently dropped by a
+    footnote-prefixed cell would otherwise shrink the check's reach without
+    failing anything, which is the failure this no-gaps assertion exists to stop.
+    """
+    anchor = curated.top_rates_soi_anchor()
+    published = curated.top_rates()
+
+    years = sorted(int(y) for y in anchor)
+    c.ok(years == list(range(1913, 2019)),
+         f"top_rates_soi_anchor: expected IRS SOI Table 23's full 1913-2018 range with no gaps, "
+         f"got {years[0] if years else None}-{years[-1] if years else None} ({len(years)} years); "
+         f"missing {sorted(set(range(1913, 2019)) - set(years))}")
+
+    for y in years:
+        want = anchor[y]
+        got = published.get(y)
+        if got is None:
+            c.ok(False, f"top_rates: {y} is in IRS SOI Table 23 ({want}%) but absent from "
+                        f"curated/top_rates.yaml")
+            continue
+        c.ok(abs(got - want) < 0.001,
+             f"top_rates: {y} published {got}% != IRS SOI Historical Table 23 {want}%. "
+             f"Table 23 is the anchor for 1913-2018; a disagreement is an editorial event "
+             f"(curated/discrepancies.yaml), never a silent re-baseline of closed history.")
+
+
 def check_cbo_effective_rates(c: Checks) -> None:
     doc = _load("cbo_effective_rates")
     rows = doc["data"]["rows"]
@@ -1150,6 +1190,10 @@ def run(outputs: list[str]) -> Checks:
     # the tier reads exactly like a check that passed (#37).
     check_sources(c, outputs)
     check_glossary_sources(c)
+    # Unconditional for the same reason as check_sources above: this one
+    # reconciles two CURATED files against each other and needs no output at
+    # all, so gating it on a tier would only make it silently skippable (#55).
+    check_top_rates_anchor(c)
     if "budget" in outputs:
         check_budget(c)
         check_laws(c)
