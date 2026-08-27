@@ -12,9 +12,13 @@
  */
 import { useMemo, useState } from 'react'
 import { Chart } from '../charts/Chart'
+import { Annotation } from '../charts/Annotation'
+import { DATA_LABEL_FONT_PX, placeAnnotation } from '../charts/annotate'
+import { firstThatFits, spanRoomAt } from '../charts/axisFit'
 import { linear } from '../charts/scales'
 import { TableView } from './TableView'
 import { useChartSize } from '../charts/useChartSize'
+import type { Frame } from '../charts/scales'
 import type { DebtHolders as DebtHoldersData } from '../../data/types'
 
 type FocusKey = 'public' | 'intragov' | 'domestic' | 'foreign' | 'japan' | 'uk' | 'china'
@@ -92,10 +96,65 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
 
   const leaderX = (i: number) => xB(domesticAmt) + ((iw - xB(domesticAmt)) * (i + 1)) / 4
 
+  // Segment labels are middle-anchored on their own segment, so two things
+  // bound them: the distance to the neighbouring label's centre, and the SVG's
+  // own edges. The long foreign variant — the amount followed by `foreignShare`
+  // in full — needs 416 units against the 231 it has, and shipped CUT after
+  // `…of publicly held d`: a complete-looking figure that is not the figure
+  // (#66, the #64 shape). The intragovernmental label overran by 24.8 the same
+  // way.
+  //
+  // The variant is picked by FIT, recomputed from the segment centres on every
+  // render, never from the `narrow` boolean or a stored width. That is what
+  // makes it vintage-proof (E6): the foreign share moves with every Treasury
+  // release, so a fix keyed on today's split would regress on the next refresh.
+  // Fitting the centre gap is also what makes a same-row collision impossible
+  // by construction rather than by inspection (E8).
+  const labelFor = (variants: string[], centre: number, gap: number, fr: Frame) =>
+    firstThatFits(
+      variants,
+      Math.min(gap, spanRoomAt(centre, fr, 'middle')),
+      DATA_LABEL_FONT_PX,
+    )
+
   return (
     <div ref={boxRef}>
       <Chart ariaLabel={ariaLabel} interactive width={W} height={leadersY + (narrow ? 30 : 46)} margin={f}>
-        {() => (
+        {(fr) => {
+          const centreA = [xA(split.public.amount_t) / 2, xA(split.public.amount_t) + (iw - xA(split.public.amount_t)) / 2]
+          const centreB = [xB(domesticAmt) / 2, xB(domesticAmt) + (iw - xB(domesticAmt)) / 2]
+          const gapA = centreA[1] - centreA[0]
+          const gapB = centreB[1] - centreB[0]
+          const publicLabel = labelFor([
+            `Held by the public ${fmtT(split.public.amount_t)} (${split.public.share_pct}% of gross debt)`,
+            `Held by the public ${fmtT(split.public.amount_t)} (${split.public.share_pct}%)`,
+            `Public ${fmtT(split.public.amount_t)} (${split.public.share_pct}%)`,
+            `Public ${fmtT(split.public.amount_t)}`,
+            fmtT(split.public.amount_t),
+          ], centreA[0], gapA, fr)
+          const intragovLabel = labelFor([
+            `Intragovernmental ${fmtT(split.intragov.amount_t)} (${split.intragov.share_pct}% of gross debt)`,
+            `Intragovernmental ${fmtT(split.intragov.amount_t)} (${split.intragov.share_pct}%)`,
+            `Intragov. ${fmtT(split.intragov.amount_t)} (${split.intragov.share_pct}%)`,
+            `Intragov. ${fmtT(split.intragov.amount_t)}`,
+            fmtT(split.intragov.amount_t),
+          ], centreA[1], gapA, fr)
+          // Domestic's percentage always keeps its denominator, for the same
+          // reason foreignShare names both of its own: a share of publicly held
+          // debt is a different quantity from a share of gross debt, and
+          // discrepancies.yaml requires they never read as one. So the ladder
+          // drops the percentage entirely rather than orphaning it.
+          const domesticLabel = labelFor([
+            `Domestic ${fmtT(domesticAmt)} (${publicSplit.domestic.share_of_public_pct}% of publicly held)`,
+            `Domestic ${fmtT(domesticAmt)}`,
+            fmtT(domesticAmt),
+          ], centreB[0], gapB, fr)
+          const foreignLabel = labelFor([
+            `Foreign ${fmtT(foreignAmt)} (${foreignShare(publicSplit.foreign.share_of_public_pct, foreignOfGross)})`,
+            `Foreign ${fmtT(foreignAmt)}`,
+            fmtT(foreignAmt),
+          ], centreB[1], gapB, fr)
+          return (
           <>
             {/* ---- Bar A: gross debt, public vs intragovernmental ---- */}
             <rect
@@ -114,15 +173,12 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
               onFocus={() => setFocus('intragov')} onBlur={() => setFocus(null)}
               onMouseEnter={() => setFocus('intragov')} onMouseLeave={() => setFocus(null)}
             />
-            <text x={xA(split.public.amount_t) / 2} y={yA - 8} textAnchor="middle" className="holders-label">
-              Held by the public {fmtT(split.public.amount_t)} ({split.public.share_pct}%)
-            </text>
-            <text
-              x={xA(split.public.amount_t) + (iw - xA(split.public.amount_t)) / 2}
-              y={yA - 8} textAnchor="middle" className="holders-label"
-            >
-              {narrow ? 'Intragov.' : 'Intragovernmental'} {fmtT(split.intragov.amount_t)} ({split.intragov.share_pct}%)
-            </text>
+            {publicLabel && (
+              <Annotation frame={fr} x={centreA[0]} y={yA - 8} anchor="middle" className="holders-label" label={publicLabel} />
+            )}
+            {intragovLabel && (
+              <Annotation frame={fr} x={centreA[1]} y={yA - 8} anchor="middle" className="holders-label" label={intragovLabel} />
+            )}
 
             {/* ---- Connectors: Bar B is the opened-up public slice of Bar A ---- */}
             <line x1={0} y1={yA + barH} x2={0} y2={yB} stroke="var(--ink-soft)" strokeWidth={0.75} />
@@ -148,17 +204,12 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
               onFocus={() => setFocus('foreign')} onBlur={() => setFocus(null)}
               onMouseEnter={() => setFocus('foreign')} onMouseLeave={() => setFocus(null)}
             />
-            <text x={xB(domesticAmt) / 2} y={yB + barH + 16} textAnchor="middle" className="holders-label">
-              Domestic {fmtT(domesticAmt)} ({publicSplit.domestic.share_of_public_pct}% of publicly held)
-            </text>
-            <text
-              x={xB(domesticAmt) + (iw - xB(domesticAmt)) / 2}
-              y={yB + barH + 16} textAnchor="middle" className="holders-label"
-            >
-              {narrow
-                ? `Foreign ${fmtT(foreignAmt)}`
-                : `Foreign ${fmtT(foreignAmt)} (${foreignShare(publicSplit.foreign.share_of_public_pct, foreignOfGross)})`}
-            </text>
+            {domesticLabel && (
+              <Annotation frame={fr} x={centreB[0]} y={yB + barH + 16} anchor="middle" className="holders-label" label={domesticLabel} />
+            )}
+            {foreignLabel && (
+              <Annotation frame={fr} x={centreB[1]} y={yB + barH + 16} anchor="middle" className="holders-label" label={foreignLabel} />
+            )}
 
             {/* ---- Top foreign holders, leadered off the foreign segment ----
              *  Point markers, evenly spaced for legibility: Japan/UK/China are
@@ -167,24 +218,37 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
             {!narrow && (['japan', 'uk', 'china'] as const).map((k, i) => {
               const idx = k === 'japan' ? 0 : k === 'uk' ? 1 : 2
               const cx = leaderX(i)
+              const leaderLabel = `${d.top_foreign[idx].country} ${fmtT(d.top_foreign[idx].amount_t)}`
+              // <Annotation> does not accept tabIndex/role/handlers, and widening
+              // it to would make the one sanctioned annotation path a props
+              // grab-bag. So these three keep their own <text> and take their x
+              // from `placeAnnotation` instead. Shift-only: a leader label
+              // re-anchored would leave the leader line it belongs to.
+              const placed = placeAnnotation({
+                x: cx, label: leaderLabel, frame: fr, anchor: 'middle',
+                fontPx: DATA_LABEL_FONT_PX, flip: false,
+              })
               return (
                 <g key={k}>
                   <line x1={cx} y1={yB + barH} x2={cx} y2={leadersY} stroke="var(--ink-soft)" strokeWidth={0.5} />
                   <circle cx={cx} cy={yB + barH / 2} r={2.5} fill="var(--ink)" />
-                  <text
-                    className="datum holders-label"
-                    x={cx} y={leadersY + 12} textAnchor="middle"
-                    tabIndex={0} role="img" aria-label={describe(k)}
-                    onFocus={() => setFocus(k)} onBlur={() => setFocus(null)}
-                    onMouseEnter={() => setFocus(k)} onMouseLeave={() => setFocus(null)}
-                  >
-                    {d.top_foreign[idx].country} {fmtT(d.top_foreign[idx].amount_t)}
-                  </text>
+                  {placed && (
+                    <text
+                      className="datum holders-label"
+                      x={placed.x} y={leadersY + 12} textAnchor={placed.textAnchor}
+                      tabIndex={0} role="img" aria-label={describe(k)}
+                      onFocus={() => setFocus(k)} onBlur={() => setFocus(null)}
+                      onMouseEnter={() => setFocus(k)} onMouseLeave={() => setFocus(null)}
+                    >
+                      {leaderLabel}
+                    </text>
+                  )}
                 </g>
               )
             })}
           </>
-        )}
+          )
+        }}
       </Chart>
 
       {narrow && (
