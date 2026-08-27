@@ -846,3 +846,12 @@ time. Appended to, never rewritten. None of these have been acted on.
   enumeration was followed; the count was a miscount. Recorded so a later audit against the plan
   does not read the difference as a missed row. Found while executing #51. Severity: plan
   arithmetic, non-blocking.
+- [2026-08-26] `src/content/glossary/intragovernmental-holdings.md:3`,
+  `src/content/glossary/vintage.md:3` and `src/content/glossary/statutory-rate.md:3` each write an
+  em dash in their `short:` field as the escape `—`, and `src/components/Term.astro` renders
+  all three into route prose as `.term-pop` bodies — four rendered occurrences. #51's check does not
+  descend into `.term-pop`, by design: a glossary entry is a different editing surface with a
+  different owner, so the dash count inside a page's prose classes is 33 and not 37. The escape is
+  also why `grep '—' src/content/glossary/` finds nothing, which is how these survived every earlier
+  dash census. #59's territory. Found while measuring #51's baseline. Severity: prose rule
+  unenforced on one surface, non-blocking.
