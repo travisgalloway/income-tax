@@ -71,7 +71,34 @@ The SVG primitive. `ariaLabel` is required (the finding, again). `interactive` s
 `role` between `img` (static) and `group`: assistive tech treats a `role="img"` subtree as
 presentational, so **any chart with Tab-focusable data points must pass `interactive`** or its
 focusable children go unannounced. `width` / `height` / `margin` come from `useChartSize`;
-`children` is a render-prop receiving the computed `Frame`.
+`children` is a render-prop receiving the computed `Frame` **and a `mark` function**.
+
+### Making a data mark focusable (#69)
+
+`useRovingMarks()` (`src/components/charts/roving.ts`) is the **only** way to make a chart mark
+focusable. A new figure spreads `{...mark()}` onto each mark, in render order:
+
+```tsx
+<Chart ariaLabel={label} interactive>
+  {(fr, mark) => rows.map((r) => (
+    <rect key={r.y} className="datum" {...mark()} role="img" aria-label={describe(r)} … />
+  ))}
+</Chart>
+```
+
+Writing `tabIndex={0}` on a mark is a **build failure**, not a style preference:
+`test_no_island_hardcodes_a_focusable_chart_mark` fails on the literal anywhere under
+`src/components/`, with exactly one allowlisted line (`AttributionSplit`'s `Tabs.Content`, a Radix
+tab panel outside every `<svg>`) which is itself matched verbatim so a rename reports the entry
+stale. The reason is a measurement, not a rule of taste: 25 figures drawing 3 to 113 marks each put
+**364 of `/government`'s 512 tab stops** inside charts, and reaching §11 took **438** Tab presses.
+
+The hook makes each `<svg>` one roving-tabindex group — one mark at `tabindex="0"`, the rest at
+`"-1"`, arrows/Home/End moving between them in DOM order without wrapping. `Chart` wires it for you.
+A figure that hand-rolls its own `<svg>` (`BracketHistory`, `StateGiveGet`, `StateTaxMix`) calls
+`useRovingMarks()` itself and spreads `groupProps` on the `<svg>`; there is no third option, because
+the roving state must be in the **served HTML** — `client:visible` server-renders the markup and
+defers only hydration. See `docs/contracts/accessibility.md` for the full rule and the numbers.
 
 ## `Axis.tsx`
 

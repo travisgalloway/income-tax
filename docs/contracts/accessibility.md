@@ -20,6 +20,51 @@ keyboard-reachable points that keeps `role="img"` has focusable children that go
 `Chart.tsx`'s `interactive` prop is the switch. Enforced by
 `test_focusable_data_points_are_labelled_and_grouped`.
 
+**A figure contributes at most one tab stop per chart `<svg>`, however many marks it draws.** Marks
+are not removed from the keyboard. Each chart SVG is one **roving-tabindex group**: exactly one mark
+carries `tabindex="0"`, every other carries `tabindex="-1"`, and Left/Up, Right/Down, Home and End
+move focus between them in **DOM order, which is data order, not screen geometry**. Tab enters the
+figure at the active mark and leaves the chart entirely. This is the roving-tabindex convention of
+the ARIA composite-widget pattern **without wrapping**: a chart's marks are a series, and jumping
+from the last year to the first reads as a discontinuity in the data, so the ends clamp. `Down` is
+included because `OecdChart`'s dot plot runs vertically and "next" reads downward there.
+
+**The rule holds in the served HTML, not only after hydration.** Islands mount `client:visible`,
+which server-renders the markup and defers only hydration, so before #69
+`dist/government/index.html` shipped all 369 marks focusable before a line of JavaScript ran. The
+active index is therefore React state and `tabIndex` is derived from it **during render** — never
+written by an effect, which would be both absent from the served bytes and clobbered by the next
+re-render. `useRovingMarks()` (`src/components/charts/roving.ts`) is the only way to make a chart
+mark focusable; `Chart` passes its `mark` to the render prop as a second argument, and the three
+islands that hand-roll their own `<svg>` (`BracketHistory`, `StateGiveGet`, `StateTaxMix`) call the
+hook directly.
+
+A figure that draws marks still carries its `<details>` "View as table". That table stays the
+complete non-visual equivalent and is **the one route this rule may never shorten**.
+
+No bypass *control* is added — no "skip this chart" link, and so no new off-screen focusable content
+of the `left: -9999px` kind. Roving needs none: it bounds the tab order for every reader rather than
+only for one who finds and activates a control.
+
+Enforced by `test_each_chart_svg_offers_exactly_one_tab_stop` and
+`test_no_island_hardcodes_a_focusable_chart_mark` over `dist/`, and by `tests/browser/keyboard.test.ts`
+in a real browser. The counts, at 1440x900 on `/government`:
+
+| | Before #69 | After #69 |
+|---|---|---|
+| Tab presses from the top of `/government` to §11 `#by-state` | **438** | **141** hydrated, **118** with scripting off |
+| Tab stops on the whole of `/government` | **512** | **161** hydrated, **136** with scripting off |
+| `tabindex="0"` marks per chart `<svg>` in `dist/government/index.html` | `32,7,3,64,31,31,31,31,3,5,64,11,51,5` | `1` x 14 |
+
+The 369 marks on `/government` (389 on `/economy`, 356 on `/households`) are all still there and all
+still reachable; `test_the_label_coverage_did_not_narrow` pins the total at 1114 so the roving change
+cannot quietly shrink the corpus every other guard reads.
+
+Two things about it stay human-judged and are **parked**, not fixed here: nothing announces to a
+keyboard reader that the arrow keys work inside a group (announcement is #30's territory), and
+whether an index-based active mark reads sensibly across a filter change is a judgement, not a
+measurement.
+
 **Every figure has an accessible name, and it is the finding.** `Figure.astro`'s `ariaLabel` prop
 renders as the `<figure>`'s own `aria-label`, in addition to the `<svg>`'s. The two are
 deliberately the same sentence — a figure with no name announces as bare "figure", the worse
@@ -379,8 +424,9 @@ does not duplicate it.
 | 32 | M6 greyscale render | **HUMAN** for the reading judgement. The luminance-ratio table below is mechanisable but is #30's artefact — **parked**, `docs/parked-findings.md` |
 | 33 | Safari.app focus-ring check | **HUMAN** — Playwright's WebKit is **not** Safari.app, and a lookalike engine must not be allowed to satisfy it. #80 |
 | 34 | M12 JavaScript disabled: page `scrollWidth` == viewport, and the trigger shapes | **ASSERTED** for the width and overflow half, by the scripting-off pass; the trigger-shape half is **COVERED ELSEWHERE** by the static `test_*term*` guards |
+| 35 | #69: the tab order through a chart route, and that every datum stays reachable once it is bounded | **ASSERTED** — `keyboard.test.ts`. A real Tab walk (press, read `document.activeElement`) on `/government` hydrated and with scripting off; per-svg stop enumeration on all three chart routes at both viewports, scripting on and off; arrow traversal over the largest group on each route; and the same enumeration after every option of `#the-laws`' three filters and both `YearRange` extremes |
 
-**Of the 34, 21 are asserted, 3 are covered elsewhere, and 10 remain human-judged** — every one of
+**Of the 35, 22 are asserted, 3 are covered elsewhere, and 10 remain human-judged** — every one of
 the 10 for a stated reason that is not "we ran out of time": assistive technology that does not exist
 in CI, a pixel judgement, a copy judgement, a viewport outside this contract, or a probe whose
 assertion would pin us to a third-party internal.
@@ -451,9 +497,9 @@ same one.
 
 | Check | Route | Result | Tool | Evidence / issue |
 |---|---|---|---|---|
-| M1 keyboard traversal | `/` | FAIL | Chrome 151 | Skip link is the first tabbable element at (8,8), 135×44, `href="#main"`, `main[tabindex="-1"]`; zero positive `tabindex` site-wide. 389 of 408 tab stops are `rect[tabindex="0"]` data points — #69. Wide-table scroll container not keyboard reachable — #71. |
-| M1 keyboard traversal | `/government/` | FAIL | Chrome 151 | Skip link and landmark order as above. 380 of 471 tab stops are data points — #69. #71. Four `radiogroup`s all resolve to the name "Measured in" — #72. |
-| M1 keyboard traversal | `/households/` | FAIL | Chrome 151 | Skip link and landmark order as above. 356 tab stops, every datum reachable — #69. #71. |
+| M1 keyboard traversal | `/` | PASS | Chrome 151 + browser lane | Skip link is the first tabbable element at (8,8), 135×44, `href="#main"`, `main[tabindex="-1"]`; zero positive `tabindex` site-wide. **The "389 of 408 tab stops are data points" reading recorded here was `/economy`'s, taken before the intro-route split**: `/` now renders zero figures, zero `<svg>` and 20 tab stops. `/economy`'s own figure was 389 of 437, and is 53 since #69. No wide table renders on this route, so #71 does not arise here either. |
+| M1 keyboard traversal | `/government/` | FAIL | Chrome 151 + browser lane | Skip link and landmark order as above. The "380 of 471" reading predates the intro-route split; at `d69e4e6` it was **364 of 512**, with **438** presses to §11. Since #69 each chart `<svg>` is one roving group: **161** stops and **141** to §11 hydrated, **136** and **118** with scripting off, every one of the 369 marks still reachable by arrow key. Walked on every pull request by `keyboard.test.ts`. Still FAIL, now for #71 alone (wide-table scroll container not keyboard reachable) and #72 (four `radiogroup`s all resolve to the name "Measured in"). |
+| M1 keyboard traversal | `/households/` | FAIL | Chrome 151 + browser lane | Skip link and landmark order as above. The 356 recorded here is the **mark** count, not the tab-stop count; the walk at `d69e4e6` was 428 stops of which 356 were marks. Since #69: **80** stops, all 356 marks still reachable by arrow key, including `BracketHistory`'s 113 — the largest group on the site. Still FAIL for #71. |
 | M1 keyboard traversal | `/sources/` | PASS | Chrome 151 | Skip link first at (8,8) 135×44; `main[tabindex="-1"]`; zero positive `tabindex`; no focusable datum and no scroll container renders on this route. |
 | M1 keyboard traversal | `/glossary` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. |
 | M1 keyboard traversal | `/contents` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. Its own edge case is the one `/sources/` failed (#79): every line on it is a derived string and the source lines are long, so the 390px rows are the ones that matter. |
