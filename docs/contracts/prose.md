@@ -499,6 +499,27 @@ each of the three routes. They are scored on the question alone, because "a stan
 first figure" and "prose after the last figure" are not asked of a section that has no figure. That
 is the structural scope of rule 2 above, and it is why this contract has no exemption list.
 
+### Criterion 2 audit
+
+One row per `.finding` on the four report routes, twenty-two of them. `The one claim it makes` is a
+reviewer's paraphrase of the single thing the finding asserts; `Checkable against` names the figure
+whose `<details>` table settles it, which is where the two-figure sections are discharged, because a
+finding cannot be checkable against both. `pipeline/tests/test_prose.py:774` asserts this table's
+`Route` and `Section id` set **equals** the set of sections carrying a finding in `dist/`. What the
+test asserts is the coverage, never the wording: whether the paraphrase is honest, and whether the
+finding really states one claim rather than two, is Checklist item 9.
+
+The `/` intro carries no finding and no figure, so it contributes no rows. That is structural scope
+again, not an exemption.
+
+| Route | Section id | The one claim it makes | Checkable against | Criterion 2 |
+|---|---|---|---|---|
+| /economy | one-picture | Real GDP grew 895% between FY1950 and FY2025 | the section's one figure | Pass |
+| /economy | growth-shadow | The two indexed lines separated: output per hour reached 216.5 by 2024 against real median household income at 138.6 | the section's one figure | Pass |
+| /economy | who-works | Unemployment in FY2025 sat below CBO's noncyclical rate, while participation sat 4.7 points below its FY2000 peak | the section's one figure | Pass |
+| /economy | prices-rates | The fed funds rate peaked one fiscal year after CPI-U inflation did | the section's one figure, rates panel against prices panel | Pass |
+| /economy | labor-capital | The wage share fell over the same decades in which the profit share rose | the section's one figure | Pass |
+
 ## Checklist — status per item
 
 What only a human reader can judge. Every item is **NOT EXECUTED** on landing, and that is a
