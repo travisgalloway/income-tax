@@ -1099,3 +1099,17 @@ time. Appended to, never rewritten. None of these have been acted on.
   concluding either way. Outside #60: the sentence carries no causal claim and no registered
   figure, so rewriting it would be a Criterion 3 edit in a Criterion 5 pass. Found while dumping
   per-section prose for #60's audit table. Severity: a reader-visible word-join, non-blocking.
+- [2026-08-27] `dist/index.html` serves `The vocabulary is on<a href="/income-tax/glossary">Glossary</a>`
+  fused, from `src/pages/index.astro`'s §4 closing prose where the anchor begins on its own source
+  line. A third live instance of the Astro whitespace-collapse finding above, on a route none of the
+  earlier examples named, and it survives on the front door today. Found while dumping every
+  section's closing prose for #61's Criterion 6 audit table. Severity: a reader-visible word-join,
+  non-blocking.
+- [2026-08-27] `dist/economy/index.html` renders `/income-tax/government/#net-interest` (a trailing
+  slash before the fragment) while `dist/contents/index.html` renders `/income-tax/government#net-interest`.
+  Both resolve, and #61's `test_every_in_prose_cross_reference_resolves_and_is_base_aware` accepts
+  either by design. The two spellings come from `${join('/government')}/#...` in
+  `src/pages/economy/index.astro` against `join()` alone in `src/pages/contents.astro`; #61 followed
+  the first, since it is the register of the hand-offs it was matching. Cosmetic inconsistency in one
+  derived-link surface. Found while writing the Households-to-Government hand-off for #61. Severity:
+  cosmetic, non-blocking.
