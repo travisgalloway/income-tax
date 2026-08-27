@@ -322,6 +322,37 @@ the pairing rule in **Drift and quoted material**: a finding edit moves the matc
 the same commit, and the label stays inside `pipeline/tests/test_accessibility.py:283-300`.
 **Cited by #53.**
 
+**The mechanical half.** Four facts about every `.finding` on the four report routes, and about
+the standfirst beside it. **Enforced by** `pipeline/tests/test_prose.py:650`, `:676`, `:710` and
+`:735`: no standfirst and finding share a number token that is not a four-digit calendar year (the
+year is exempt as a regex class, not as a list, because a standfirst says over what window and a
+finding says when, so both name the same years by construction); every finding and every
+`figure.figure` accessible name clears the finding-shape floor; no finding runs past
+`FINDING_CHARS_MAX` (`pipeline/tests/test_prose.py:625`, 220 characters, with the longest surviving
+finding at 193); and each section carries at most one finding, immediately after its standfirst and
+before its first figure. The floor is `finding_shape_problems` at
+`pipeline/tests/test_accessibility.py:284`, extracted from `test_every_chart_svg_states_a_finding`
+with no assertion changed, so the finding and the accessible name this contract calls the same
+sentence are held to one predicate rather than two copies of one. Scope is structural: a section is
+asked these questions **because it carries a `.finding`**, which discharges the three Limits
+sections and the `/` intro's four with no exemption list.
+
+**No baseline, and here is the count.** #53 measured ten live violations: six sections sharing a
+non-year token, three findings past 220 characters and a fourth at 216 with no headroom left, and
+one `figure.figure` name opening "Chart showing". Ten is #52's road under rule 3 below and not
+#51's: all ten are fixed and every assertion above is zero. A ten-entry `fingerprint -> "#owner"`
+map would have cost more to maintain than the ten edits cost to make, and there was no third party
+to hand it to. #58 owns sentence craft and #60 owns whether a reader can check a claim; neither
+owns a standfirst restating its finding.
+
+**What they cannot see.** They cannot see whether a finding states *one* claim.
+`government/index.html#whole-budget` is 68 characters and carries three figures; a 200-character
+finding can carry exactly one. Length is a proxy and the test says so, and no clause-counter or
+"and"-splitter is added to fake the judgement. They cannot see whether a standfirst orients a
+reader at all: a numberless restatement of the finding in words passes every check here. They
+cannot see whether a finding and the `aria-label` beside it agree, only that both clear the same
+floor. Those are Checklist items 2, 3 and 9 below.
+
 ### Criterion 3 — sentence craft
 
 **Asks:** sentence length, clause count, punctuation (Ruling 1) and emphasis (Ruling 2).
@@ -501,3 +532,9 @@ statement about this contract's coverage, not a formality. Nothing below is enfo
    section's variables? The last of the three is the half no word list reaches: a heading naming
    what was plotted passes `test_no_section_heading_names_the_charts_construction` and fails this
    criterion on any human reading. — **NOT EXECUTED.** Human required. Criterion 1.
+9. **Read each standfirst and its finding as a pair, and ask two questions of them.** Of the
+   standfirst: does it name what is plotted, against what, over what window, and what the reader
+   should look at? Of the finding: is it one claim, or several joined by a full stop? The mechanical
+   half of Criterion 2 measures shared number tokens and character counts, which is why
+   `households#who-pays` was catchable and why a standfirst that restates its finding in words
+   would not be. Neither number is the judgement. — **NOT EXECUTED.** Human required. Criterion 2.

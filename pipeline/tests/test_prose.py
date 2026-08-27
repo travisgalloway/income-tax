@@ -41,7 +41,12 @@ from pathlib import Path
 
 import pytest
 
-from test_accessibility import Node, nodes_of, parse_html  # noqa: F401  (Node/nodes_of re-exported for symmetry)
+from test_accessibility import (  # noqa: F401  (Node/nodes_of re-exported for symmetry)
+    Node,
+    finding_shape_problems,
+    nodes_of,
+    parse_html,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 DIST = ROOT / "dist"
@@ -556,6 +561,27 @@ def _route_of(page: str) -> str:
     return "/" + page[: -len("index.html")].rstrip("/")
 
 
+def _audit_table(heading: str) -> str:
+    """The text under `### <heading>`, ending at the next heading of **any** level.
+
+    The boundary is the load-bearing part. While `### Criterion 1 audit` was the only audit table
+    in the contract, slicing to the next `"\\n## "` was equivalent to slicing to the next heading.
+    With `### Criterion 2 audit` sitting beside it, that slice swallows both tables and each
+    coverage test below then measures the *union* of the two row sets against its own subject.
+    Today that union happens to equal the section set, so the mis-parse would pass rather than
+    fail, which is the worse of the two outcomes. Ending at `\\n## ` or `\\n### `, whichever comes
+    first, keeps each table to itself.
+    """
+    text = PROSE_DOC.read_text()
+    start = text.find(f"### {heading}")
+    assert start != -1, (
+        f"docs/contracts/prose.md has no `### {heading}` section. The per-surface judgement lives "
+        "in the contract, where it can be re-read, not in a PR body, where it cannot."
+    )
+    nxt = re.search(r"\n#{2,3} ", text[start + 1 :])
+    return text[start : start + 1 + nxt.start()] if nxt else text[start:]
+
+
 def test_the_criterion_one_audit_covers_every_section():
     """The audit table's row set **equals** the section set built from `dist/`.
 
@@ -565,14 +591,7 @@ def test_the_criterion_one_audit_covers_every_section():
     test asserts is the table's *coverage*; the wording of each question is a reviewer's paraphrase
     and is exactly the part no machine can check.
     """
-    text = PROSE_DOC.read_text()
-    start = text.find("### Criterion 1 audit")
-    assert start != -1, (
-        "docs/contracts/prose.md has no `### Criterion 1 audit` section. The per-section judgement "
-        "lives in the contract, where it can be re-read, not in a PR body, where it cannot."
-    )
-    end = text.find("\n## ", start)
-    table = text[start : end if end != -1 else len(text)]
+    table = _audit_table("Criterion 1 audit")
     declared = {(route, sid) for route, sid in AUDIT_ROW_RE.findall(table)}
     actual = {(_route_of(page), sid) for page, sid, _, _ in sections()}
     missing = sorted(actual - declared)
@@ -584,5 +603,195 @@ def test_the_criterion_one_audit_covers_every_section():
     assert not stale, (
         "Criterion 1 audit rows for sections that no longer exist. Delete them in the same commit "
         "as the section:\n  " + "\n  ".join(f"{r}#{s}" for r, s in stale)
+    )
+    assert declared == actual
+
+
+# ---------------------------------------------------------------------------
+# 7. Criterion 2 — the standfirst sets up, the finding claims
+# ---------------------------------------------------------------------------
+
+#: A four-digit calendar year. The one number a standfirst and its finding may both name: the
+#: standfirst's job is to say over what window the chart runs, and the finding's is to locate its
+#: claim in time, so both name the same years by construction. This is a regex class and not a list
+#: of instances, so there is nothing here to maintain and nothing to rot.
+YEAR = re.compile(r"^(?:19|20)\d{2}$")
+
+#: The cap on a finding, in characters, whitespace collapsed. `docs/contracts/prose.md` left the
+#: number open and #53 fixes it here. The longest finding that survives #53 is 193 characters, so
+#: the cap carries 27 characters of headroom — the property `PREEMPTION_CEILING`'s comment above
+#: argues a threshold needs, and the reason `households#a-century-of-brackets` was rewritten at 216
+#: rather than left four characters under the line.
+FINDING_CHARS_MAX = 220
+
+
+def _prose_of(node: Node, cls: str) -> list[Node]:
+    return [d for d in node.iter_descendants() if cls in d.classes()]
+
+
+def findings() -> list[tuple[str, str, Node]]:
+    """Every `.finding` on the four report routes, as `(page, section_id, node)`.
+
+    Structural scope, per `docs/contracts/prose.md` rule 2: a section is asked these questions
+    **because it carries a `.finding`**. The three Limits sections and the `/` intro's four carry
+    none, so they fall out here with no exemption list to keep.
+    """
+    return [
+        (page, sid, node)
+        for page, sid, _, section in sections()
+        for node in _prose_of(section, "finding")
+    ]
+
+
+def _collapsed(node: Node) -> str:
+    return " ".join(_deep_text(node).split())
+
+
+def test_no_standfirst_repeats_its_findings_figures():
+    """A standfirst may name the window; it may not hand over the figure the finding is there for.
+
+    Stricter than `test_no_standfirst_preempts_its_finding` on values and looser on years, and the
+    two are complementary rather than redundant. Criterion 1's Jaccard measure counts years, so it
+    still fires on a standfirst that names nothing but its finding's window; this one permits every
+    shared year and fails on a single shared value. Neither subsumes the other, and #53 keeps both.
+
+    *Cannot see:* a standfirst that restates its finding **in words** rather than in numbers. That
+    is Checklist item 2 in `docs/contracts/prose.md`, and it is human-judged.
+    """
+    offenders = []
+    for page, sid, _, section in sections():
+        a, b = _numbers(section, "standfirst"), _numbers(section, "finding")
+        shared = sorted(t for t in a & b if not YEAR.match(t))
+        if shared:
+            offenders.append(f"{page}#{sid} shares {', '.join(shared)}")
+    assert not offenders, (
+        "A standfirst quotes a figure its finding is there to give. docs/contracts/prose.md "
+        "Criterion 2: the standfirst sets the chart up and the finding makes the claim. Rewrite "
+        "the standfirst, never the finding — a finding edit drags its chart `aria-label` with it "
+        "under Criterion 7. A shared four-digit year is allowed, because both elements are "
+        "supposed to say when. Sections:\n  " + "\n  ".join(offenders)
+    )
+
+
+def test_every_finding_states_a_finding():
+    """Every `.finding` body, and every `figure.figure` name, clears the finding-shape floor.
+
+    The floor is `finding_shape_problems` in `pipeline/tests/test_accessibility.py`, which is where
+    it has always lived: at least 40 characters, a digit, no leading shape word, no "chart showing".
+    This test applies the same function rather than a second copy of it, so the two surfaces
+    `docs/contracts/prose.md` says are the same sentence cannot drift apart in what they are held to.
+
+    Asserting the floor on the `.finding` itself is also what makes trimming a finding safe: a
+    rewrite short enough to push its `aria-label` under 40 characters fails here first, on the
+    element the author actually edited.
+
+    *Cannot see:* whether the claim is true, or whether the label and the finding beside it say the
+    same thing. Checklist item 3, Criterion 7, human-judged.
+    """
+    offenders = []
+    for page, sid, node in findings():
+        text = _collapsed(node)
+        for problem in finding_shape_problems(text):
+            offenders.append(f"{page}#{sid} finding {problem}: {text[:70]!r}")
+    for page in REPORT_PAGES:
+        for fig in nodes_of(parse_html(DIST / page), "figure"):
+            if "figure" not in fig.classes():
+                continue
+            label = fig.get("aria-label") or ""
+            for problem in finding_shape_problems(label):
+                offenders.append(f"{page} figure aria-label {problem}: {label[:70]!r}")
+    assert not offenders, (
+        "A finding, or a figure's accessible name, does not read as a finding. "
+        "docs/contracts/prose.md: a figure's accessible name *is* its finding, so both are held to "
+        "the same floor. Offenders:\n  " + "\n  ".join(offenders)
+    )
+
+
+def test_no_finding_runs_past_the_cap():
+    """Every `.finding` is at or under `FINDING_CHARS_MAX`, whitespace collapsed.
+
+    **Length is a proxy and this test says so.** It cannot count claims. `government#whole-budget`
+    is 68 characters and carries three figures; a 200-character finding can carry exactly one. No
+    clause-counter and no "and"-splitter is added here to fake the judgement, because a word list
+    invented to make a human reading look mechanical reports green and is worse than no check at
+    all (`docs/contracts/prose.md`, rule 4). "One claim" is Checklist item 2 and it is read by a
+    person. What this catches is the shape that made every multi-claim finding on the site
+    identifiable: a finding that kept going.
+    """
+    offenders = [
+        f"{page}#{sid} at {len(_collapsed(node))} characters: {_collapsed(node)[:70]!r}"
+        for page, sid, node in findings()
+        if len(_collapsed(node)) > FINDING_CHARS_MAX
+    ]
+    assert not offenders, (
+        f"A finding runs past {FINDING_CHARS_MAX} characters. docs/contracts/prose.md Criterion 2: "
+        "a finding states one claim a reader can check against the figure, and it is also the "
+        "figure's accessible name, read aloud in full. Move the surplus figures into the section's "
+        "closing `.prose`, and move the `<Figure ariaLabel>` in the same commit. "
+        "Findings:\n  " + "\n  ".join(offenders)
+    )
+
+
+def test_every_finding_sits_where_the_stylesheet_expects_it():
+    """One finding per section, immediately after its standfirst, before the section's first figure.
+
+    `src/styles/global.css:82` selects `.standfirst + .finding`, so a finding that is not its
+    standfirst's next sibling silently loses 1.4rem of top margin. That is the cheap half. The
+    load-bearing half is that a section's finding, its `<Figure ariaLabel>` and its row in the
+    Criterion 2 audit table are one-to-one: a second finding has no label to be and no row to sit
+    in, which is why the answer to a multi-claim finding is the closing `.prose` and never a second
+    `.finding`.
+
+    Scope is structural. A section carrying no finding is not asked rather than exempted.
+    """
+    offenders = []
+    for page, sid, body, section in sections():
+        found = _prose_of(section, "finding")
+        if not found:
+            continue
+        if len(found) > 1:
+            offenders.append(f"{page}#{sid} carries {len(found)} findings; one section, one claim")
+        for node in found:
+            siblings = [c for c in node.parent.children if c.tag != "#text"] if node.parent else []
+            i = siblings.index(node)
+            previous = siblings[i - 1] if i else None
+            if previous is None or "standfirst" not in previous.classes():
+                got = f"<{previous.tag} class={previous.get('class')!r}>" if previous else "nothing"
+                offenders.append(
+                    f"{page}#{sid} finding does not follow its standfirst; it follows {got}"
+                )
+        first_figure = body.find("<figure")
+        if first_figure != -1 and not 0 <= body.find('class="finding"') < first_figure:
+            offenders.append(f"{page}#{sid} states its finding after the figure it claims about")
+    assert not offenders, (
+        "A finding is not where the stylesheet and the audit table expect it. "
+        "docs/contracts/prose.md Criterion 2: one finding per section, immediately after the "
+        "standfirst it answers, before the figure it is checkable against. Sections:\n  "
+        + "\n  ".join(offenders)
+    )
+
+
+def test_the_criterion_two_audit_covers_every_finding():
+    """The Criterion 2 audit table's row set **equals** the set of sections carrying a `.finding`.
+
+    Equality, in the idiom of `test_the_criterion_one_audit_covers_every_section` above and of the
+    two `==`-asserted baselines. A new finding cannot ship without a reviewer writing down the one
+    claim it makes and which figure's `<details>` table that claim is checkable against, and a
+    deleted one cannot leave its judgement behind. As with Criterion 1, the test asserts coverage
+    and never wording: whether the row's paraphrase is honest is Checklist item 2.
+    """
+    table = _audit_table("Criterion 2 audit")
+    declared = {(route, sid) for route, sid in AUDIT_ROW_RE.findall(table)}
+    actual = {(_route_of(page), sid) for page, sid, _ in findings()}
+    missing = sorted(actual - declared)
+    stale = sorted(declared - actual)
+    assert not missing, (
+        "Sections carrying a finding with no row in the Criterion 2 audit table. Add a row naming "
+        "the one claim the finding makes and the figure it is checkable against:\n  "
+        + "\n  ".join(f"{r}#{s}" for r, s in missing)
+    )
+    assert not stale, (
+        "Criterion 2 audit rows for sections that carry no finding. Delete them in the same commit "
+        "as the finding:\n  " + "\n  ".join(f"{r}#{s}" for r, s in stale)
     )
     assert declared == actual
