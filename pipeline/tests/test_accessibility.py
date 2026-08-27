@@ -1509,7 +1509,7 @@ def test_term_popovers_are_not_animated(page):
 # times — Radix mounts `Content` only while the listbox is open, so the
 # listbox is never in the served bytes — and width and overflow are computed,
 # not serialised, so even a mounted popper would not expose its rendered size
-# to a static reader. What these check is that the three *declarations* that
+# to a static reader. What these checks verify is that the three *declarations* that
 # bound the popup are still present: a later sweep that deletes any one of
 # them turns one of these red instead of silently restoring the defect.
 #
