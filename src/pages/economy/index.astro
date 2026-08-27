@@ -77,12 +77,12 @@ const fig = figuresOf('/economy')
       <Term id="median">median</Term> household income rose 38.6%. Both are indexed to 1984 = 100.
     </p>
     <p class="finding">
-      Indexed to 1984 = 100, output per hour reached 216.5 by 2024 and real median household
-      income reached 138.6.
+      Output per hour reached 216.5 by 2024 while real median household income reached 138.6,
+      the two lines separating over the period.
     </p>
 
     <Figure
-      ariaLabel="Indexed to 1984 = 100, output per hour reached 216.5 by 2024 while real median household income reached 138.6, the two lines separating over the period."
+      ariaLabel="Output per hour reached 216.5 by 2024 while real median household income reached 138.6, the two lines separating over the period."
       fig={fig('growth-shadow')}
       xUnit="Year (fiscal for output per hour, calendar for median household income)"
       yUnit="index, 1984 = 100"
@@ -165,18 +165,17 @@ const fig = figuresOf('/economy')
     <h2>Inflation and rates spiked together, then spent a decade near zero</h2>
     <p class="standfirst">
       Inflation and the cost of borrowing share a section because neither reads correctly on
-      its own. The fed funds rate was 4.4% in fiscal 2025, and whether that is high or low is a
-      question about what prices were doing at the time. The two panels below run over the same
-      fiscal years, so a reader can ask that of any year in the series.
+      its own. Whether a given fed funds rate is high or low is a question about what prices
+      were doing at the time. The two panels below plot the price series above the rate series
+      over the same fiscal years, so a reader can ask that of any year in the run.
     </p>
     <p class="finding">
-      CPI-U inflation peaked at 13.6% in fiscal 1980 and the fed funds rate at 16.9% in fiscal
-      1981; both fell to near zero between 2009 and 2021 before rising again, with CPI-U
-      inflation at 2.7% and the fed funds rate at 4.4% in fiscal 2025.
+      The fed funds rate peaked at 16.9% in fiscal 1981, one fiscal year after CPI-U inflation
+      peaked at 13.6% in fiscal 1980.
     </p>
 
     <Figure
-      ariaLabel="CPI-U inflation peaked at 13.6% in fiscal 1980 and the fed funds rate at 16.9% in fiscal 1981; both fell to near zero between 2009 and 2021 before rising again, with CPI-U inflation at 2.7% and the fed funds rate at 4.4% in fiscal 2025."
+      ariaLabel="The fed funds rate peaked at 16.9% in fiscal 1981, one fiscal year after CPI-U inflation peaked at 13.6% in fiscal 1980."
       fig={fig('prices-rates')}
       xUnit="Fiscal year"
       yUnit="percent change in the price index from the previous fiscal year (CPI-U and core PCE) and percent per year (the fed funds rate, the 3-month bill and the 10-year note)"
@@ -208,6 +207,12 @@ const fig = figuresOf('/economy')
       1982, fell to 1.1% in fiscal 2020, and was 4.3% in fiscal 2025. Each near-zero value sits
       on the same axis as the fiscal 1981 peak, not compressed onto a separate scale, and each
       series draws a gap, never a zero, before its own documented start year.
+    </p>
+    <p class="prose">
+      Read the two panels against each other and the same shape appears in both: prices and
+      rates fell to near zero between 2009 and 2021 before rising again. Nothing here identifies
+      a cause, and the panels are stacked for the narrower reason that a rate is only readable
+      next to what prices were doing at the time.
     </p>
     <p class="prose">
       Rates are the mechanism that reprices the debt. The government route shows what that

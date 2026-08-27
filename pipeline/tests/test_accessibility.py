@@ -281,24 +281,40 @@ _SHAPE_WORD_RE = re.compile(
 )
 
 
+def finding_shape_problems(text: str) -> list[str]:
+    """The four shape rules a string must clear to read as a finding, as a list of failures.
+
+    Lifted verbatim out of `test_every_chart_svg_states_a_finding` below, which still calls it and
+    still asserts exactly what it asserted before. It is a function rather than four inline
+    assertions so that `pipeline/tests/test_prose.py`'s Criterion 2 check can hold `.finding`
+    bodies and `figure.figure` accessible names to the same floor without a second, drifting copy
+    of it. `docs/contracts/prose.md` says the finding and the chart's accessible name are the same
+    sentence; one predicate for both is what makes that cheap to enforce.
+
+    **It sees shape, never substance.** A string can clear all four and still claim something the
+    chart does not show, or disagree with the finding printed beside it. That is Checklist item 3
+    in `docs/contracts/prose.md`, and it is human-judged.
+    """
+    problems: list[str] = []
+    if len(text) < 40:
+        problems.append("is under 40 characters")
+    if not re.search(r"\d", text):
+        problems.append("has no digit — it states no finding")
+    if _SHAPE_WORD_RE.match(text):
+        problems.append("describes its shape, not its finding")
+    if "chart showing" in text.lower():
+        problems.append("says 'chart showing', a shape description")
+    return problems
+
+
 def test_every_chart_svg_states_a_finding(page):
     path, root = page
     for svg in nodes_of(root, "svg"):
         if "chart" not in svg.classes():
             continue
         label = svg.get("aria-label") or ""
-        assert len(label) >= 40, (
-            f"{path}: chart svg aria-label is under 40 characters: {label!r}"
-        )
-        assert re.search(r"\d", label), (
-            f"{path}: chart svg aria-label has no digit — it states no finding: {label!r}"
-        )
-        assert not _SHAPE_WORD_RE.match(label), (
-            f"{path}: chart svg aria-label describes its shape, not its finding: {label!r}"
-        )
-        assert "chart showing" not in label.lower(), (
-            f"{path}: chart svg aria-label says 'chart showing', a shape description: {label!r}"
-        )
+        for problem in finding_shape_problems(label):
+            pytest.fail(f"{path}: chart svg aria-label {problem}: {label!r}")
 
 
 # Figures that legitimately carry no chart. Empty today, and it stays an
