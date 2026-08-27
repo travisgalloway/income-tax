@@ -2142,16 +2142,20 @@ def test_check_sources_rule_c_accepts_a_glossary_only_citation(monkeypatch, tmp_
     still bites: delete the sole term that cites such a key and the entry is orphaned,
     which is the answer to "may deleting a term orphan its source"."""
     register = copy.deepcopy(curated.source_register())
-    # Registered in SOURCES.md (it is tax_policy_center's own registered_as, so rule B
-    # passes) but named by no output's cites -- a definitional-only source.
-    register["registry"]["tax_policy_center_definitional"] = {
-        "registered_as": "Tax Policy Center",
-        "cited_as": "Tax Policy Center",
+    # Registered in SOURCES.md (it reuses irs_soi_table_23's registered_as, so rule B
+    # passes) but named by no output's cites -- a definitional-only source. It borrows a
+    # real registered string rather than inventing one, because rule B matches
+    # registered_as INTO SOURCES.md and a made-up name would fail for that reason instead
+    # of exercising rule C. It used to borrow "Tax Policy Center"; #55 removed that source
+    # from SOURCES.md entirely, so the fixture moved to a string that is still there.
+    register["registry"]["irs_soi_table_23_definitional"] = {
+        "registered_as": "IRS SOI Historical Table 23",
+        "cited_as": "IRS SOI Historical Table 23",
     }
     monkeypatch.setattr(curated, "source_register", lambda: register)
 
     cited = _glossary_copy(tmp_path / "cited")
-    _set_source(cited, "marginal-rate", ["tax_policy_center_definitional"])
+    _set_source(cited, "marginal-rate", ["irs_soi_table_23_definitional"])
     monkeypatch.setattr(validate, "GLOSSARY_DIR", cited)
     c = validate.Checks()
     validate.check_sources(c, OUTPUTS)
@@ -2162,7 +2166,7 @@ def test_check_sources_rule_c_accepts_a_glossary_only_citation(monkeypatch, tmp_
     c = validate.Checks()
     validate.check_sources(c, OUTPUTS)
     assert len(c.failures) == 1, c.failures
-    assert "tax_policy_center_definitional" in c.failures[0]
+    assert "irs_soi_table_23_definitional" in c.failures[0]
     assert "no glossary term" in c.failures[0]
 
 

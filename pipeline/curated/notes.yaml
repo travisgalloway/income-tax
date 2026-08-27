@@ -194,10 +194,12 @@ outputs:
       never across two of them.
   bracket_history:
     title: Statutory federal income tax bracket schedules, {start}-{end}
-    source: Tax Foundation income-tax-rates dataset (1913-2019, from IRS SOI Historical Table 23
-      and IRS Revenue Procedures); IRS Revenue Procedures 2018-57 through 2024-40 (2019-2025,
-      curated); IRS SOI Historical Table 23 / Tax Policy Center for the published top rate;
-      FRED CPIAUCNS for the constant-dollar deflator
+    source: Tax Foundation income-tax-rates dataset (1913-2019), a compilation of IRS SOI
+      Historical Table 23 and IRS Revenue Procedures rather than a source in its own right;
+      IRS publishes no machine-readable ladder at bracket granularity, and Table 23 itself
+      carries only the lowest and highest bracket of each year, 1913-2018; IRS Revenue
+      Procedures 2018-57 through 2024-40 (2019-2025, curated); IRS SOI Historical Table 23
+      for the published top rate; FRED CPIAUCNS for the constant-dollar deflator
     units:
       s.*.r: percent
       s.*.lo, s.*.hi: nominal dollars
@@ -205,7 +207,8 @@ outputs:
       top, sched_top: percent
     fields:
       y: tax year
-      top: top marginal rate as published (IRS SOI / Tax Policy Center)
+      top: top marginal rate as published (IRS SOI Historical Table 23 through 2018, IRS
+        Revenue Procedures thereafter)
       sched_top: top marginal rate on the raw bracket schedule ladder (single filer)
       adj: non-null only in the twelve years where top and sched_top disagree
       nb: bracket count on the single-filer schedule

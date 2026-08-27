@@ -937,3 +937,11 @@ time. Appended to, never rewritten. None of these have been acted on.
   an origin. Found while executing #55. Severity: none — this is a closed decision, recorded so it
   is not re-litigated from an impression. The same record, in full, is in
   `docs/contracts/interfaces/bracket-history-data.md`.
+- [2026-08-26] `pipeline/lib/report.py:124` renders `data-report.md`'s "Generated {…} from git
+  `{git_sha}`" from ONE output's `_meta`, not from the run that wrote the report. Regenerating only
+  `bracket_history` moved the stamp from `4750a98` to `7f3445c` — neither of which is the commit
+  being built, and neither of which is `bracket_history`'s own new stamp. So the report's dateline
+  describes some other output's last build, and the file shows up dirty after any partial rebuild
+  for a reason unrelated to its content (the "118 of 118 prose figures reconcile" body was
+  unchanged). Found while regenerating `bracket_history` for #55. Severity: reporting accuracy,
+  non-blocking.

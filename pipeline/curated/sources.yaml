@@ -145,10 +145,6 @@ registry:
     registered_as: "IRS Revenue Procedures"
     cited_as: "IRS Revenue Procedures"
 
-  tax_policy_center:
-    registered_as: "Tax Policy Center"
-    cited_as: "Tax Policy Center"
-
   fred_cpiaucns:
     registered_as: "FRED CPIAUCNS"
     cited_as: "FRED CPIAUCNS"
@@ -174,9 +170,8 @@ outputs:
       - tax_foundation_rates
       - irs_soi_table_23
       - irs_revenue_procedures
-      - tax_policy_center
       - fred_cpiaucns
-    source_shape: "{tax_foundation_rates} (-, from {irs_soi_table_23} and {irs_revenue_procedures}); {irs_revenue_procedures} through (-, curated); {irs_soi_table_23} / {tax_policy_center} for the published top rate; {fred_cpiaucns} for the constant-dollar deflator"
+    source_shape: "{tax_foundation_rates} (-), a compilation of {irs_soi_table_23} and {irs_revenue_procedures} rather than a source in its own right; IRS publishes no machine-readable ladder at bracket granularity, and Table 23 itself carries only the lowest and highest bracket of each year, -; {irs_revenue_procedures} through (-, curated); {irs_soi_table_23} for the published top rate; {fred_cpiaucns} for the constant-dollar deflator"
 
   budget:
     cites: [cbo_historical_budget, cbo_historical_economic, cbo_jct_scores, crs_party_control]

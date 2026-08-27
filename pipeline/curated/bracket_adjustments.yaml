@@ -1,7 +1,7 @@
 _comment: >-
   Curated. NEVER machine-written.
   The twelve tax years where the top statutory rate PUBLISHED in
-  curated/top_rates.yaml (IRS SOI Historical Table 23 / Tax Policy Center) does not
+  curated/top_rates.yaml (IRS SOI Historical Table 23) does not
   match the top of the raw bracket-schedule ladder fetched from the Tax Foundation
   income-tax-rates dataset. Both numbers are real; they differ because a credit,
   surtax or part-year rate change moved the effective top rate away from the

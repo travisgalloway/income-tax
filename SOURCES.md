@@ -52,25 +52,46 @@ Shares of AGI and of income tax paid by percentile group.
 
 **Tax Foundation income-tax-rates dataset**
 `github.com/TaxFoundation/data` → `income-tax-rates/income-tax-rates.csv`
-The statutory bracket ladder by filing status, 1913–2019, itself compiled from
-IRS SOI Historical Table 23 and the IRS Revenue Procedures. The CSV ends at 2019.
+The statutory bracket ladder by filing status, 1913–2019. It is a **compilation**
+of IRS SOI Historical Table 23 and the IRS Revenue Procedures, not an independent
+source: every number in it is a federal one, reorganised into per-bracket rows.
+The CSV ends at 2019.
+
+It is used instead of the IRS files themselves for a reason worth stating plainly,
+because it is the one place this site reads a compiler rather than the original.
+**The IRS does not publish the bracket ladder in machine-readable form at bracket
+granularity.** Table 23 (below) is the closest thing, and it carries only two rates
+per year — the lowest bracket and the highest — with no per-bracket rows and no
+filing-status dimension. Probed directly in August 2026: `histab23.xls` is there and
+current, `histab23.xlsx` is a 404, there is no Table 24, and nothing else in the SOI
+historical-tables release carries the full schedules. So the Tax Foundation CSV is
+the best available machine-readable form of data the government produced, and the
+derivation is stated here rather than left in a script. The probe, with its URLs and
+byte counts, is in `docs/contracts/interfaces/bracket-history-data.md`.
 
 **IRS SOI Historical Table 23** and the **IRS Revenue Procedures**
-Table 23 is the published top marginal rate. Revenue Procedures 2018-57 through
-2024-40 carry the 2019–2025 schedules, hand-transcribed into
-`pipeline/curated/brackets_modern.yaml` because no machine-readable feed
-publishes them; 2019 is transcribed too but used only as a regression check
-against the fetched CSV, which stays authoritative for that year.
+`irs.gov/pub/irs-soi/histab23.xls` — "U.S. Individual Income Tax: Personal
+Exemptions and Lowest and Highest Bracket Tax Rates, and Tax Base for Regular Tax,
+Tax Years 1913–2018". Table 23 is where the published top marginal rate comes from,
+and since August 2026 it is checked rather than merely cited: its highest-bracket
+column is transcribed, with the file's SHA-256, into
+`pipeline/curated/top_rates_soi_anchor.yaml`, and the build fails if any year of the
+top-rate series disagrees with it. All 106 overlapping years, 1913–2018, agree to
+the digit. Table 23 stops at 2018 and is a legacy `.xls`; it is the envelope of the
+bracket ladder, never the ladder itself.
+
+Revenue Procedures 2018-57 through 2024-40, and PL 115-97 behind them, carry the
+2019–2025 schedules and the 37% top rate for those years — past where Table 23
+reaches. They are hand-transcribed into `pipeline/curated/brackets_modern.yaml`
+because no machine-readable feed publishes them; 2019 is transcribed too but used
+only as a regression check against the fetched CSV, which stays authoritative for
+that year.
 
 **Statutory rate schedules**
 The bracket ladder above, read as a top-rate series. The statute's nominal top
 bracket and the published top rate disagree in twelve years, where a credit,
 surtax or part-year rate change moved the published figure; both numbers are
 kept, and the reconciliation is in `pipeline/curated/bracket_adjustments.yaml`.
-
-**Tax Policy Center**
-Published top marginal rate, used alongside SOI Historical Table 23 for the
-twelve years above.
 
 **FRED CPIAUCNS**
 `fred.stlouisfed.org` CPI-U, all urban consumers, not seasonally adjusted,

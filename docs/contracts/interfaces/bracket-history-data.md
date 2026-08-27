@@ -128,6 +128,12 @@ years, 2019-2025, are outside Table 23's range and are anchored on PL 115-97 and
 removed** from every citation: every value it was cited for is corroborated by Table 23 or by a
 Revenue Procedure, so it was doing no work the register could point a reader at.
 
+Removing it reached one place outside this dataset. The `marginal-rate` glossary term cited
+`tax_policy_center` as its sole source, and #50's `check_glossary_sources` correctly refused to
+build a term whose citation no longer resolves. It now cites `irs_soi_table_23` and
+`irs_revenue_procedures` — the same pair its sibling `statutory-rate` cites, and the primary
+documents that actually publish the ladder the definition describes.
+
 Incidental corroboration of the 1985 defect above, from the same primary source: Table 23's 1985
 row reads lowest bracket **11.0%**, highest **50.0%** over **$169,020** (that floor is the
 married-filing-jointly figure; the single-filer 50% floor is $85,130, which is what the site
