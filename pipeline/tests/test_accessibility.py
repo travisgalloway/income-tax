@@ -753,7 +753,16 @@ def test_the_one_tab_stop_guard_bites(page):
 #: `tablist` have zero violations today and are included precisely because they
 #: cost nothing to include: they lock the same bug out of `Select.tsx` and the
 #: Radix tabs before it can be written.
-CHOICE_SET_ROLES = frozenset({"radiogroup", "combobox", "tablist"})
+#: The one role G2 and G3 speak about. Named rather than written as a literal
+#: in each of them, because a typo in a bare `"radiogroup"` inside a guard body
+#: would make that guard sweep an empty set while the coverage floor — counting
+#: through `CHOICE_SET_ROLES` — went on reporting 9. The floor asserts THIS
+#: constant, so the two cannot drift apart. Found by M9 (2026-08-27), which
+#: proved the floor caught a typo in `CHOICE_SET_ROLES` but would not have
+#: caught one here.
+FIGURE_BOUND_ROLE = "radiogroup"
+
+CHOICE_SET_ROLES = frozenset({FIGURE_BOUND_ROLE, "combobox", "tablist"})
 
 
 def choice_sets(root: Node, roles=CHOICE_SET_ROLES) -> list[Node]:
@@ -813,7 +822,7 @@ def figure_bound_name_failures(root: Node) -> list[str]:
 
     failures: list[str] = []
     ids = id_map(root)
-    for i, group in enumerate(choice_sets(root, {"radiogroup"})):
+    for i, group in enumerate(choice_sets(root, {FIGURE_BOUND_ROLE})):
         fig = own_figure(group)
         if fig is None:
             # Every radiogroup on the site today is inside a figure. One that is
@@ -867,7 +876,7 @@ def label_in_name_failures(root: Node) -> list[str]:
     mutation, and it turns only this guard red.
     """
     failures: list[str] = []
-    for i, group in enumerate(choice_sets(root, {"radiogroup"})):
+    for i, group in enumerate(choice_sets(root, {FIGURE_BOUND_ROLE})):
         controls = next(
             (a for a in group.ancestors() if "controls" in a.classes()), None
         )
@@ -1106,11 +1115,14 @@ def test_the_choice_set_coverage_did_not_narrow():
         for n in choice_sets(root):
             counts[n.get("role")] = counts.get(n.get("role"), 0) + 1
 
-    assert counts.get("radiogroup") == 9, (
-        f"{counts.get('radiogroup')} [role=radiogroup] across dist/, expected "
-        "9 (8 on /government, 1 on /households). This is the role the done "
-        "contract names, and a drop means the uniqueness assertion above went "
-        "quiet rather than clean."
+    assert counts.get(FIGURE_BOUND_ROLE) == 9, (
+        f"{counts.get(FIGURE_BOUND_ROLE)} [role={FIGURE_BOUND_ROLE}] across "
+        "dist/, expected 9 (8 on /government, 1 on /households). This is the "
+        "role the done contract names, and a drop means the uniqueness "
+        "assertion above went quiet rather than clean. Reading it through "
+        "FIGURE_BOUND_ROLE is deliberate: it is the same constant G2 and G3 "
+        "filter on, so a typo there fails HERE rather than silently emptying "
+        "both guards."
     )
     assert counts.get("combobox") == 4, (
         f"{counts.get('combobox')} [role=combobox] across dist/, expected 4 "

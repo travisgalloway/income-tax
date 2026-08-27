@@ -1329,3 +1329,13 @@ time. Appended to, never rewritten. None of these have been acted on.
   no guard is affected (#71's are invariant-based or self-baselined), but any future assertion that
   pins an overflow *count* will be red on half the machines that run it. Found while reading #71's
   first green CI run. Severity: coverage, non-blocking.
+- [2026-08-27] The "own literal" hole in coverage floors, found in #72's own guards and probably not
+  unique to them. `figure_bound_name_failures` and `label_in_name_failures` each filtered on a bare
+  `"radiogroup"` string, while `test_the_choice_set_coverage_did_not_narrow` counted through
+  `CHOICE_SET_ROLES` — so mutation M9 (typo the roles) turned the floor red as designed, but a typo
+  in either guard's own literal would have emptied it silently with every floor still green. Fixed
+  in #72 by routing both through `FIGURE_BOUND_ROLE`, which the floor asserts. The general shape is
+  worth a sweep: a coverage floor only defends the selector *it* uses, and this file
+  (`pipeline/tests/test_accessibility.py`) has several floors — `test_the_label_coverage_did_not_narrow`
+  among them — whose guards may read selectors the floor never counts through. Found while executing
+  #72's M9. Severity: hollow-check risk, non-blocking.

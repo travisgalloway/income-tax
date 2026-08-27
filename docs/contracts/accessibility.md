@@ -1606,7 +1606,8 @@ recorded rather than the mutation quietly adjusted.**
 | M6 | Visible span text changed without changing the name | G3 | **G3 red; G1 and G2 GREEN** — see below |
 | M7 | `labelledByFigure` drops the local label id, leaving only `fig-…-no` | G3 | **G3 red on both pages; G1 green** |
 | M8 | `CHOICE_SET_ROLES` narrowed to `{"radiogroup"}` | the floor | **floor red; G1 GREEN** |
-| M9 | Every role string typo'd so the guards match nothing | the floor | **floor red; G1 GREEN** |
+| M9 | Every role in `CHOICE_SET_ROLES` typo'd | the floor | **floor red; G1 GREEN** — but G2/G3 green, see below |
+| M9b | `FIGURE_BOUND_ROLE` typo'd (the role G2 and G3 filter on) | — | **floor red; G2 and G3 both GREEN** |
 | M10 | `RevenueChart` reverted in source, rebuilt, browser lane only | B1 | **B1 red** |
 | M11 | Every `id` removed from `Figure.astro`'s `figure-no` span | G2 on all nine | **G2 red on both pages, every group** |
 
@@ -1625,10 +1626,17 @@ sourced from `revenue-units`). It turns **G3 red while G1 and G2 both stay green
 stronger proof than the original. The fact that the literal M6 cannot be constructed is itself the
 result: this class of drift is now unreachable by construction, not merely guarded.
 
-**M8 and M9 are the anti-hollow proofs and are why the coverage floor exists.** Both leave G1, G2
-and G3 reporting green while the guards look at a narrowed or empty set. A guard that sees nothing
-is indistinguishable from a guard that sees everything and finds nothing, and only the floor tells
-them apart.
+**M8 and M9 are the anti-hollow proofs and are why the coverage floor exists.** Both leave the
+name guards reporting green while the guards look at a narrowed or empty set. A guard that sees
+nothing is indistinguishable from a guard that sees everything and finds nothing, and only the floor
+tells them apart.
+
+**M9 found a real hole, and it was closed rather than noted.** Typing the roles wrong in
+`CHOICE_SET_ROLES` turned the floor red, as designed — but G2 and G3 stayed green, because each was
+filtering on its own bare `"radiogroup"` literal, which the floor did not cover. A typo *there* would
+have emptied both guards silently. So the literal became `FIGURE_BOUND_ROLE`, used by G2, G3 **and**
+the floor's own assertion. **M9b** is the proof: typo it now and the floor goes red while G2 and G3
+both fall green — caught, where before it would not have been.
 
 #### Boundaries
 
