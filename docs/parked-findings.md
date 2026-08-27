@@ -1091,7 +1091,7 @@ time. Appended to, never rewritten. None of these have been acted on.
   its true first use while the phrase was fused to the word before it. Widening the check to every
   inline element boundary is #58's surface, not #60's. Found while rebuilding `/government` §3 for
   #60. Severity: a checker blind spot that masks a second checker, non-blocking.
-- [2026-08-27] `dist/households/index.html` serves "who pays the<span class="term">income tax</span>"
+- [2026-08-27] `dist/households/index.html` serves `who pays the<span class="term">income tax</span>`
   fused, from `src/pages/households/index.astro`'s §6 standfirst — the same Astro whitespace
   collapse as the finding above, on a `.term` boundary this time, which
   `test_no_prose_string_fuses_two_words_at_a_component_boundary` is supposed to catch. Worth
