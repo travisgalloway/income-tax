@@ -185,9 +185,13 @@ def prose_strings() -> list[tuple[str, str, str]]:
 #: #58 owns every prose-class entry: it is the sentence-craft issue, and it edits `src/pages/**`.
 #: #102 owns the two `aria-label` entries, which are island `.tsx` templates outside #58's remit.
 KNOWN_DASH_DEBT: dict[str, str] = {
-    # --- #58, sentence craft: the em dash and ` -- ` in the page sources. 26 fingerprints over
-    #     33 rendered occurrences, across five built pages. Zeroing this block is #58's own
-    #     definition of done, and it is machine-checkable.
+    # --- #58, sentence craft: the em dash and ` -- ` in the page sources. 23 fingerprints over
+    #     30 rendered occurrences, across five built pages. Zeroing this block is #58's own
+    #     definition of done, and it is machine-checkable. It was 26 over 33 until #53 rewrote
+    #     three sentences it independently owned under Criterion 2 (`households#what-a-household-earns`'s
+    #     standfirst, and the findings of `households#a-century-of-brackets` and
+    #     `households#statutory-vs-effective`); the dash went with the rewrite and the fingerprint
+    #     went with it, in the same commit, as this baseline's contract requires.
     'contents/index.html|standfirst|The whole of the site on one page: # sections across # desti': "#58",
     'economy/index.html|prose|National aggregates say nothing about distribution. Every se': "#58",
     'government/index.html|figure-caveat|Note. Give is gross IRS collections by filer address; get is': "#58",
@@ -202,13 +206,10 @@ KNOWN_DASH_DEBT: dict[str, str] = {
     'households/index.html|figure-caveat|Note. This chart counts the federal individual income tax on': "#58",
     'households/index.html|figure-caveat|Note. This figure is on fiscal years, while sections # throu': "#58",
     'households/index.html|figure-caveat|Note. Twelve years show a published top rate that differs fr': "#58",
-    'households/index.html|finding|The # top bracket started at $# about $# million in # dollar': "#58",
-    'households/index.html|finding|The top statutory rate fell from #% in # to #% in # Over the': "#58",
     'households/index.html|prose|# Distributional data is by tax unit, not by person or by ho': "#58",
     'households/index.html|prose|The series begins in # because that is where the Census/FRED': "#58",
     'households/index.html|prose|Two things move independently here. The bracket COUNT is a p': "#58",
     'households/index.html|standfirst|Nobody pays the top rate on their whole income. The top brac': "#58",
-    'households/index.html|standfirst|Real median household income rose #% in three decades, but t': "#58",
     'index.html|prose|Each section opens the same way: a section number, a heading': "#58",
     'index.html|prose|Its through-line is that the popular story — that one party ': "#58",
     'index.html|prose|The debt, who holds it, the whole budget behind it, and the ': "#58",
@@ -230,8 +231,8 @@ KNOWN_DASH_DEBT: dict[str, str] = {
 #: page through generated JSON, so retiring them means regenerating data and re-running validation,
 #: which is a pipeline change and not a prose edit.
 KNOWN_SHOUT_DEBT: dict[str, str] = {
-    # --- #58, the three shouts in the page sources: `src/pages/households/index.astro:121`
-    #     ("bracket COUNT"), `:133` ("Surtaxes ARE folded") and `:159`, the figure note
+    # --- #58, the three shouts in the page sources: `src/pages/households/index.astro:122`
+    #     ("bracket COUNT"), `:134` ("Surtaxes ARE folded") and `:159`, the figure note
     #     ("it INCLUDES PAYROLL TAX"), which Ruling 2 rules in explicitly.
     'households/index.html|prose:ARE|Ordinary income only: capital gains have been taxed at separ': "#58",
     'households/index.html|prose:COUNT|Two things move independently here. The bracket COUNT is a p': "#58",

@@ -81,17 +81,17 @@ Nothing else is a prose string. In particular:
 **No em dash, and no ` -- ` either.** The ban stands (Ruling 1), and every job an em dash was doing
 has a named replacement. Fail: `src/pages/economy/index.astro:288` reads "Every series on this route
 — GDP, prices, rates, the wage and profit shares — is one number"; the aside is itself a list, so it
-takes parentheses. Fail: `src/pages/households/index.astro:144-145` reads "what people actually pay
+takes parentheses. Fail: `src/pages/households/index.astro:145-146` reads "what people actually pay
 -- the average federal tax rate -- has moved far less"; an appositive gloss takes a comma pair. Pass:
 `src/pages/government/index.astro:272-275`, which does the same work with a full stop and a new
 sentence. Enforced by `test_no_prose_string_contains_an_em_dash_or_a_double_hyphen`.
 
 **No all-caps emphasis.** Capitals are the `.kicker`'s role and nothing else's (Ruling 2). Fail:
-`src/pages/households/index.astro:121`, "The bracket COUNT is a policy choice". Fail:
-`src/pages/households/index.astro:133`, "Surtaxes ARE folded into the published top rate". Fail, in a
+`src/pages/households/index.astro:122`, "The bracket COUNT is a policy choice". Fail:
+`src/pages/households/index.astro:134`, "Surtaxes ARE folded into the published top rate". Fail, in a
 figure note, `src/pages/households/index.astro:159`, "it INCLUDES PAYROLL TAX". Pass:
 `src/pages/government/index.astro:443` and `src/pages/government/index.astro:450`, which put the
-emphasis on a `<strong>` noun phrase, and `src/pages/households/index.astro:261`, which does the same
+emphasis on a `<strong>` noun phrase, and `src/pages/households/index.astro:262`, which does the same
 for a numbered limit. Enforced by `test_no_prose_string_shouts`.
 
 **Acronyms are registered, not assumed.** An all-caps run of two or more letters is either in
@@ -165,16 +165,17 @@ replacement per grammatical job, so remediation is a mechanical pass and not thi
 |---|---|---|
 | parenthetical aside | `src/pages/economy/index.astro:288` | comma pair; parentheses where the aside is itself a list, as it is there |
 | amplifying clause | `src/pages/government/index.astro:424` | colon, or a full stop and a new sentence |
-| appositive gloss | `src/pages/households/index.astro:144-145` | comma pair |
+| appositive gloss | `src/pages/households/index.astro:145-146` | comma pair |
 | generated readout separator | `src/components/islands/BudgetChart.tsx:84` | full stop. The readout's other fields are already separated by ". ", so one template edit clears all 31 labels |
 
 Four scoping decisions, each stated so that no future issue has to litigate a grep:
 
 1. **` -- ` is retired outright.** No ASCII stand-in is blessed. It is not an em dash and it is not a
    substitute for one: it renders as two literal hyphens, which is what a reader sees at every
-   viewport. Ten instances reach `dist/`, all on `/households`.
+   viewport. Ten instances reached `dist/` on the day this contract landed, all on `/households`;
+   #53's Criterion 2 rewrites took two of them, leaving eight.
 2. **Numeric-range hyphens are out of scope.** "1946-1950" at
-   `src/pages/households/index.astro:115`, "FY1995-FY2025" throughout: a hyphen between two numbers
+   `src/pages/households/index.astro:116`, "FY1995-FY2025" throughout: a hyphen between two numbers
    is a range operator, not punctuation. **No en dash is introduced in its place.** The minus-sign
    ambiguity that justifies the em-dash ban applies to the en dash identically, so this site uses the
    hyphen and only the hyphen.
@@ -195,7 +196,7 @@ Four scoping decisions, each stated so that no future issue has to litigate a gr
 **All-caps is reserved for the `.kicker` role and banned in body copy and figure notes.** The
 replacement is `<strong>` on the load-bearing noun phrase, which the pages already do well at
 `src/pages/government/index.astro:443`, `src/pages/government/index.astro:450` and
-`src/pages/households/index.astro:261`, or a recast that puts the emphasis where the word order puts
+`src/pages/households/index.astro:262`, or a recast that puts the emphasis where the word order puts
 it.
 
 Two refinements:
@@ -207,7 +208,7 @@ Two refinements:
 - **Figure notes are ruled in, explicitly.** `src/components/Figure.astro:60` renders a `note` into
   the figcaption as `.figure-caveat`, and `.figure-caveat` is inside the allow-list. Without this,
   `src/pages/households/index.astro:159`'s "it INCLUDES PAYROLL TAX" would stay legal. All three
-  shouts, `src/pages/households/index.astro:121`, `:133` and `:159`, are assigned to **#58** as one
+  shouts, `src/pages/households/index.astro:122`, `:134` and `:159`, are assigned to **#58** as one
   pass: splitting a three-instance fix across issues costs more than it documents.
 
 The rule is about emphasis, not about acronyms. A registered initialism is not a shout, and the
@@ -288,8 +289,8 @@ the numbering is for.
 
 **Asks:** does the section state the question it answers before its first figure appears?
 **Pass:** the kicker, heading and standfirst together name a question a reader could have asked, and
-the chart then answers it. `src/pages/households/index.astro:222-225` poses it and
-`src/pages/households/index.astro:241-247` answers it after the chart. **Fail:** the standfirst
+the chart then answers it. `src/pages/households/index.astro:225-230` poses it and
+`src/pages/households/index.astro:244-250` answers it after the chart. **Fail:** the standfirst
 summarises the chart the reader has not seen yet, so the figure arrives as evidence for a claim
 rather than as an answer to a question. **Cited by #52.**
 
@@ -307,7 +308,7 @@ which is the choice the rule below says to make at that count.
 **What they cannot see.** They cannot see a heading that names the section's *variables* rather than
 its question: "Prices and rates" and "Labor and capital" told the reader what was plotted, not what
 was found, and both passed every word list anyone would write. #52 rewrote them by reading, to
-`src/pages/economy/index.astro:165` and `src/pages/economy/index.astro:221`. They cannot see a
+`src/pages/economy/index.astro:165` and `src/pages/economy/index.astro:226`. They cannot see a
 standfirst that restates its finding **in words** rather than in numbers, and they cannot judge
 whether the closing prose answers the question the standfirst actually posed. That is Checklist
 item 8, and it is human-judged.
@@ -358,8 +359,8 @@ floor. Those are Checklist items 2, 3 and 9 below.
 **Asks:** sentence length, clause count, punctuation (Ruling 1) and emphasis (Ruling 2).
 **Pass:** `src/pages/government/index.astro:272-275`, three sentences, one clause each, a full stop
 where a dash was tempting. **Fail:** `src/pages/economy/index.astro:288` and
-`src/pages/households/index.astro:144-145` for punctuation;
-`src/pages/households/index.astro:121`, `:133` and `:159` for emphasis. This is the only criterion
+`src/pages/households/index.astro:145-146` for punctuation;
+`src/pages/households/index.astro:122`, `:134` and `:159` for emphasis. This is the only criterion
 with a machine-checkable definition of done: **the baseline going to zero is the criterion being
 met.** **Cited by #58.**
 
@@ -437,7 +438,7 @@ docs are most of the diff.
 |---|---|---|
 | 1 | **#52** | The `.kicker` + heading + `.standfirst` block opening each section across the three route pages. Prose only: no figure, no data and no `aria-label` change |
 | 2 | **#53** | `.standfirst` and `.finding` elements — 13 and 11 on `/government`, 8 and 6 on `/households`, 7 and 5 on `/economy`. Constrained by the pairing rule above |
-| 3 | **#58** | The whole day-one baseline: 26 prose-class dash fingerprints over 33 rendered occurrences, eight of them ` -- ` on `/households`, and the three shouts at `src/pages/households/index.astro:121`, `:133` and `:159`. Each fix deletes its fingerprint from `KNOWN_DASH_DEBT` or `KNOWN_SHOUT_DEBT` in the same commit |
+| 3 | **#58** | What is left of the day-one baseline: 23 prose-class dash fingerprints over 30 rendered occurrences, six of them ` -- ` on `/households`, and the three shouts at `src/pages/households/index.astro:122`, `:134` and `:159`. It opened at 26 over 33; #53 retired three, because Criterion 2 made it rewrite those three sentences and a rewritten sentence takes its dash with it. Each fix deletes its fingerprint from `KNOWN_DASH_DEBT` or `KNOWN_SHOUT_DEBT` in the same commit |
 | 4 | **#59** | `src/content/glossary/` (23 entries), `src/components/Term.astro`, and each route's first use of each term. Owns any move of `REGISTERED_INITIALISMS` onto the glossary |
 | 5 | **#60** | `.prose` bodies and `.figure-caveat` notes across all three routes, plus the Government route's section 12 limits block |
 | 6 | **#61** | The closing paragraph of each section and the terminal section of each route: Economy section 6, Households section 7, Government section 12 |
@@ -519,6 +520,12 @@ again, not an exemption.
 | /economy | who-works | Unemployment in FY2025 sat below CBO's noncyclical rate, while participation sat 4.7 points below its FY2000 peak | the section's one figure | Pass |
 | /economy | prices-rates | The fed funds rate peaked one fiscal year after CPI-U inflation did | the section's one figure, rates panel against prices panel | Pass |
 | /economy | labor-capital | The wage share fell over the same decades in which the profit share rose | the section's one figure | Pass |
+| /households | what-a-household-earns | Real median household income rose 28.1% between 1995 and 2024, in constant 2024 dollars | `median-income` | Pass |
+| /households | the-spread | Both published measures of the spread widened across their own windows | `the-spread`, whose table carries the Gini series and the two CBO anchor points | Pass |
+| /households | a-century-of-brackets | The real income at which the top bracket begins has fallen about 96% since 1913 | `bracket-history`, threshold column in constant 2024 dollars | Pass |
+| /households | statutory-vs-effective | The rate the top 1% actually paid moved far less than the statutory rate above it | `statutory-vs-effective` | Pass |
+| /households | who-pays | The top 1% paid a share of the income tax close to twice its share of income | `who-pays`, the first of the section's two figures; `top1-share` answers a different question and the finding does not claim it | Pass |
+| /households | the-bill-you-do-not-see | In aggregate the individual income tax is the larger of the two federal bills on a wage | `payroll-bill` | Pass |
 
 ## Checklist — status per item
 

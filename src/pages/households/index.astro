@@ -37,9 +37,9 @@ const cbo = cboEffectiveRatesData()
     <p class="kicker"><span class="section-no">Section 1</span></p>
     <h2>What a household earns</h2>
     <p class="standfirst">
-      <Term id="real">Real</Term> <Term id="median">median</Term> household income rose 28.1%
-      in three decades, but the series only runs back to 1984 — before that, this measure was not
-      yet collected.
+      <Term id="real">Real</Term> <Term id="median">median</Term> household income, one point a
+      calendar year in constant 2024 dollars, back to 1984 where the Census series starts. Look
+      at where the line stalls and where it climbs, and at how little of the range it covers.
     </p>
     <p class="finding">
       Real median household income was $65,380 in 1995 and $83,730 in 2024, in constant
@@ -68,8 +68,9 @@ const cbo = cboEffectiveRatesData()
     <p class="kicker"><span class="section-no">Section 2</span></p>
     <h2>The spread</h2>
     <p class="standfirst">
-      The family Gini index has climbed for decades. CBO's longer, separately-published
-      series has the top 1% share of income before transfers and taxes doubling since 1979.
+      Two measures of the spread, drawn on one shared range. The Census family Gini index runs
+      annually; CBO's share of income before transfers and taxes going to the top percentile is
+      published as two anchor points, decades apart. Look at whether the two agree on direction.
     </p>
     <p class="finding">
       The family Gini index went from 0.421 in 1995 to 0.456 in 2024. CBO's longer series
@@ -97,18 +98,18 @@ const cbo = cboEffectiveRatesData()
     <p class="kicker"><span class="section-no">Section 3</span></p>
     <h2>A century of brackets</h2>
     <p class="standfirst">
-      The federal income tax has run 2 brackets (1988) to 56 (1918) since 1913, and the
-      income level where the top bracket begins has moved by a factor of about 25 once
-      inflation is stripped out.
+      The federal income tax has run 2 brackets (1988) to 56 (1918) since 1913. The chart holds
+      the bracket count, the top statutory rate and the income at which the top bracket begins on
+      one tax-year timeline, the threshold in both nominal and constant 2024 dollars. Look at what
+      inflation does to a threshold that is not re-indexed.
     </p>
     <p class="finding">
-      The 1913 top bracket started at $500,000, about $16 million in 2024 dollars. The 2025
-      top bracket starts at $626,350 nominal, about $610,000 in 2024 dollars -- roughly a
-      96% real decline in where the top rate begins.
+      In constant 2024 dollars, the income at which the top bracket begins has fallen about 96%
+      since 1913, from about $16 million to about $610,000.
     </p>
 
     <Figure
-      ariaLabel="The top US income tax bracket has run from 2 brackets in 1988 to 56 in 1918. The top statutory rate has ranged from 7% at the outset to a wartime peak of 94% in 1944, while the income threshold where the top bracket begins has fallen from about $16 million in 1913 to about $600,000 in 2025, both in constant 2024 dollars."
+      ariaLabel="In constant 2024 dollars, the income at which the top bracket begins has fallen about 96% since 1913, from about $16 million to about $610,000."
       fig={fig('bracket-history')}
       xUnit="Tax year"
       yUnit="top rate in percent, bracket count, and top-bracket threshold in nominal and constant 2024 dollars"
@@ -123,9 +124,9 @@ const cbo = cboEffectiveRatesData()
       in the 1986 reform. The threshold is a different story -- it is set in
       <Term id="nominal">nominal</Term> dollars
       and, unless deliberately re-indexed, inflation erodes it every year it is left alone.
-      1913's top bracket applied only to income that would be about $16 million today; almost
-      nobody was ever going to pay the top rate. Today's threshold, in real terms, is a
-      fraction of that.
+      The 1913 top bracket started at $500,000, which is about $16 million in 2024 dollars;
+      almost nobody was ever going to pay the top rate. The 2025 top bracket starts at $626,350
+      nominal, about $610,000 in the same dollars.
     </p>
     <p class="prose">
       Ordinary income only: capital gains have been taxed at separate, usually lower, rates
@@ -146,13 +147,12 @@ const cbo = cboEffectiveRatesData()
       <Term id="statutory-rate">statutory rate</Term> above it.
     </p>
     <p class="finding">
-      The top statutory rate fell from 70% in 1979 to 37% in 2022. Over the same span, the
-      average federal tax rate the top 1% actually paid, payroll tax included, moved from
-      35.1% to 31.5% -- a much smaller change than the statutory line alone would suggest.
+      Between 1979 and 2022 the top statutory rate fell from 70% to 37%, while the average
+      federal tax rate the top 1% actually paid moved only from 35.1% to 31.5%.
     </p>
 
     <Figure
-      ariaLabel="The top statutory income tax rate ran from 70% in 1979 to 37% in 2022, while the average federal tax rate actually paid by the top 1 percent, which includes payroll tax, moved far less, from 35.1% to 31.5%. Nobody pays the top statutory rate on their whole income."
+      ariaLabel="Between 1979 and 2022 the top statutory income tax rate fell from 70% to 37%, while the average federal tax rate actually paid by the top 1 percent moved only from 35.1% to 31.5%."
       fig={fig('statutory-vs-effective')}
       xUnit="Tax / calendar year"
       yUnit="percent"
@@ -167,7 +167,8 @@ const cbo = cboEffectiveRatesData()
       reduce it further, and until 2013 income above that threshold could often be recharacterised
       as capital gains taxed at a separate, lower rate. The lowest quintile's average federal
       tax rate fell furthest of all, to 0.6% by 2019, as refundable credits expanded; it was
-      9.3% in 1979.
+      9.3% in 1979. CBO's measure counts payroll tax, corporate income tax and excise tax as
+      well as the income tax, so the two lines above are not measuring the same bill.
     </p>
   </section>
 
@@ -175,18 +176,19 @@ const cbo = cboEffectiveRatesData()
     <p class="kicker"><span class="section-no">Section 5</span></p>
     <h2>Who pays the income tax</h2>
     <p class="standfirst">
-      In tax year 2023 the top 1% earned 20.6% of adjusted gross income and paid 38.4% of
-      federal individual income tax.
-      This is the individual income tax only.
-      Outside the top decile, payroll tax is the larger bill.
+      Tax units ranked by adjusted gross income into nested percentile
+      groups. The first chart pairs each group's share of income against its share of the tax,
+      one bar each; the second follows the top group's tax share across the published years.
+      This is the individual income tax only, and outside the top decile payroll tax is the
+      larger bill.
     </p>
     <p class="finding">
-      Top 1%: 20.6% of AGI, 38.4% of the tax, a 26.3% average rate. Top 10%: 47.6% and
-      70.5%. The bottom half paid 3.3% of the tax at a 3.7% average rate.
+      The top 1% earned 20.6% of adjusted gross income and paid 38.4% of federal individual
+      income tax in tax year 2023.
     </p>
 
     <Figure
-      ariaLabel="The top 1% earned 20.6% of adjusted gross income and paid 38.4% of federal individual income tax in tax year 2023. The bottom half paid 3.3% of the tax. AGI share is not published for the Top 5%, Top 25% and Bottom 50% groups."
+      ariaLabel="The top 1% earned 20.6% of adjusted gross income and paid 38.4% of federal individual income tax in tax year 2023. AGI share is not published for the Top 5%, Top 25% and Bottom 50% groups."
       fig={fig('who-pays')}
       xUnit="Percent"
       yUnit="Percentile group of tax units"
@@ -206,6 +208,7 @@ const cbo = cboEffectiveRatesData()
     </Figure>
 
     <p class="prose">
+      The other groups, from the same table: the top 10% earned 47.6% of adjusted gross income and paid 70.5% of the tax, and the bottom half paid 3.3% of it at a 3.7% average rate against the top 1%'s 26.3%.
       Concentration of tax paid tracks concentration of income, and the tax-share column alone misleads about who pays the most versus who earns the most.
       CBO's longer series has the top 1% share of income before transfers and taxes going from 9% in 1979 to 18% in 2022, shown in <a href="#the-spread">the spread</a> above.
     </p>
