@@ -20,6 +20,7 @@ import { giniBasis } from '../../data'
 import { YearRange } from './YearRange'
 import { TableView } from './TableView'
 import { useChartSize } from '../charts/useChartSize'
+import { AXIS_TITLE_FONT_PX, firstThatFits } from '../charts/axisFit'
 import type { IncomeYear, Top1IncomeSharePoint } from '../../data/types'
 
 type Focus = { series: 'gini'; year: number } | { series: 'top1'; point: Top1IncomeSharePoint } | null
@@ -44,6 +45,14 @@ export function HouseholdSpread({ rows, top1 }: { rows: IncomeYear[]; top1: Top1
   const top1Height = narrow ? 190 : 200
   const giniIh = giniHeight - f.top - f.bottom
   const top1Ih = top1Height - f.top - f.bottom
+
+  // A panel title is start-anchored at the plot's left edge, so its room is
+  // `W - margin.left - pad`: 644 units at the 720 preset but 306 at 360, where
+  // the Top 1% title needs 312 and is CUT (#66). Chosen by fit against the
+  // frame's own numbers, so it stays right if either preset moves.
+  const titleRoom = W - f.left - 2
+  const panelTitle = (variants: string[]) =>
+    firstThatFits(variants, titleRoom, AXIS_TITLE_FONT_PX) ?? variants[variants.length - 1]
 
   const x = linear(range, [0, iw])
   const xTicks = x.ticks(narrow ? 4 : 8).filter((t) => Number.isInteger(t))
@@ -104,7 +113,7 @@ export function HouseholdSpread({ rows, top1 }: { rows: IncomeYear[]; top1: Top1
       <Chart ariaLabel={giniLabel} interactive width={W} height={giniHeight} margin={f}>
         {(fr) => (
           <>
-            <text x={0} y={-6} className="panel-title">{giniLabelWord} Gini index</text>
+            <text x={0} y={-6} className="panel-title">{panelTitle([`${giniLabelWord} Gini index`])}</text>
             <AxisLeft
               frame={fr}
               ticks={giniYTicks}
@@ -141,12 +150,18 @@ export function HouseholdSpread({ rows, top1 }: { rows: IncomeYear[]; top1: Top1
       <Chart ariaLabel={top1Label} interactive width={W} height={top1Height} margin={f}>
         {(fr) => (
           <>
-            <text x={0} y={-6} className="panel-title">Top 1% share of income before transfers and taxes</text>
+            <text x={0} y={-6} className="panel-title">
+              {panelTitle([
+                'Top 1% share of income before transfers and taxes',
+                'Top 1% share of pre-tax, pre-transfer income',
+                'Top 1% income share',
+              ])}
+            </text>
             <AxisLeft
               frame={fr}
               ticks={top1YTicks}
               format={(v) => percent(v, 0)}
-              label="Percent of income before transfers and taxes"
+              label="Percent of income"
               scale={yTop1}
             />
             <AxisBottom frame={fr} ticks={xTicks} format={calendarYear} label="Calendar year" scale={x} />

@@ -132,7 +132,7 @@ export function WhoWorks({ rows, lastActualFy }: { rows: EconomyYear[]; lastActu
       >
         {(fr) => (
           <>
-            <AxisLeft frame={fr} ticks={yBottomTicks} format={(v) => `${v.toFixed(0)}%`} label="Percent of the population 16 and over" scale={yBottom} />
+            <AxisLeft frame={fr} ticks={yBottomTicks} format={(v) => `${v.toFixed(0)}%`} label="Percent of the population 16+" scale={yBottom} />
             <AxisBottom frame={fr} ticks={xTicks} format={(t) => `${t}`} label="Fiscal year" scale={x} />
 
             <path d={lfprLine(actual) ?? ''} fill="none" stroke="var(--mand)" strokeWidth={2} />

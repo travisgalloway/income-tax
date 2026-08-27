@@ -905,6 +905,191 @@ island hydrates, because Radix's `Select.Value` has no text to show until then; 
 38.1 × 17.6 with a 38.1 × 24 hit area. Parked in `docs/parked-findings.md` — it is a hydration
 question, not a target-size one, and this change neither causes nor fixes it.
 
+### Chart legibility at 390px (#66)
+
+The broad 390px sweep. Four cluster issues took pieces of it first — **#62** the `Select` popup,
+**#63** the by-state table columns, **#64** the four annotation classes, **#65** the 24px target
+floor — and all four are merged. What was left is the part none of them touched: **axis text, tick
+density, and every remaining `<text>` class that leaves its own SVG**.
+
+Re-running #64's own walker (`_annotated_svgs` / `_local_x` / the `ADVANCE_EM = 0.62` arithmetic),
+widened from the four annotation classes to **every** `<text>` class that ships, found seven
+overruns in `dist/` at the 720 preset:
+
+| Route | Class | Anchor | Label | Overrun |
+|---|---|---|---|---|
+| `/government` | `holders-label` | middle | `Foreign $9.64T (…share in full…)` | **+90.7 right** |
+| `/government` | `holders-label` | middle | `Intragovernmental $7.74T (19.4%)` | **+24.8 right** |
+| `/households` | `axis-label` | end | `$30,000,000` | **+23.0 left** |
+| `/households` | `axis-label` | end | `$10,000,000` | **+23.0 left** |
+| `/households` | `axis-label` | end | `$3,000,000` | **+16.2 left** |
+| `/households` | `axis-label` | end | `$1,000,000` | **+16.2 left** |
+| `/households` | `axis-label` | end | `Bottom 50%` | **+2.2 left** |
+
+All seven are the #64 shape on classes #64 did not own — a complete-looking label carrying a number
+that is not the number. `$30,000,000` shipped as `0,000,000`. **The parked finding recorded one
+`holders-label` defect; there were two**, and the intragovernmental one had never been written down.
+
+Widening the walk found three more the original probe could not see, and one it could see only once
+its own arithmetic was corrected:
+
+- `/government` **`Presidency`**, +2.2 left. `BudgetChart`'s control-strip row labels already
+  carried a long/short pair, chosen by the `narrow` boolean — so at the *wide* preset it went on
+  emitting the long one into a gutter 2.2 units too small. A breakpoint cannot see a gutter it is
+  not measuring; the pair is now chosen by fit.
+- `/government` §2's **three leader labels on one baseline**. The Japan / UK / China points are 46.6
+  units apart and `United Kingdom $880B` alone is 136 units wide, so the three sat on top of each
+  other. Every clipping assertion was green throughout — this is E8 in the served bytes, not in
+  theory — and it is why `test_no_two_holders_labels_on_one_row_intersect` exists. They are now
+  staggered one per row down their own leader lines.
+- Two **rotated axis titles** longer than the short lower panels they label (`Percent of the
+  population 16 and over`, 241 units against 205; `Percent of income before transfers and taxes`,
+  286 against 186). A rotated title's *length* runs down the y axis, so the horizontal walk is
+  structurally blind to it. Both are shortened, and `placeAxisTitleY` shifts the rest.
+
+**A correction worth recording, because it is the failure mode this document exists to catch:** the
+first vertical probe read each rotated title's own `translate()` and not its ancestors', which put
+every title `margin.top` units too high and reported three clips at the 720 preset that were not
+there. `_local_y` is the mirror of `_local_x` for exactly this reason, and
+`test_the_text_clipping_guards_bite_each_way_the_fix_can_regress` asserts the accumulation directly.
+An arithmetic error in a probe reads exactly like a finding.
+
+#### What is asserted, and what is only measured
+
+| Geometry | Lane | Status |
+|---|---|---|
+| **WIDE, 720 units** — every `<text>` of every class in `dist/`, horizontally | `pytest -k "chart_text or left_axis_tick or holders_labels"`, over the served bytes | **ASSERTED**, and unattended |
+| **WIDE, 720 units** — rotated axis titles, vertically | `pytest -k rotated_axis_title` | **ASSERTED** |
+| **NARROW, 360 units** — the left gutter (42 units, six characters), the right-edge bottom tick, the rotated title down a short panel | `npm run test:unit` over the pure helpers (`src/components/charts/axisFit.test.ts`) | **ASSERTED**, at the unit level |
+| **Rendered pixels**, real `getBoundingClientRect()` at 390x844 and 1440x900 | browser | **NOT EXECUTED in this pass** — see below. Automating it in CI is **#67** |
+
+SSR cannot reach NARROW at all: `useChartSize.ts` returns the WIDE preset before the first client
+measurement, so the server render — and therefore every assertion any pytest guard can make — only
+ever observes 720. `axisFit.test.ts` is not optional cover for this issue; it is the only lane that
+reaches half of it.
+
+**320px viewports and landscape phones are explicitly outside this contract** (E11). 390x844 is the
+stated floor. The 360 preset applies below a **560px container** width, so 320 uses the same
+geometry with less room — recorded as untested, not as passing.
+
+**Type size with scripting on cannot fail by construction**, which is why no lane asserts it as an
+observation: the viewBox matches the container (`useChartSize.ts:12-21`), so 11px is 11px at every
+width. The below-intended-size failure is the scripting-**off** path only, which is **#78**'s.
+
+#### The browser lane, and why it is NOT EXECUTED here
+
+This pass did **not** run the browser lane, and records that rather than inferring it. The nearest
+prior measurement is #64's, executed 2026-08-27 on this branch's ancestor and recorded above at
+`Right-edge annotation clipping (#64)` — 0 overrunning annotations and
+`documentElement.scrollWidth === clientWidth` on all three routes at 390x844, with the charts
+reporting a **360**-unit viewBox, which is what proves the NARROW path was genuinely exercised
+rather than SSR scaled down. That measurement covers DoD items 3 and 4 for the geometry that has not
+moved.
+
+It does **not** cover what this issue moved, and saying so is the point: `WhoPays`' six category
+labels are now inside the plot, `DebtHolders`' leader labels are staggered, and four titles took a
+shorter variant. Those are the rows in the table below reading **NOT EXECUTED**, and each names
+**#67** as the owner. A sweep that measured unmounted `client:visible` islands would report a false
+PASS, which is the most expensive outcome available here (E1) — so the lane is recorded as unrun
+rather than run cheaply.
+
+**Human-judged, not asserted (E8).** `WhoPays`' narrow treatment moves each category label into
+empty plot space above its own bar pair. That the label reads as belonging to *that* pair rather
+than to the pair above it is a judgement about reading, and no static lane makes it. It is recorded
+here as human-judged and is **not** claimed as verified.
+
+#### Per-figure results, 390x844, scripting on
+
+25 figures: `/economy` 5, `/households` 7, `/government` 13. (`/` is the intro route and carries no
+figures — the DoD's original route list predates that split.) Each cell is PASS, FAIL with the
+specific failure, or NOT EXECUTED with a reason; none is blank.
+
+- **PASS (S)** — asserted statically against `dist/` by a named guard in
+  `pipeline/tests/test_accessibility.py`.
+- **PASS (C)** — true by construction, with the mechanism asserted rather than the outcome sampled.
+- **NOT EXECUTED** — needs rendered pixels; owner named.
+
+| Route + section | Figure (`aria-label`, abridged) | No content clipped | Type at intended size | No control over the plot | `figcaption` + Units/Note/Source | "View as table" reachable | JS off |
+|---|---|---|---|---|---|---|---|
+| /economy `#one-picture` | Real GDP grew 895% between fiscal 1950 and fiscal 2025, fr… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
+| /economy `#growth-shadow` | Output per hour reached 216.5 by 2024 while real median ho… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
+| /economy `#who-works` | Unemployment was 4.2% in fiscal 2025 against a noncyclical… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
+| /economy `#prices-rates` | The fed funds rate peaked at 16.9% in fiscal 1981, one fis… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
+| /economy `#labor-capital` | Wages and salaries fell from a fiscal 1970 peak of 51.5% o… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#forty-trillion` | Debt doubled in ten fiscal years, from $19.57 trillion at… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | known FAIL, **#36** |
+| /government `#who-holds-it` | $32.14 trillion of the federal debt is held by the public… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#how-old` | Average maturity of marketable Treasury debt is 71 months… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#whole-budget` | Federal outlays from fiscal 1962 to 2025 stacked into mand… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** (unit toggle) | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#structural-gap` | Revenue averaged 17.2% of GDP against outlays at 21.1% acr… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#what-congress-votes-on` | Share of GDP from FY1995 to FY2025: mandatory rose from 9.… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#net-interest` | Net interest rose from $232 billion in FY1995 to $970 bill… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#the-laws` | Sixteen of the twenty-three major deficit-moving laws sinc… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** (coalition/president filter) | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#passed-signed` | Both attributions total the same $16.75 trillion in net te… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#where-money-comes-from` | Federal revenue by source held near 17 to 18 percent of GD… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#where-money-comes-from` | The United States collected 25.6% of GDP in tax in 2024, 3… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#by-state` | Federal gross tax collections against federal award spendi… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** (state metric filter) | PASS (S) | PASS (S) | owned by **#78** |
+| /government `#by-state` | Each state's own tax collections by category as a share of… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** (state metric filter) | PASS (S) | PASS (S) | owned by **#78** |
+| /households `#what-a-household-earns` | Real median household income rose from $65,380 in 1995 to… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** (year range) | PASS (S) | PASS (S) | owned by **#78** |
+| /households `#the-spread` | The family Gini index rose from 0.421 in 1995 to 0.456 in… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** (year range) | PASS (S) | PASS (S) | owned by **#78** |
+| /households `#a-century-of-brackets` | In constant 2024 dollars, the income at which the top brac… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
+| /households `#statutory-vs-effective` | Between 1979 and 2022 the top statutory income tax rate fe… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
+| /households `#who-pays` | The top 1% earned 20.6% of adjusted gross income and paid… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
+| /households `#who-pays` | Share of federal individual income tax paid by the top 1%… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
+| /households `#the-bill-you-do-not-see` | Payroll tax and individual income tax, each as a share of… | PASS (S) | PASS (C) | NOT EXECUTED — browser, **#67** | PASS (S) | PASS (S) | owned by **#78** |
+
+`/government` §1's scripting-off state is a **known FAIL** citing **#36**, recorded rather than
+skipped. Every other JS-off cell is **#78**'s, whose measurement is at `Known limitation:
+JS-disabled narrow-viewport chart legibility` above: the `<noscript><style>` block loses the cascade
+to the bundle entirely, so the three classes render at 5.10 / 5.35 / 5.59px and the anticipated
+crowding never occurred. That closes the DoD's "amend the Known limitation" item by citation.
+
+#### Every FAIL has a disposition
+
+| Finding | Disposition |
+|---|---|
+| 7 overruns in `dist/` (2 `holders-label`, 5 `axis-label`) | **Fixed here**, all seven |
+| `Presidency` in `/government`'s control strip, +2.2 | **Fixed here** |
+| 3 leader labels colliding on one baseline | **Fixed here** |
+| 2 rotated titles longer than their panels | **Fixed here** |
+| 2 narrow-only panel titles over their 298-unit room | **Fixed here** |
+| `/government` §2's foreign label can no longer carry its percentage on the chart | **Parked** — `docs/parked-findings.md`. The full share is still on the figure's `aria-label`, in its live readout, and in both columns of its table |
+| `PricesAndRates`' converging series labels | **Parked** by #64, and stays parked: it is annotation text, and it collides at every width, so it is not a 390px defect |
+| Browser lane not run in this pass | **#67**, named in every affected cell |
+| Scripting-off geometry | **#78**; `/government` §1 specifically **#36** |
+
+#### The ways these guards could report healthy while blind
+
+Each is checked by `test_the_text_clipping_guard_sees_every_text_class` or by the negative test, and
+each was **observed failing** before this landed:
+
+| Blindness | Caught by |
+|---|---|
+| `html.parser` lowercases `viewBox`; reading `viewBox` finds zero SVGs | `>= 700` nodes, `>= 29` SVGs. Mutated: reports **0 nodes** |
+| A `<text>` with no `x` reads as 0, not "skip" | Negative test's ancestor-translate case |
+| A whole route dropped from `dist/` | All three routes asserted individually |
+| A new `<text>` class ships unguarded | `==` audit over the class sets **and** the font table. Mutated by dropping `axis-title`: fails naming it |
+| A font size drifts in `global.css`, making every width here wrong | `test_the_text_font_sizes_match_the_stylesheet`, against a grouped-selector-safe reader. Mutated to 12px: fails |
+| The rotated exclusion silently drops every title instead of redirecting it | `rotated >= 20` in the corpus check |
+| Two labels that each fit, on top of each other | `test_no_two_holders_labels_on_one_row_intersect` |
+
+Reverting each fixed island against the guards, all rebuilt and observed:
+
+| Reverted | Guard | Observed |
+|---|---|---|
+| `DebtHolders.tsx` | `no_chart_text_is_clipped` | FAILS, naming both labels at **+24.8** and **+90.7** |
+| `DebtHolders.tsx` | `two_holders_labels_on_one_row` | FAILS, naming 3 collisions |
+| `BracketHistory.tsx` | `left_axis_tick_fits` | FAILS, naming all four dollar ticks and the shortfall in units |
+| `HouseholdSpread.tsx` | `rotated_axis_title` | FAILS, **43.2 units above the top edge** |
+
+#### Boundaries
+
+Not touched, and not re-fixed: **#62** `Select`, **#63** by-state columns, **#64** the four
+annotation classes and their NARROW coverage in `annotate.test.ts`, **#65** the **24px** target floor
+(**deliberately not 44px** — at these controls' 24px pitch that would create 20px ambiguous
+overlaps, E12; no target-size CSS is touched). Also out: **#71**/**#76** table scroll wrappers,
+**#72** toggles' shared accessible name, **#73** chart marks, **#74** §11's legend swatch, **#77**
+the data-table height cap.
+
 ### Reading position in the contents list (#44)
 
 **EXECUTED 2026-08-26**, Chromium **151.0.7922.174** (Playwright), against `astro preview` at

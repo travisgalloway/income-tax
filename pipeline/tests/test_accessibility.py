@@ -2046,10 +2046,15 @@ ADVANCE_EM = 0.62
 # broad 390px legibility sweep in #66, NOT to #64, and a later reader should
 # not "complete" this guard into that issue's scope.
 #
-# `holders-label` is a genuine direct data label that overruns /government
-# today (Foreign $9.64T … at +100 units). It is recorded in
-# docs/parked-findings.md and left to #66; it is listed here so the audit still
-# bites when something NEW appears.
+# `holders-label` was the parked defect this set was holding for #66 (two
+# clipped labels on /government, not the one that was written down). It is FIXED
+# — DebtHolders now routes both bar rows through <Annotation> — and it is
+# checked by `test_no_chart_text_is_clipped_by_its_svg` below along with every
+# other class here. It stays in THIS set rather than moving to
+# ANNOTATION_CLASSES because its three leader labels are interactive and keep
+# their own <text>, so the file-locality audit
+# `test_every_annotation_is_placed_through_the_clamp` would fail on them; they
+# take their `x` from `placeAnnotation` directly instead.
 NON_ANNOTATION_TEXT_CLASSES = {
     "attrib-row-label",
     "axis-label",
@@ -2494,6 +2499,543 @@ def test_the_annotation_clipping_guard_bites():
         '<text x="600" class="axis-title">Percent of the labour force</text></svg>'
     )
     assert not annotation_clipping_failures(other), "axis text was swept into #64's scope"
+
+
+# ---- Chart text at 390px: the widened walk (#66) ---------------------------
+#
+# #64 asserted the four ANNOTATION_CLASSES against the served bytes and left the
+# rest of the corpus to this issue. Widening the SAME walker to every `<text>`
+# class that ships found seven overruns the narrow one could not see:
+#
+#   /government  holders-label  middle  +90.7, +24.8 right
+#   /households  axis-label     end     +23.0, +23.0, +16.2, +16.2, +2.2 left
+#
+# All seven are the #64 shape on classes #64 did not own — `$30,000,000`
+# shipping as `0,000,000`, the foreign holdings label cut after `…publicly held
+# d` — so the arithmetic below stays the clamp's own (`ADVANCE_EM`, `_local_x`,
+# `_annotated_svgs` verbatim). A guard that measured differently from the code
+# it guards would prove nothing about the code.
+#
+# What is NOT provable here is what #64 could not prove either: the 360-unit
+# NARROW geometry, which `useChartSize` never emits into SSR. That half belongs
+# to `src/components/charts/axisFit.test.ts` under `npm run test:unit`. The
+# browser lane with real `getBoundingClientRect()` is #67's, and
+# `docs/contracts/accessibility.md` records it as measured, not asserted.
+
+# global.css font size per `<text>` class, asserted against the stylesheet below
+# rather than trusted: a size change silently changes every width in this file.
+TEXT_FONT_PX = {
+    "annotation": 11.5,
+    "attrib-row-label": 11.5,
+    "axis-label": 11.0,
+    "axis-title": 10.5,
+    "control-strip-glyph": 8.0,
+    "dotplot-average-label": 10.5,
+    "dotplot-label": 11.5,
+    "dotplot-value": 11.0,
+    "holders-label": 11.0,
+    "legend-label": 11.0,
+    "maturity-label": 11.0,
+    "maturity-marker-label": 10.5,
+    "panel-title": 10.5,
+    "state-tile-code": 10.0,
+    "state-tile-mark": 10.0,
+}
+
+# Classes carrying no font-size of their own: each only ever co-occurs with one
+# above and modifies weight, colour or cursor. Named rather than defaulted, so a
+# genuinely new class cannot land in this bucket by accident (E10).
+INHERITS_FONT_SIZE = {
+    "datum",
+    "dotplot-label-us",
+    "dotplot-value-us",
+    "series-label",
+}
+
+_ROTATE = re.compile(r"rotate\(")
+# `translate(x,y) rotate(-90)` — AxisLeft's title, the only rotated text on the
+# site. Captures the y, because that is the axis its LENGTH runs on.
+_ROTATED_TITLE = re.compile(r"translate\(\s*-?[\d.]+\s*,\s*(-?[\d.]+)\s*\)\s*rotate\(\s*-?90")
+_TRANSLATE_XY = re.compile(r"translate\(\s*-?[\d.]+\s*,\s*(-?[\d.]+)")
+
+
+def _css_font_px(css: str, cls: str) -> float | None:
+    """The `font-size` of the rule whose selector list names `.cls`.
+
+    Written to survive a GROUPED selector: `.holders-label, .maturity-label {`
+    is one rule for two classes, and a regex anchored on `\\.cls\\s*\\{` reads
+    None for the first of them and silently skips the pin.
+    """
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    for match in re.finditer(r"([^{}]+)\{([^{}]*)\}", css):
+        selectors = [s.strip() for s in match.group(1).split(",")]
+        if not any(s == f".{cls}" for s in selectors):
+            continue
+        size = re.search(r"font-size:\s*([\d.]+)px", match.group(2))
+        if size:
+            return float(size.group(1))
+    return None
+
+
+def _text_font_px(node: Node) -> float:
+    """The largest font size among the node's known classes.
+
+    LARGEST, not first-match: `class="datum holders-label"` and
+    `class="dotplot-value dotplot-value-us"` each carry two tokens, and taking
+    whichever came first in the attribute would make the width depend on the
+    author's spelling order.
+    """
+    sizes = [TEXT_FONT_PX[token] for token in node.classes() if token in TEXT_FONT_PX]
+    return max(sizes) if sizes else max(TEXT_FONT_PX.values())
+
+
+def _text_label_and_width(node: Node) -> tuple[str, float]:
+    """`_label_and_width`, widened past the annotation family's font table."""
+    font_px = _text_font_px(node)
+    tspans = [c for c in node.iter_descendants() if c.tag == "tspan"]
+    if tspans:
+        lines = [(s.text() or "").strip() for s in tspans]
+        widest = max(lines, key=len) if lines else ""
+        return widest, max((len(line) for line in lines), default=0) * font_px * ADVANCE_EM
+    label = (node.text() or "").strip()
+    return label, len(label) * font_px * ADVANCE_EM
+
+
+def _is_rotated(node: Node, svg: Node) -> bool:
+    parent: Node | None = node
+    while parent is not None and parent is not svg:
+        if _ROTATE.search(parent.get("transform") or ""):
+            return True
+        parent = parent.parent
+    return False
+
+
+def _local_y(node: Node, svg: Node) -> float:
+    """Every ancestor `translate()`'s y, up to the SVG.
+
+    The mirror of `_local_x`, and it exists for the same reason: `AxisLeft`'s
+    title sits inside `Chart.tsx`'s `translate(margin.left, margin.top)`, so
+    reading its own transform alone puts it `margin.top` units too high and
+    reports overruns that are not there.
+    """
+    dy = 0.0
+    parent = node.parent
+    while parent is not None and parent is not svg:
+        match = _TRANSLATE_XY.search(parent.get("transform") or "")
+        if match:
+            dy += float(match.group(1))
+        parent = parent.parent
+    return dy
+
+
+def _chart_text_nodes(root: Node) -> list[tuple[Node, Node, float, float]]:
+    """Every `<text>` inside a viewBox-carrying SVG, with that SVG's extent."""
+    found = []
+    for svg, width in _annotated_svgs(root):
+        height = float((svg.get("viewbox") or "0 0 0 0").split()[3])
+        for node in svg.iter_descendants():
+            if node.tag == "text":
+                found.append((node, svg, width, height))
+    return found
+
+
+def chart_text_clipping_failures(root: Node) -> list[str]:
+    """Every `<text>` whose painted box leaves its own SVG horizontally."""
+    failures = []
+    for node, svg, width, _height in _chart_text_nodes(root):
+        # A rotated node's advance runs DOWN the page, so its horizontal box is
+        # not what bounds it and a horizontal test would be meaningless rather
+        # than merely lenient. Excluded here BY NAME — the only ones are
+        # AxisLeft's titles — and checked on the axis they actually run on by
+        # `test_no_rotated_axis_title_is_clipped_by_its_svg` below. Do not
+        # "complete" this walk by deleting the skip; delete the vertical guard
+        # instead, and it will be obvious that something was lost.
+        if _is_rotated(node, svg):
+            continue
+        label, text_width = _text_label_and_width(node)
+        x = _local_x(node, svg)
+        anchor = node.get("text-anchor") or "start"
+        if anchor == "end":
+            left = x - text_width
+        elif anchor == "middle":
+            left = x - text_width / 2
+        else:
+            left = x
+        right = left + text_width
+        classes = " ".join(node.classes()) or "(no class)"
+        if left < -0.5:
+            failures.append(
+                f'"{label}" [{classes}] ({anchor}) starts at {left:.1f}, '
+                f"{-left:.1f} units past the left edge"
+            )
+        elif right > width + 0.5:
+            failures.append(
+                f'"{label}" [{classes}] ({anchor}) ends at {right:.1f}, {right - width:.1f} '
+                f"units past the right edge of a {width:.0f}-unit viewBox"
+            )
+    return failures
+
+
+def rotated_title_clipping_failures(root: Node) -> list[str]:
+    """Rotated axis titles whose length leaves the SVG top or bottom (E7)."""
+    failures = []
+    for node, svg, _width, height in _chart_text_nodes(root):
+        match = _ROTATED_TITLE.search(node.get("transform") or "")
+        if not match:
+            continue
+        label, text_width = _text_label_and_width(node)
+        centre = float(match.group(1)) + _local_y(node, svg)
+        top, bottom = centre - text_width / 2, centre + text_width / 2
+        if top < -0.5:
+            failures.append(
+                f'rotated title "{label}" starts at {top:.1f}, {-top:.1f} units above '
+                f"the top edge"
+            )
+        elif bottom > height + 0.5:
+            failures.append(
+                f'rotated title "{label}" ends at {bottom:.1f}, {bottom - height:.1f} units '
+                f"below the bottom of a {height:.0f}-unit viewBox"
+            )
+    return failures
+
+
+def left_gutter_failures(root: Node) -> list[str]:
+    """Left-axis tick labels wider than the gutter they are drawn into.
+
+    `AxisLeft` places every tick at `x = -8`, `end`-anchored, so the label grows
+    leftward into `margin.left` and NOTHING clamps it — deliberately, because a
+    left tick shifted inward lands on the data it labels (see axisFit.ts). The
+    contract is the caller's, and this is where it is checked.
+    """
+    failures = []
+    for node, svg, _width, _height in _chart_text_nodes(root):
+        if _is_rotated(node, svg) or "axis-label" not in node.classes():
+            continue
+        if (node.get("text-anchor") or "start") != "end":
+            continue
+        label, text_width = _text_label_and_width(node)
+        x = _local_x(node, svg)
+        room = x - 2
+        if text_width > room + 0.5:
+            failures.append(
+                f'"{label}" needs {text_width:.1f} units and its gutter has {room:.1f} — '
+                f"short by {text_width - room:.1f}"
+            )
+    return failures
+
+
+def holders_label_row_overlaps(root: Node) -> list[str]:
+    """Pairs of `holders-label` boxes on one bar row whose boxes intersect.
+
+    Criterion 2's second half. `DebtHolders` picks each segment label by fit
+    against the distance to its row-mate's centre, which makes a collision
+    impossible BY CONSTRUCTION — this asserts the construction actually holds in
+    the served bytes, because "legible now" and "still correct now" are
+    different claims (E8) and #64's first pass passed every clipping assertion
+    while breaking exactly this way.
+    """
+    rows: dict[tuple[int, str], list[tuple[str, float, float]]] = {}
+    for node, svg, _width, _height in _chart_text_nodes(root):
+        if "holders-label" not in node.classes():
+            continue
+        label, text_width = _text_label_and_width(node)
+        x = _local_x(node, svg)
+        anchor = node.get("text-anchor") or "start"
+        left = x - text_width if anchor == "end" else x - text_width / 2 if anchor == "middle" else x
+        rows.setdefault((id(svg), node.get("y") or ""), []).append((label, left, left + text_width))
+
+    failures = []
+    for (_svg_id, y), boxes in rows.items():
+        boxes.sort(key=lambda b: b[1])
+        for earlier, later in zip(boxes, boxes[1:]):
+            if later[1] < earlier[2] - 0.5:
+                failures.append(
+                    f'"{earlier[0]}" and "{later[0]}" overlap by '
+                    f"{earlier[2] - later[1]:.1f} units on the row at y={y}"
+                )
+    return failures
+
+
+def test_no_chart_text_is_clipped_by_its_svg(page):
+    """Criterion 1, and the core of #66.
+
+    `Chart.tsx` renders with a viewBox and no `overflow: visible`, so a label
+    past the SVG edge is CUT MID-GLYPH — no ellipsis, no scrollbar, nothing that
+    says a number is missing. `$30,000,000` shipped as `0,000,000` and the
+    foreign holdings label as `…of publicly held d`.
+
+    That is a correctness defect on a site whose whole claim is that every
+    figure traces to a source, which is why the bar is stronger than "keep it
+    visible": no placement may be CAPABLE of emitting a partial number that
+    reads as a whole one.
+    """
+    path, root = page
+    failures = chart_text_clipping_failures(root)
+    assert not failures, f"{path}: chart text clipped by its own SVG:\n  " + "\n  ".join(failures)
+
+
+def test_every_left_axis_tick_fits_its_gutter(page):
+    """Criterion 3's static half — the specific shape of five of the seven.
+
+    The narrow preset's gutter is 42 units, six characters at 11px, and
+    `axisFit.test.ts` asserts every formatter in `format.ts` against it. This
+    asserts the result against the bytes actually served.
+    """
+    path, root = page
+    failures = left_gutter_failures(root)
+    assert not failures, (
+        f"{path}: left-axis tick label wider than its gutter — it is CUT, not spilled:\n  "
+        + "\n  ".join(failures)
+    )
+
+
+def test_no_rotated_axis_title_is_clipped_by_its_svg(page):
+    """E7. `AxisLeft`'s title is `rotate(-90)`, so its LENGTH is on the y axis.
+
+    A horizontal walk cannot see this one at all, and two of the site's titles
+    ran off the short lower panels they label. `placeAxisTitleY` shifts them
+    along the axis they run on; where even a shift cannot rescue the title, the
+    island shortens it.
+    """
+    path, root = page
+    failures = rotated_title_clipping_failures(root)
+    assert not failures, f"{path}: rotated axis title clipped:\n  " + "\n  ".join(failures)
+
+
+def test_no_two_holders_labels_on_one_row_intersect(page):
+    """Criterion 2's second half — see `holders_label_row_overlaps`."""
+    path, root = page
+    failures = holders_label_row_overlaps(root)
+    assert not failures, f"{path}: holders-label collision:\n  " + "\n  ".join(failures)
+
+
+def test_the_text_clipping_guard_sees_every_text_class():
+    """The anti-blindness check, in the shape #64's corpus self-check takes.
+
+    Every way this walk can go blind is SILENT and reads exactly like the good
+    outcome: `viewBox` lowercased to `viewbox` by `html.parser` finds zero SVGs;
+    a `<text>` with no `x` reads as x=0; a whole route dropped from `dist/`
+    still clears a total carried by the other two. So assert the corpus was
+    actually seen, and assert the class inventory is CLOSED, not merely
+    non-empty.
+    """
+    seen = 0
+    parsed_svgs = 0
+    classes: set[str] = set()
+    per_route: dict[str, int] = {}
+    for path in PAGES:
+        root = parse_html(path)
+        nodes = _chart_text_nodes(root)
+        parsed_svgs += len(_annotated_svgs(root))
+        seen += len(nodes)
+        for node, _svg, _w, _h in nodes:
+            classes.update(node.classes())
+        if nodes:
+            per_route[path.parent.name] = len(nodes)
+
+    assert seen >= 700, (
+        f"the widened text walk found only {seen} nodes across dist/; it found 713 when #66 "
+        f"landed. Either chart text was dropped from the server render, or the walk has gone "
+        f"blind (viewBox/viewbox, or a <text> with no x). Per route: {per_route}"
+    )
+    assert parsed_svgs >= 29, (
+        f"only {parsed_svgs} SVGs yielded a numeric viewBox width — the attribute in dist/ is "
+        f"lowercase `viewbox`, and reading `viewBox` returns None for every one of them"
+    )
+    for route in ("economy", "households", "government"):
+        assert per_route.get(route), f"no chart text found on /{route}"
+
+    # E10: the class inventory is an `==` audit, and it now covers the font
+    # table too. A class in neither TEXT_FONT_PX nor INHERITS_FONT_SIZE would be
+    # measured at a default size, which is exactly how a real overrun gets
+    # reported as fitting.
+    known = ANNOTATION_CLASSES | NON_ANNOTATION_TEXT_CLASSES
+    assert classes - known == set(), (
+        f"unclassified <text> class(es) in dist/: {sorted(classes - known)}"
+    )
+    sized = set(TEXT_FONT_PX) | INHERITS_FONT_SIZE
+    assert known == sized, (
+        f"the guarded class set and the font table have drifted apart. Only in the class "
+        f"sets: {sorted(known - sized)}. Only in the font table: {sorted(sized - known)}. "
+        f"Every class must state its size or be listed as inheriting one."
+    )
+
+    # And the rotated family really is non-empty, so the exclusion in
+    # `chart_text_clipping_failures` is a redirection and not a silent drop.
+    rotated = sum(
+        1
+        for path in PAGES
+        for node, svg, _w, _h in _chart_text_nodes(parse_html(path))
+        if _is_rotated(node, svg)
+    )
+    assert rotated >= 20, (
+        f"only {rotated} rotated <text> nodes were found; they are excluded from the "
+        f"horizontal walk, so if this reaches zero the vertical guard is asserting nothing"
+    )
+
+
+def test_the_text_font_sizes_match_the_stylesheet():
+    """Every width in this file is wrong if one of these drifts.
+
+    Three copies of each size exist — global.css, the TS constants, and this
+    table — so pin them to each other rather than trusting any one.
+    """
+    css = GLOBAL_CSS.read_text()
+    for cls, expected in sorted(TEXT_FONT_PX.items()):
+        actual = _css_font_px(css, cls)
+        assert actual is not None, f"global.css has no .{cls} rule with a font-size"
+        assert actual == expected, (
+            f".{cls} is {actual}px in global.css but {expected}px here; every width in "
+            f"this file would be wrong"
+        )
+
+    # The classes that inherit really do declare no size of their own — the
+    # claim this suite makes about them, rather than an unexamined default.
+    for cls in sorted(INHERITS_FONT_SIZE):
+        assert _css_font_px(css, cls) is None, (
+            f".{cls} now declares its own font-size; move it into TEXT_FONT_PX, or the "
+            f"widened walk will measure it at a neighbour's size"
+        )
+
+    # And the TS side, which is what actually places the labels.
+    axis_fit = (CHARTS_DIR / "axisFit.ts").read_text()
+    for name, expected in (
+        ("AXIS_LABEL_FONT_PX", TEXT_FONT_PX["axis-label"]),
+        ("AXIS_TITLE_FONT_PX", TEXT_FONT_PX["axis-title"]),
+    ):
+        match = re.search(rf"export const {name} = ([\d.]+)", axis_fit)
+        assert match and float(match.group(1)) == expected, (
+            f"axisFit.ts has {name} = {match.group(1) if match else 'nothing'}, "
+            f"the stylesheet has {expected}px"
+        )
+    annotate = ANNOTATE_TS.read_text()
+    data_label = re.search(r"export const DATA_LABEL_FONT_PX = ([\d.]+)", annotate)
+    assert data_label and float(data_label.group(1)) == TEXT_FONT_PX["holders-label"], (
+        "annotate.ts's DATA_LABEL_FONT_PX no longer matches .holders-label in global.css"
+    )
+
+
+def test_the_text_clipping_guards_bite_each_way_the_fix_can_regress():
+    """The negative test. Not optional and not a self-report: #64 shipped one
+    guard that passed vacuously, and its own criterion 4 then found a regression
+    its assertions could not see.
+
+    Every guard above, against the mutant it exists to catch.
+    """
+    # A clean corpus flags nothing. Over-reading here would be a false alarm
+    # that a later reader "fixes" by loosening the guard.
+    clean = _parse_html_string(
+        '<svg viewBox="0 0 720 396">'
+        '<text x="66" text-anchor="end" class="axis-label">$30M</text>'
+        '<text x="360" text-anchor="middle" class="holders-label">Domestic $22.50T</text>'
+        '<text x="100" class="panel-title">Bracket count, single filer</text>'
+        "</svg>"
+    )
+    assert not chart_text_clipping_failures(clean), "a within-bounds corpus was flagged"
+    assert not left_gutter_failures(clean), "a tick that fits its gutter was flagged"
+    assert not holders_label_row_overlaps(clean), "a single holders-label was called a collision"
+
+    # The defect this issue is named for: a middle-anchored data label off the
+    # right edge, cut mid-number.
+    over_right = _parse_html_string(
+        '<svg viewBox="0 0 720 396"><g transform="translate(74,20)">'
+        '<text x="530" text-anchor="middle" class="holders-label">'
+        "Foreign $9.64T (30 percent of publicly held debt)</text></g></svg>"
+    )
+    failures = chart_text_clipping_failures(over_right)
+    assert failures and "Foreign $9.64T" in failures[0], (
+        "a holders-label running off the right edge passed"
+    )
+
+    # And the five on /households: an end-anchored tick wider than its gutter.
+    over_left = _parse_html_string(
+        '<svg viewBox="0 0 720 396"><g transform="translate(60,8)">'
+        '<text x="-8" text-anchor="end" class="axis-label">$30,000,000</text></g></svg>'
+    )
+    assert chart_text_clipping_failures(over_left), "a clipped left tick passed the widened walk"
+    gutter = left_gutter_failures(over_left)
+    assert gutter and "$30,000,000" in gutter[0] and "short by" in gutter[0], (
+        "the gutter guard did not name the label and the shortfall"
+    )
+
+    # E9: a `<text>` with no `x` at all, carried past the edge by its ancestor.
+    # Missing x is 0, not "skip this node".
+    no_x = _parse_html_string(
+        '<svg viewBox="0 0 720 396"><g transform="translate(716,20)">'
+        '<text text-anchor="middle" class="axis-label">FY2025</text></g></svg>'
+    )
+    assert chart_text_clipping_failures(no_x), "a <text> positioned only by its ancestor passed"
+
+    # E9: the lowercasing trap, demonstrated rather than described. A camelCase
+    # read finds no SVG at all, so every mutant above would pass.
+    cased = _parse_html_string(
+        '<svg VIEWBOX="0 0 720 396">'
+        '<text x="900" class="axis-label">$30,000,000</text></svg>'
+    )
+    assert chart_text_clipping_failures(cased), (
+        "an uppercase VIEWBOX in source, lowercased by html.parser, was not walked"
+    )
+
+    # E7: the rotated title, whose length is on the OTHER axis. The horizontal
+    # walk must stay silent on it and the vertical one must not.
+    tall = _parse_html_string(
+        '<svg viewBox="0 0 360 190"><g transform="translate(52,22)">'
+        '<text transform="translate(-38,59) rotate(-90)" text-anchor="middle" '
+        'class="axis-title">Percent of income before transfers and taxes</text></g></svg>'
+    )
+    assert not chart_text_clipping_failures(tall), (
+        "a rotated title was measured horizontally, where its box means nothing"
+    )
+    vertical = rotated_title_clipping_failures(tall)
+    assert vertical and "before transfers" in vertical[0], (
+        "a rotated title longer than its SVG passed the vertical guard"
+    )
+    fits = _parse_html_string(
+        '<svg viewBox="0 0 360 316"><g transform="translate(52,22)">'
+        '<text transform="translate(-38,122) rotate(-90)" text-anchor="middle" '
+        'class="axis-title">Percent of GDP</text></g></svg>'
+    )
+    assert not rotated_title_clipping_failures(fits), "a rotated title that fits was flagged"
+
+    # E7 again, the ancestor translate: dropping `_local_y` puts every title
+    # `margin.top` units too high and invents overruns.
+    node = [n for n in fits.iter_descendants() if n.tag == "text"][0]
+    svg = [n for n in fits.iter_descendants() if n.tag == "svg"][0]
+    assert _local_y(node, svg) == 22, "the ancestor translate's y was not accumulated"
+
+    # E8: two labels that each fit the SVG but land on each other. Every
+    # clipping assertion above stays green on this one.
+    collision = _parse_html_string(
+        '<svg viewBox="0 0 720 396"><g transform="translate(74,20)">'
+        '<text x="200" y="-8" text-anchor="middle" class="holders-label">'
+        "Held by the public $32.14T (80.6%)</text>"
+        '<text x="260" y="-8" text-anchor="middle" class="holders-label">'
+        "Intragov. $7.74T (19.4%)</text></g></svg>"
+    )
+    assert not chart_text_clipping_failures(collision), (
+        "the collision corpus was supposed to be clipping-clean, so the overlap guard is "
+        "the only thing standing between it and a green suite"
+    )
+    overlaps = holders_label_row_overlaps(collision)
+    assert overlaps and "overlap by" in overlaps[0], "two labels on one row, on top of each other, passed"
+
+    # Different rows do not collide with each other, however close in x.
+    two_rows = _parse_html_string(
+        '<svg viewBox="0 0 720 396"><g transform="translate(74,20)">'
+        '<text x="200" y="-8" text-anchor="middle" class="holders-label">Held by the public</text>'
+        '<text x="200" y="130" text-anchor="middle" class="holders-label">Domestic $22.50T</text>'
+        "</g></svg>"
+    )
+    assert not holders_label_row_overlaps(two_rows), "labels on two different bar rows were merged"
+
+    # The font table drives every width: drop a class from it and a real overrun
+    # is measured at the wrong size.
+    assert _text_font_px(
+        [n for n in over_left.iter_descendants() if n.tag == "text"][0]
+    ) == TEXT_FONT_PX["axis-label"]
+    assert _css_font_px(GLOBAL_CSS.read_text(), "holders-label") == 11.0, (
+        "the grouped-selector reader stopped seeing `.holders-label, .maturity-label {`"
+    )
 
 
 # ---- Target size for controls (#65) ---------------------------------------

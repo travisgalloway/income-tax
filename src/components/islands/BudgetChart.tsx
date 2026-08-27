@@ -16,6 +16,7 @@ import { area as d3area, line as d3line } from 'd3-shape'
 import { Chart } from '../charts/Chart'
 import { Annotation } from '../charts/Annotation'
 import { AxisBottom, AxisLeft, ZeroLine } from '../charts/Axis'
+import { AXIS_LABEL_FONT_PX, firstThatFits, leftGutterRoom } from '../charts/axisFit'
 import { linear, niceExtent } from '../charts/scales'
 import { UnitToggle } from './UnitToggle'
 import { TableView } from './TableView'
@@ -255,8 +256,13 @@ export function BudgetChart({ rows: source }: { rows: BudgetYear[] }) {
             </text>
             {CONTROL_ROWS.map((row, i) => (
               <g key={row.key}>
+                {/* Picked by FIT rather than by the `narrow` boolean (#66):
+                    `Presidency` needs 68.2 units and the 720 preset's gutter
+                    has 66, so the full label was cut at the wide width too —
+                    a breakpoint cannot see a gutter it is not measuring. */}
                 <text x={-6} y={rowCenterY(i)} dy="0.32em" textAnchor="end" className="axis-label">
-                  {narrow ? row.labelNarrow : row.label}
+                  {firstThatFits([row.label, row.labelNarrow], leftGutterRoom(fr, 6), AXIS_LABEL_FONT_PX) ??
+                    row.labelNarrow}
                 </text>
                 {controlled.map((r) => {
                   const party = r.ctl[row.key]

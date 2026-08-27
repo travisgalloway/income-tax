@@ -14,6 +14,7 @@ import { Annotation } from '../charts/Annotation'
 import { AxisBottom } from '../charts/Axis'
 import { linear } from '../charts/scales'
 import { percent } from '../charts/format'
+import { everyLeftGutterLabelFits } from '../charts/axisFit'
 import { TableView } from './TableView'
 import { useChartSize } from '../charts/useChartSize'
 import type { IncomeTaxGroup } from '../../data/types'
@@ -45,10 +46,6 @@ export function WhoPays({ rows }: { rows: IncomeTaxGroup[] }) {
   const x = linear([0, 100], [0, iw])
   const xTicks = x.ticks(narrow ? 4 : 5)
 
-  const rowH = ih / rows.length
-  const barH = rowH * 0.3
-  const barGap = rowH * 0.1
-
   const activeRow = active ? rows.find((r) => r.g === active.g) : null
   const readoutText = activeRow && active ? describe(activeRow, active.metric) : null
 
@@ -61,7 +58,27 @@ export function WhoPays({ rows }: { rows: IncomeTaxGroup[] }) {
   return (
     <div ref={boxRef}>
       <Chart ariaLabel={ariaLabel} interactive width={W} height={H} margin={f}>
-        {(fr) => (
+        {(fr) => {
+          // The six group strings are the axis's CATEGORIES, so they cannot be
+          // abbreviated without changing what the figure says. `Bottom 50%`
+          // needs 68.2 units and the left gutter has 64 at the 720 preset and
+          // 42 at 360 — so it shipped clipped, the #64 shape on axis text (#66).
+          //
+          // The choice is all-or-none and made from the frame's own numbers,
+          // never from a viewport constant: a per-label decision would put some
+          // categories in the gutter and others in the plot on one axis, which
+          // reads as a rendering fault. When they fit, this is byte-identical
+          // to what shipped before. When they do not, each label moves above
+          // its own bar pair, start-anchored at x=0 — the same in-plot idiom
+          // this figure already uses for its AGI and tax markers — and the two
+          // markers take the gutter the categories vacated.
+          const gutterLabels = everyLeftGutterLabelFits(rows.map((g) => g.g), fr)
+          const labelBand = gutterLabels ? 0 : 15
+          const rowH = ih / rows.length
+          const avail = rowH - labelBand
+          const barH = avail * (gutterLabels ? 0.3 : 0.34)
+          const barGap = avail * 0.1
+          return (
           <>
             <AxisBottom
               frame={fr}
@@ -73,7 +90,7 @@ export function WhoPays({ rows }: { rows: IncomeTaxGroup[] }) {
 
             {rows.map((g, i) => {
               const rowTop = i * rowH
-              const agiY = rowTop + rowH * 0.14
+              const agiY = rowTop + labelBand + avail * 0.14
               const taxY = agiY + barH + barGap
               const groupCenter = rowTop + rowH / 2
               const agiCenter = agiY + barH / 2
@@ -84,20 +101,32 @@ export function WhoPays({ rows }: { rows: IncomeTaxGroup[] }) {
 
               return (
                 <g key={g.g}>
-                  <text
-                    x={-8}
-                    y={groupCenter}
-                    dy="0.32em"
-                    textAnchor="end"
-                    className="axis-label"
-                  >
-                    {g.g}
-                  </text>
+                  {gutterLabels ? (
+                    <text
+                      x={-8}
+                      y={groupCenter}
+                      dy="0.32em"
+                      textAnchor="end"
+                      className="axis-label"
+                    >
+                      {g.g}
+                    </text>
+                  ) : (
+                    <text x={0} y={rowTop + 10} className="axis-label">
+                      {g.g}
+                    </text>
+                  )}
 
                   {/* AGI share bar. No rect at all when the group has no published income share. */}
                   {g.income_share_pct != null ? (
                     <>
-                      <text x={4} y={agiY - 3} className="axis-label">AGI</text>
+                      {gutterLabels ? (
+                        <text x={4} y={agiY - 3} className="axis-label">AGI</text>
+                      ) : (
+                        <text x={-4} y={agiCenter} dy="0.32em" textAnchor="end" className="axis-label">
+                          AGI
+                        </text>
+                      )}
                       <rect
                         className="datum"
                         x={0}
@@ -124,13 +153,19 @@ export function WhoPays({ rows }: { rows: IncomeTaxGroup[] }) {
                       />
                     </>
                   ) : (
-                    <text x={4} y={agiCenter} dy="0.32em" className="axis-label">
+                    <text x={gutterLabels ? 4 : 0} y={agiCenter} dy="0.32em" className="axis-label">
                       {`AGI: ${NO_DATA}`}
                     </text>
                   )}
 
                   {/* Tax share bar. Always present; the field is required. */}
-                  <text x={4} y={taxY - 3} className="axis-label">tax</text>
+                  {gutterLabels ? (
+                    <text x={4} y={taxY - 3} className="axis-label">tax</text>
+                  ) : (
+                    <text x={-4} y={taxCenter} dy="0.32em" textAnchor="end" className="axis-label">
+                      tax
+                    </text>
+                  )}
                   <rect
                     className="datum"
                     x={0}
@@ -159,7 +194,8 @@ export function WhoPays({ rows }: { rows: IncomeTaxGroup[] }) {
               )
             })}
           </>
-        )}
+          )
+        }}
       </Chart>
 
       <p aria-live="polite" className="readout">

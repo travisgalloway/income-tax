@@ -14,7 +14,8 @@ import { frame as makeFrame, linear, scaleLog } from '../charts/scales'
 import { Annotation } from '../charts/Annotation'
 import { useChartSize } from '../charts/useChartSize'
 import { TableView } from './TableView'
-import { dollars, calendarYear, percentRate } from '../charts/format'
+import { dollars, dollarsCompact, calendarYear, percentRate } from '../charts/format'
+import { AXIS_TITLE_FONT_PX, firstThatFits, placeTickLabel, spanRoomAt } from '../charts/axisFit'
 import type { BracketYear } from '../../data/types'
 
 const MARGIN = { top: 8, right: 16, bottom: 34, left: 60 }
@@ -31,6 +32,16 @@ export function BracketHistory({ rows }: { rows: BracketYear[] }) {
   // use the same `translate(margin.left, …)` convention, so one frame over the
   // shared x axis is the right span for every panel's annotations (#64).
   const fr = makeFrame(W, H, MARGIN)
+
+  // Panel titles are start-anchored at local x=0, so their room is whatever is
+  // left between the plot's left edge and the SVG's right edge: 658 units at
+  // the 720 preset but only 298 at 360, where the two long titles below run
+  // off the edge and are CUT (#66). The variant is chosen by fit against the
+  // frame's own numbers rather than by the `narrow` boolean, so it stays right
+  // if either preset ever moves.
+  const titleRoom = spanRoomAt(0, fr, 'start')
+  const panelTitle = (variants: string[]) =>
+    firstThatFits(variants, titleRoom, AXIS_TITLE_FONT_PX) ?? variants[variants.length - 1]
 
   const [focus, setFocus] = useState<number | null>(null)
 
@@ -116,7 +127,11 @@ export function BracketHistory({ rows }: { rows: BracketYear[] }) {
         {/* Panel A: top rate */}
         <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
           <text className="panel-title" x={0} y={-2}>
-            Top statutory rate vs. schedule ladder top, percent
+            {panelTitle([
+              'Top statutory rate vs. schedule ladder top, percent',
+              'Top rate vs. schedule ladder, percent',
+              'Top rate, percent',
+            ])}
           </text>
           <rect x={0} y={0} width={innerW} height={panelH} fill="var(--panel)" />
           {rateTicks.map((t) => (
@@ -164,13 +179,17 @@ export function BracketHistory({ rows }: { rows: BracketYear[] }) {
         {/* Panel C: top-bracket threshold, constant 2024 dollars, log scale */}
         <g transform={`translate(${MARGIN.left},${MARGIN.top + (panelH + GAP) * 2})`}>
           <text className="panel-title" x={0} y={-2}>
-            Top-bracket threshold, constant 2024 dollars (log scale)
+            {panelTitle([
+              'Top-bracket threshold, constant 2024 dollars (log scale)',
+              'Top-bracket threshold, 2024 dollars (log)',
+              'Top bracket, 2024 $ (log)',
+            ])}
           </text>
           <rect x={0} y={0} width={innerW} height={panelH} fill="var(--panel)" />
           {threshTickVals.map((t) => (
             <g key={t} transform={`translate(0,${yThresh(t)})`}>
               <line x1={0} x2={innerW} stroke="var(--rule)" strokeWidth={0.5} />
-              <text x={-8} dy="0.32em" textAnchor="end" className="axis-label">{dollars(t)}</text>
+              <text x={-8} dy="0.32em" textAnchor="end" className="axis-label">{dollarsCompact(t)}</text>
             </g>
           ))}
           <path d={pathThresh} fill="none" stroke="var(--int)" strokeWidth={2} />
@@ -198,9 +217,14 @@ export function BracketHistory({ rows }: { rows: BracketYear[] }) {
           ))}
 
           <g aria-hidden="true">
-            {xTicks.map((t) => (
-              <text key={t} x={x(t)} y={panelH + 18} textAnchor="middle" className="axis-label">{t}</text>
-            ))}
+            {xTicks.map((t) => {
+              // Shift-only, exactly as AxisBottom does: a year tick re-anchored
+              // would jump a label-width off its own gridline (#66).
+              const placed = placeTickLabel(x(t), `${t}`, fr)
+              return placed ? (
+                <text key={t} x={placed.x} y={panelH + 18} textAnchor={placed.textAnchor} className="axis-label">{t}</text>
+              ) : null
+            })}
             <text x={innerW / 2} y={panelH + 34} textAnchor="middle" className="axis-title">Tax year</text>
           </g>
         </g>

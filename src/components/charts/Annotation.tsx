@@ -15,6 +15,7 @@
 import type { Frame } from './scales'
 import {
   ANNOTATION_FONT_PX,
+  DATA_LABEL_FONT_PX,
   SMALL_LABEL_FONT_PX,
   estimateTextWidth,
   placeAnnotation,
@@ -28,6 +29,10 @@ const FONT_PX_BY_CLASS: Record<string, number> = {
   'series-label': ANNOTATION_FONT_PX,
   'dotplot-average-label': SMALL_LABEL_FONT_PX,
   'maturity-marker-label': SMALL_LABEL_FONT_PX,
+  // #66. DebtHolders' two bar rows route their segment labels through here, so
+  // `Foreign $9.64T (30% of publicly held debt, 24% of gross debt)` — which
+  // shipped cut at `…of publicly held d` — can no longer be emitted partial.
+  'holders-label': DATA_LABEL_FONT_PX,
 }
 
 function fontPxFor(className: string): number {

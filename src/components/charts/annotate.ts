@@ -35,6 +35,8 @@ export const ADVANCE_EM = 0.62
 export const ANNOTATION_FONT_PX = 11.5
 /** global.css `.dotplot-average-label` / `.maturity-marker-label`. */
 export const SMALL_LABEL_FONT_PX = 10.5
+/** global.css `.holders-label` / `.maturity-label`. */
+export const DATA_LABEL_FONT_PX = 11
 
 export type Anchor = 'start' | 'middle' | 'end'
 

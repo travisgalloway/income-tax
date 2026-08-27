@@ -66,8 +66,18 @@ export function fiscalYear(y: number): string {
 }
 
 /** Compact axis-tick text for a dollar series with no unit family (no
- *  nominal/real/GDP toggle): `60000 -> "$60k"`. */
+ *  nominal/real/GDP toggle): `60000 -> "$60k"`, `30000000 -> "$30M"`.
+ *
+ *  The suffix is picked by magnitude rather than fixed at `k`, because a left
+ *  axis tick has `margin.left - 8` units to live in — 42 at the 360 preset,
+ *  about six characters (#66). `$30,000,000` needs eleven and shipped CLIPPED,
+ *  as `0,000,000`: a complete-looking number that is not the number. Below
+ *  1e6 the output is byte-identical to what this function always emitted, so
+ *  `MedianIncome`'s axis does not move. */
 export function dollarsCompact(v: number): string {
+  const magnitude = Math.abs(v)
+  if (magnitude >= 1e9) return `$${Math.round(v / 1e9)}B`
+  if (magnitude >= 1e6) return `$${Math.round(v / 1e6)}M`
   return `$${Math.round(v / 1000)}k`
 }
 
