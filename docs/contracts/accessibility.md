@@ -401,7 +401,7 @@ does not duplicate it.
 | 8 | #63 E4: the five sort buttons clicked at full-right scroll, geometry re-measured after each | **ASSERTED (driven)** |
 | 9 | #63 E2: `border-collapse` hairlines still paint across and along the pinned column | **HUMAN** — established by screenshot; no non-pixel assertion expresses it |
 | 10 | #63 E6: identical geometry with `javaScriptEnabled: false` | **ASSERTED** — the scripting-off pass |
-| 11 | #63 E9: 320x568 still fits name + `Net balance` | **HUMAN** — 320px is explicitly outside this contract; asserting it would widen the contract silently |
+| 11 | #63 E9: 320x568 still fits name + `Net balance` | **HUMAN** — this row's own subject stays human-judged. 320px is outside this contract's general commitment, with ONE named exception since #74: the legend-integrity invariant is asserted at 320px by `tests/browser/legend.test.ts`, which declares that width locally rather than widening `VIEWPORTS`. Nothing else at 320px is committed, and widening it further stays a deliberate act |
 | 12 | #64 rendered pixels: no annotation overruns its SVG, both viewports, all routes | **ASSERTED** — generalised past `.annotation` to **every** `<text>` in every `<svg>` |
 | 13 | #64 criterion 4: a clamped label must not land on the series it names | **HUMAN** — needs the set of labels the clamp *moved*, knowable only by re-running the placement. The clip guard was green throughout while this was broken, so a green spec must not imply it |
 | 14 | #64 `ADVANCE_EM`: worst `getComputedTextLength()/(chars x fontPx)` <= 0.62 | **ASSERTED** — one-sided, over exactly the classes `estimateTextWidth` estimates |
@@ -429,7 +429,10 @@ does not duplicate it.
 
 | 36 | #71: that a wide table's scroll container is reachable and scrollable by keyboard, and that making it so does not add empty Tab stops | **ASSERTED** — `tests/browser/scroll.test.ts`. The focusable-exactly-when-it-overflows invariant over all 27 containers on three routes at both viewports with every `<details>` open; arrow/`Home`/`End` movement with clamping; all seven `#prices-rates` columns brought fully into view by keys alone; role, caption-containing name and a solid author focus ring; Tab-order growth equal to exactly the overflowing count, self-baselined; and both `keyboard.test.ts` bounds re-walked in the all-tables-open state. The served-bytes half is `test_the_served_bytes_carry_no_focusable_scroll_container` |
 
-**Of the 36, 23 are asserted, 3 are covered elsewhere, and 10 remain human-judged** — every one of
+| 37 | #74: that every legend marker on the site shares a line with the label it belongs to, at 320, 390 and 414 | **ASSERTED** — `tests/browser/legend.test.ts` L1/L2. A generic marker rule (a painted box <= 26x26px outside a chart `<svg>`, or a top-level inline `<svg>`) over all three chart routes: 36 markers site-wide, pinned per route as **26 / 10 / 0** and per kind as `state-legend-swatch` 3, `character-swatch` 23, CBO `<svg>` 6, `year-range-thumb` 4 skipped, asserted as equalities **before** any geometry is read |
+| 38 | #74: that the label survives a longer, data-driven number | **ASSERTED (driven)** — L3 replaces the legend's two currency strings in the DOM at each of the three widths, with `$1,113,122,999` and again with a 45-character unbreakable token, and re-runs both the line-sharing and the overflow halves |
+
+**Of the 38, 25 are asserted, 3 are covered elsewhere, and 10 remain human-judged** — every one of
 the 10 for a stated reason that is not "we ran out of time": assistive technology that does not exist
 in CI, a pixel judgement, a copy judgement, a viewport outside this contract, or a probe whose
 assertion would pin us to a third-party internal.
@@ -519,7 +522,7 @@ same one.
 | M3 roving tabindex / focus trap | `/glossary` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. |
 | M3 roving tabindex / focus trap | `/contents` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. Its own edge case is the one `/sources/` failed (#79): every line on it is a derived string and the source lines are long, so the 390px rows are the ones that matter. |
 | M4 390px legibility, JS on | `/` | FAIL | Chrome 151, 390×844 | Body does not scroll horizontally (`scrollWidth` 390 = `clientWidth`). Right-edge annotations clipped — #64. Chart legibility sweep — #66. "Focus or hover" instruction with 3.3px hit targets — **fixed 2026-08-27 (#73)**, measurement below. Open tables uncapped, page 11,316px → 24,195px — #77. |
-| M4 390px legibility, JS on | `/government/` | FAIL | Chrome 151, 390×844 | No horizontal body scroll. Filter menu wider than the phone — **fixed 2026-08-27 (#62)**, measurement below. §11's by-state table was unreadable at this width — every column was present and scrollable, but the name column scrolled away with the numbers and the caption's box was the table's 745px — **fixed 2026-08-27 (#63)**, measurement below. #64, #66. #73 **fixed 2026-08-27**, measurement below. §11 legend wraps a swatch away from its label — #74. Wide tables still give no at-rest sign that they scroll — #76. |
+| M4 390px legibility, JS on | `/government/` | FAIL | Chrome 151, 390×844 | No horizontal body scroll. Filter menu wider than the phone — **fixed 2026-08-27 (#62)**, measurement below. §11's by-state table was unreadable at this width — every column was present and scrollable, but the name column scrolled away with the numbers and the caption's box was the table's 745px — **fixed 2026-08-27 (#63)**, measurement below. #64, #66. #73 **fixed 2026-08-27**, measurement below. §11 legend wrapped a swatch away from its label — **fixed 2026-08-27 (#74)**, measurement below. Wide tables still give no at-rest sign that they scroll — #76. |
 | M4 390px legibility, JS on | `/households/` | FAIL | Chrome 151, 390×844 | No horizontal body scroll. §4 Figure 4 clipped at the right edge — #64. #66. #73 **fixed 2026-08-27**, measurement below. |
 | M4 390px legibility, JS on | `/sources/` | **PASS** (was FAIL) | Chromium (Playwright MCP), 390×844 | **Re-measured 2026-08-26 after #57.** `documentElement.scrollWidth` **390** against `clientWidth` **390** — no horizontal body scroll, against 520 vs 390 before. Widest of the 45 `<code>` spans is now **348px**, against 500px; none is clipped (`scrollWidth == clientWidth` on all 45) and none carries `text-overflow: ellipsis`, so nothing was bought by truncation. Fixed by `overflow-wrap: anywhere` on `.reference-doc code`, contained at the element and never at the page. **#79 closes as fixed-by-#57.** The route also gained 23 `main` hyperlinks, from zero. |
 | M4 390px legibility, JS on | `/glossary` | **PASS** (width only) | Chromium (Playwright MCP), 390×844 | **Executed 2026-08-26 (#57)**, for the width check only: `scrollWidth` **390** = `clientWidth` **390**, with the 25 new external source links in place. The rest of M4 — chart legibility, hit targets, table caps — is vacuous here (zero `<figure>`, zero `<svg>`, zero islands). The keyboard and screen-reader rows below are still NOT EXECUTED. |
@@ -1234,8 +1237,9 @@ Not touched, and not re-fixed: **#62** `Select`, **#63** by-state columns, **#64
 annotation classes and their NARROW coverage in `annotate.test.ts`, **#65** the **24px** target floor
 (**deliberately not 44px** — at these controls' 24px pitch that would create 20px ambiguous
 overlaps, E12; no target-size CSS is touched). Also out: **#71**/**#76** table scroll wrappers,
-**#74** §11's legend swatch, **#77**
-the data-table height cap. (**#73**, the chart marks, **has since shipped** — see *Reading a datum
+**#77**
+the data-table height cap. (**#74**, §11's legend swatch, **has since shipped** — see *A legend key
+that wraps between its swatch and its label* below.) (**#73**, the chart marks, **has since shipped** — see *Reading a datum
 with no hover* below; it does not enlarge a mark, it stops the mark being the hit target.) (**#72**, the toggles' shared accessible name, **has since shipped** —
 see *Unique accessible names for choice-set controls* below.)
 
@@ -1642,10 +1646,10 @@ both fall green — caught, where before it would not have been.
 
 #### Boundaries
 
-**Not in scope, still open.** §11's legend
-swatch wrapping **#74**; focus-ring width **#75**; the visible at-rest scroll affordance **#76**; the
-open data-table height cap **#77**; how any of this *reads* in NVDA or JAWS **#30**/**#80**.
-(**#73**, chart-mark hit targets and hover affordance, **has since shipped** — see below.)
+**Not in scope, still open.** Focus-ring width **#75**; the visible at-rest scroll affordance
+**#76**; the open data-table height cap **#77**; how any of this *reads* in NVDA or JAWS
+**#30**/**#80**. (**#73**, chart-mark hit targets and hover affordance, and **#74**, §11's legend
+swatch wrapping, **have since shipped** — see below.)
 
 **`role="group"` is outside `CHOICE_SET_ROLES` by decision**, per the scope table above. Recorded
 here as a boundary, not an oversight: if a chart `<svg>` and a scroll container ever do collide on a
@@ -1928,9 +1932,9 @@ Behaviourally, DoD 4 is also carried by B3a, B3b, and by `tests/browser/keyboard
 
 #### Boundaries
 
-**Not in scope, still open.** §11's legend swatch wrapping **#74**; focus-ring width **#75**; the
-visible at-rest scroll affordance **#76**; the open data-table height cap **#77**; how any of this
-*reads* in NVDA or JAWS **#30**/**#80**. **Control sizing is #65's and #73 owns chart marks only** —
+**Not in scope, still open.** Focus-ring width **#75**; the visible at-rest scroll affordance
+**#76**; the open data-table height cap **#77**; how any of this *reads* in NVDA or JAWS
+**#30**/**#80**. (**#74**, §11's legend swatch wrapping, **has since shipped** — see below.) **Control sizing is #65's and #73 owns chart marks only** —
 which is why the issue's "'View as table' is a 24px target" line is recorded as stale above rather
 than acted on.
 
@@ -1940,6 +1944,91 @@ above); and `StatutoryVsEffective`, whose chart draws 44 years and whose table c
 the CBO anchor years, so three of the values a tap can read out are genuinely absent from the table
 below it. B1c names that figure as an explicit exception rather than softening the rule to "where
 present", which would pass over any number of charts losing their tables.
+
+### A legend key that wraps between its swatch and its label (#74)
+
+`.state-legend` — GOV-11's give/get key — was a **flat** flex container: six sibling `<span>`s,
+swatch, label, swatch, label, swatch, label, under one `flex-wrap: wrap`. Nothing bound a swatch to
+the label it belonged to, so the wrap fell wherever the sixth box happened to land. Read left to
+right, a stranded swatch sits beside the **next** label and inverts the direction the colour ramp
+encodes.
+
+**Measured before and after**, `npm run build` of the branch base, hydrated, Chromium via
+`tests/browser/harness.ts`. `top`/`bottom` are absolute document offsets, so only their differences
+matter. "Label line" is the line box holding the **first word** of the text the swatch abuts.
+
+| width | before: swatch | before: label line | before | after: swatch | after: label line | after |
+|---|---|---|---|---|---|---|
+| **320** | 23530–23543 | 23556–23577 | **no overlap** (item 2, "Even", strands at the end of row 1) | 23530–23543 | 23528–23549 | overlap, all three |
+| 360 | — | — | ok | — | — | ok |
+| **390** | 21543–21557 | 21569–21591 | **no overlap** (item 3) | 21543–21557 | 21542–21563 | overlap, all three |
+| **414** | 21111–21125 | 21137–21158 | **no overlap** (item 3) | 21111–21125 | 21110–21131 | overlap, all three |
+| 768 / 1440 | — | — | ok | — | — | ok |
+
+The issue reported 390px only. 320px breaks a *different* item and 360px does not break at all —
+which is the reason the guard sweeps three widths rather than the reported one.
+
+**The fix** wraps each swatch + glyph + label in one `.state-legend-item`
+(`display: inline-flex; align-items: baseline; gap: .35rem; min-width: 0; max-width: 100%;
+overflow-wrap: anywhere`), so the parent wraps between items and never inside one. It is the idiom
+`StatutoryVsEffective`'s CBO key already uses inline; no new one was introduced. `baseline`, not
+`center`, on reading-order grounds: a two-line label with `center` floats the swatch between the
+lines rather than putting it on the first.
+
+**Driven durability.** The `$113,122 per person` figure is data-driven, so "it fits today" is not
+"it fits". At each of the three widths the two currency strings are replaced in the DOM and the
+whole invariant re-run — with `$1,113,122,999`, and again with a 45-character unbreakable token.
+`.state-legend` measures `scrollWidth` **280** against `clientWidth` **280** at 320px in both cases,
+and `documentElement.scrollWidth == clientWidth` throughout. With `min-width: 0`, `max-width: 100%`
+and `overflow-wrap: anywhere` all removed, the unbreakable token puts `.state-legend` at **290**
+against **280** — that is what those three declarations buy, and either half alone buys it.
+
+**320px is now committed for this invariant, and only this one.** Row 11 above and
+`tests/browser/harness.ts`'s `VIEWPORTS` comment were both corrected in place. `VIEWPORTS` itself is
+unchanged: the spec declares 320/390/414 locally, so no other spec's cost or coverage moved.
+
+**The glyphs.** `markFor` emits `−`, `·`, `+` and `?`, and nothing on the route said what they
+meant — the prose under the figure covers the midpoint, DC and the grid geometry and is silent about
+the marks. The three legend items now carry the first three, from the same constant `markFor` reads,
+and `test_the_state_legend_names_every_glyph_it_ships` asserts that every glyph in
+`dist/government/index.html` (51 tiles: 28 `+`, 23 `−`) is named by the legend's exactly-3 entries.
+`?` has no legend entry **by decision** — no tile renders it and `describe()` spells the
+missing-figure case out in words — and that test is the tripwire that turns the day one ships into a
+decision rather than an oversight.
+
+**Two premises the issue stated, re-measured and found stale.**
+
+1. "Assert every swatch and its label share a `getBoundingClientRect().top`" is not satisfiable even
+   by a correct legend: the swatch is 13.6px and the line box ~21px, so the two tops differ by a few
+   pixels when everything is right. The assertion is **vertical overlap with the line box holding
+   the abutting text's first word** — red at 320/390/414 before, green at 360/768/1440 before, green
+   everywhere after.
+2. "Colour is the only encoding of direction" is inaccurate: the tiles' `+`/`−` glyphs and the
+   by-state table were already redundant carriers (GOV-11, below). And
+   `test_no_island_encodes_a_category_only_in_colour` does **not** cover this island at all — it
+   matches `fill=`/`stroke=` against a literal `var(--<token>)`, and `StateGiveGet` paints through
+   `divergingFill(...)`. The guards for this figure are the two new ones, not that test.
+
+**Mutation results, including the three that did not bite.** Every guard was run against the mutant
+that removes what it protects. Recorded in full because two of the planned mutations turned out to
+be wrong about the mechanism and one is a real limit of the assertion:
+
+| mutation | result |
+|---|---|
+| Six loose sibling spans (the defect) | **red** — L1 at 320 (2 offenders), 390 and 414; green at 360/768/1440 |
+| `.state-legend-item { display: inline }` | **green — did not bite.** A flex item is blockified, so `inline` becomes `block` and the swatch still cannot leave its label. The mutant that does bite is `display: contents`, which removes the item's box entirely: **red** on L1 and L3 |
+| `.state-legend-item { align-items: center }` | **green at two-line labels — did not bite.** Centred over two lines the swatch straddles them and still overlaps the first; measured, it goes **red** at four lines. `baseline` is kept on reading-order grounds, which this assertion does not express |
+| `.state-legend { flex-wrap: nowrap }` | **red** — but on L3, not L2: with the shipped label the three items shrink onto one row, and it is the driven long value that forces `.state-legend-item` to 25 against 23 |
+| Drop `min-width: 0` / `max-width: 100%` / `overflow-wrap: anywhere` | **red** on L3's unbreakable token (290 against 280). Green at `$1,113,122,999`, which is why L3 drives both |
+| Empty the sweep's own selector (both `display: none` on every swatch, and narrowing the marker rule to a class that matches nothing) | **red** — the pinned per-route counts fire before any geometry is measured |
+| Legend stops naming `−` | **red** — `test_the_state_legend_names_every_glyph_it_ships` |
+| One tile emits `?` | **red** — the same test |
+| Point the glyph guard at a page with no tiles | **red** — its `>= 51` tile-count floor, which is what stops "no glyph is unexplained" reading the same as "no glyph was found" |
+
+The `display: contents` mutant also exposed a hole in the assertion and closed it: measuring against
+the abutting range's **first line box** passed a legend whose swatch and glyph stayed together while
+the words walked off, because the first line box was the glyph. The guard now measures against the
+line box holding the first **letter or digit**.
 
 ### Greyscale, per chart
 
@@ -1972,7 +2061,7 @@ table column, an in-plot label or a marker shape is a PASS with a note.
 | `/government/` | GOV-9 law explorer, president | `--rev-ci` / `--positive` | 1.28:1 | each bar labelled in-plot | PASS (note) |
 | `/government/` | GOV-10 revenue by source | `--rev-pr` / `--rev-eg` | **1.00:1** | non-adjacent in the stack; tightest adjacent pair 1.44:1 with a drawn boundary; four of seven sources labelled in-plot; all seven are table columns | PASS (note) |
 | `/government/` | GOV-10 OECD comparison | single colour | n/a | country names in-plot | PASS |
-| `/government/` | GOV-11 give and get cartogram | adjacent scale steps | **1.00:1** | every tile carries its state abbreviation and a `+`/`−` glyph for direction; magnitude is in the table | PASS (note) |
+| `/government/` | GOV-11 give and get cartogram | adjacent scale steps | **1.00:1** | every tile carries its state abbreviation and a `+`/`−` glyph for direction, and since #74 the legend **names those glyphs** beside its three swatches — an unexplained glyph is a weak carrier, and no prose on the route explains them; magnitude is in the table | PASS (note) |
 | `/government/` | GOV-11 state tax mix | `--rev-ii` / `--rev-pr` | 1.44:1 | **nothing in the figure** — no legend and no in-plot label at either viewport; the three segments are named only inside the disclosure table | PASS (note) |
 | `/households/` | HH-1 household spread | single colour | n/a | in-plot title, table | PASS |
 | `/households/` | HH-2 inequality, both panels | single colour each | n/a | in-plot panel titles, table columns | PASS |

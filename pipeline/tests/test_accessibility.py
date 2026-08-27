@@ -2788,6 +2788,117 @@ def test_the_by_state_guards_bite_the_ways_the_fix_can_regress():
 
 
 # ---------------------------------------------------------------------------
+# §11's legend names every glyph its tiles carry (#74)
+#
+# Every cartogram tile carries its state abbreviation and a `+`/`−` glyph, which
+# is the figure's redundant carrier for a reader who cannot separate the amber
+# and teal ends of the ramp (docs/contracts/accessibility.md, GOV-11). A glyph
+# nothing explains is a weak carrier, and the legend is the only place on the
+# route that explains one — the prose under the figure covers the midpoint, DC
+# and the grid geometry and says nothing about the marks.
+#
+# `markFor` has FOUR branches and the legend has three entries. That is a
+# decision: `?` is not shipped by any tile today, and the missing-figure case is
+# already spelled out in words by `describe()` in the tile's own aria-label. This
+# guard is what makes it a decision with a tripwire — the day a `?` ships, this
+# test fails and the legend gains an entry.
+#
+# NOTE this is NOT covered by `test_no_island_encodes_a_category_only_in_colour`.
+# That test matches `fill=`/`stroke=` against a literal `var(--<token>)`, and
+# `StateGiveGet` paints through `divergingFill(...)`, so its pattern never
+# matches this island at all.
+
+
+def legend_glyph_failures(root: Node) -> list[str]:
+    """Every glyph §11's tiles ship, checked against the legend's own entries.
+
+    The tile count is asserted FIRST and as a floor, because an empty selector
+    makes `shipped <= named` vacuously true: "no glyph is unexplained" and "no
+    glyph was found" are the same output and only one of them is good news."""
+    failures: list[str] = []
+
+    tiles = [
+        n for n in root.iter_descendants()
+        if n.tag == "text" and "state-tile-mark" in n.classes()
+    ]
+    if len(tiles) < 51:
+        failures.append(
+            f"found {len(tiles)} .state-tile-mark glyphs, expected at least 51 "
+            "(50 states + DC). An empty or short selector must not read as "
+            "'every glyph is covered'."
+        )
+
+    legend = [
+        n for n in root.iter_descendants() if "state-legend-mark" in n.classes()
+    ]
+    if len(legend) != 3:
+        failures.append(
+            f"the legend carries {len(legend)} .state-legend-mark entries, "
+            "expected exactly 3 — one per numeric branch of `markFor`"
+        )
+
+    named = {n.text().strip() for n in legend}
+    shipped = {n.text().strip() for n in tiles}
+    unexplained = sorted(g for g in shipped - named if g)
+    if unexplained:
+        failures.append(
+            f"tiles ship {unexplained!r}, which the legend does not name "
+            f"(it names {sorted(named)!r}). Colour is this figure's primary "
+            "channel and the glyph is its redundant one; a glyph nothing "
+            "explains carries nothing."
+        )
+    return failures
+
+
+def test_the_state_legend_names_every_glyph_it_ships():
+    path = DIST / "government" / "index.html"
+    assert path.exists(), "dist/government/index.html is missing — run `npm run build`"
+    assert not legend_glyph_failures(parse_html(path))
+
+
+def _fake_state_figure(tile_glyphs: list[str], legend_glyphs: list[str]) -> Node:
+    tiles = "".join(
+        f'<text class="state-tile-mark">{g}</text>' for g in tile_glyphs
+    )
+    keys = "".join(
+        f'<span class="state-legend-item">'
+        f'<span class="state-legend-swatch"></span>'
+        f'<span class="state-legend-mark">{g}</span><span>label</span></span>'
+        for g in legend_glyphs
+    )
+    return parse_fragment(
+        f'<figure><svg>{tiles}</svg><div class="state-legend">{keys}</div></figure>'
+    )
+
+
+def test_the_legend_glyph_guard_bites():
+    """The guard above against each way the pairing can regress, including the
+    one that would otherwise pass over nothing at all."""
+    # A faithful stand-in for what ships today passes.
+    assert not legend_glyph_failures(
+        _fake_state_figure(["+"] * 28 + ["−"] * 23, ["−", "·", "+"])
+    )
+
+    # A tile emits `?` and the legend does not explain it.
+    unexplained = legend_glyph_failures(
+        _fake_state_figure(["+"] * 28 + ["−"] * 22 + ["?"], ["−", "·", "+"])
+    )
+    assert unexplained, "a tile shipping an unexplained `?` passed"
+    assert "'?'" in unexplained[0]
+
+    # The legend loses an entry the tiles still ship.
+    assert legend_glyph_failures(
+        _fake_state_figure(["+"] * 28 + ["−"] * 23, ["·", "+"])
+    ), "a legend that stopped naming `−` passed"
+
+    # And the empty-selector case: no tiles must FAIL, not pass vacuously.
+    assert legend_glyph_failures(_fake_state_figure([], ["−", "·", "+"])), (
+        "a page with no tiles at all passed — the guard would have reported "
+        "green over an empty set"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Chart annotations clipped at the plot edge (#64)
 #
 # Unlike the CSS-layout defects in #62 and #63, this one is fully provable from
