@@ -2494,3 +2494,427 @@ def test_the_annotation_clipping_guard_bites():
         '<text x="600" class="axis-title">Percent of the labour force</text></svg>'
     )
     assert not annotation_clipping_failures(other), "axis text was swept into #64's scope"
+
+
+# ---- Target size for controls (#65) ---------------------------------------
+#
+# Every interactive control in this design is styled as text with a hairline
+# rule under it and `padding: 0`, so its hit area is exactly its line box —
+# 15px to 24px tall, under the 24px floor of WCAG 2.2 SC 2.5.8 Target Size
+# (Minimum), Level AA. The repair is one technique everywhere: a transparent
+# `::before` overlay of `--target-min`, absolutely positioned and centred.
+#
+# **What these seven guards can and cannot see.** They read *declarations*,
+# which for absolute units are literal bytes: the value of `--target-min`, the
+# `height`/`width`/`position`/inset/`z-index` of each overlay rule, the
+# vertical padding of each host, and the `gap` of the two flex containers.
+# They cannot read a *computed* box — `.unit-toggle-item` measures 16px
+# precisely because a `<button>` does not inherit `body`'s `line-height: 1.62`
+# and keeps the UA's `normal`, and that number appears nowhere in `src/`. The
+# overlay technique is chosen so that this does not matter: it contributes
+# zero layout height *by construction*, which turns "did a figure move down
+# the page" and "did a control grow sideways into its neighbour" from
+# measurements into declarations.
+#
+# The one residual is vertical clearance between two *wrapped* rows of
+# controls at 390px: an 8px row gap plus a 16px computed line box is a 24px
+# pitch against a 24px floor, so the areas touch at 0px clearance and do not
+# overlap. **That clause is a browser observation and no test here asserts
+# it** — it is recorded in `docs/contracts/accessibility.md` § "Target size
+# for controls (#65)" and #67 owns automating it.
+
+YEAR_RANGE_TSX = SRC / "components" / "islands" / "YearRange.tsx"
+
+# The eight controls that failed the floor. `.select-item` is deliberately
+# absent: it already measures 32px, and sweeping it in would be scope drift.
+# `.datum` is absent because chart marks are #73's.
+_TARGET_HOSTS = (
+    ".unit-toggle-item",
+    ".tableview-trigger",
+    ".year-range-thumb",
+    ".select-trigger",
+    ".tax-mix-select",
+    ".sort-button",
+    ".attrib-tab",
+    ".law-name-button",
+)
+
+# Vertical padding as of #65, asserted with `==` rather than "is zero": four of
+# the eight already carried a bottom padding holding the hairline off the word,
+# and a guard demanding zero would have been red on arrival. `None` means the
+# host declares no `padding` at all. Growing any of these is the criterion-3
+# regression — it pushes the hairline off the text and, on a flex item under
+# `align-items: baseline`, shifts the control against its siblings.
+_TARGET_HOST_VERTICAL_PADDING = {
+    ".unit-toggle-item": ("0", "0"),
+    ".tableview-trigger": ("0", "0.1rem"),
+    ".year-range-thumb": None,
+    ".select-trigger": ("0.15rem", "0.25rem"),
+    ".tax-mix-select": ("0", "0.1rem"),
+    ".sort-button": ("0", "0"),
+    ".attrib-tab": ("0", "0.3rem"),
+    ".law-name-button": ("0", "0"),
+}
+
+_DECL_RE = re.compile(r"([-\w]+)\s*:\s*([^;]+)")
+
+
+def _declarations(body: str) -> list[tuple[str, str]]:
+    """Every `property: value` in a rule body, in document order.
+
+    A list rather than a dict: the cascade's last-one-wins is the whole point
+    of the `.sort-button` check below, and a dict would silently discard it."""
+    return [(m.group(1).strip(), m.group(2).strip()) for m in _DECL_RE.finditer(body)]
+
+
+def _rules_for(css_text: str, selector: str) -> list[str]:
+    """Every rule body whose selector list contains `selector` exactly."""
+    return [body for selectors, body in iter_css_rules(css_text) if selector in selectors]
+
+
+def target_overlay_bodies(css_text: str) -> dict[str, str]:
+    """`selector -> body` for each of the eight `::before` overlay rules.
+
+    Raises rather than returning a short dict if any selector is missing: a
+    helper that finds nothing to check reads exactly like one whose checks
+    passed (the `narrow_media_block()` rule, applied to the overlays). One
+    rule may carry several of the eight — `.law-name-button::before` and
+    `.sort-button::before` share theirs — so this is keyed by selector, never
+    by rule, which is also how it covers `.sort-button` in *both* tables."""
+    bodies: dict[str, str] = {}
+    for selector in _TARGET_HOSTS:
+        matches = _rules_for(css_text, f"{selector}::before")
+        if len(matches) != 1:
+            raise AssertionError(
+                f"expected exactly one `{selector}::before` rule in {GLOBAL_CSS}, "
+                f"found {len(matches)} — the target-size guards below have "
+                "nothing to read for this control"
+            )
+        bodies[selector] = matches[0]
+    return bodies
+
+
+def _assert_overlays_declare_the_floor(css_text: str) -> None:
+    """The height/width half of the overlay contract.
+
+    Factored out of the test below so the mutants at the end of this file can
+    aim at *this* assertion and prove the shipped guard red, rather than a
+    private restatement of it."""
+    bodies = target_overlay_bodies(css_text)
+    for selector, body in bodies.items():
+        assert dict(_declarations(body)).get("height") == "var(--target-min)", (
+            f"{selector}::before declares "
+            f"`height: {dict(_declarations(body)).get('height')}`, not "
+            "`var(--target-min)` — the floor is no longer the one token"
+        )
+    thumb = dict(_declarations(bodies[".year-range-thumb"]))
+    assert thumb.get("width") == "var(--target-min)", (
+        ".year-range-thumb::before declares no `width: var(--target-min)` — the "
+        "15px dot is the one control failing on width as well as height, so its "
+        "overlay is the one that must grow on both axes"
+    )
+
+
+def test_every_thumb_sized_control_declares_a_target_overlay():
+    css = GLOBAL_CSS.read_text()
+    for selector, body in target_overlay_bodies(css).items():
+        decls = dict(_declarations(body))
+        assert decls.get("content") in ("''", '""'), (
+            f"{selector}::before declares no empty `content` — a pseudo-element "
+            "with no `content` is not generated at all, so it has no hit area"
+        )
+        assert decls.get("position") == "absolute", (
+            f"{selector}::before is not `position: absolute` — an in-flow "
+            "overlay adds layout height and pushes the figure down the page"
+        )
+        # `pointer-events: none` and `visibility: hidden` both remove every hit
+        # area while leaving every size assertion above green. That is the
+        # exact failure shape a size-only guard misses (#65, E10).
+        assert decls.get("pointer-events") != "none", (
+            f"{selector}::before declares `pointer-events: none` — the overlay "
+            "is the right size and catches nothing"
+        )
+        assert decls.get("visibility") != "hidden", (
+            f"{selector}::before declares `visibility: hidden` — a hidden box "
+            "is not hit-tested"
+        )
+    _assert_overlays_declare_the_floor(css)
+
+
+def test_the_target_size_floor_is_at_least_24px():
+    text = TOKENS_CSS.read_text()
+    # The paired positive: if `--rule-width` cannot be read from this file the
+    # parse below is broken, not the stylesheet, and a missing `--target-min`
+    # would look identical to a renamed one.
+    assert re.search(r"--rule-width\s*:\s*1px", text), (
+        f"--rule-width is no longer readable from {TOKENS_CSS}; the "
+        "--target-min parse below cannot be trusted"
+    )
+    m = re.search(r"--target-min\s*:\s*([\d.]+)rem", text)
+    assert m, f"{TOKENS_CSS} declares no `--target-min` in rem"
+    rem = float(m.group(1))
+    # `html` sets no `font-size`, so the root is the 16px default and a rem
+    # floor is exact — the same reading `test_nav_bar_tap_targets_clear_44px`
+    # already makes of `2.75rem`.
+    assert rem * 16 >= 24, (
+        f"--target-min is {rem}rem = {rem * 16}px, under the 24px floor of "
+        "WCAG 2.2 SC 2.5.8 Target Size (Minimum), Level AA"
+    )
+
+
+def target_overlay_inset_failures(css_text: str) -> list[str]:
+    """Every overlay declaring a negative inset.
+
+    Seven of the eight are `left: 0; right: 0` — exactly the host's own width
+    — so today's clearances between neighbours are preserved exactly. A
+    negative inset is how an overlay starts stealing its neighbour's taps."""
+    failures: list[str] = []
+    for selector, body in target_overlay_bodies(css_text).items():
+        for prop, value in _declarations(body):
+            if prop in ("left", "right", "top", "bottom") and value.startswith("-"):
+                failures.append(f"{selector}::before declares {prop}: {value}")
+    return failures
+
+
+def test_no_target_overlay_reaches_into_a_neighbours_hit_area():
+    css = GLOBAL_CSS.read_text()
+    assert not target_overlay_inset_failures(css), target_overlay_inset_failures(css)
+    # The horizontal clearances the zero insets preserve. Neither is expanded
+    # by this change; both are what stops the preserved widths from touching.
+    unit_toggle = dict(_declarations(_rules_for(css, ".unit-toggle")[0]))
+    assert unit_toggle.get("gap") == "0.9rem", (
+        f".unit-toggle declares `gap: {unit_toggle.get('gap')}`, not 0.9rem — "
+        "the 14.4px between two toggle hit areas is gone"
+    )
+    controls = dict(_declarations(_rules_for(css, ".controls")[0]))
+    assert controls.get("gap") == "0.5rem 1rem", (
+        f".controls declares `gap: {controls.get('gap')}`, not `0.5rem 1rem` — "
+        "the 8px row gap is half of the 24px wrapped-row pitch that the 24px "
+        "floor exactly fills"
+    )
+    # The thumb pair is the one case with real horizontal growth. The prop is
+    # the mechanism, not a measured clearance: the pixel distance depends on
+    # the rendered track width. Shortening a domain to a handful of years
+    # could bring two 24px areas together, and this is what stops that landing
+    # silently (#65, E8).
+    # Read past the comments. `YearRange.tsx`'s own header block *describes*
+    # `minStepsBetweenThumbs={4}`, so a substring search over the raw file
+    # stays green after the prop itself is deleted — caught by mutating this
+    # guard rather than by reading it.
+    code = re.sub(r"/\*.*?\*/", "", YEAR_RANGE_TSX.read_text(), flags=re.DOTALL)
+    assert re.search(r"minStepsBetweenThumbs\s*=\s*\{\s*4\s*\}", code), (
+        f"{YEAR_RANGE_TSX} no longer passes `minStepsBetweenThumbs={{4}}` — "
+        "the two 24px thumb hit areas can now be dragged into each other"
+    )
+    assert "Slider.Thumb" in code, (
+        f"{YEAR_RANGE_TSX} renders no `Slider.Thumb`; the check above is "
+        "asserting a prop against a component that is gone"
+    )
+
+
+def test_no_target_overlay_creates_a_stacking_context():
+    css = GLOBAL_CSS.read_text()
+    for selector, body in target_overlay_bodies(css).items():
+        decls = dict(_declarations(body))
+        assert "z-index" not in decls, (
+            f"{selector}::before declares `z-index: {decls['z-index']}` — a "
+            "positioned element with any z-index but `auto` creates a stacking "
+            "context, and the overlay then paints over the popup above it"
+        )
+    # The paired positive, so this cannot pass by finding no popup at all.
+    content = dict(_declarations(_rules_for(css, ".select-content")[0]))
+    assert content.get("z-index") == "20", (
+        f".select-content declares `z-index: {content.get('z-index')}`, not 20 — "
+        "the check above is asserting an absence against nothing (#65, E2)"
+    )
+
+
+def _vertical_padding(shorthand: str) -> tuple[str, str]:
+    """(top, bottom) from a `padding` shorthand's 1-to-4 values."""
+    parts = shorthand.split()
+    if len(parts) == 1:
+        return parts[0], parts[0]
+    if len(parts) == 2:
+        return parts[0], parts[0]
+    return parts[0], parts[2]
+
+
+def target_host_layout_failures(css_text: str) -> list[str]:
+    """Every way a host rule could have gained layout height.
+
+    This one helper covers criterion 3 (the hairline cannot be pushed off the
+    word, and a flex item under `align-items: baseline` cannot be shifted
+    against its siblings) *and* criterion 6 (no figure can be pushed down the
+    page), because both have the same cause: vertical space added to a host."""
+    failures: list[str] = []
+    for selector, body in target_overlay_bodies(css_text).items():
+        if dict(_declarations(body)).get("position") != "absolute":
+            failures.append(f"{selector}::before is not out of flow")
+    for selector, expected in _TARGET_HOST_VERTICAL_PADDING.items():
+        matches = _rules_for(css_text, selector)
+        if not matches:
+            raise AssertionError(f"selector {selector!r} not found in {GLOBAL_CSS}")
+        found: tuple[str, str] | None = None
+        for body in matches:
+            for prop, value in _declarations(body):
+                if prop == "min-height":
+                    failures.append(f"{selector} declares min-height: {value}")
+                elif prop in ("padding-top", "padding-bottom"):
+                    failures.append(f"{selector} declares {prop}: {value}")
+                elif prop == "padding":
+                    found = _vertical_padding(value)
+        if found != expected:
+            failures.append(
+                f"{selector} vertical padding is {found}, was {expected} at #65"
+            )
+    return failures
+
+
+def test_target_overlays_add_no_layout_height():
+    failures = target_host_layout_failures(GLOBAL_CSS.read_text())
+    assert not failures, "; ".join(failures)
+
+
+def test_every_target_host_is_a_containing_block_for_its_overlay():
+    """The overlay must anchor to its own control, not to an ancestor.
+
+    Asserted on the *cascade result* rather than per rule, because
+    `.sort-button` is declared three times — the rule it shares with
+    `.law-name-button`, `#63`'s by-state rule, and a bare `display: block` —
+    and at equal specificity the last `position` in document order is the one
+    in effect. A single edit turning one of them `static` is the regression
+    that would silently re-anchor the overlay to `.year-range-track` or a
+    table cell, where it would swallow every tap on the whole element (E7)."""
+    css = GLOBAL_CSS.read_text()
+    for selector in _TARGET_HOSTS:
+        positions = [
+            value
+            for body in _rules_for(css, selector)
+            for prop, value in _declarations(body)
+            if prop == "position"
+        ]
+        assert positions, f"{selector} declares no `position` — its overlay anchors to an ancestor"
+        assert positions[-1] in ("relative", "absolute", "sticky"), (
+            f"{selector}'s effective position is {positions[-1]!r}; a static host "
+            "is not a containing block and its overlay escapes to an ancestor"
+        )
+    # E6, discovered while implementing: `.sort-button` is declared more than
+    # once, in two different tables. A guard reading only the first rule would
+    # be blind to whichever one it did not read.
+    assert len(_rules_for(css, ".sort-button")) >= 2, (
+        ".sort-button is now declared once; it was two independent rules at #65 "
+        "(the shared `.law-name-button` one and #63's by-state one) and the "
+        "cascade check above was written to span both"
+    )
+
+
+def test_the_year_range_thumb_still_paints_a_fifteen_pixel_dot():
+    decls = dict(_declarations(_rules_for(GLOBAL_CSS.read_text(), ".year-range-thumb")[0]))
+    assert decls.get("width") == "15px" and decls.get("height") == "15px", (
+        f".year-range-thumb is {decls.get('width')}x{decls.get('height')}, not "
+        "15x15 — growing the element repaints the dot and changes the box Radix "
+        "positions the thumb by; only the overlay is 24x24"
+    )
+    assert decls.get("border-radius") == "50%", (
+        ".year-range-thumb is no longer a circle"
+    )
+
+
+def test_the_target_floor_survives_the_build():
+    css_files = list(DIST.glob("_astro/*.css"))
+    assert css_files, f"No built CSS found under {DIST / '_astro'}"
+    built_css = "\n".join(f.read_text() for f in css_files)
+    assert "--target-min" in built_css, "built CSS lost the --target-min token"
+    for selector in _TARGET_HOSTS:
+        # The minifier collapses `::before` to the legacy single colon, so both
+        # spellings count. Asserting only the source form would pass on `src/`
+        # and say nothing about the bytes actually served.
+        assert re.search(rf"{re.escape(selector)}:{{1,2}}before", built_css), (
+            f"built CSS carries no `{selector}::before` — the overlay never "
+            "reached the page"
+        )
+
+
+def test_the_target_size_guards_bite_each_way_the_fix_can_regress():
+    css = GLOBAL_CSS.read_text()
+    tokens = TOKENS_CSS.read_text()
+
+    # The inverse, asserted first: nothing below can pass by failing for an
+    # unrelated reason.
+    assert not target_overlay_inset_failures(css)
+    assert not target_host_layout_failures(css)
+
+    overlay = ".unit-toggle-item::before"
+
+    # 1. The floor stops being the token.
+    mutant = _mutate_rule(css, overlay, "height: var(--target-min);", "height: 1rem;")
+    assert mutant != css, "the mutant for 'overlay height hard-coded under the floor' did not apply"
+    with pytest.raises(AssertionError):
+        _assert_overlays_declare_the_floor(mutant)
+
+    # 2. The thumb's overlay loses the width half, leaving a 24x15 hit area on
+    #    the one control that also fails on width.
+    mutant = _mutate_rule(css, ".year-range-thumb::before", "width: var(--target-min);", "")
+    assert mutant != css, "the mutant for 'thumb overlay width deleted' did not apply"
+    with pytest.raises(AssertionError):
+        _assert_overlays_declare_the_floor(mutant)
+
+    # 3. The token itself is lowered below 24px.
+    mutant_tokens = tokens.replace("--target-min: 1.5rem;", "--target-min: 1rem;")
+    assert mutant_tokens != tokens, "the mutant for 'floor lowered to 1rem' did not apply"
+    assert not re.search(r"--target-min\s*:\s*1\.5rem", mutant_tokens)
+    m = re.search(r"--target-min\s*:\s*([\d.]+)rem", mutant_tokens)
+    assert m and float(m.group(1)) * 16 < 24, "a 16px floor was not caught"
+
+    # 4. An overlay reaches sideways into its neighbour.
+    mutant = _mutate_rule(css, overlay, "left: 0;", "left: -0.5rem;")
+    assert mutant != css, "the mutant for 'negative inset' did not apply"
+    assert target_overlay_inset_failures(mutant), "a negative inset passed"
+
+    # 5. The clearance the zero insets were preserving is deleted.
+    mutant = _mutate_rule(css, ".unit-toggle", "gap: 0.9rem;", "gap: 0;")
+    assert mutant != css, "the mutant for 'toggle gap deleted' did not apply"
+    assert dict(_declarations(_rules_for(mutant, ".unit-toggle")[0])).get("gap") == "0"
+
+    # 6. An overlay creates a stacking context and paints over the popup.
+    mutant = _mutate_rule(css, overlay, "position: absolute;", "position: absolute; z-index: 5;")
+    assert mutant != css, "the mutant for 'overlay z-index' did not apply"
+    assert "z-index" in dict(_declarations(target_overlay_bodies(mutant)[".unit-toggle-item"]))
+
+    # 7. An overlay falls back into flow and pushes every figure below it down.
+    mutant = _mutate_rule(css, overlay, "position: absolute;", "position: static;")
+    assert mutant != css, "the mutant for 'overlay back in flow' did not apply"
+    assert target_host_layout_failures(mutant), "an in-flow overlay passed"
+
+    # 8. The criterion-3 regression: vertical padding on a host, which detaches
+    #    the hairline from the word and shifts the flex item off its baseline.
+    mutant = _mutate_rule(css, ".unit-toggle-item", "padding: 0;", "padding: 0.3rem 0;")
+    assert mutant != css, "the mutant for 'vertical padding on a host' did not apply"
+    assert target_host_layout_failures(mutant), "vertical padding on a host passed"
+
+    # 9. The criterion-4 regression: the dot itself is grown to the floor.
+    mutant = _mutate_rule(css, ".year-range-thumb", "width: 15px;", "width: 24px;")
+    assert mutant != css, "the mutant for 'the dot grown to 24px' did not apply"
+    assert dict(_declarations(_rules_for(mutant, ".year-range-thumb")[0]))["width"] == "24px"
+
+    # 10 and 11 — the must-not-fire half. #64 shipped a guard that over-read
+    #     into #66's scope; these two are the same shape, pinned.
+    #
+    #     `.select-item` already measures 32px and is deliberately unchanged;
+    #     `.datum` is a chart mark and belongs to #73. Neither declares a
+    #     `::before` overlay, so if either were ever added to `_TARGET_HOSTS`
+    #     the real stylesheet — checked immediately above and clean — would go
+    #     red on arrival.
+    for out_of_scope in (".select-item", ".datum"):
+        assert out_of_scope not in _TARGET_HOSTS, (
+            f"{out_of_scope} was swept into #65's scope; it belongs to "
+            "neither this issue's control set nor this issue"
+        )
+        assert not _rules_for(css, f"{out_of_scope}::before"), (
+            f"{out_of_scope}::before now exists in global.css — #65 added no "
+            "overlay to it and the scope boundary has moved"
+        )
+    assert _rules_for(css, ".select-item"), (
+        ".select-item is gone from global.css; the must-not-fire check above "
+        "is asserting against nothing"
+    )

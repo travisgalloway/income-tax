@@ -767,6 +767,144 @@ Both cost a cycle during the investigation, both are silent, and both are now co
    ancestor `<g transform>`. Skipping it would drop a real node; a missing `x` is **0**, not "not my
    problem". That label is now placed explicitly, and the guard reads absent `x` as 0.
 
+### Target size for controls (#65)
+
+**The floor is 24 CSS px, and the success criterion is WCAG 2.2 SC 2.5.8 Target Size (Minimum),
+Level AA.** It is carried by one token, `--target-min: 1.5rem` in `src/styles/tokens.css`. `html`
+sets no `font-size`, so the root is the 16px default and the rem is exact — the same reading
+`test_nav_bar_tap_targets_clear_44px` already makes of its `2.75rem`.
+
+**Why 24 and not the 44 of SC 2.5.5 (Enhanced, AAA).** This is a decision, not a convenience, and
+at 44px the arithmetic fails outright. `.controls` declares `gap: 0.5rem 1rem` — an 8px row gap —
+and `.unit-toggle-item` computes to a 16px box, so a wrapped control row has a **24px pitch**. Two
+44px hit areas on that pitch would **overlap by 20px**, and every tap in the overlap would be
+ambiguous: a worse defect than the one being fixed, and a direct failure of the issue's own
+"adjacent controls' hit areas do not overlap". At 24px the pitch of 24 exactly accommodates the
+floor — the areas tile, touching but not overlapping. The nav bar keeps its own 44px floor: it is a
+dedicated surface with no dense control rows, and nothing here lowers it.
+
+**One technique for all eight: a transparent `::before` overlay.** `position: absolute`, centred on
+the control, `height: var(--target-min)`, and `left: 0; right: 0` for seven of the eight so it is
+exactly the host's own width. The slider thumb's is the one that also grows horizontally, so it
+centres on both axes. The issue invited a per-control choice between padding, an overlay and
+line-height; the overlay wins every time, for a different reason each time:
+
+| Control | Why not padding / `min-height` | Why the overlay |
+|---|---|---|
+| `.unit-toggle-item` | A flex item under `align-items: baseline`; asymmetric vertical padding shifts it against its siblings and against `.controls-label`. Its `border-bottom` is the on-state affordance, and padding detaches the rule from the word | Out of flow, so the baseline and the rule stay exactly where they are |
+| `.tableview-trigger` | It **is** the `<summary>`, and its full-width `border-bottom` is the affordance; `min-height` drops the rule away from the label | Same — no ink moves |
+| `.select-trigger` | Only 2px short, so padding is tempting, but it would still move the hairline | Consistency, and no ink moves |
+| `.tax-mix-select` | Hairline affordance, and a flex item in `.controls` under `align-items: baseline` | Same two reasons as `.unit-toggle-item` |
+| `.attrib-tab` | `border-bottom` carries the active-tab state; padding moves the tab underline off the text | Same |
+| `.sort-button` | **Padding widens the `<th>`** in a `border-collapse` table, which makes §11's 745px scroll worse — #71/#76's problem. `min-height` avoids the width, but the `<th>` is `vertical-align: bottom` in one table and unset in the other, so the label would lift off the head rule in one and not the other | Adds no width and no height. The table geometry is untouched and the label does not move |
+| `.law-name-button` | Long statute names already wrap to ~105px cells, and padding would add ~9px to *every* row of a 100-row table | Tall cells untouched **by construction**; only the short ones gain a hit area |
+| `.year-range-thumb` | Resizing the element to 24×24 changes the box Radix positions the thumb by, shifting it against the track and changing the track's usable extent. The 15px dot **is** the element | The element stays and paints 15×15; only the overlay is 24×24 |
+
+**Two corrections to the issue's own table, found against the tree and worth recording.**
+`.select-item` is listed as failing but **measures 32px and already passed** — it is unchanged, and
+`test_the_target_size_guards_bite_each_way_the_fix_can_regress` asserts it was *not* swept in,
+because sweeping it in would be scope drift. And `.sort-button` is declared **twice** — the rule it
+shares with `.law-name-button`, and the one #63 added for §11's `.sortable-table` — so a fix
+editing one leaves the other governing two different tables. Both carry `position: relative`, and
+the overlay is selector-matched (`.law-name-button::before, .sort-button::before`) so it covers
+both. The guard asserts the **cascade result** per selector rather than per rule, and separately
+pins that `.sort-button` still matches more than one rule.
+
+**Three things must never be added to these rules**, each of which would leave every size assertion
+green while breaking the result:
+
+- **`pointer-events: none` or `visibility: hidden`.** A transparent box is hit-testable; neither of
+  those is. This is the failure the size guards alone would miss, so
+  `test_every_thumb_sized_control_declares_a_target_overlay` asserts against both by name.
+- **`z-index`.** A positioned element with `z-index: auto` creates no stacking context, which is why
+  `.select-content`'s `z-index: 20` still paints over the trigger's overlay.
+- **A negative inset.** The zero insets are what preserve today's clearances exactly.
+
+#### What is asserted, and what is only measured
+
+Seven guards plus a negative test in `pipeline/tests/test_accessibility.py`. They read
+*declarations*, which for absolute units are literal bytes; they cannot read a **computed** box.
+`.unit-toggle-item` measures 16px precisely because a `<button>` does not inherit `body`'s
+`line-height: 1.62` and keeps the UA's `normal`, and that number appears nowhere in `src/`.
+`npm run test:unit` cannot close the gap either — it is `node --test` over TypeScript modules, with
+no DOM and no layout.
+
+The overlay technique is chosen so that this does not matter. Every overlay is out of flow, so the
+layout height added across the whole site is **zero**, and "did a figure move down the page" and
+"did a control grow sideways into its neighbour" stop being measurements and become declarations.
+The guards are `test_every_thumb_sized_control_declares_a_target_overlay`,
+`test_the_target_size_floor_is_at_least_24px`,
+`test_no_target_overlay_reaches_into_a_neighbours_hit_area`,
+`test_no_target_overlay_creates_a_stacking_context`,
+`test_target_overlays_add_no_layout_height`,
+`test_every_target_host_is_a_containing_block_for_its_overlay`,
+`test_the_year_range_thumb_still_paints_a_fifteen_pixel_dot` and
+`test_the_target_floor_survives_the_build`.
+
+`test_target_overlays_add_no_layout_height` pins each host's vertical padding with `==` against its
+value at #65 rather than demanding zero: four of the eight already carried a bottom padding holding
+the hairline off the word, and a zero-demanding guard would have been red on arrival.
+
+**What no test here asserts:** the wrapped-row vertical clearance at 390px. An 8px row gap plus a
+16px computed line box is a 24px pitch against a 24px floor — a touch at 0px clearance, not an
+overlap — and both halves of that sentence are computed values. It is measured below and **#67**
+owns automating it. On the tree as it stands no `.controls` row wraps its toggles onto two lines at
+390px, so the 0px case does not currently arise; the tightest measured vertical clearance is 45.7px.
+
+#### Executed 2026-08-27 (the browser lane)
+
+Chromium **151.0.0.0** (Playwright MCP), `dist/` served locally under its `/income-tax/` base, at
+**390×844** and **1440×900**, on all three content routes. Each control's hit area is the computed
+`::before` box; `getComputedStyle(el, '::before')` for the size and `getBoundingClientRect()` for
+the position. Root `font-size` read back as **16px**, so `--target-min: 1.5rem` resolves to 24px.
+
+| Control | Element box | Hit area (overlay), 390×844 | Hit area, 1440×900 |
+|---|---|---|---|
+| `.unit-toggle-item` (18 on `/government`) | 50.2 × **16** | 50.2 × **24** | 50.2 × **24** |
+| `.tableview-trigger` (12) | 350 × 23.6 | 350 × **24** | 736 × **24** |
+| `.select-trigger` (3) | 120 × 22.4 | 120 × **24** | 120 × **24** |
+| `.tax-mix-select` (1) | 38.1 × 17.6 | 38.1 × **24** | 38.1 × **24** |
+| `.attrib-tab` (2) | 115.5 × 21.8 | 115.5 × **24** | 115.5 × **24** |
+| `.law-name-button` (23) | 57.5 × **15** | 57.5 × **24** | 57.5 × **24** |
+| `.sort-button` (8) | 42.9 × 21.1 | 42.9 × **24** | 46.9 × **24** |
+| `.year-range-thumb` (4 on `/households`) | **15 × 15**, unchanged | **24 × 24** | **24 × 24** |
+| `.select-item` (3, popup open) | 152 × **32.2** | none — `::before` computes `content: none` | — |
+
+**Criterion 5, measured rather than argued.** Every pair of control hit areas on a route was tested
+for intersection: **0 overlapping pairs** out of 67 controls on `/government`, 13 on `/households`
+and 5 on `/economy`, at both viewports. The tightest vertical clearance is **45.7px** and the
+tightest horizontal is **14.4px** — `.unit-toggle`'s `gap: 0.9rem`, exactly as declared.
+
+**Criteria 3 and 6, proved in the browser and not only from the stylesheet.** With the page loaded,
+the whole change was disabled at runtime (`content: none` on every overlay, `position: static` on
+every host) and 106 boxes — the eight controls plus `.controls-label`, `.figure` and `.chart` —
+were compared before and against. **0 boxes moved.** The `.unit-toggle-item` underline sits where
+it did, the toggles keep their baseline with `.controls-label`, and no figure moved down the page.
+The same result is visible from the build side: every `dist/**/index.html` is byte-identical to its
+pre-change build once the stylesheet content-hash is normalised.
+
+**E7, the check the plan could not settle from the stylesheet.** Radix leaves `Slider.Thumb`'s
+`position` to CSS — the thumb's computed `position` reads `relative`, ours. `elementFromPoint` at
+the centre of `.year-range-track` returns `.year-range-range`, **not** `.year-range-thumb`, so the
+overlay is anchored to the thumb and does not swallow taps on the track.
+
+**E8, the two thumbs at minimum range.** `minStepsBetweenThumbs={4}` over a 1984–2024 domain on a
+350px track at 390px is 8.75px per year, so the thumbs are never closer than **35px** — **11px of
+clearance** between two 24px hit areas. At 1440px the track is 736px and the separation is 73.6px.
+
+**E2, the popup over the trigger.** With a `.select-content` open, `elementFromPoint` inside the
+popup returns `.select-viewport`; the popup's box begins at y=437 while the trigger's hit band ends
+at y=434.2, so they do not even intersect.
+
+**E9, overlays inside a clipping ancestor.** All 26 `.law-name-button` and `.sort-button` overlays
+inside `.law-table-scroll` (`overflow-x: auto`) measure 24px tall. They add no horizontal size, so
+there is nothing for the scroll container to clip horizontally.
+
+**One measurement artefact, not a defect of this change.** `.tax-mix-select` reads 0 × 2.6 until its
+island hydrates, because Radix's `Select.Value` has no text to show until then; it settles at
+38.1 × 17.6 with a 38.1 × 24 hit area. Parked in `docs/parked-findings.md` — it is a hydration
+question, not a target-size one, and this change neither causes nor fixes it.
+
 ### Reading position in the contents list (#44)
 
 **EXECUTED 2026-08-26**, Chromium **151.0.7922.174** (Playwright), against `astro preview` at

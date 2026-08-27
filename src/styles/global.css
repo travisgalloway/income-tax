@@ -426,6 +426,47 @@ figcaption .lead,
   color: var(--ink-soft);
   cursor: pointer;
   font-variant-numeric: var(--num-table);
+  position: relative;
+}
+
+/* ---- Target size for controls (#65) -------------------------------------
+ * Every control in this design is styled as text with a hairline rule under
+ * it and `padding: 0`, so its hit area is exactly its line box — 15px to 24px
+ * tall, under the 24px floor of WCAG 2.2 SC 2.5.8. The repair is one
+ * technique everywhere: a transparent `::before` overlay of `--target-min`,
+ * absolutely positioned and centred on the control.
+ *
+ * Padding and `min-height` were both rejected, and for a different reason per
+ * control: the toggles and `.tax-mix-select` are flex items under
+ * `align-items: baseline`, so vertical padding shifts them against their
+ * siblings; the `border-bottom` is the affordance on six of the eight, and
+ * padding detaches the rule from the word; `.sort-button` padding widens a
+ * `border-collapse` `<th>`; `.law-name-button` padding adds height to every
+ * row of a 100-row table. The overlay is out of flow, so it adds **zero**
+ * layout height and **zero** width anywhere on the site.
+ *
+ * Three things must never be added to these rules:
+ *   - `pointer-events: none` or `visibility: hidden`. A transparent box is
+ *     hit-testable; neither of those is. Adding one removes every hit area
+ *     while leaving all the size assertions green.
+ *   - `z-index`. A positioned element with `z-index: auto` creates no
+ *     stacking context, which is why `.select-content`'s `z-index: 20` still
+ *     paints over the trigger's overlay.
+ *   - a negative inset. Seven of the eight are `left: 0; right: 0` — exactly
+ *     the host's own width — so today's clearances between neighbours are
+ *     preserved exactly.
+ *
+ * Guarded by the seven `*target*` checks in
+ * `pipeline/tests/test_accessibility.py`.
+ */
+.unit-toggle-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: var(--target-min);
+  transform: translateY(-50%);
 }
 .unit-toggle-item:hover { color: var(--ink); }
 .unit-toggle-item[data-state='on'] {
@@ -448,6 +489,18 @@ figcaption .lead,
   padding: 0 0 0.1rem;
   color: var(--ink-soft);
   cursor: pointer;
+  position: relative;
+}
+/* #65. It *is* the `<summary>`, and its full-width `border-bottom` is the
+ * affordance, so `min-height` would drop the rule away from the label. */
+.tableview-trigger::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: var(--target-min);
+  transform: translateY(-50%);
 }
 .tableview-trigger:hover { color: var(--ink); border-bottom-color: var(--ink); }
 
@@ -569,6 +622,18 @@ figcaption .lead,
   cursor: pointer;
   min-width: 0;
   max-width: 100%;
+  position: relative;
+}
+/* #65. Two pixels short of the floor, so padding is tempting — but it would
+ * still move the hairline off the label. */
+.select-trigger::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: var(--target-min);
+  transform: translateY(-50%);
 }
 /* Radix portals the selected item's text into a bare <span> inside the
  * trigger, so it can only be reached positionally. It is a flex item, whose
@@ -705,6 +770,23 @@ figcaption .lead,
   color: inherit;
   cursor: pointer;
   text-align: left;
+  position: relative;
+}
+/* #65. Padding here widens a `border-collapse` `<th>` — which is exactly the
+ * by-state table's 745px problem (#71/#76) — and adds ~9px to every row of a
+ * 100-row table. The overlay adds neither. Long statute names already wrap to
+ * ~105px cells; those are untouched by construction, and only the short ones
+ * gain a hit area. This one `::before` selector covers `.sort-button` in both
+ * tables, including the second `.sort-button` rule further down. */
+.law-name-button::before,
+.sort-button::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: var(--target-min);
+  transform: translateY(-50%);
 }
 .law-name-button:hover { text-decoration: underline; }
 .law-name-button[aria-pressed='true'] {
@@ -924,6 +1006,10 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   .sortable-table th[scope='row'] { white-space: normal; }
 }
 
+/* #63's by-state table declares `.sort-button` a second time. Both rules must
+ * carry `position: relative` (#65, E6): the shared `::before` above is
+ * selector-matched and applies here too, but it needs a positioned host, and
+ * a later edit to either rule alone must not be able to unanchor it. */
 .sort-button {
   font: inherit;
   background: transparent;
@@ -931,6 +1017,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   padding: 0;
   cursor: pointer;
   color: inherit;
+  position: relative;
 }
 .sort-button:hover { color: var(--ink); }
 
@@ -951,6 +1038,18 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
    * Jurisdiction names are short, so this is a guard rather than a repair. */
   min-width: 0;
   max-width: 100%;
+  position: relative;
+}
+/* #65. A flex item in `.controls` under `align-items: baseline`, with the
+ * hairline as its affordance — the same two reasons as `.unit-toggle-item`. */
+.tax-mix-select::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: var(--target-min);
+  transform: translateY(-50%);
 }
 .tax-mix-select-content {
   background: var(--panel);
@@ -1023,6 +1122,18 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   padding: 0 0 0.3rem;
   color: var(--ink-soft);
   cursor: pointer;
+  position: relative;
+}
+/* #65. The `border-bottom` carries the active-tab state; padding would move
+ * the tab underline off the text. */
+.attrib-tab::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: var(--target-min);
+  transform: translateY(-50%);
 }
 .attrib-tab:hover { color: var(--ink); }
 .attrib-tab[data-state='active'] {
@@ -1243,6 +1354,25 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   background: var(--panel);
   border: 1.5px solid var(--ink);
   cursor: pointer;
+  /* #65, E7. Radix positions `Slider.Thumb` with inline styles; if it ever
+   * sets `position` itself this is overridden, harmlessly — an absolutely
+   * positioned thumb is equally a containing block. What this declaration
+   * prevents is the thumb staying `static`, which would anchor the overlay
+   * below to `.year-range-track` and swallow every tap on the whole track. */
+  position: relative;
+}
+/* #65. The only overlay that grows on both axes, because the dot is the one
+ * control failing on width as well. The element stays 15x15 and paints 15x15
+ * — resizing it would change the box Radix positions the thumb by, shifting
+ * it against the track and changing the track's usable extent. */
+.year-range-thumb::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--target-min);
+  height: var(--target-min);
+  transform: translate(-50%, -50%);
 }
 .year-range-thumb:hover { background: var(--ink); }
 .year-range-thumb:focus-visible { outline: 1.5px solid var(--ink); outline-offset: 3px; }
