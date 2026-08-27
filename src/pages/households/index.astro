@@ -220,9 +220,8 @@ const cbo = cboEffectiveRatesData()
     <p class="kicker"><span class="section-no">Section 6</span></p>
     <h2>The bill you do not see</h2>
     <p class="standfirst">
-      Payroll tax raised 5.76% of GDP and 33.4% of all federal revenue in FY2025, and for
-      every household outside the top decile it is the larger of the two bills. The chart
-      in Section 5 counts none of it.
+      Section 5 measured who pays the income tax, and its chart counts none of the other
+      federal bill a wage earner pays. Which of the two is larger, and for which households?
     </p>
     <p class="finding">
       FY2025: payroll tax 5.76% of GDP and 33.4% of total federal revenue, against
@@ -238,6 +237,14 @@ const cbo = cboEffectiveRatesData()
     >
       <PayrollBill client:visible rows={revenue.data} />
     </Figure>
+
+    <p class="prose">
+      For every household outside the top decile the payroll bill is the larger of the two.
+      That does not put this chart in conflict with the one in Section 5. The two answer
+      different questions about the same taxpayer: one asks who pays the
+      <strong>income tax</strong>, the other asks what a wage earner owes across both taxes.
+      Read either chart on its own and the federal bill looks like whichever half it drew.
+    </p>
   </section>
 
   <section id="limits">
