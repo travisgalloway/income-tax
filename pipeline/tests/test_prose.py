@@ -293,7 +293,12 @@ _OWNER_RE = re.compile(r"^#\d+$")
 
 
 @pytest.mark.parametrize("name", ["KNOWN_DASH_DEBT", "KNOWN_SHOUT_DEBT"])
-def test_the_dash_baseline_is_declining(name):
+def test_the_baselines_are_declining(name):
+    """Both baselines, not just the dash one: this is parametrized over each in turn.
+
+    Renamed from `test_the_dash_baseline_is_declining` by #58, which owned both baselines down to
+    its own zero and so owned the name that described half of what the test checks.
+    """
     baseline = {"KNOWN_DASH_DEBT": KNOWN_DASH_DEBT, "KNOWN_SHOUT_DEBT": KNOWN_SHOUT_DEBT}[name]
     assert baseline, f"{name} is empty. An empty baseline means the check is not looking."
     for fingerprint, owner in sorted(baseline.items()):
@@ -776,3 +781,191 @@ def test_the_criterion_two_audit_covers_every_finding():
     )
     assert declared == actual
 
+
+# ---------------------------------------------------------------------------
+# 8. Criterion 3 — sentence length and word spacing
+# ---------------------------------------------------------------------------
+
+#: The cap on a prose sentence, in **words**, whitespace collapsed. Measured over all 443 sentences
+#: the four prose classes carried on the seven built pages before #58 edited them: 50 ran past 30
+#: words, 29 past 35, 13 past 40, **7 past 45**, 3 past 50 and 2 past 55. 45 is the knee. 40 catches
+#: thirteen, several of which are long but well-behaved lists of caveats; 50 leaves the 46- and
+#: 49-word sentences that were the worst clause-stacking on the site. Seven is also the count that
+#: made #52's road correct under `docs/contracts/prose.md` rule 3: all seven were split, this test
+#: asserts zero, and there is no baseline and no exemption set.
+#:
+#: **Words, not characters, and the divergence from `FINDING_CHARS_MAX` is deliberate.** That cap
+#: (220) is a display-length cap on a single ruled-off sentence a screen reader also reads aloud in
+#: full. This one is a proxy for clause load, where a word is the unit a reader parses. The two
+#: disagree materially: the 49-word offender measured 320 characters and the 46-word one 241. The
+#: longest finding on the site is 40 words, so this cap cannot collide with Criterion 2.
+SENTENCE_WORDS_MAX = 45
+
+#: A sentence boundary: terminal punctuation, an optional closing quote or bracket, whitespace, and
+#: a capital, digit or `$` opening the next sentence. Deliberately conservative — an **over**-split
+#: hides a violation by halving a long sentence, while an under-split merely shows a human a longer
+#: string than there really is, so the safe direction is to split less.
+#:
+#: `(?<!\b[A-Z]\.)` exists for exactly one live string: `government#passed-signed` writes "G.W.
+#: Bush", which a naive `(?<=[.!?])\s+(?=[A-Z])` cuts in half. It is a lookbehind on a *single*
+#: capital at a word boundary, so `GDP.` is unaffected: there is no word boundary before the `P`.
+SENTENCE_SPLIT = re.compile(r'(?<=[.!?])(?<!\b[A-Z]\.)["’”)]?\s+(?=[A-Z0-9$])')
+
+
+def sentences(text: str) -> list[str]:
+    """`text` split into sentences, whitespace collapsed, empties dropped."""
+    return [s for s in (p.strip() for p in SENTENCE_SPLIT.split(" ".join(text.split()))) if s]
+
+
+def prose_class_strings() -> list[tuple[str, str, str]]:
+    """`prose_strings()` minus the accessible names.
+
+    Structural, not a list: a `(page, scope, text)` triple is in scope when its scope is one of
+    `PROSE_CLASSES`, which is to say when the string is the text of an element on the page. The
+    accessible names fall out because they are `aria-label` scopes, and they fall out for a reason
+    this contract already states elsewhere: a chart's name is bound by
+    `docs/contracts/accessibility.md` and, where it is a finding, by `FINDING_CHARS_MAX` above,
+    and the island-generated ones are `.tsx` templates owned by #102. Holding a per-datum readout
+    assembled by a number formatter to a sentence-craft cap would be measuring the formatter.
+    """
+    return [(page, scope, text) for page, scope, text in prose_strings() if scope in PROSE_CLASSES]
+
+
+def test_no_prose_sentence_runs_past_the_cap():
+    """Every sentence in every prose element is at or under `SENTENCE_WORDS_MAX`.
+
+    Asserts zero. No baseline, no exemption set: #58 found seven violations and split all seven,
+    which is the choice `docs/contracts/prose.md` rule 3 prescribes at that count.
+
+    **Cannot see:** whether a sentence is *hard*. It cannot tell a 46-word sentence a reader glides
+    through from a 30-word one they have to restart, because length is a proxy and clause count is
+    the judgement. No clause-counter and no proxy word list is added here to fake it — a word list
+    invented to make a human reading look mechanical reports green, which is worse than no check
+    (rule 4). Reading for clause load is Checklist item 10.
+
+    **Also cannot see** a list item that forgot its full stop. An `<ol class="prose">` matches on
+    the list element, so `_deep_text` concatenates every `<li>` into one string: `/` section 4's
+    four numbered items arrive here as a single text run, split correctly today only because each
+    item ends in a full stop. An item that did not would fuse with the next and read as one
+    over-long sentence. That is a **false positive**, which is the safe direction for a splitter,
+    and it is recorded here rather than left for a future reader to mistake for a real violation.
+    """
+    offenders = []
+    for page, scope, text in prose_class_strings():
+        for s in sentences(text):
+            n = len(s.split())
+            if n > SENTENCE_WORDS_MAX:
+                offenders.append(f"{page} .{scope} at {n} words: {s[:70]!r}")
+    assert not offenders, (
+        f"A prose sentence runs past {SENTENCE_WORDS_MAX} words. docs/contracts/prose.md "
+        "Criterion 3: split it at the clause the reader is already pausing at, and do not change "
+        "what it claims — every figure in these sentences is registered in "
+        "pipeline/curated/prose_figures.yaml, so re-punctuating around a figure is in scope and "
+        "restating or re-rounding it is not. Sentences:\n  " + "\n  ".join(offenders)
+    )
+
+
+#: A character that must not sit immediately against a `.term` span. Letters and digits are a fused
+#: word (`thestatutory`, `innominal`); a comma is a fused clause boundary.
+TERM_ABUTS_BEFORE = re.compile(r"[A-Za-z0-9,]")
+TERM_ABUTS_AFTER = re.compile(r"[A-Za-z0-9]")
+
+
+def _text_and_term_spans(n: Node) -> tuple[str, list[tuple[int, int]]]:
+    """`_deep_text(n)`, plus the `(start, end)` offset of every `.term` span inside it."""
+    out: list[str] = []
+    spans: list[tuple[int, int]] = []
+    pos = 0
+
+    def walk(x: Node) -> None:
+        nonlocal pos
+        for c in x.children:
+            if c.tag == "#text":
+                t = c.attrs.get("__text__", "")
+                out.append(t)
+                pos += len(t)
+            elif c.tag in SKIP_TAGS or EXCLUDED_DESCENDANT_CLASS in c.classes():
+                continue
+            elif "term" in c.classes():
+                start = pos
+                walk(c)
+                spans.append((start, pos))
+            else:
+                walk(c)
+
+    walk(n)
+    return "".join(out), spans
+
+
+def test_no_prose_string_fuses_two_words_at_a_component_boundary():
+    """No `.term` span abuts a letter, a digit or a comma in the served bytes.
+
+    Astro strips the whitespace between a text run and a component that begins the next source
+    line, so a `<Term>` wrapped onto its own line fuses with the word before it. `/households`
+    served "far less than thestatutory rate" and "it is set innominal dollars", and `/government`
+    served "permanent law andnet interest", from source that looks correct in every case. **The
+    source is not the subject; the served bytes are.**
+
+    Scope is derived from the DOM and carries no list: every `.term` inside every prose element is
+    asked, and punctuation that legitimately abuts a term — an opening bracket or quote — is
+    allowed by construction rather than by exemption.
+
+    **Cannot see the expression-boundary variant.** The same collapse fuses a text run with a
+    `{expr}` that begins the next line, which is how `/contents` served "6 destinations,25 numbered
+    figures". An interpolated value is indistinguishable from literal text in the served bytes, so
+    there is no span to anchor on and nothing here to check. That instance is fixed by hand, with
+    `{' '}` on the line the value is on, and re-reading `/contents`' standfirst is Checklist
+    item 12.
+    """
+    offenders = []
+    for path in PAGES:
+        page = str(path.relative_to(DIST))
+        for n in parse_html(path).iter_descendants():
+            if not any(c in PROSE_CLASSES for c in n.classes()):
+                continue
+            text, spans = _text_and_term_spans(n)
+            for start, end in spans:
+                if start > 0 and TERM_ABUTS_BEFORE.match(text[start - 1]):
+                    offenders.append(f"{page}: ...{text[max(0, start - 30):end]!r}")
+                if end < len(text) and TERM_ABUTS_AFTER.match(text[end]):
+                    offenders.append(f"{page}: {text[start:end + 30]!r}...")
+    assert not offenders, (
+        "A glossary term is fused to the word beside it in the served HTML. Astro drops the "
+        "newline between a text run and a component that starts the next source line. Keep the "
+        "space on the component's own line — `word <Term …>` or `</Term> word` — rather than "
+        "letting the line break carry it. Occurrences:\n  " + "\n  ".join(offenders)
+    )
+
+
+#: A row of the `### Criterion 3 audit` table: `` | `economy/index.html` | … | Pass | ``. The page
+#: is backticked because it is a path, and anchoring on the backticks keeps the prose in the second
+#: column from ever matching this.
+#: The directory prefix is optional, because `/` builds to a bare `index.html` with no directory in
+#: front of it, and a required prefix silently drops the front door from the row set.
+CRITERION_THREE_ROW_RE = re.compile(r"^\|\s*`((?:[A-Za-z0-9_-]+/)*index\.html)`\s*\|", re.MULTILINE)
+
+
+def test_the_criterion_three_audit_covers_every_page():
+    """The Criterion 3 audit table's row set **equals** the pages `dist/` carries.
+
+    Criterion 3's surface is the **page**, not the section: punctuation and emphasis conventions
+    are page-wide, and both baselines above are keyed by page. Equality, in the idiom of the
+    Criterion 1 and Criterion 2 audits and of the two `==`-asserted baselines: a new route cannot
+    ship without a reviewer writing down what its sentence craft turns on, and a deleted one
+    cannot leave a stale judgement behind. What the test asserts is the **coverage**, never the
+    wording.
+    """
+    table = _audit_table("Criterion 3 audit")
+    declared = set(CRITERION_THREE_ROW_RE.findall(table))
+    actual = {str(p.relative_to(DIST)) for p in PAGES}
+    missing = sorted(actual - declared)
+    stale = sorted(declared - actual)
+    assert not missing, (
+        "Built pages with no row in the Criterion 3 audit table. Add a row naming what that "
+        "page's sentence craft turns on:\n  " + "\n  ".join(missing)
+    )
+    assert not stale, (
+        "Criterion 3 audit rows for pages that no longer exist. Delete them in the same commit as "
+        "the route:\n  " + "\n  ".join(stale)
+    )
+    assert declared == actual

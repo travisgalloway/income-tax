@@ -1005,3 +1005,30 @@ time. Appended to, never rewritten. None of these have been acted on.
   those hosts or it will report three false failures forever, which is how a check gets disabled.
   Found while probing every candidate URL for #57. Severity: a trap for the link-checker that does
   not exist yet, non-blocking.
+- [2026-08-26] `src/pages/index.astro:106` and `src/pages/index.astro:160` carry em dashes that are
+  **not violations and must stay**. `:106` is `<p class="brief-attrib">— the site's design brief</p>`,
+  an attribution marker rather than a punctuation mark, and `.brief-attrib` is not a prose class;
+  `:160` sits in a `<dd>` of `dl.apparatus`, which carries no prose class either. Neither is in
+  `KNOWN_DASH_DEBT`, neither is reachable by `test_no_prose_string_contains_an_em_dash_or_a_double_hyphen`,
+  and editing either changes no test while growing the diff. Recorded because a future reader will
+  grep `dist/` or `src/` for `—`, find them, and assume #58 missed two. Found while clearing the
+  last prose-class dashes for #58. Severity: none; this is a note against a wrong conclusion.
+- [2026-08-26] **Astro's whitespace collapse at a component boundary is a latent trap, not six
+  instances.** Astro drops the newline-plus-indent between a text run and a component or expression
+  that begins the next source line, so any future line-wrap that puts a `<Term>` or a `{expr}` at
+  the start of a line fuses two words in the served bytes with source that looks correct. #58 fixed
+  the six live cases and added `test_no_prose_string_fuses_two_words_at_a_component_boundary`, which
+  catches the `.term` form over the whole DOM. **The `{expr}` form stays uncovered**: an interpolated
+  value is indistinguishable from literal text once rendered, so there is nothing to anchor a check
+  on. A general fix — a lint rule, or a Prettier/Astro formatting setting that refuses to break a
+  line immediately before a component — belongs to whoever owns the build config, not to a prose
+  issue. Found while fixing `thestatutory`, `innominal`, `andnet` and `destinations,25` for #58.
+  Severity: one reader-visible defect class with half a check behind it, non-blocking.
+- [2026-08-26] `pipeline/tests/test_prose.py:556-557` — `_audit_table`'s own docstring writes
+  " -- " as prose punctuation ("Ending at the next heading of any level -- ... -- keeps each table
+  to itself"), which is the exact
+  construction Ruling 1 retires. The checker reads `dist/`, so its own source is out of scope by
+  construction and no test can see this; but `docs/contracts/prose.md` opens by saying the contract
+  follows its own rules, and the file that enforces it does not. Two characters, in a docstring.
+  Found while adding section 8 for #58, which is scoped to prose a reader meets. Severity:
+  cosmetic, non-blocking.

@@ -387,6 +387,55 @@ figure note's "it INCLUDES PAYROLL TAX" for emphasis. This is the only criterion
 machine-checkable definition of done: **the baseline going to zero is the criterion being met**,
 and #58 took it there. **Cited by #58.**
 
+**The mechanical half now spans three of this checker's numbered blocks.** Sections 1 and 2 are
+punctuation and emphasis, both `==` against the baselines. Section 8, added by #58, is sentence
+length and word spacing: `pipeline/tests/test_prose.py:834` caps a prose sentence at
+`SENTENCE_WORDS_MAX` (`pipeline/tests/test_prose.py:802`, 45 words),
+`pipeline/tests/test_prose.py:900` fails a `.term` span that abuts a letter, digit or comma in the
+served bytes, and `pipeline/tests/test_prose.py:946` gates the audit table below. All three assert
+zero.
+
+**The counts, and the exemption policy they chose (rule 3).** #58 met four numbers. It retired **23
+dash fingerprints** over 24 em dashes and 6 ` -- ` occurrences, and **5 shout fingerprints** over 3
+sites, by deleting them from #51's baselines entry by entry — that is #51's road, already chosen,
+and #58 emptied its block of each rather than replacing the mechanism. The two *new* checks measured
+**7** sentences past 45 words and **5** term-boundary word-joins. Both are #52's road: **fix them
+all and assert zero, with no baseline and no exemption list.** A 7-entry and a 5-entry
+`fingerprint -> "#owner"` map would cost more to maintain than the twelve edits cost to make, and
+there is no third party to hand either to.
+
+**Why 45 words, and why words rather than characters.** Measured across all 443 prose-class
+sentences on the seven built pages before the edits: 50 ran past 30 words, 29 past 35, 13 past 40,
+**7 past 45**, 3 past 50 and 2 past 55. 45 is the knee. A cap of 40 catches thirteen, several of
+them long but well-behaved lists of caveats that read fine; a cap of 50 leaves standing the 46- and
+49-word sentences that were the worst clause-stacking on the site. The unit diverges from
+`FINDING_CHARS_MAX` (220 characters) deliberately, and the two disagree materially here: the
+49-word offender measured 320 characters while the 46-word one measured 241. `FINDING_CHARS_MAX` is
+a **display-length** cap on one ruled-off sentence that a screen reader also reads aloud in full;
+this one is a **proxy for clause load**, where the word is the unit a reader parses. The longest
+finding on the site is 40 words, so the two caps cannot collide.
+
+**Scope, derived from structure (rule 2).** The length cap asks the four prose classes and not the
+three kinds of accessible name. That is scope, not exemption: a chart's name is bound by
+`docs/contracts/accessibility.md` and, where it is a finding, by `FINDING_CHARS_MAX` above, and the
+island-generated per-datum readouts are `.tsx` templates owned by #102. Holding a readout a number
+formatter assembles to a sentence-craft cap would be measuring the formatter. The word-join check
+asks every `.term` inside every prose element, with punctuation that legitimately abuts — an
+opening bracket or quote — allowed by construction rather than by a list.
+
+**What the checks cannot see.** They cannot see whether a sentence is *hard*: a 46-word sentence a
+reader glides through and a 30-word one they have to restart score the same, because length is a
+proxy and clause count is the judgement. No clause-counter and no proxy word list is invented to
+fake it, which is Checklist item 10. They cannot see the OpenStax 8.6 essential/nonessential
+judgement that decides whether a clause takes commas at all — Ruling 1's replacement table is the
+mechanical half, and choosing which job a given dash was doing is a reading. They cannot tell
+whether a split changed what a sentence claims, which is Checklist item 11. And the word-join check
+cannot see the **expression-boundary** variant of the same defect: the collapse that fuses a text
+run with a `<Term>` also fuses it with a `{expr}`, which is how `/contents` served
+"6 destinations,25 numbered figures", and an interpolated value is indistinguishable from literal
+text in the served bytes, so there is no span to anchor on. That one is fixed by hand and read by a
+person, as Checklist item 12.
+
 ### Criterion 4 — terms are defined
 
 **Asks:** is every technical term defined the first time a reader meets it? **Pass:** a first use
@@ -461,7 +510,7 @@ docs are most of the diff.
 |---|---|---|
 | 1 | **#52** | The `.kicker` + heading + `.standfirst` block opening each section across the three route pages. Prose only: no figure, no data and no `aria-label` change |
 | 2 | **#53** | `.standfirst` and `.finding` elements — 13 and 11 on `/government`, 8 and 6 on `/households`, 7 and 5 on `/economy`. Constrained by the pairing rule above |
-| 3 | **#58** | **Discharged.** It took what was left of the day-one baseline — 23 prose-class dash fingerprints over 30 rendered occurrences, six of them ` -- ` on `/households`, and the three shouts in `/households` sections 3 and 4 — and deleted every one, each in the same commit as its edit. It opened at 26 over 33; #53 retired three, because Criterion 2 made it rewrite those three sentences and a rewritten sentence takes its dash with it. #58 also set the sentence-length cap this criterion had left open and split the seven sentences over it, and fixed six reader-visible word-joins. **The remainder is owned, not orphaned: `KNOWN_DASH_DEBT` holds exactly 4 entries, all `#102`, and `KNOWN_SHOUT_DEBT` holds exactly 5, all `#103`.** Both stay non-empty, so `test_the_dash_baseline_is_declining`'s `assert baseline` still holds and neither check stops looking |
+| 3 | **#58** | **Discharged.** It took what was left of the day-one baseline — 23 prose-class dash fingerprints over 30 rendered occurrences, six of them ` -- ` on `/households`, and the three shouts in `/households` sections 3 and 4 — and deleted every one, each in the same commit as its edit. It opened at 26 over 33; #53 retired three, because Criterion 2 made it rewrite those three sentences and a rewritten sentence takes its dash with it. #58 also set the sentence-length cap this criterion had left open and split the seven sentences over it, and fixed six reader-visible word-joins. **The remainder is owned, not orphaned: `KNOWN_DASH_DEBT` holds exactly 4 entries, all `#102`, and `KNOWN_SHOUT_DEBT` holds exactly 5, all `#103`.** Both stay non-empty, so `test_the_baselines_are_declining`'s `assert baseline` still holds and neither check stops looking |
 | 4 | **#59** | `src/content/glossary/` (23 entries), `src/components/Term.astro`, and each route's first use of each term. Owns any move of `REGISTERED_INITIALISMS` onto the glossary |
 | 5 | **#60** | `.prose` bodies and `.figure-caveat` notes across all three routes, plus the Government route's section 12 limits block |
 | 6 | **#61** | The closing paragraph of each section and the terminal section of each route: Economy section 6, Households section 7, Government section 12 |
@@ -561,6 +610,31 @@ again, not an exemption.
 | /government | where-money-comes-from | Over three decades the revenue mix tilted toward the individual income tax and away from payroll and corporate tax | `revenue`, the first of the section's two figures; `oecd` is an international comparison the finding does not claim | Pass |
 | /government | by-state | More states receive more federal spending per person than they pay in federal tax than the reverse | `state-give-get`, the first of the section's two figures; `state-tax-mix` is a different question | Pass |
 
+### Criterion 3 audit
+
+One row per **built page**, seven of them. Criterion 3's surface is the page, not the section:
+punctuation and emphasis conventions are page-wide, and both baselines above are keyed by page.
+`What its sentence craft turns on` is a reviewer's one-line paraphrase of the pressure this page's
+prose is under. `pipeline/tests/test_prose.py:946` asserts this table's page set **equals** the set
+`dist/` carries, so a new route cannot ship without declaring what its sentence craft turns on and
+a deleted one cannot leave its judgement behind. What the test asserts is the **coverage**, never
+the wording. **No measured counts sit in this table**: a count rots on the next prose edit, and the
+test would then be asserting a number it cannot maintain.
+
+| Page | What its sentence craft turns on | Criterion 3 |
+|---|---|---|
+| `index.html` | Pure exposition with no chart to lean on: four sections that have to survive as sentences alone. Its dashes were doing a definition's job, so they became colons and full stops, and its two longest sentences were single-breath inventories that split cleanly at the point the inventory begins | Pass |
+| `contents/index.html` | One standfirst over a wholly generated index. Every count in it is interpolated, so the sentence has to read correctly across four `{expr}` boundaries as well as scan — which is exactly where the served bytes fused "destinations,25" | Pass |
+| `economy/index.html` | Derivation prose: index start years, one-year offsets and deflator bases, chained behind colons and semicolons. Both of its over-long sentences were derivations stacked into one, and both split at the derivation rather than at a comma | Pass |
+| `government/index.html` | The longest route and the most caveat-dense. Its over-long sentences were vintage and scope qualifications queued behind a colon; each qualification is now its own sentence, which is also what let the two ` -- `-free asides drop their dashes without losing the pause | Pass |
+| `households/index.html` | Where every ` -- ` and all three shouted-capital emphases lived. Emphasis matters most here because the statutory-versus-effective distinction is the route's whole argument, and it now travels by `<strong>` or by word order, never by capitals | Pass |
+| `glossary/index.html` | One standfirst of its own; everything else a reader meets on the page is a glossary entry authored under `src/content/glossary/` and owned by #59. The criterion bites on that one sentence and no further | Pass |
+| `sources/index.html` | Carries no prose-class element at all. The page renders `SOURCES.md`, which is quoted register material no prose rule may edit, so there is nothing here for this criterion to hold and the row says so rather than leaving the page undeclared | Pass |
+
+The last two rows are not exemptions. They are the honest reading of a structural scope: a page is
+asked this criterion of whatever prose-class elements it carries, and two of the seven carry one
+and none respectively.
+
 ## Checklist — status per item
 
 What only a human reader can judge. Every item is **NOT EXECUTED** on landing, and that is a
@@ -600,3 +674,24 @@ statement about this contract's coverage, not a formality. Nothing below is enfo
    half of Criterion 2 measures shared number tokens and character counts, which is why
    `households#who-pays` was catchable and why a standfirst that restates its finding in words
    would not be. Neither number is the judgement. — **NOT EXECUTED.** Human required. Criterion 2.
+10. **Decide, clause by clause, which clauses are essential and which are not**, in the sense
+    OpenStax *Writing Guide* 8.6 uses, and check that the punctuation follows the decision.
+    Ruling 1's replacement table is the mechanical half: it says what to write once you know which
+    job the dash was doing. Knowing which job it was doing is a reading, and so is deciding whether
+    a clause a comma pair now sets off was ever nonessential. **No word list is invented to make
+    this look mechanical**, because a proxy for it would report green on exactly the sentences a
+    reader stumbles over. `test_no_prose_sentence_runs_past_the_cap` measures length, which is a
+    proxy for clause load and nothing more. — **NOT EXECUTED.** Human required. Criterion 3.
+11. **Read the seven split sentences aloud and confirm each still claims what it claimed.** #58
+    split seven sentences that ran past 45 words, on `/`, `/economy` and `/government`. A split is
+    allowed to move a pause; it is not allowed to move a figure, drop a qualifier onto the wrong
+    clause, or turn a hedged claim into a flat one. Every figure in those sentences is registered
+    in `pipeline/curated/prose_figures.yaml`, and the drift report checks the *number*, never the
+    sentence around it. — **NOT EXECUTED.** Human required. Criterion 3 and Criterion 7.
+12. **Read `/contents`' standfirst in the browser, not in the source.**
+    `test_no_prose_string_fuses_two_words_at_a_component_boundary` cannot see the
+    expression-boundary form of the word-join it exists to catch, because an interpolated count is
+    indistinguishable from literal text once rendered. The standfirst carries four such
+    boundaries, it served "6 destinations,25 numbered figures" before #58, and the fix is a `{' '}`
+    that only a rendered read can confirm is still there. — **NOT EXECUTED.** Human required.
+    Criterion 3.
