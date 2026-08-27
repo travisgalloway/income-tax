@@ -38,8 +38,21 @@ export function Select({
         </RadixSelect.Trigger>
         <RadixSelect.Portal>
           {/* position="popper": the listbox opens beside the trigger rather
-             than covering it. */}
-          <RadixSelect.Content className="select-content" position="popper" sideOffset={4}>
+             than covering it. `collisionPadding` keeps it off the viewport
+             edge and, more importantly, is the number
+             `--radix-select-content-available-width` is measured against —
+             the `max-width` clamp in `.select-content` is only as good as
+             this value, so the two ship together (#62). `avoidCollisions`
+             stays at its default `true`: repositioning is what walks an
+             already-placed popup back inside a 390px viewport, and it cannot
+             rescue a popup wider than that viewport, which is what the clamp
+             is for. */}
+          <RadixSelect.Content
+            className="select-content"
+            position="popper"
+            sideOffset={4}
+            collisionPadding={8}
+          >
             <RadixSelect.Viewport className="select-viewport">
               {options.map((o) => (
                 <RadixSelect.Item key={o.value} value={o.value} className="select-item">
