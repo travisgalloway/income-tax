@@ -1450,3 +1450,267 @@ def test_the_criterion_five_audit_covers_every_section():
         "as the section:\n  " + "\n  ".join(f"{r}#{s}" for r, s in stale)
     )
     assert declared == actual
+
+
+# ---------------------------------------------------------------------------
+# 11. Criterion 6 — sections and routes hand off
+# ---------------------------------------------------------------------------
+
+#: `Term.astro`'s wrapper. Both anchors it renders -- `a.term-trigger` and `a.term-more` -- are
+#: glossary markers, not cross-references: they point every reader of a marked word at the same
+#: entry, and counting them would make every section look as though it hands off. The exclusion is
+#: **structural**, taken from the markup the component emits, not from a list of hrefs to ignore;
+#: it is the same reasoning `EXCLUDED_DESCENDANT_CLASS` uses to keep `.term-pop` out of prose text.
+GLOSSARY_MARKER_CLASS = "term"
+
+#: The three reference destinations. A link to one of them is the apparatus, not the argument:
+#: Check B2 requires the site's last paragraph to point at something a reader can keep reading,
+#: over and above the Sources line it already carried.
+APPARATUS_ROUTES = frozenset({"/sources", "/glossary", "/contents"})
+
+#: A bundled asset URL. Astro writes these from `base` itself, so they carry the served prefix and
+#: no page author can get one wrong -- which is what makes them the right place to read the base
+#: from. Hard-coding `/income-tax/` here would make this suite fail the day the site moved, and
+#: reading `astro.config.mjs` would assert the source against itself rather than against the bytes.
+ASSET_URL_RE = re.compile(r'(?:href|src)="(/[^"]*_astro/[^"]*)"')
+
+
+def base_prefix() -> str:
+    """The served base path, with no trailing slash. `''` if the site is served from the root."""
+    prefixes = {url[: url.index("_astro/")].rstrip("/") for p in PAGES for url in ASSET_URL_RE.findall(p.read_text())}
+    assert len(prefixes) == 1, (
+        "The built pages disagree about the base path their bundled assets are served from: "
+        f"{sorted(prefixes)}. One `astro.config.mjs` `base` produces one prefix."
+    )
+    return prefixes.pop()
+
+
+def _route_of_path(path: Path) -> str:
+    rel = path.relative_to(DIST).as_posix()
+    return "/" + rel[: -len("index.html")].rstrip("/")
+
+
+def built_routes() -> dict[str, Path]:
+    """Every route a reader can actually reach, as `route -> built page`.
+
+    Derived from `dist/` rather than from `siteRoutes` in `src/data/sections.ts`, and the two are
+    the same set by construction: Astro builds one page per route file. `dist/` is the stronger
+    subject of the two, because a `siteRoutes` entry with no built page is itself a 404 and would
+    satisfy a check that read the array.
+    """
+    return {_route_of_path(p): p for p in PAGES}
+
+
+def _ids_of(path: Path) -> set[str]:
+    return {n.get("id") for n in parse_html(path).iter_descendants() if n.get("id")}
+
+
+def internal_hrefs_under(node: Node) -> list[str]:
+    """Every `/`- or `#`-rooted href inside `node`, minus the glossary markers."""
+    out: list[str] = []
+    for a in node.iter_descendants():
+        if a.tag != "a":
+            continue
+        href = a.get("href") or ""
+        if not href.startswith(("/", "#")):
+            continue
+        if any(GLOSSARY_MARKER_CLASS in x.classes() for x in a.ancestors()):
+            continue
+        out.append(href)
+    return out
+
+
+def in_prose_hrefs(path: Path) -> list[str]:
+    """A built page's internal cross-references: the hrefs inside its prose elements.
+
+    Prose-scoping is what makes every check under this banner non-trivial. The rail and the
+    narrow-viewport navbar link every route from every page, and a figure's source line links its
+    publisher; none of those carries a `PROSE_CLASSES` class, so scoping to prose excludes the
+    whole of the site's furniture, and every `https://` source link with it, without naming one of
+    them in an exclusion list.
+    """
+    root = parse_html(path)
+    out: list[str] = []
+    for n in root.iter_descendants():
+        if any(c in n.classes() for c in PROSE_CLASSES):
+            out.extend(internal_hrefs_under(n))
+    return out
+
+
+def _split(href: str, base: str) -> tuple[str, str]:
+    """A based href as `(route, fragment)`. `('/government', 'net-interest')`."""
+    rest = href[len(base):]
+    route, _, fragment = rest.partition("#")
+    return (route.rstrip("/") or "/"), fragment
+
+
+def test_every_in_prose_cross_reference_resolves_and_is_base_aware():
+    """Every in-prose internal link lands somewhere that exists, under the served base path.
+
+    Two failures in one test because they are the same sentence read twice: a link a reader
+    follows either arrives or does not. A bare `#anchor` must be an `id` on the page it sits on. A
+    rooted href must begin with the base -- this is the check that would have caught #70, where
+    three cross-route links were written without it, worked in `astro dev` and 404ed in production
+    -- and its route must be a route `dist/` actually built, and its fragment, if it has one, must
+    be an `id` on that built page.
+
+    **Measured at the count this issue opened on: 12 in-prose cross-references, 12 resolving, 0
+    not base-aware.** Asserted as zero with **no baseline**, which is method rule 3's fix-all road
+    at a count of zero, the road #52 and #60 took. The point of a check that already passes is
+    that #61 adds six more cross-references to the twelve it measured, taking the page-wide total
+    to eighteen: without it the next
+    hand-written link reintroduces #70 silently.
+
+    *Cannot see:* whether the target section **delivers what the sentence promised**. A link to
+    `#structural-gap` from a sentence claiming section 5 explains why the gap opened resolves
+    perfectly and is still wrong. That reading is Checklist item 14. It also cannot see a
+    hand-off written with no link in it at all, which is the other half of Checklist item 14.
+    """
+    base = base_prefix()
+    routes = built_routes()
+    ids = {route: _ids_of(path) for route, path in routes.items()}
+    unbased: list[str] = []
+    broken: list[str] = []
+    for route, path in sorted(routes.items()):
+        for href in in_prose_hrefs(path):
+            if href.startswith("#"):
+                if href[1:] not in ids[route]:
+                    broken.append(f"{route}: {href} is not an id on this page")
+                continue
+            if base and not href.startswith(base + "/"):
+                unbased.append(f"{route}: {href}")
+                continue
+            target, fragment = _split(href, base)
+            if target not in routes:
+                broken.append(f"{route}: {href} names {target}, which dist/ did not build")
+                continue
+            if fragment and fragment not in ids[target]:
+                broken.append(f"{route}: {href} names #{fragment}, which is not an id on {target}")
+    assert not unbased, (
+        "In-prose internal links that skip the base path. They work in `astro dev` and 404 in "
+        f"production, which is how #70 shipped. Build every internal href through `join()` in "
+        "src/data/sections.ts:\n  " + "\n  ".join(unbased)
+    )
+    assert not broken, (
+        "In-prose cross-references that do not resolve. docs/contracts/prose.md Criterion 6: a "
+        "hand-off that points nowhere is worse than no hand-off. Fix the href or the anchor in "
+        "the same commit:\n  " + "\n  ".join(broken)
+    )
+
+
+def test_every_joint_of_the_route_ladder_is_written():
+    """Each content route carries an in-prose link to the one after it.
+
+    The ladder is derived, in order, from `routeSections`' keys through `content_routes()` -- the
+    same array the rail renders and `/contents` enumerates -- so a fourth route inserted between
+    two of these is checked on both of its new joints without this test being edited.
+
+    **Prose-scoping is the whole check.** The rail and the navbar link `/government` from every
+    page on the site, so `grep -c government dist/households/index.html` was already non-zero on
+    the day this issue opened, while `/households` carried **zero** links to `/government` in any
+    sentence a reader reads. **Measured: 1 of 2 joints written.** Asserted as zero violations with
+    no baseline, once the second joint was written.
+
+    *Cannot see:* whether the sentence carrying the link is a hand-off or a footnote. A rail-style
+    "see also" list at the bottom of a route would satisfy this and hand nobody on. Checklist
+    item 14.
+    """
+    base = base_prefix()
+    routes = built_routes()
+    ladder = content_routes()
+    missing: list[str] = []
+    for earlier, later in zip(ladder, ladder[1:]):
+        page = routes[earlier]
+        targets = {_split(h, base)[0] for h in in_prose_hrefs(page) if not h.startswith("#")}
+        if later not in targets:
+            missing.append(f"{earlier} names no destination on {later}")
+    assert not missing, (
+        "A joint of the route ladder is unwritten. docs/contracts/prose.md Criterion 6: the "
+        "routes claim a sequence in their `Route N of 3` kickers, so each must hand the reader to "
+        "the next in its own prose, not only through the rail:\n  " + "\n  ".join(missing)
+    )
+
+
+def test_the_last_routes_ending_points_back_into_the_argument():
+    """The site's final paragraph links something other than the reference pages.
+
+    The terminal route is the last of the ladder `content_routes()` derives, its terminal section
+    is the last `<section id>` on that built page, and its closing prose is the last `.prose`
+    inside it. That paragraph is the last thing a reader who has read the site in order meets.
+    **Measured on the day this issue opened: its only href was `/sources`** -- the apparatus, not
+    the argument -- so the site ended by pointing out of itself. Asserted as zero with no
+    baseline.
+
+    `/sources`, `/glossary` and `/contents` are excluded as destinations by name here, and that is
+    the one place under this banner where a name appears rather than a structure. It is a
+    three-entry list of the routes that carry no argument, it is stated in `APPARATUS_ROUTES`
+    beside the reason, and it is checked against `built_routes()` below, so a reference page
+    renamed out of `dist/` fails here instead of quietly widening what counts.
+
+    *Cannot see:* whether the sentence is worth reading, or whether an ending that links three
+    things is better than one that links one. Checklist item 14.
+    """
+    routes = built_routes()
+    assert APPARATUS_ROUTES <= set(routes), (
+        f"APPARATUS_ROUTES names {sorted(APPARATUS_ROUTES - set(routes))}, which dist/ did not "
+        "build. A reference page was renamed; rename it here in the same commit, or this test "
+        "silently starts accepting a link to it as a hand-off."
+    )
+    terminal = content_routes()[-1]
+    page = terminal.lstrip("/") + "/index.html"
+    on_page = [(sid, node) for p, sid, _, node in sections() if p == page]
+    assert on_page, f"{page} carries no <section id>, so it has no terminal section to check."
+    section_id, node = on_page[-1]
+    proses = [d for d in node.iter_descendants() if "prose" in d.classes()]
+    assert proses, (
+        f"{terminal}#{section_id} is the terminal section of the terminal route and ends with no "
+        "`.prose`. That is a Criterion 1 failure as well; see "
+        "`test_every_section_with_a_figure_answers_after_it`."
+    )
+    base = base_prefix()
+    destinations: list[str] = []
+    for href in internal_hrefs_under(proses[-1]):
+        if href.startswith("#"):
+            destinations.append(href)
+            continue
+        route, _ = _split(href, base)
+        if route not in APPARATUS_ROUTES:
+            destinations.append(href)
+    assert destinations, (
+        f"{terminal}#{section_id}'s closing prose is the last paragraph on the site and links "
+        "only the reference pages. docs/contracts/prose.md Criterion 6: the terminal section of "
+        "the terminal route points back into the argument, over and above its Sources line."
+    )
+
+
+def test_the_criterion_six_audit_covers_every_section():
+    """The Criterion 6 audit table's row set **equals** the section set built from `dist/`.
+
+    Method rule 5, in the idiom `test_the_criterion_one_audit_covers_every_section` established.
+    Equality, not containment: containment would let a new section ship without declaring where it
+    hands the reader next, and would let a deleted section leave a stale judgement behind.
+
+    What is asserted is **coverage**, never the wording. "Ends here, and correctly" is a legal
+    answer in column 3 and is the answer for a good many of the twenty-nine -- a construction
+    caveat bounding the chart above closes its section, and manufacturing a link out of it is the
+    failure the refused link quota would have produced. The refusal and its numbers are recorded
+    in Criterion 6 in the contract.
+
+    *Cannot see:* whether a row is **true**. A section can claim in column 3 that it hands off to
+    the next while its closing sentence names nothing. Checklist item 14.
+    """
+    table = _audit_table("Criterion 6 audit")
+    declared = {(route, sid) for route, sid in AUDIT_ROW_RE.findall(table)}
+    actual = {(_route_of(page), sid) for page, sid, _, _ in sections()}
+    missing = sorted(actual - declared)
+    stale = sorted(declared - actual)
+    assert not missing, (
+        "Sections on the built site with no row in the Criterion 6 audit table. Add a row saying "
+        "where the section hands the reader next, or why it ends here:\n  "
+        + "\n  ".join(f"{r}#{s}" for r, s in missing)
+    )
+    assert not stale, (
+        "Criterion 6 audit rows for sections that no longer exist. Delete them in the same commit "
+        "as the section:\n  " + "\n  ".join(f"{r}#{s}" for r, s in stale)
+    )
+    assert declared == actual

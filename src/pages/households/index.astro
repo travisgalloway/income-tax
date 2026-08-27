@@ -12,7 +12,7 @@ import { PayrollBill } from '../../components/islands/PayrollBill'
 import {
   income, incomeGroups, cboTop1IncomeShare, bracketHistory, cboEffectiveRatesData, revenue,
 } from '../../data'
-import { routeSections } from '../../data/sections'
+import { join, routeSections } from '../../data/sections'
 import { figuresOf } from '../../data/figures'
 
 /* Figure number, title and source come from the manifest, which /contents reads too. */
@@ -277,6 +277,12 @@ const cbo = cboEffectiveRatesData()
     </p>
     <p class="prose">
       <strong>5. The dates break the site's convention.</strong> The Government route runs FY1995 to FY2025. This route reads IRS tax year 2023, Census/FRED calendar 2024 and CBO calendar 2022, because those are the latest each publishes. Refundable credits are excluded from the IRS series, which overstates the effective rate at the bottom.
+    </p>
+    <p class="prose">
+      The <a href={`${join('/government')}/`}>government route</a> picks up from here. It sets the
+      income tax counted above against the{' '}
+      <a href={`${join('/government')}/#where-money-comes-from`}>other sources federal revenue comes from</a>, shows what the whole
+      budget spends it on, and prices the borrowing that covers the rest.
     </p>
   </section>
 </BaseLayout>
