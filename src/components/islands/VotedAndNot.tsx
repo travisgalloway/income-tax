@@ -113,9 +113,9 @@ export function VotedAndNot({ rows }: { rows: BudgetYear[] }) {
             <path d={discretionaryLine(span) ?? ''} fill="none" stroke="var(--disc)" strokeWidth={2} />
             <path d={netInterestLine(span) ?? ''} fill="none" stroke="var(--int)" strokeWidth={2} />
 
-            <Annotation frame={fr} x={x(last.y) - 4} y={y(mandatoryNetOf(last, unit)) - 8} anchor="end" className="annotation series-label" label="Mandatory (net)" />
-            <Annotation frame={fr} x={x(last.y) - 4} y={y(discretionaryOf(last, unit)) - 8} anchor="end" className="annotation series-label" label="Discretionary" />
-            <Annotation frame={fr} x={x(last.y) - 4} y={y(netInterestOf(last, unit)) - 8} anchor="end" className="annotation series-label" label="Net interest" />
+            <Annotation frame={fr} x={x(last.y) - 4} y={y(mandatoryNetOf(last, unit)) - 8} anchor="end" seriesLabel label="Mandatory (net)" />
+            <Annotation frame={fr} x={x(last.y) - 4} y={y(discretionaryOf(last, unit)) - 8} anchor="end" seriesLabel label="Discretionary" />
+            <Annotation frame={fr} x={x(last.y) - 4} y={y(netInterestOf(last, unit)) - 8} anchor="end" seriesLabel label="Net interest" />
 
             {marked && (
               <>

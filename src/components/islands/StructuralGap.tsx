@@ -176,7 +176,7 @@ export function StructuralGap({ rows }: { rows: BudgetYear[] }) {
               x={x(last.y) - 4}
               y={y(outlaysOf(last, unit)) - 8}
               anchor="end"
-              className="annotation series-label"
+              seriesLabel
               label="Outlays"
             />
             <Annotation
@@ -184,7 +184,7 @@ export function StructuralGap({ rows }: { rows: BudgetYear[] }) {
               x={x(last.y) - 4}
               y={y(revenueOf(last, unit)) - 8}
               anchor="end"
-              className="annotation series-label"
+              seriesLabel
               label="Revenue"
             />
 

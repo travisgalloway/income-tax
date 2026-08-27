@@ -52,6 +52,11 @@ export interface AnnotationProps {
   lines?: string[]
   anchor?: Anchor
   className?: string
+  /** The italic end-of-line series name variant (global.css `.series-label`).
+   *  A flag rather than a class string, so the class itself is written in this
+   *  file and nowhere else — which is the invariant
+   *  `test_every_annotation_is_placed_through_the_clamp` greps for. */
+  seriesLabel?: boolean
   fill?: string
   /** Set false where flipping the anchor would read worse than sliding. */
   flip?: boolean
@@ -67,17 +72,19 @@ export function Annotation({
   lines,
   anchor = 'start',
   className = 'annotation',
+  seriesLabel = false,
   fill,
   flip,
   pad,
 }: AnnotationProps) {
-  const fontPx = fontPxFor(className)
+  const cls = seriesLabel ? `${className} series-label` : className
+  const fontPx = fontPxFor(cls)
   const all = lines?.length ? [label, ...lines] : [label]
   const width = Math.max(...all.map((line) => estimateTextWidth(line, fontPx)))
   const placed = placeAnnotation({ x, label, width, frame, anchor, fontPx, flip, pad })
   if (!placed) return null
   return (
-    <text x={placed.x} y={y} dy={dy} textAnchor={placed.textAnchor} className={className} fill={fill}>
+    <text x={placed.x} y={y} dy={dy} textAnchor={placed.textAnchor} className={cls} fill={fill}>
       {lines?.length
         ? all.map((line, i) => (
             <tspan key={line} x={placed.x} dy={i === 0 ? undefined : '1.15em'}>
