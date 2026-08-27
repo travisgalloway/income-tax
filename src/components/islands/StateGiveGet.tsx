@@ -17,6 +17,7 @@ import * as ToggleGroup from '@radix-ui/react-toggle-group'
 // divergingFill (the non-partisan amber/stone/teal colour ramp).
 import { TILES, divergingFill } from '../charts/stateGrid'
 import { useRovingMarks } from '../charts/roving'
+import { useScrollableRegion } from './scrollRegion'
 import { dollars } from '../charts/format'
 import type { StateJurisdiction, StatesBalance } from '../../data/types'
 
@@ -127,6 +128,11 @@ export function StateGiveGet({ data }: { data: StatesBalance }) {
     `${data.summary.n_get_more} jurisdictions receive more than they pay and ` +
     `${data.summary.n_give_more} pay more than they receive.`
 
+  // Lifted out of the JSX so the accessible name of the scroll region and the
+  // visible <caption> cannot drift apart (#71).
+  const caption = `Every jurisdiction: 50 states, DC and territories, FY${data.fy_give} give against get`
+  const scroll = useScrollableRegion(caption)
+
   return (
     <div>
       <div className="controls">
@@ -214,9 +220,9 @@ export function StateGiveGet({ data }: { data: StatesBalance }) {
         a measure.
       </p>
 
-      <div className="tableview-scroll">
+      <div className="tableview-scroll" {...scroll}>
         <table className="sortable-table">
-          <caption>Every jurisdiction: 50 states, DC and territories, FY{data.fy_give} give against get</caption>
+          <caption>{caption}</caption>
           <thead>
             <tr>
               {columns.map((c) => (

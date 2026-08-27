@@ -19,6 +19,7 @@ import { AxisBottom, AxisLeft, ZeroLine } from '../charts/Axis'
 import { linear, niceExtent } from '../charts/scales'
 import { useChartSize } from '../charts/useChartSize'
 import { TableView } from './TableView'
+import { useScrollableRegion } from './scrollRegion'
 import { Select, type SelectOption } from './Select'
 import {
   chamberLine,
@@ -118,6 +119,11 @@ export function LawExplorer({
   const [focusFy, setFocusFy] = useState<number | null>(null)
 
   const filtered = useMemo(() => filterLaws(rows, filters), [rows, filters])
+  // One string for the visible <caption> and the scroll region's accessible
+  // name, so the two cannot drift apart (#71).
+  const lawTableCaption = 'All 23 major deficit-moving laws, 1997 to 2025'
+  const scroll = useScrollableRegion(lawTableCaption)
+
   const sorted = useMemo(() => {
     const copy = [...filtered]
     copy.sort((a, b) => {
@@ -381,9 +387,9 @@ export function LawExplorer({
           . Clear a filter to see the other {rows.length}.
         </p>
       ) : (
-        <div className="law-table-scroll">
+        <div className="law-table-scroll" {...scroll}>
           <table className="law-table">
-            <caption>All 23 major deficit-moving laws, 1997 to 2025</caption>
+            <caption>{lawTableCaption}</caption>
             <thead>
               <tr>
                 <th scope="col">Law</th>
