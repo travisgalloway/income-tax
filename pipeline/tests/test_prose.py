@@ -398,9 +398,12 @@ def test_prose_contract_has_a_numbered_rubric():
 REPORT_PAGES = ("index.html", "economy/index.html", "households/index.html", "government/index.html")
 
 #: Jaccard overlap of number tokens at or above which a standfirst counts as having pre-empted its
-#: finding. Deliberately loose: the highest passing section today is `economy#growth-shadow` at
-#: 0.429, so the margin is one section wide. A threshold with no headroom is a threshold that fires
-#: on every honest edit and gets raised until it means nothing.
+#: finding. Deliberately loose: it was set at 0.5 with the highest passing section, then
+#: `economy#growth-shadow`, at 0.429. #53's Criterion 2 pass took the whole distribution down, and
+#: the highest today is `households#a-century-of-brackets` at 0.222. The ceiling is deliberately
+#: left where it was: it is Criterion 1's rule, not Criterion 2's, and tightening it to fit the
+#: prose that happens to exist is how a threshold with no headroom starts firing on every honest
+#: edit and gets raised until it means nothing.
 PREEMPTION_CEILING = 0.5
 
 #: Words that name the drawing rather than the subject. Word-boundary, case-insensitive.

@@ -90,7 +90,7 @@ sentence. Enforced by `test_no_prose_string_contains_an_em_dash_or_a_double_hyph
 `src/pages/households/index.astro:122`, "The bracket COUNT is a policy choice". Fail:
 `src/pages/households/index.astro:134`, "Surtaxes ARE folded into the published top rate". Fail, in a
 figure note, `src/pages/households/index.astro:159`, "it INCLUDES PAYROLL TAX". Pass:
-`src/pages/government/index.astro:443` and `src/pages/government/index.astro:450`, which put the
+`src/pages/government/index.astro:448` and `src/pages/government/index.astro:455`, which put the
 emphasis on a `<strong>` noun phrase, and `src/pages/households/index.astro:262`, which does the same
 for a numbered limit. Enforced by `test_no_prose_string_shouts`.
 
@@ -137,7 +137,7 @@ makes two claims joined by "and". Not mechanically enforced. Criterion 2 owns it
 **A chart's `aria-label` is prose, and it is the finding.** The `<figure>`'s name and the `<svg>`'s
 name are deliberately the same sentence per `docs/contracts/accessibility.md`, so a convention that
 moves one must move both, in the same commit. The label is additionally bound by
-`pipeline/tests/test_accessibility.py:283-300`: a digit, at least 40 characters, no leading shape
+`pipeline/tests/test_accessibility.py:284-306`: a digit, at least 40 characters, no leading shape
 word, and never "chart showing". Pass: `src/pages/economy/index.astro:127`. Fail:
 `src/components/islands/StatutoryVsEffective.tsx:97`, which is a ` -- ` violation *inside* an
 accessible name, and is the reason `dist/households/index.html` carries more banned dashes than its
@@ -164,7 +164,7 @@ replacement per grammatical job, so remediation is a mechanical pass and not thi
 | Job | Live example | Replacement |
 |---|---|---|
 | parenthetical aside | `src/pages/economy/index.astro:288` | comma pair; parentheses where the aside is itself a list, as it is there |
-| amplifying clause | `src/pages/government/index.astro:424` | colon, or a full stop and a new sentence |
+| amplifying clause | `src/pages/government/index.astro:429` | colon, or a full stop and a new sentence |
 | appositive gloss | `src/pages/households/index.astro:145-146` | comma pair |
 | generated readout separator | `src/components/islands/BudgetChart.tsx:84` | full stop. The readout's other fields are already separated by ". ", so one template edit clears all 31 labels |
 
@@ -195,7 +195,7 @@ Four scoping decisions, each stated so that no future issue has to litigate a gr
 
 **All-caps is reserved for the `.kicker` role and banned in body copy and figure notes.** The
 replacement is `<strong>` on the load-bearing noun phrase, which the pages already do well at
-`src/pages/government/index.astro:443`, `src/pages/government/index.astro:450` and
+`src/pages/government/index.astro:448`, `src/pages/government/index.astro:455` and
 `src/pages/households/index.astro:262`, or a recast that puts the emphasis where the word order puts
 it.
 
@@ -276,7 +276,7 @@ have needed a class added to `src/components/Figure.astro` purely to express the
 **A `.finding` and its chart `aria-label` move together.** They are deliberately the same sentence
 per `docs/contracts/accessibility.md`. A C-issue that edits a finding and not its label breaks the
 accessibility contract silently, and the label must still satisfy
-`pipeline/tests/test_accessibility.py:283-300` afterwards: a digit, at least 40 characters, no
+`pipeline/tests/test_accessibility.py:284-306` afterwards: a digit, at least 40 characters, no
 leading shape word.
 
 ## Rubric
@@ -295,10 +295,10 @@ summarises the chart the reader has not seen yet, so the figure arrives as evide
 rather than as an answer to a question. **Cited by #52.**
 
 **The mechanical half.** Four positional and textual facts, over the four report routes' built
-pages. **Enforced by** `pipeline/tests/test_prose.py:464`, `:483`, `:502` and `:526`: a
+pages. **Enforced by** `pipeline/tests/test_prose.py:473`, `:492`, `:511` and `:535`: a
 `.standfirst` before the section's first `<figure>`; a `.prose` after its **last** `</figure>`; a
 standfirst whose number tokens overlap its finding's by less than `PREEMPTION_CEILING`
-(`pipeline/tests/test_prose.py:398`, 0.5) on Jaccard, because a standfirst quoting the finding's
+(`pipeline/tests/test_prose.py:407`, 0.5) on Jaccard, because a standfirst quoting the finding's
 exact figures posed no question; and no `<h2>` containing a word from `CONSTRUCTION_WORDS`. Scope is
 structural, with no exemption list anywhere: a section is asked the first two questions **because it
 carries a `<figure>`**, which is what silently and correctly discharges the three Limits sections
@@ -320,16 +320,16 @@ could falsify against the figure? **Pass:** `src/pages/economy/index.astro:117-1
 standfirst rounds and orients and the finding gives the unrounded values and the comparison between
 them. **Fail:** a finding that restates the standfirst, or that joins two claims with "and". Bound by
 the pairing rule in **Drift and quoted material**: a finding edit moves the matching `aria-label` in
-the same commit, and the label stays inside `pipeline/tests/test_accessibility.py:283-300`.
+the same commit, and the label stays inside `pipeline/tests/test_accessibility.py:284-306`.
 **Cited by #53.**
 
 **The mechanical half.** Four facts about every `.finding` on the four report routes, and about
-the standfirst beside it. **Enforced by** `pipeline/tests/test_prose.py:650`, `:676`, `:710` and
-`:735`: no standfirst and finding share a number token that is not a four-digit calendar year (the
+the standfirst beside it. **Enforced by** `pipeline/tests/test_prose.py:654`, `:680`, `:714` and
+`:739`: no standfirst and finding share a number token that is not a four-digit calendar year (the
 year is exempt as a regex class, not as a list, because a standfirst says over what window and a
 finding says when, so both name the same years by construction); every finding and every
 `figure.figure` accessible name clears the finding-shape floor; no finding runs past
-`FINDING_CHARS_MAX` (`pipeline/tests/test_prose.py:625`, 220 characters, with the longest surviving
+`FINDING_CHARS_MAX` (`pipeline/tests/test_prose.py:629`, 220 characters, with the longest surviving
 finding at 193); and each section carries at most one finding, immediately after its standfirst and
 before its first figure. The floor is `finding_shape_problems` at
 `pipeline/tests/test_accessibility.py:284`, extracted from `test_every_chart_svg_states_a_finding`
@@ -397,7 +397,7 @@ them? **Pass:** a reworded paragraph whose registered figure is unchanged, whose
 untouched, and whose finding and `aria-label` moved together. **Fail:** any one of the three moved
 alone. Cross-cutting, and **cited by all six** C-issues. Its surfaces are
 `pipeline/curated/prose_figures.yaml`, `src/components/Figure.astro:45-46` and
-`src/components/Figure.astro:61`, and `pipeline/tests/test_accessibility.py:283-300`.
+`src/components/Figure.astro:61`, and `pipeline/tests/test_accessibility.py:284-306`.
 
 ### How a C-issue lands its criterion
 
@@ -442,7 +442,7 @@ docs are most of the diff.
 | 4 | **#59** | `src/content/glossary/` (23 entries), `src/components/Term.astro`, and each route's first use of each term. Owns any move of `REGISTERED_INITIALISMS` onto the glossary |
 | 5 | **#60** | `.prose` bodies and `.figure-caveat` notes across all three routes, plus the Government route's section 12 limits block |
 | 6 | **#61** | The closing paragraph of each section and the terminal section of each route: Economy section 6, Households section 7, Government section 12 |
-| 7 | all six | `pipeline/curated/prose_figures.yaml`, `src/components/Figure.astro:45-46` and `src/components/Figure.astro:61`, and `pipeline/tests/test_accessibility.py:283-300` |
+| 7 | all six | `pipeline/curated/prose_figures.yaml`, `src/components/Figure.astro:45-46` and `src/components/Figure.astro:61`, and `pipeline/tests/test_accessibility.py:284-306` |
 
 Two surfaces no C-issue can reach, each filed and each named beside the baseline entries it owns:
 
@@ -457,7 +457,7 @@ Two surfaces no C-issue can reach, each filed and each named beside the baseline
 
 One row per `<section id>` on the four report routes, twenty-nine of them. The question is a
 reviewer's one-line paraphrase of what the section's kicker, heading and standfirst pose before the
-reader meets a chart. `pipeline/tests/test_prose.py:588` asserts this table's `Route` and
+reader meets a chart. `pipeline/tests/test_prose.py:589` asserts this table's `Route` and
 `Section id` set **equals** the set built from `dist/`, so a section cannot ship without declaring
 its question and a deleted section cannot leave its judgement behind. What the test asserts is the
 **coverage**, never the wording: whether the paraphrase is honest, and whether the closing prose
@@ -505,7 +505,7 @@ is the structural scope of rule 2 above, and it is why this contract has no exem
 One row per `.finding` on the four report routes, twenty-two of them. `The one claim it makes` is a
 reviewer's paraphrase of the single thing the finding asserts; `Checkable against` names the figure
 whose `<details>` table settles it, which is where the two-figure sections are discharged, because a
-finding cannot be checkable against both. `pipeline/tests/test_prose.py:774` asserts this table's
+finding cannot be checkable against both. `pipeline/tests/test_prose.py:778` asserts this table's
 `Route` and `Section id` set **equals** the set of sections carrying a finding in `dist/`. What the
 test asserts is the coverage, never the wording: whether the paraphrase is honest, and whether the
 finding really states one claim rather than two, is Checklist item 9.
@@ -526,6 +526,17 @@ again, not an exemption.
 | /households | statutory-vs-effective | The rate the top 1% actually paid moved far less than the statutory rate above it | `statutory-vs-effective` | Pass |
 | /households | who-pays | The top 1% paid a share of the income tax close to twice its share of income | `who-pays`, the first of the section's two figures; `top1-share` answers a different question and the finding does not claim it | Pass |
 | /households | the-bill-you-do-not-see | In aggregate the individual income tax is the larger of the two federal bills on a wage | `payroll-bill` | Pass |
+| /government | forty-trillion | Gross debt doubled over the ten fiscal years to August 2026 | `debt`, nominal series | Pass |
+| /government | who-holds-it | Four fifths of the gross debt is owed to the public rather than to the government itself | `debt-holders` | Pass |
+| /government | how-old | Average maturity is 71 months, with roughly a third of the stock maturing inside a year | `debt-maturity` | Pass |
+| /government | whole-budget | FY2025 spent $1.78 trillion more than it took in | `whole-budget` | Pass |
+| /government | structural-gap | Across the 31 years outlays averaged about four points of GDP above revenue | `structural-gap` | Pass |
+| /government | what-congress-votes-on | Over three decades the shift in the budget's shape was mandatory's, not discretionary's or net interest's | `voted-and-not` | Pass |
+| /government | net-interest | The 31 years of net interest come to 39% of the deficits run in them | `net-interest` | Pass |
+| /government | the-laws | Cross-party laws outweigh every party-line law combined, on both count and score | `law-explorer` | Pass |
+| /government | passed-signed | Both attributions of the scored cost total the same $16.75 trillion | `attribution`, whose table carries both columns' totals | Pass |
+| /government | where-money-comes-from | Over three decades the revenue mix tilted toward the individual income tax and away from payroll and corporate tax | `revenue`, the first of the section's two figures; `oecd` is an international comparison the finding does not claim | Pass |
+| /government | by-state | More states receive more federal spending per person than they pay in federal tax than the reverse | `state-give-get`, the first of the section's two figures; `state-tax-mix` is a different question | Pass |
 
 ## Checklist — status per item
 

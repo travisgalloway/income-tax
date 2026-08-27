@@ -874,3 +874,24 @@ time. Appended to, never rewritten. None of these have been acted on.
   mis-count by one per route. #52's checks read standfirsts only from inside a section node and are
   unaffected. Recorded because the assumption is easy to make. Found while writing the Criterion 1
   section extractor. Severity: latent assumption, non-blocking.
+- [2026-08-26] `src/pages/government/index.astro:64`, `:98`, `:165` and `:400` are four
+  `<Figure ariaLabel>` props that are not their section's finding. #53 had a mechanical reason to
+  touch only one of them, `:135`, which failed the finding-shape floor outright by opening "Chart
+  showing". The other four clear the floor and still say something other than the finding printed
+  beside them, which no check reaches: `docs/contracts/prose.md` Checklist item 3 is exactly this
+  reading and it is marked NOT EXECUTED. Reconciling label and finding across all 25 figures is
+  Criterion 7 and human-judged. Found while extending the floor to `figure.figure` names for #53.
+  Severity: accessibility prose divergence, non-blocking.
+- [2026-08-26] `src/components/islands/StatutoryVsEffective.tsx:97` builds the `svg.chart`
+  accessible name for the same figure whose `figure.figure` name #53 rewrote, so the two now carry
+  different sentences for one chart. #53 moved only the `<Figure ariaLabel>` prop, which is the
+  page's to edit; the island template is #102's, and it also carries the ` -- ` baselined as
+  `households/index.html|aria-label:svg|...`. The gap predates #53 and #53 neither closes nor
+  widens it. Found while moving the finding for `households#statutory-vs-effective`. Severity:
+  duplicate accessible names disagreeing, non-blocking.
+- [2026-08-26] The `/` intro's four sections carry no `.finding` and no `<figure>`, so no Criterion
+  2 check reaches them and they contribute no row to the Criterion 2 audit table. That is the
+  structural scope working as designed. What it leaves open is a design question rather than a
+  prose one: whether the front door should make any checkable claim at all, or whether its job is
+  purely to route a reader onward. Nobody's issue today. Found while deriving Criterion 2's scope
+  for #53. Severity: design question, non-blocking.
