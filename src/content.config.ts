@@ -1,6 +1,6 @@
 import { defineCollection, z } from 'astro:content'
 import { glob } from 'astro/loaders'
-import { REGISTER_KEYS, sourceLine } from './data/source-register'
+import { REGISTER_KEYS, sourceLine, sourceLinks } from './data/source-register'
 
 /** SOURCES.md is the repository's reference document and lives at the root, where the pipeline
  *  and the brief both point at it. A glob loader renders it in place rather than copying it into
@@ -34,7 +34,9 @@ export const collections = {
        *  failure. The `.transform` keeps this the ONLY module that touches the register, so
        *  `glossary.astro` stays register-unaware and no island can pull `node:fs` into a
        *  bundle. `text` is the register's `registered_as` verbatim, joined by "; " — the one
-       *  prose copy of a source stays in `SOURCES.md`. */
+       *  prose copy of a source stays in `SOURCES.md`. `links` carries the same citations
+       *  followable, with each source's tier (#57): an addition beside `text`, never a
+       *  replacement for it, so the verbatim line is still the line. */
       source: z
         .array(
           z.enum(REGISTER_KEYS as [string, ...string[]], {
@@ -53,7 +55,7 @@ export const collections = {
             'whose citation the reader cannot trace to /sources (#50). source is a list of ' +
             'pipeline/curated/sources.yaml registry keys.',
         })
-        .transform((keys) => ({ keys, text: sourceLine(keys) })),
+        .transform((keys) => ({ keys, text: sourceLine(keys), links: sourceLinks(keys) })),
       /** Sibling term ids. Zod cannot see sibling entries, so a dangling value is caught by a
        *  build-time throw on the page, not here. */
       see_also: z.array(z.string()).default([]),

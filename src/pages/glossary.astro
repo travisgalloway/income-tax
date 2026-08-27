@@ -116,6 +116,16 @@ const sections = groups.map((g) => ({ id: g.id, label: g.letter }))
               <p class="glossary-long">{entry.data.long}</p>
               <p class="glossary-meta">
                 <span class="term-source"><span class="lead">Source.</span> {entry.data.source.text}</span>
+                <span class="term-follow">
+                  <span class="lead">Follow.</span>{' '}
+                  {entry.data.source.links.map((s, i) => (
+                    <>
+                      {i > 0 && ' · '}
+                      {s.href ? <a href={s.href} rel="noopener">{s.text}</a> : <span>{s.text}</span>}
+                      <span class="source-tier"> ({s.tier})</span>
+                    </>
+                  ))}
+                </span>
                 {entry.data.see_also.length > 0 && (
                   <span class="glossary-see-also">
                     <span class="lead">See also.</span>{' '}

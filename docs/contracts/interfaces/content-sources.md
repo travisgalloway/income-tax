@@ -75,12 +75,14 @@ skipped because its output was not in the tier reads exactly like a check that p
 The file has two blocks:
 
 - `registry` — one entry per cited source: `registered_as` (a string that must appear in
-  `SOURCES.md`), `cited_as` (one string, or several, that may appear in an `_meta.source`), and
+  `SOURCES.md`), `cited_as` (one string, or several, that may appear in an `_meta.source`),
+  `tier` and `url`/`url_exempt` (see §"A source states what kind of source it is" below), and
   the optional `cited_in_prose_only: true`.
 - `outputs` — one entry per published output: `cites` (register keys) and `source_shape`, that
   output's `_meta.source` vintage-normalized with every citation replaced by its `{key}`.
 
-Four rules, each a named failure:
+Nine rules, each a named failure. All nine live in `check_sources`, which `run()` calls
+**unconditionally**; there is no second call site and no `if` in front of any of them.
 
 | | Rule | Catches |
 |---|---|---|
@@ -88,6 +90,11 @@ Four rules, each a named failure:
 | **B** | every `registered_as` appears in `SOURCES.md` | **the #39 defect** — a cited source absent from `/sources` |
 | **C** | every register entry is cited by some output **or by some glossary term**, or is `cited_in_prose_only` | an orphan entry left behind by a rename, or by the deletion of the last term citing a definitional-only source |
 | **D** | the recomputed shape equals the stored `source_shape` exactly | a source **added** to `_meta.source` and never registered — the case B cannot see, because the register does not know the new source exists |
+| **E** | no name in `not_a_source` appears anywhere in `src/data/*.json` | an outlet's paraphrase sourcing an emitted value (#54) |
+| **F** | every entry states a `tier` from the five-term vocabulary | a source added with no stated kind, or a typo'd tier |
+| **G** | every entry has a well-formed `https://` `url`, **or** a non-empty written `url_exempt` reason | an unfollowable source line; an exemption used as a silent skip |
+| **H** | `tier: secondary` ⟹ a written `justification`; `tier: compilation` ⟹ `compiled_from`, every element a real register key | a secondary source slipped in unargued; a compilation passed off as a source in its own right |
+| **I** | the composed lead-in `"{registered_as}** — {tier}"` **and** the `url` appear in `SOURCES.md` | the tier or the link on the page drifting from the register |
 
 Three rules that are not negotiable when editing any of this:
 
@@ -119,12 +126,51 @@ Adding an output without adding its `outputs` entry fails the build.
 `src/data/*.json`, so neither an unregistered new output nor an orphan entry left by a rename can
 keep the count whole.
 
-**What this register is not (#57).** It makes the register **complete** — every cited source is
-in `SOURCES.md`. It does not make it **navigable**. Source *tiers* (primary / derived /
-cited-never-ingested) as a reader-facing taxonomy, the format of a `<Figure>`'s "Source:" line,
-and anchor links from that line into `/sources` are #57's scope and are deliberately absent here.
-`cited_in_prose_only` is a build-gate exemption flag, not a tier: do not read it as one, and do
-not grow it into one without #57.
+## A source states what kind of source it is, and where a reader goes next (#57)
+
+**Every register entry carries a `tier` and a `url`.** Rules F–I above are the gate. The tier
+vocabulary is five terms, and it is closed — a sixth is a change to `validate.SOURCE_TIERS`, to
+this table, and to the `_comment:` block in `sources.yaml`, together:
+
+| Tier | Means | Carried by |
+|---|---|---|
+| `primary` | the body that produced the data publishes it | the CBO, Treasury, IRS, Census, OECD, USASpending and House Clerk entries; `statutory_rate_schedules` |
+| `official republication` | an official redistributor carries another agency's series unaltered | `fred_cpiaucns`, `census_via_fred`, `jec_debt_update`, `crs_party_control` |
+| `scholarly republication` | an academic or institutional publication of, or derived directly from, a primary record, traceable back to it | `voteview`, `rockefeller_bop` |
+| `compilation` | assembled from named primary sources; not a source in its own right. Requires `compiled_from:` | `tax_foundation_rates`, `peterson_foundation` |
+| `secondary` | anything else. Requires a written `justification:` | **nothing today, and that is the point** — the term exists so the next one cannot be added silently |
+
+**`scholarly republication` is why the vocabulary is five terms and not the three #57's body
+proposed.** Voteview is not official — it is not the House Clerk — and it is not secondary: it
+republishes the primary roll-call record, and the join it feeds is regressed against the Clerk's
+independently published record for PL 115-97, which fails the build if it drifts. A vocabulary
+whose only word for it was `secondary` would be the wrong vocabulary, and the issue says so.
+
+**`compilation` makes #55's argument machine-readable.** That the Tax Foundation CSV is "a
+compilation of IRS SOI Historical Table 23 and IRS Revenue Procedures rather than a source in its
+own right" was stated in prose, once, inside one `_meta.source` string, where no check could read
+it. `compiled_from: [irs_soi_table_23, irs_revenue_procedures]` says it in a field rule H reads.
+
+**`cited_in_prose_only` is still a build-gate exemption flag and is still not a tier.** Do not
+read it as one and do not grow it into one. `peterson_foundation` and `rockefeller_bop` each carry
+a `tier` **as well as** the flag; the flag exempts them from rules C and D and from nothing else.
+
+**A source's URL and tier originate in the register and are resolved at build time; neither is
+ever hand-typed under `src/`.** This is stricter than "the URL comes from `_meta`": the URL lives
+in the one curated register, rule I pins it to `SOURCES.md`, and `src/data/source-register.ts`
+resolves it for every render site. Where no single URL is truthful — `crs_party_control` names
+three separate archives, `statutory_rate_schedules` is a derivation rather than a document — the
+entry carries `url_exempt: <written reason>`, never a bare bool and never an invented URL.
+
+**`/sources` does NOT derive its source list from `_meta`, and that is a decision, not an
+omission.** The page renders `SOURCES.md` in full, as it always has; the tier is **written into
+`SOURCES.md`** and gated against the register by rule I. So a source added to the register does
+not appear on `/sources` by side effect — it appears because someone wrote its block, and rule B
+fails the build until they do. #39's two additions, `irs_soi_table_5` and `census_stc`, needed no
+work here for exactly that reason: both were already registered and already passing rule B
+(`SOURCES.md`, the State give-and-get section). The alternative — deriving the page from `_meta` —
+would mean parsing `SOURCES.md` out of, or replacing it with generated prose, and both break the
+never-parse-out invariant above.
 
 ## A glossary term's `source` is a reference into the register (#50)
 
@@ -177,9 +223,13 @@ and `median`, `(published January 2026)` on `effective-rate` and `incidence`, `p
 marginal rate` on `marginal-rate`, and the `voteview.com/data` file list on `roll-call-vote` no
 longer appear on the term's line. Every one of them is in that source's `SOURCES.md` block. Keeping
 them would have meant a free-text field beside the key — the second copy, reintroduced through a
-side door. Making the line **followable**, so a reader reaches the qualifier in one click, is #57's
-job and is deliberately not half-done here: `/glossary` still carries zero external hyperlinks and
-no source-tier vocabulary.
+side door. Making the line **followable**, so a reader reaches the qualifier in one click, was #57's
+job, and #57 has done it: each key on a term's line now renders as a link to that source's
+registered `url`, resolved from the register at build time by `sourceLinks()`. The `text` field is
+unchanged and still renders verbatim beside the links — the links are an addition to the line, not
+a replacement for it, so nothing about "the register's own string is the only thing printed"
+weakens. `/glossary`'s "zero external hyperlinks" boundary is therefore lifted, deliberately and
+by the issue that #50 named as the one that would lift it.
 
 ## §12 — "What this cannot tell you" (`id="limits"`, `src/pages/government/index.astro`)
 

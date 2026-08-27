@@ -6,25 +6,34 @@ material gets challenged.
 
 ---
 
-## Primary
+## The sources
 
-**Congressional Budget Office, Historical Budget Data, February 2026**
-`github.com/US-CBO/cbo-data` → `data/budget/historical_budget/annual_fy_2026-02.csv`
+Each lead-in below names the source, then what KIND of source it is. The tier is not
+prose: it is written on the register entry at `pipeline/curated/sources.yaml`, and
+`check_sources` rule I fails the build if the two disagree. The five terms are
+**primary** (the body that produced the data publishes it), **official republication**
+(an official redistributor carries another agency's series unaltered), **scholarly
+republication** (an academic or institutional publication of a primary record,
+traceable back to it), **compilation** (assembled from named primary sources; not a
+source in its own right) and **secondary** (anything else, and it must be argued).
+
+**Congressional Budget Office, Historical Budget Data, February 2026** — primary
+[github.com/US-CBO/cbo-data](https://github.com/US-CBO/cbo-data) → `data/budget/historical_budget/annual_fy_2026-02.csv`
 Outlays by category, revenues by source, deficits, debt held by the public, all
 in nominal dollars and as a share of GDP, FY1962 onward. Machine-readable.
 Used for: sections 4, 5, 6, 7, 10.
 
-**Congressional Budget Office, Historical Economic Data, February 2026**
-Same repo, `data/economic/historical_economic/annual_fy_2026-02.csv`
+**Congressional Budget Office, Historical Economic Data, February 2026** — primary
+Same repo, [github.com/US-CBO/cbo-data](https://github.com/US-CBO/cbo-data) → `data/economic/historical_economic/annual_fy_2026-02.csv`
 GDP price index, used to deflate every nominal series to FY2025 dollars.
 
-**Congressional Budget Office, Estimates of Automatic Stabilizers, November 2024**
+**Congressional Budget Office, Estimates of Automatic Stabilizers, November 2024** — primary
 Same repo, `data/budget/automatic_stabilizers/annual_fy_2024-11.csv`
 Cyclical component of the deficit. Note the vintage: FY2025 is a projection in
 this file, not an actual.
 
-**US Treasury, Historical Debt Outstanding and Debt to the Penny**
-`fiscaldata.treasury.gov`
+**US Treasury, Historical Debt Outstanding and Debt to the Penny** — primary
+[fiscaldata.treasury.gov/datasets/debt-to-the-penny/debt-to-the-penny](https://fiscaldata.treasury.gov/datasets/debt-to-the-penny/debt-to-the-penny)
 Total public debt outstanding at fiscal year end, and the daily series.
 $40 trillion first closed above the threshold on 18 August 2026 at $40.047
 trillion, and was reported the following day, 19 August 2026. Debt to the
@@ -32,7 +41,8 @@ Penny publishes a date's closing balance on the next business day, so these
 are one event, not two figures. Debt to the Penny stood at $39.89T on
 7 August 2026 and $39.84T on 30 July.
 
-**US Treasury, Monthly Statement of the Public Debt**
+**US Treasury, Monthly Statement of the Public Debt** — primary
+[fiscaldata.treasury.gov/datasets/monthly-statement-public-debt/summary-of-treasury-securities-outstanding](https://fiscaldata.treasury.gov/datasets/monthly-statement-public-debt/summary-of-treasury-securities-outstanding)
 Instrument composition of marketable debt, May 2026 statement.
 `api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/debt/mspd/mspd_table_1`,
 machine-readable and fetched directly. Bills $6.76T (22%), notes $15.94T, bonds
@@ -44,22 +54,24 @@ editorial act, not a refresh. Until #56 these figures were curated constants
 credited to the Peterson Foundation, and the total among them read $28.0T —
 which is bills plus notes plus bonds, not the marketable total.
 
-**US Treasury, Treasury International Capital**
+**US Treasury, Treasury International Capital** — primary
 Major Foreign Holders of Treasury Securities, November 2025 release.
-`ticdata.treasury.gov/Publish/mfhhis01.txt`, machine-readable and fetched
-directly. Japan $1,202.7B, UK $879.8B, China $683.9B. Revised monthly; the
+[ticdata.treasury.gov/Publish/mfhhis01.txt](https://ticdata.treasury.gov/Publish/mfhhis01.txt),
+machine-readable and fetched directly. Japan $1,202.7B, UK $879.8B, China $683.9B. Revised monthly; the
 pinned release month is recorded in `debt_holders._meta.provenance.vintage` and
 moving it is an editorial act, not a refresh.
 
-**OECD, Revenue Statistics 2025, United States country note**
+**OECD, Revenue Statistics 2025, United States country note** — primary
+[oecd.org/en/data/datasets/global-revenue-statistics-database.html](https://www.oecd.org/en/data/datasets/global-revenue-statistics-database.html)
 2024 preliminary. US 25.6% of GDP, OECD average 34.1%, US ranked 31st of 38.
 Counts all levels of government.
 
-**IRS, Statistics of Income, individual tables by tax rate and income percentile, tax year 2023**
+**IRS, Statistics of Income, individual tables by tax rate and income percentile, tax year 2023** — primary
+[irs.gov/statistics/soi-tax-stats-individual-statistical-tables-by-tax-rate-and-income-percentile](https://www.irs.gov/statistics/soi-tax-stats-individual-statistical-tables-by-tax-rate-and-income-percentile)
 Shares of AGI and of income tax paid by percentile group.
 
-**Tax Foundation income-tax-rates dataset**
-`github.com/TaxFoundation/data` → `income-tax-rates/income-tax-rates.csv`
+**Tax Foundation income-tax-rates dataset** — compilation
+[github.com/TaxFoundation/data](https://github.com/TaxFoundation/data) → `income-tax-rates/income-tax-rates.csv`
 The statutory bracket ladder by filing status, 1913–2019. It is a **compilation**
 of IRS SOI Historical Table 23 and the IRS Revenue Procedures, not an independent
 source: every number in it is a federal one, reorganised into per-bracket rows.
@@ -77,8 +89,8 @@ the best available machine-readable form of data the government produced, and th
 derivation is stated here rather than left in a script. The probe, with its URLs and
 byte counts, is in `docs/contracts/interfaces/bracket-history-data.md`.
 
-**IRS SOI Historical Table 23** and the **IRS Revenue Procedures**
-`irs.gov/pub/irs-soi/histab23.xls` — "U.S. Individual Income Tax: Personal
+**IRS SOI Historical Table 23** — primary, and the **IRS Revenue Procedures** — primary
+[irs.gov/pub/irs-soi/histab23.xls](https://www.irs.gov/pub/irs-soi/histab23.xls) — "U.S. Individual Income Tax: Personal
 Exemptions and Lowest and Highest Bracket Tax Rates, and Tax Base for Regular Tax,
 Tax Years 1913–2018". Table 23 is where the published top marginal rate comes from,
 and since August 2026 it is checked rather than merely cited: its highest-bracket
@@ -88,39 +100,51 @@ top-rate series disagrees with it. All 106 overlapping years, 1913–2018, agree
 the digit. Table 23 stops at 2018 and is a legacy `.xls`; it is the envelope of the
 bracket ladder, never the ladder itself.
 
-Revenue Procedures 2018-57 through 2024-40, and PL 115-97 behind them, carry the
+Revenue Procedures 2018-57 through 2024-40, published in the Internal Revenue
+Bulletin ([irs.gov/irb](https://www.irs.gov/irb)), and PL 115-97 behind them, carry the
 2019–2025 schedules and the 37% top rate for those years — past where Table 23
 reaches. They are hand-transcribed into `pipeline/curated/brackets_modern.yaml`
 because no machine-readable feed publishes them; 2019 is transcribed too but used
 only as a regression check against the fetched CSV, which stays authoritative for
 that year.
 
-**Statutory rate schedules**
+**Statutory rate schedules** — primary
+No single link: this is the bracket ladder assembled here, read as a top-rate series,
+and any one URL would point at one of its inputs and claim to be the whole.
 The bracket ladder above, read as a top-rate series. The statute's nominal top
 bracket and the published top rate disagree in twelve years, where a credit,
 surtax or part-year rate change moved the published figure; both numbers are
 kept, and the reconciliation is in `pipeline/curated/bracket_adjustments.yaml`.
 
-**FRED CPIAUCNS**
-`fred.stlouisfed.org` CPI-U, all urban consumers, not seasonally adjusted,
+**FRED CPIAUCNS** — official republication
+[fred.stlouisfed.org/series/CPIAUCNS](https://fred.stlouisfed.org/series/CPIAUCNS).
+FRED carries the BLS series unaltered: the deflator is BLS's, the machine-readable
+feed is FRED's. CPI-U, all urban consumers, not seasonally adjusted,
 averaged to a calendar year. The deflator behind every constant-dollar bracket
 threshold. Averaged, not sampled: taking a December observation for the year is
 a different series and would move every real threshold.
 
-**Census Bureau, via FRED**
-`MEHOINUSA672N` real median household income in 2024 dollars, 1984–2024.
-`GINIALLRF` family Gini index, 1947–2024.
+**Census Bureau, via FRED** — official republication
+[MEHOINUSA672N](https://fred.stlouisfed.org/series/MEHOINUSA672N) real median household
+income in 2024 dollars, 1984–2024.
+[GINIALLRF](https://fred.stlouisfed.org/series/GINIALLRF) family Gini index, 1947–2024.
 
-**CBO, The Distribution of Household Income, 2022** (published January 2026)
+**CBO, The Distribution of Household Income, 2022** — primary (published January 2026)
+[cbo.gov/topics/income-distribution](https://www.cbo.gov/topics/income-distribution)
 Top 1% share of income before transfers and taxes: 9% in 1979, 18% in 2022.
 
-**CBO and Joint Committee on Taxation cost estimates**
+**CBO and Joint Committee on Taxation cost estimates** — primary
+[cbo.gov/cost-estimates](https://www.cbo.gov/cost-estimates)
 Ten-year scores for each of the 23 laws, as estimated at enactment.
 
-**Joint Economic Committee, monthly debt update, August 2026**
-Average maturity of marketable debt, 71 months as of June 2026.
+**Joint Economic Committee, monthly debt update, August 2026** — official republication
+[jec.senate.gov](https://www.jec.senate.gov)
+Average maturity of marketable debt, 71 months as of June 2026. The committee
+restates a figure Treasury's Office of Debt Management computes; it is an official
+body carrying an official series, not the origin of the number.
 
-**Peter G Peterson Foundation**
+**Peter G Peterson Foundation** — compilation
+[pgpf.org](https://www.pgpf.org)
 **Sources nothing.** It supplied the instrument shares of marketable debt until
 #56, which was a compiler of the Monthly Statement of the Public Debt standing in
 for the statement; the composition is fetched from Treasury directly now. It is
@@ -129,7 +153,9 @@ discrepancies below, which is the origin of a circulating claim rather than the
 source of a published value. It is listed in `curated/sources.yaml` under
 `not_a_source:`, so it cannot appear in any emitted dataset.
 
-**Congressional Research Service and House/Senate historical records**
+**Congressional Research Service and House/Senate historical records** — official republication
+No single link: CRS's party-division tables, the House Clerk's archive and the Senate
+Historical Office publish separately, and naming one would misdescribe the other two.
 Party control of the presidency, House and Senate by Congress.
 
 ---
@@ -177,11 +203,17 @@ deficit. **If both numbers appear, explain the gap.**
 ## The counted vote splits, and what they still cannot tell you
 
 This was the dataset's weakest point and is no longer. Each of the 23 laws
-carries per-party yea and nay counts taken from Voteview roll-call records
-(`voteview.com/data`, `HSall_members.csv` joined to the per-congress roll-call
-and vote files) by `pipeline/oneshot/party_splits.py`. PL 115-97 reproduces the
-published House Clerk record on the caucus basis: House R 224–12, D 0–189;
-Senate R 51–0, D 0–48.
+carries per-party yea and nay counts taken from Voteview roll-call records by
+`pipeline/oneshot/party_splits.py`. PL 115-97 reproduces the published House
+Clerk record on the caucus basis: House R 224–12, D 0–189; Senate R 51–0, D 0–48.
+
+**Voteview roll-call records** — scholarly republication
+[voteview.com/data](https://voteview.com/data). `HSall_members.csv` joined to the
+per-congress roll-call and vote files.
+
+**House Clerk record** — primary
+[clerk.house.gov/Votes](https://clerk.house.gov/Votes). The chamber's own published
+roll call, and the independent record the Voteview join is regressed against.
 
 **Voteview is an academic republication of primary roll-call records, not a
 secondary interpretation of them, and it is not a candidate for replacement**
@@ -213,22 +245,24 @@ Government §11 compares what each state pays the federal government against wha
 Four sources were probed; two were fetched, one was rejected outright, and one is cited but never
 ingested.
 
-**IRS Statistics of Income, SOI Data Book Table 5, Gross Collections by Type of Tax and State**
-`irs.gov/pub/irs-soi/` (basename discovered per run; FY2025 fetched as `25db-1-05-co.xlsx`, 61,340
+**IRS Statistics of Income, SOI Data Book Table 5, Gross Collections by Type of Tax and State** — primary
+[irs.gov/pub/irs-soi/](https://www.irs.gov/pub/irs-soi/) (basename discovered per run; FY2025 fetched as `25db-1-05-co.xlsx`, 61,340
 bytes). Gross federal tax collections by state, classified by the filer's address. **This is
 "give."** The workbook's own note: classification by state can misattribute a corporation's tax to
 its principal office and a border employer's withholding to the wrong side of a state line.
 
-**USASpending.gov, `POST /api/v2/search/spending_by_geography/`** Keyless, no API key required.
-Queried for the same fiscal-year window the IRS vintage covers (FY2025: 2024-10-01 to 2025-09-30),
+**USASpending.gov** — primary
+[www.usaspending.gov](https://www.usaspending.gov), `POST /api/v2/search/spending_by_geography/`.
+Keyless, no API key required. Queried for the same fiscal-year window the IRS vintage covers (FY2025: 2024-10-01 to 2025-09-30),
 returning 57 rows: the 50 states, DC, Puerto Rico, Guam, the US Virgin Islands, the Northern
 Mariana Islands, American Samoa, and one row with an empty `shape_code` (unattributed award
 spending, recorded in `_meta.coverage.unattributed_get_b` rather than dropped). **This is "get,"**
 classified by **place of performance**, and it supplies the population denominator used for every
 per-capita figure on both sides.
 
-**US Census Bureau, Annual Survey of State Government Tax Collections (STC)**
-`www2.census.gov/programs-surveys/stc/tables/{year}/FY{year}-STC-Detailed-Table-Transposed.xlsx`,
+**US Census Bureau, Annual Survey of State Government Tax Collections (STC)** — primary
+[census.gov/programs-surveys/stc.html](https://www.census.gov/programs-surveys/stc.html);
+fetched from `www2.census.gov/programs-surveys/stc/tables/{year}/FY{year}-STC-Detailed-Table-Transposed.xlsx`,
 vintage discovered per run (resolved to FY2025 at time of writing). States are columns, tax items
 are rows keyed by Census item code; a cell of `X` means the state does not levy that tax at all
 (Alaska has no general sales tax), a fact recorded distinctly from a genuinely missing figure.
@@ -238,8 +272,9 @@ Used for the state tax-mix figure.
 `timeseries/govs` and `2023/acs/acs1`, redirected to `data/missing_key.html`. No API secret is
 introduced into this pipeline's CI.
 
-**Rockefeller Institute of Government, state balance-of-payments studies** — **Cited, never
-ingested.** Ruled 2026-08-26 (#56), in
+**Rockefeller Institute of Government, state balance-of-payments studies** — scholarly republication
+[rockinst.org/issue-area/balance-of-payments/](https://rockinst.org/issue-area/balance-of-payments/)
+**Cited, never ingested.** Ruled 2026-08-26 (#56), in
 `docs/contracts/interfaces/state-data.md`: kept as an attributed limitation. This is the authoritative balance-of-payments comparison and the honest name for what
 a reader might expect §11 to be; its published series ends at FY2022 with no machine-readable feed.
 Hand-transcribing a 50-state table from a PDF is exactly the fabrication risk this pipeline's
