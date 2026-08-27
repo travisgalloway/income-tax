@@ -110,7 +110,7 @@ export function StatutoryVsEffective({
       </div>
 
       <Chart ariaLabel={label} interactive width={W} height={H} margin={f}>
-        {(fr) => (
+        {(fr, mark) => (
           <>
             <AxisLeft frame={fr} ticks={yTicks} format={(v) => `${v}%`} label="Percent" scale={y} />
             <AxisBottom frame={fr} ticks={xTicks} format={(t) => `${t}`} label="Tax / calendar year" scale={x} />
@@ -163,7 +163,7 @@ export function StatutoryVsEffective({
                 height={ih}
                 fill={active?.y === r.y ? 'var(--ink)' : 'transparent'}
                 opacity={active?.y === r.y ? 0.06 : 0}
-                tabIndex={0}
+                {...mark()}
                 role="img"
                 aria-label={
                   `${calendarYear(r.y)}: top statutory rate ${percentRate(r.top)}` +

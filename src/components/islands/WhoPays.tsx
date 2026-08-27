@@ -58,7 +58,7 @@ export function WhoPays({ rows }: { rows: IncomeTaxGroup[] }) {
   return (
     <div ref={boxRef}>
       <Chart ariaLabel={ariaLabel} interactive width={W} height={H} margin={f}>
-        {(fr) => {
+        {(fr, mark) => {
           // The six group strings are the axis's CATEGORIES, so they cannot be
           // abbreviated without changing what the figure says. `Bottom 50%`
           // needs 68.2 units and the left gutter has 64 at the 720 preset and
@@ -136,7 +136,7 @@ export function WhoPays({ rows }: { rows: IncomeTaxGroup[] }) {
                         fill="var(--disc)"
                         stroke={isAgiActive ? 'var(--ink)' : 'none'}
                         strokeWidth={1.5}
-                        tabIndex={0}
+                        {...mark()}
                         role="img"
                         aria-label={describe(g, 'agi')}
                         onFocus={() => setActive({ g: g.g, metric: 'agi' })}
@@ -175,7 +175,7 @@ export function WhoPays({ rows }: { rows: IncomeTaxGroup[] }) {
                     fill="var(--mand)"
                     stroke={isTaxActive ? 'var(--ink)' : 'none'}
                     strokeWidth={1.5}
-                    tabIndex={0}
+                    {...mark()}
                     role="img"
                     aria-label={describe(g, 'tax')}
                     onFocus={() => setActive({ g: g.g, metric: 'tax' })}

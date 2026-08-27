@@ -13,6 +13,7 @@ import { line as d3line, curveMonotoneX } from 'd3-shape'
 import { frame as makeFrame, linear, scaleLog } from '../charts/scales'
 import { Annotation } from '../charts/Annotation'
 import { useChartSize } from '../charts/useChartSize'
+import { useRovingMarks } from '../charts/roving'
 import { TableView } from './TableView'
 import { dollars, dollarsCompact, calendarYear, percentRate } from '../charts/format'
 import { AXIS_TITLE_FONT_PX, firstThatFits, placeTickLabel, spanRoomAt } from '../charts/axisFit'
@@ -44,6 +45,7 @@ export function BracketHistory({ rows }: { rows: BracketYear[] }) {
     firstThatFits(variants, titleRoom, AXIS_TITLE_FONT_PX) ?? variants[variants.length - 1]
 
   const [focus, setFocus] = useState<number | null>(null)
+  const { groupProps, mark } = useRovingMarks()
 
   const years = rows.map((r) => r.y)
   const x = linear([Math.min(...years), Math.max(...years)], [0, innerW])
@@ -118,6 +120,7 @@ export function BracketHistory({ rows }: { rows: BracketYear[] }) {
   return (
     <div ref={boxRef}>
       <svg
+        {...groupProps}
         role="group"
         aria-label={label}
         viewBox={`0 0 ${W} ${H}`}
@@ -206,7 +209,7 @@ export function BracketHistory({ rows }: { rows: BracketYear[] }) {
               height={(panelH + GAP) * 2 + panelH}
               fill={active?.y === r.y ? 'var(--ink)' : 'transparent'}
               opacity={active?.y === r.y ? 0.08 : 0}
-              tabIndex={0}
+              {...mark()}
               role="img"
               aria-label={readout(r)}
               onFocus={() => setFocus(r.y)}

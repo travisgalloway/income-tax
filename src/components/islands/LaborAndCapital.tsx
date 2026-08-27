@@ -56,7 +56,7 @@ export function LaborAndCapital({ rows, lastActualFy }: { rows: EconomyYear[]; l
         height={H}
         margin={f}
       >
-        {(fr) => (
+        {(fr, mark) => (
           <>
             <AxisLeft frame={fr} ticks={yTicks} format={(v) => `${v.toFixed(0)}%`} label="Percent of GDP" scale={y} />
             <AxisBottom frame={fr} ticks={xTicks} format={(t) => `${t}`} label="Fiscal year" scale={x} />
@@ -84,7 +84,7 @@ export function LaborAndCapital({ rows, lastActualFy }: { rows: EconomyYear[]; l
                   width={iw / rows.length}
                   height={ih}
                   fill="transparent"
-                  tabIndex={0}
+                  {...mark()}
                   role="img"
                   aria-label={describe(r)}
                   onFocus={() => setFocus(r.y)}

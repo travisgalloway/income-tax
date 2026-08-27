@@ -97,7 +97,7 @@ function Panel({
         height={H}
         margin={f}
       >
-        {(fr) => (
+        {(fr, mark) => (
           <>
             <AxisLeft
               frame={fr}
@@ -179,7 +179,7 @@ function Panel({
                     width={iw}
                     height={rowH}
                     fill="transparent"
-                    tabIndex={0}
+                    {...mark()}
                     role="img"
                     aria-label={describe(b)}
                     onFocus={() => onActivate(b.key)}

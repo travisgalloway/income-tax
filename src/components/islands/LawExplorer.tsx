@@ -237,7 +237,7 @@ export function LawExplorer({
       </p>
 
       <Chart ariaLabel={chartAriaLabel} interactive width={W} height={H} margin={sizeMargin}>
-        {(f) => (
+        {(f, mark) => (
           <>
             <AxisLeft frame={f} ticks={yTicks} format={(v) => `${v.toFixed(0)}%`} label="Percent of GDP" scale={y} />
             <AxisBottom frame={f} ticks={xTicks} format={(t) => `FY${t}`} label="Fiscal year" scale={x} />
@@ -300,7 +300,7 @@ export function LawExplorer({
                   cy={y(r.g_de)}
                   r={9}
                   fill="transparent"
-                  tabIndex={0}
+                  {...mark()}
                   role="img"
                   aria-label={fyReadout(r)}
                   onFocus={() => setFocusFy(r.y)}

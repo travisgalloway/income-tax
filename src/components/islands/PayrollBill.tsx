@@ -95,7 +95,7 @@ export function PayrollBill({ rows }: { rows: RevenueYear[] }) {
       </div>
 
       <Chart ariaLabel={ariaLabel} interactive width={W} height={H} margin={f}>
-        {(fr) => (
+        {(fr, mark) => (
           <>
             <AxisLeft
               frame={fr}
@@ -129,7 +129,7 @@ export function PayrollBill({ rows }: { rows: RevenueYear[] }) {
                 height={ih}
                 fill={active?.y === r.y ? 'var(--ink)' : 'transparent'}
                 opacity={active?.y === r.y ? 0.08 : 0}
-                tabIndex={0}
+                {...mark()}
                 role="img"
                 aria-label={describe(r)}
                 onFocus={() => setFocus(r.y)}

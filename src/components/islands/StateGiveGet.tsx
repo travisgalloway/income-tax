@@ -16,6 +16,7 @@ import * as ToggleGroup from '@radix-ui/react-toggle-group'
 // stateGrid.ts supplies TILES (each jurisdiction's grid position) and
 // divergingFill (the non-partisan amber/stone/teal colour ramp).
 import { TILES, divergingFill } from '../charts/stateGrid'
+import { useRovingMarks } from '../charts/roving'
 import { dollars } from '../charts/format'
 import type { StateJurisdiction, StatesBalance } from '../../data/types'
 
@@ -76,6 +77,7 @@ type SortDir = 'asc' | 'desc'
 export function StateGiveGet({ data }: { data: StatesBalance }) {
   const [basis, setBasis] = useState<Basis>('per_capita')
   const [focused, setFocused] = useState<string | null>(null)
+  const { groupProps, mark } = useRovingMarks()
   const [sortKey, setSortKey] = useState<SortKey>('balance_b')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
 
@@ -150,6 +152,7 @@ export function StateGiveGet({ data }: { data: StatesBalance }) {
       </div>
 
       <svg
+        {...groupProps}
         role="group"
         aria-label={findingLabel}
         viewBox="0 0 440 320"
@@ -166,7 +169,7 @@ export function StateGiveGet({ data }: { data: StatesBalance }) {
             <g
               key={j.code}
               data-state-tile={j.code}
-              tabIndex={0}
+              {...mark()}
               role="img"
               aria-label={`${j.name}: ${describe(j, basis)}`}
               onFocus={() => setFocused(j.code)}

@@ -65,7 +65,7 @@ export function RealGdpLogScale({ rows, lastActualFy }: { rows: EconomyYear[]; l
         height={H}
         margin={f}
       >
-        {(fr) => (
+        {(fr, mark) => (
           <>
             <AxisLeft
               frame={fr}
@@ -113,7 +113,7 @@ export function RealGdpLogScale({ rows, lastActualFy }: { rows: EconomyYear[]; l
                   width={iw / rows.length}
                   height={ih}
                   fill="transparent"
-                  tabIndex={0}
+                  {...mark()}
                   role="img"
                   aria-label={describe(r)}
                   onFocus={() => setFocus(r.y)}

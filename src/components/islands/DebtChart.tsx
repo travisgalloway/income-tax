@@ -82,7 +82,7 @@ export function DebtChart({ rows }: { rows: DebtYear[] }) {
       </div>
 
       <Chart ariaLabel={label} interactive width={W} height={H} margin={f}>
-        {(fr) => (
+        {(fr, mark) => (
           <>
             <AxisLeft
               frame={fr}
@@ -137,7 +137,7 @@ export function DebtChart({ rows }: { rows: DebtYear[] }) {
                 cy={y(get(r))}
                 r={active?.y === r.y ? 5 : 9}
                 fill={active?.y === r.y ? 'var(--ink)' : 'transparent'}
-                tabIndex={0}
+                {...mark()}
                 // NOT role="button": focusing a point reveals its value, it does
                 // not activate anything. Announcing it as pressable would promise
                 // an action that does not exist.

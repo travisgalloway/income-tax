@@ -69,7 +69,7 @@ export function OecdChart({ data }: { data: OecdComparison }) {
   return (
     <div ref={boxRef}>
       <Chart ariaLabel={chartLabel} interactive width={W} height={H} margin={margin}>
-        {(fr) => (
+        {(fr, mark) => (
           <>
             <AxisBottom
               frame={fr}
@@ -107,7 +107,7 @@ export function OecdChart({ data }: { data: OecdComparison }) {
                 width={12}
                 height={innerHeight}
                 fill="transparent"
-                tabIndex={0}
+                {...mark()}
                 role="img"
                 aria-label={describeAverage(data.oecd_average_pct_gdp)}
                 onFocus={() => setFocus({ kind: 'average' })}
@@ -138,7 +138,7 @@ export function OecdChart({ data }: { data: OecdComparison }) {
                     cy={cy}
                     r={isUs ? 6 : 4}
                     fill={isUs ? 'var(--ink)' : 'var(--ink-soft)'}
-                    tabIndex={0}
+                    {...mark()}
                     role="img"
                     aria-label={describeCountry(c, data.us_rank, data.of_countries)}
                     onFocus={() => setFocus({ kind: 'country', c: c.c })}
