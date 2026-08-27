@@ -4,12 +4,21 @@
  *  route/viewport tables the specs iterate, the preview server's lifecycle, and
  *  the island-mount step that every geometric measurement depends on.
  *
- *  WHY `astro preview` AND NOT A HAND-ROLLED STATIC SERVER. `astro.config.mjs`
- *  pins `base: '/income-tax/'`, `build.format: 'directory'` and
- *  `trailingSlash: 'ignore'`. Resolving all three by hand is exactly the edge
- *  case that produces a suite happily measuring 404 pages that returned 200.
- *  `astro preview` reads the same config the build did, and `openRoute()` then
- *  asserts the route's own `<h1>` text, so a 404 body cannot read as a pass.
+ *  WHY NOT `astro preview`. It was the obvious choice — it reads the same config
+ *  the build did, so `base: '/income-tax/'`, `build.format: 'directory'` and
+ *  `trailingSlash: 'ignore'` resolve without being reimplemented. Astro 7 makes
+ *  it unusable here: `astro preview` is a PROJECT-GLOBAL SINGLETON that
+ *  daemonises itself. A second invocation — a second spec file, a developer with
+ *  the site already up — exits 0 with
+ *  `Preview server already running at http://localhost:4321`, and the harness
+ *  then measures a server it did not start, on a `dist/` it did not build, and
+ *  cannot shut down. That failure is silent and it reads as a pass.
+ *
+ *  So `serveDist()` below, deliberately strict, plus TWO anti-blindness guards
+ *  the plan required of the preview route and that survive the change: a missing
+ *  file returns a real 404 rather than a 200-rendered fallback, and
+ *  `openRoute()` asserts the route's own `<h1>` text, so a wrong base path
+ *  cannot read as a pass.
  *
  *  WHY A TOLERANCE AND NOT A PINNED CONTAINER. `src/styles/tokens.css:4-5`
  *  documents a deliberate system-font stack with no webfont, so macOS and Linux
@@ -19,7 +28,10 @@
  *  `TOLERANCE_PX` on containment, and every other assertion is an integer or a
  *  one-sided inequality that font drift can only make stricter.
  */
-import { spawn, type ChildProcess } from 'node:child_process'
+import { createReadStream } from 'node:fs'
+import { stat } from 'node:fs/promises'
+import { createServer, type Server } from 'node:http'
+import { extname, join, normalize, resolve } from 'node:path'
 import { chromium, type Browser, type BrowserContext, type Page } from 'playwright'
 
 /** Slack allowed when asserting that one box is contained by another.
@@ -71,7 +83,68 @@ export type Route = (typeof ROUTES)[number]
 export const CHART_ROUTES = ROUTES.filter((r) => r.figures > 0)
 
 const BASE = '/income-tax'
-const PORT = Number(process.env.BROWSER_TEST_PORT ?? 4321)
+/** Not 4321: that is `astro dev`/`astro preview`'s default, and colliding with a
+ *  developer's running site is the one failure this harness cannot detect from
+ *  the inside — it would serve a DIFFERENT build than the one under test. */
+const PORT = Number(process.env.BROWSER_TEST_PORT ?? 4331)
+const DIST = resolve(import.meta.dirname, '..', '..', 'dist')
+
+const CONTENT_TYPES: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.ico': 'image/x-icon',
+  '.woff2': 'font/woff2',
+  '.txt': 'text/plain; charset=utf-8',
+  '.xml': 'application/xml; charset=utf-8',
+}
+
+/** Resolve a request URL to a file in `dist/`, applying `base`,
+ *  `build.format: 'directory'` and `trailingSlash: 'ignore'` — and NOTHING
+ *  else. There is no index fallback and no SPA rewrite: an unresolvable path is
+ *  a 404, because a 404 rendered with status 200 is precisely how a suite ends
+ *  up measuring four blank pages and reporting green. */
+async function resolveFile(urlPath: string): Promise<string | null> {
+  const decoded = decodeURIComponent(urlPath.split('?')[0] ?? '')
+  if (decoded !== BASE && !decoded.startsWith(`${BASE}/`)) return null
+  const rest = decoded.slice(BASE.length).replace(/^\/+/, '').replace(/\/+$/, '')
+  const candidates = extname(rest) === '' ? [join(rest, 'index.html')] : [rest]
+  for (const candidate of candidates) {
+    const full = normalize(join(DIST, candidate))
+    if (!full.startsWith(DIST)) return null
+    try {
+      const info = await stat(full)
+      if (info.isFile()) return full
+    } catch {
+      /* fall through to 404 */
+    }
+  }
+  return null
+}
+
+function serveDist(port: number): Promise<Server> {
+  const server = createServer((req, res) => {
+    void resolveFile(req.url ?? '/').then((file) => {
+      if (file === null) {
+        res.writeHead(404, { 'content-type': 'text/plain' })
+        res.end(`404 ${req.url}`)
+        return
+      }
+      res.writeHead(200, { 'content-type': CONTENT_TYPES[extname(file)] ?? 'application/octet-stream' })
+      createReadStream(file).pipe(res)
+    })
+  })
+  return new Promise((ok, fail) => {
+    server.once('error', fail)
+    server.listen(port, '127.0.0.1', () => ok(server))
+  })
+}
 
 export interface Site {
   browser: Browser
@@ -83,44 +156,47 @@ function urlFor(baseURL: string, path: string): string {
   return path === '/' ? `${baseURL}${BASE}/` : `${baseURL}${BASE}${path}`
 }
 
-/** Spawn `astro preview`, wait for it to actually serve, and hand back a
+/** Serve the built `dist/`, prove it is actually serving, and hand back a
  *  browser pointed at it. Callers must `await site.close()` in a `finally`. */
 export async function withSite(portOffset = 0): Promise<Site> {
   const port = PORT + portOffset
-  const baseURL = `http://localhost:${port}`
-  let stderr = ''
-  let stdout = ''
+  const baseURL = `http://127.0.0.1:${port}`
 
-  const child: ChildProcess = spawn(
-    'npx',
-    ['astro', 'preview', '--port', String(port)],
-    // Own process group, so `close()` can take the whole tree down. `astro
-    // preview` runs behind an `npx` shim; killing only the shim orphans the
-    // server and the next run fails on a busy port.
-    { detached: true, stdio: ['ignore', 'pipe', 'pipe'] },
-  )
-  child.stdout?.on('data', (c: Buffer) => (stdout += c.toString()))
-  child.stderr?.on('data', (c: Buffer) => (stderr += c.toString()))
-
-  let exited: string | null = null
-  child.on('exit', (code, signal) => (exited = `exit code ${code}, signal ${signal}`))
-
-  const kill = () => {
-    if (child.pid === undefined) return
-    try {
-      process.kill(-child.pid, 'SIGTERM')
-    } catch {
-      /* already gone */
-    }
-  }
-  // Safety net for a hard crash between spawn and `close()`; the `finally` in
-  // the spec is the normal path.
-  process.once('exit', kill)
-
+  let server: Server
   try {
-    await waitForServer(baseURL, port, () => ({ exited, stdout, stderr }))
+    server = await serveDist(port)
   } catch (err) {
-    kill()
+    throw new Error(
+      `could not listen on ${port}: ${err instanceof Error ? err.message : String(err)}. ` +
+        `Set BROWSER_TEST_PORT to move the lane off a busy port.`,
+    )
+  }
+
+  // A harness that cannot see its target reports blind, never healthy. Prove
+  // the server answers, and that `dist/` is a real build rather than an empty
+  // or stale directory, before a single measurement is taken.
+  try {
+    const res = await fetch(`${baseURL}${BASE}/`)
+    if (res.status !== 200) {
+      throw new Error(
+        `GET ${BASE}/ returned ${res.status}. Run \`npm run build\` first — ` +
+          `this lane measures dist/, it does not build it.`,
+      )
+    }
+    const body = await res.text()
+    if (!body.includes('<h1')) {
+      throw new Error(`GET ${BASE}/ returned 200 with no <h1>; dist/ is not a built site.`)
+    }
+    // The base path itself, asserted rather than assumed: a request OUTSIDE the
+    // base must 404. If it does not, every route below is resolving somewhere
+    // unexpected and the <h1> guards are the only thing standing between this
+    // suite and a green run over nothing.
+    const outside = await fetch(`${baseURL}/definitely-not-a-route`)
+    if (outside.status !== 404) {
+      throw new Error(`a path outside ${BASE} returned ${outside.status}, expected 404`)
+    }
+  } catch (err) {
+    server.close()
     throw err
   }
 
@@ -132,42 +208,10 @@ export async function withSite(portOffset = 0): Promise<Site> {
       try {
         await browser.close()
       } finally {
-        kill()
+        await new Promise<void>((done) => server.close(() => done()))
       }
     },
   }
-}
-
-async function waitForServer(
-  baseURL: string,
-  port: number,
-  state: () => { exited: string | null; stdout: string; stderr: string },
-): Promise<void> {
-  const deadline = Date.now() + 20_000
-  let lastError = 'never attempted'
-  while (Date.now() < deadline) {
-    const { exited } = state()
-    if (exited !== null) break
-    try {
-      const res = await fetch(`${baseURL}${BASE}/`)
-      if (res.status === 200) return
-      lastError = `HTTP ${res.status}`
-    } catch (err) {
-      lastError = err instanceof Error ? err.message : String(err)
-    }
-    await new Promise((r) => setTimeout(r, 250))
-  }
-  // A harness that cannot see its target reports blind, never healthy — so this
-  // carries the child's own output, never a bare timeout.
-  const { exited, stdout, stderr } = state()
-  throw new Error(
-    `astro preview never served ${baseURL}${BASE}/ within 20s.\n` +
-      `  last attempt: ${lastError}\n` +
-      `  child: ${exited ?? 'still running'}\n` +
-      `  stdout: ${stdout.trim() || '(empty)'}\n` +
-      `  stderr: ${stderr.trim() || '(empty)'}\n` +
-      `  (set BROWSER_TEST_PORT if ${port} is busy)`,
-  )
 }
 
 /** Open a route in a fresh context at a viewport, and prove the body is the
