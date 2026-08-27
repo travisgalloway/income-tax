@@ -409,6 +409,109 @@ test('scripting off @ 390x844', async () => {
   }
 })
 
+/** #72 — the calibration test, and the only place a real engine is asked.
+ *
+ *  `pipeline/tests/test_accessibility.py` enforces the uniqueness rule over the
+ *  served bytes, using `accessible_name()` — a deliberately partial model of the
+ *  accname algorithm. That model is the right enforcement point (the names must
+ *  be correct with scripting off, and the ancestry claims G2 makes are invisible
+ *  once a name has flattened to text), but a model can drift from the algorithm
+ *  it approximates and go on reporting green.
+ *
+ *  So this test asks Chromium for the names it actually computes, and checks the
+ *  two agree. It is calibration, not enforcement: if it and the pytest guards
+ *  ever disagree, the model is what is wrong.
+ *
+ *  THE SERVED-BYTES COUNT COMES FIRST, deliberately. Islands mount
+ *  `client:visible`, so a name that only becomes correct at hydration would
+ *  satisfy a check on a hydrated page while the scripting-off reader hears
+ *  nothing useful — the shape #69's lane had, passing 59/59 while 113 data
+ *  points sat in the tab order. The scripting-off pass below proves the eight
+ *  groups and their `aria-labelledby` lists are in the HTML Astro shipped;
+ *  only then is Chromium asked what it makes of them.
+ *
+ *  Bounded explicitly (#123): `node --test` has no default per-test timeout, and
+ *  an unbounded wait in this lane hung CI for fifteen minutes during #71. */
+test('every radiogroup on /government has a distinct accessible name (#72)', { timeout: 60_000 }, async () => {
+  const route = ROUTES.find((r) => r.path === '/government')!
+  const EXPECTED = 8
+
+  // 1. The served bytes, scripting off.
+  {
+    const { context, page } = await openRoute(site, route, VIEWPORTS[1], {
+      javaScriptEnabled: false,
+    })
+    try {
+      const ssr = await page.evaluate(() =>
+        [...document.querySelectorAll('[role="radiogroup"]')].map((n) => ({
+          labelledby: n.getAttribute('aria-labelledby'),
+          label: n.getAttribute('aria-label'),
+        })),
+      )
+      assert.equal(
+        ssr.length,
+        EXPECTED,
+        `scripting off: ${ssr.length} [role=radiogroup] in the served HTML, expected ${EXPECTED}. ` +
+          `The names must be right before hydration, not because of it.`,
+      )
+      for (const g of ssr) {
+        assert.ok(
+          g.labelledby && g.labelledby.split(' ').length === 2,
+          `scripting off: a radiogroup carries aria-labelledby=${JSON.stringify(g.labelledby)} / ` +
+            `aria-label=${JSON.stringify(g.label)} instead of a two-token figure+label list. ` +
+            `A name typed at the call site is what #72 removed.`,
+        )
+      }
+    } finally {
+      await context.close()
+    }
+  }
+
+  // 2. Chromium's own accessibility tree, islands mounted.
+  const { context, page } = await openRoute(site, route, VIEWPORTS[1])
+  try {
+    await mountIslands(page, route.hydratedSvg)
+    const groups = await page.locator('[role="radiogroup"]').all()
+    assert.equal(
+      groups.length,
+      EXPECTED,
+      `${groups.length} radiogroups after hydration, expected ${EXPECTED}`,
+    )
+
+    // `ariaSnapshot()` yields `- radiogroup "Figure 1 Measured in":` — the name
+    // Chromium computed, not the attribute we wrote.
+    const names: string[] = []
+    for (const g of groups) {
+      const snapshot = await g.ariaSnapshot()
+      const name = /^- radiogroup "([^"]*)"/.exec(snapshot)?.[1]
+      assert.ok(
+        name,
+        `could not read a radiogroup name out of Chromium's tree: ${JSON.stringify(snapshot)}`,
+      )
+      names.push(name!)
+    }
+
+    assert.equal(
+      new Set(names).size,
+      EXPECTED,
+      `Chromium computes ${new Set(names).size} distinct names for ${EXPECTED} radiogroups on ` +
+        `/government: ${JSON.stringify(names)}. A reader entering two of these hears the same thing.`,
+    )
+    for (const n of names) {
+      assert.match(
+        n,
+        /^Figure \d+ .+/,
+        `Chromium computed the name ${JSON.stringify(n)}, which does not begin with the figure ` +
+          `number it is bound to. The static resolver in pipeline/tests/test_accessibility.py and ` +
+          `the real engine disagree — trust the engine and fix the model.`,
+      )
+    }
+  } finally {
+    await context.close()
+  }
+})
+
+
 /** Inventory #29 — a KNOWN FAILURE, carried explicitly rather than omitted.
  *
  *  `:focus-visible { outline: 1.5px solid var(--ink) }` (`src/styles/global.css:863`)

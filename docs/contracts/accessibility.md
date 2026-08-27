@@ -500,7 +500,7 @@ same one.
 | Check | Route | Result | Tool | Evidence / issue |
 |---|---|---|---|---|
 | M1 keyboard traversal | `/` | PASS | Chrome 151 + browser lane | Skip link is the first tabbable element at (8,8), 135×44, `href="#main"`, `main[tabindex="-1"]`; zero positive `tabindex` site-wide. **The "389 of 408 tab stops are data points" reading recorded here was `/economy`'s, taken before the intro-route split**: `/` now renders zero figures, zero `<svg>` and 20 tab stops. `/economy`'s own figure was 389 of 437, and is 53 since #69. No wide table renders on this route, so #71 does not arise here either. |
-| M1 keyboard traversal | `/government/` | FAIL | Chrome 151 + browser lane | Skip link and landmark order as above. The "380 of 471" reading predates the intro-route split; at `d69e4e6` it was **364 of 512**, with **438** presses to §11. Since #69 each chart `<svg>` is one roving group: **161** stops and **141** to §11 hydrated, **136** and **118** with scripting off, every one of the 369 marks still reachable by arrow key. Since #71 it is **163** and **142**, the two extra stops being the two wide tables that are not inside a `<details>`; scripting off is unchanged at 136/118. Walked on every pull request by `keyboard.test.ts`. Still FAIL, now for **#72 alone** (four `radiogroup`s all resolve to the name "Measured in"). |
+| M1 keyboard traversal | `/government/` | FAIL | Chrome 151 + browser lane | Skip link and landmark order as above. The "380 of 471" reading predates the intro-route split; at `d69e4e6` it was **364 of 512**, with **438** presses to §11. Since #69 each chart `<svg>` is one roving group: **161** stops and **141** to §11 hydrated, **136** and **118** with scripting off, every one of the 369 marks still reachable by arrow key. Since #71 it is **163** and **142**, the two extra stops being the two wide tables that are not inside a `<details>`; scripting off is unchanged at 136/118. Walked on every pull request by `keyboard.test.ts`. Was FAIL for **#72 alone** (four `radiogroup`s all resolved to the name "Measured in"); **#72 has shipped** and all nine now resolve distinctly — see *Unique accessible names for choice-set controls*. **PASS** on naming as of 2026-08-27. |
 | M1 keyboard traversal | `/households/` | PASS | Chrome 151 + browser lane | Skip link and landmark order as above. The 356 recorded here is the **mark** count, not the tab-stop count; the walk at `d69e4e6` was 428 stops of which 356 were marks. Since #69: **80** stops, all 356 marks still reachable by arrow key, including `BracketHistory`'s 113 — the largest group on the site. #71 resolved the scroll-container half: this route's seven wrappers are focusable exactly while they overflow, and the walk is unchanged at 80/67 because all seven sit inside a `<details>`. **PASS as of #71.** |
 | M1 keyboard traversal | `/sources/` | PASS | Chrome 151 | Skip link first at (8,8) 135×44; `main[tabindex="-1"]`; zero positive `tabindex`; no focusable datum and no scroll container renders on this route, so #71 does not arise here. |
 | M1 keyboard traversal | `/glossary` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. |
@@ -512,7 +512,7 @@ same one.
 | M2 screen-reader pass | `/glossary` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. |
 | M2 screen-reader pass | `/contents` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. Its own edge case is the one `/sources/` failed (#79): every line on it is a derived string and the source lines are long, so the 390px rows are the ones that matter. |
 | M3 roving tabindex / focus trap | `/` | PASS | Chrome 151 | Radio groups carry `role` plus `aria-checked` plus a roving tabindex; no control traps focus. |
-| M3 roving tabindex / focus trap | `/government/` | PASS | Chrome 151 | All 20 radios site-wide carry `role` + `aria-checked` + roving tabindex; the three filter dropdowns close on Escape and restore focus to their trigger. Naming defect only, not focus behaviour — #72. |
+| M3 roving tabindex / focus trap | `/government/` | PASS | Chrome 151 | All 20 radios site-wide carry `role` + `aria-checked` + roving tabindex; the three filter dropdowns close on Escape and restore focus to their trigger. The naming defect was #72, not focus behaviour; #72 has shipped. |
 | M3 roving tabindex / focus trap | `/households/` | PASS | Chrome 151 | As above; no focus trap. |
 | M3 roving tabindex / focus trap | `/sources/` | PASS | Chrome 151 | Vacuous — no roving-tabindex control renders on this route. |
 | M3 roving tabindex / focus trap | `/glossary` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. |
@@ -1233,8 +1233,9 @@ Not touched, and not re-fixed: **#62** `Select`, **#63** by-state columns, **#64
 annotation classes and their NARROW coverage in `annotate.test.ts`, **#65** the **24px** target floor
 (**deliberately not 44px** — at these controls' 24px pitch that would create 20px ambiguous
 overlaps, E12; no target-size CSS is touched). Also out: **#71**/**#76** table scroll wrappers,
-**#72** toggles' shared accessible name, **#73** chart marks, **#74** §11's legend swatch, **#77**
-the data-table height cap.
+**#73** chart marks, **#74** §11's legend swatch, **#77**
+the data-table height cap. (**#72**, the toggles' shared accessible name, **has since shipped** —
+see *Unique accessible names for choice-set controls* below.)
 
 ### Reading position in the contents list (#44)
 
@@ -1469,6 +1470,176 @@ in NVDA or JAWS. #30/#80.
 persistent scrollbar, text hint — is **#76**. `, scrollable table` is an accessible name, not a
 visible affordance; no ink moved.
 
+### Unique accessible names for choice-set controls (#72)
+
+**SHIPPED 2026-08-27.** Four unit toggles on `/government` were all announced as **"Measured in"**.
+A screen reader reads a `radiogroup`'s name on entry, so four groups controlling four different
+figures were indistinguishable by name alone — a reader arriving at the second heard exactly what
+they heard at the first.
+
+#### What was actually there, re-measured at `6827f0b`
+
+Nine `[role="radiogroup"]` site-wide — eight on `/government`, one on `/households`. **Four** shared
+the name "Measured in", all four on `/government`. The issue also alleged two groups pointing at the
+*same* id; they did not, and `test_no_page_repeats_an_id` already forbids that shape. Three defects
+the issue did **not** name were live and are fixed here, because each is a direct product of the
+mechanism being replaced:
+
+| Defect | Where | Status |
+|---|---|---|
+| Two ids, identical text (`net-interest-units`, `revenue-units` both "Measured in") | `/government` | Fixed |
+| Two identical hardcoded `aria-label`s — the shape **#35** created when it moved `DebtChart` onto the shared `UnitToggle` | `DebtChart`, `BudgetChart` | Fixed |
+| Three orphaned label ids: a visible `.controls-label` span that **nothing referenced**, the toggle beside it named by `aria-label` | `DebtChart:80`, `StructuralGap:130`, `VotedAndNot:102` | Fixed |
+| **WCAG 2.5.3 Label in Name (Level A)**: visible text "Measured in", accessible name "Structural gap units" / "What Congress votes on units" — a voice-control user saying what they could see could not target either control | `StructuralGap`, `VotedAndNot` | **Fixed** |
+| No visible label at all — the only one of the nine without one | `BudgetChart` | Fixed |
+
+#### The mechanism: the name is derived, not typed
+
+The obvious fix is a different string at each call site, and it is the wrong one — it is how the bug
+arrived. A hand-typed name can be unique and still wrong ("Measured in 2"), and a uniqueness guard
+would pass on it.
+
+`Figure.astro` puts a manifest-derived id on the figure-number span it already renders, and each
+control points at that plus its own visible label:
+
+```
+aria-labelledby="fig-net-interest-no net-interest-units"   ->   "Figure 7 Measured in"
+```
+
+**Uniqueness is inherited, not asserted afresh.** `src/data/figures.ts:323` already throws when a
+route declares a key twice, and a figure's number is its index in that route's array — so neither
+the key nor the number can collide within a page, by build failure. Nobody invents a distinct name;
+a new toggle inherits one. An island declares only its own manifest **key**, as a module-level
+`FIGURE` constant, and `src/components/islands/figureLabel.ts` is the single place the `fig-…-no` id
+shape is written.
+
+**The number, not the title**, because a group's name is announced on every entry and
+"Net interest payments by fiscal year, FY1995 to FY2025" is twelve words. "Figure 7" is short, sits
+visibly two lines above the control, and is the page's own cross-reference vocabulary — #49 made
+figure numbers real DOM text precisely so they could be referenced.
+
+**A zero-typing derivation is not available, and the design does not pretend otherwise.** Astro
+cannot inject props into slotted children, so `<Figure>` cannot hand its key to the island it wraps;
+threading a `figure=` prop through nine `.astro` call sites would make the author type the key a
+second time beside the `fig('...')` already there. Deriving at runtime with `closest('figure')` was
+**rejected**: it would be wrong in the served bytes and correct only after hydration, which
+`test_government_section_1_renders_its_whole_apparatus_without_scripting` already forbids. No
+`.astro` call site changed.
+
+#### The nine names
+
+| Route | Figure | Name |
+|---|---|---|
+| `/government` | 1 (`debt`) | Figure 1 Measured in |
+| `/government` | 4 (`whole-budget`) | Figure 4 Measured in |
+| `/government` | 5 (`structural-gap`) | Figure 5 Measured in |
+| `/government` | 6 (`voted-and-not`) | Figure 6 Measured in |
+| `/government` | 7 (`net-interest`) | Figure 7 Measured in |
+| `/government` | 8 (`law-explorer`) | Figure 8 Democratic votes shown |
+| `/government` | 10 (`revenue`) | Figure 10 Measured in |
+| `/government` | 12 (`state-give-get`) | Figure 12 Measured |
+| `/households` | 7 (`payroll-bill`) | Figure 7 Measured in |
+
+`/households` has one radiogroup, so uniqueness there is vacuous — it is renamed anyway, because
+requirements 2 and 3 are not vacuous. Visible labels are unchanged: five still read "Measured in",
+which is correct, and the figure prefix is what distinguishes them.
+
+#### Guard scope: measured, then narrowed
+
+`CHOICE_SET_ROLES = {radiogroup, combobox, tablist}` — 14 nodes site-wide (9 / 4 / 1). A page-wide
+all-roles rule is **unenforceable** and would have to be allowlisted into decoration:
+
+| role | worst page | nodes | distinct | why the duplicates are legitimate |
+|---|---|---|---|---|
+| `link` | `/glossary` | 136 | 57 | nav rendered twice by design (bar + panel), "Full entry in the glossary" ×16, per-letter index links, repeated citations. On `/contents` alone a `link` rule fires on 43 duplicate names |
+| `button` | `/government` | 45 | 33 | "View as table"/"Hide table" ×13 — one per figure, disambiguated by its figure |
+| `radio` | `/government` | 20 | 10 | "Nominal" / "% of GDP" inside each group; the **group** is what disambiguates them, and the group is what this section makes unique |
+| `navigation` | every page | 4 | 2 | "Site" and "Contents" as bar + panel; `test_route_nav_and_contents_nav_are_separate_landmarks` already asserts the pair is deliberate |
+| `group` | `/government` | 28 | 28 | **Deliberately excluded.** Zero collisions today, but this is where the chart `<svg>`s and #71's scroll containers live, and their names are long finding sentences that two similar figures could legitimately share |
+
+`radiogroup` is the mandatory floor. `combobox` (LawExplorer's three filters, StateGiveGet's
+jurisdiction) and `tablist` have **zero** violations today and cost nothing to include — they lock
+the same bug out of `Select.tsx` and the Radix tabs before it can be written.
+
+#### Why static over `dist/`, with one browser test as calibration
+
+**Enforcement is static.** The names must be correct in the served bytes with scripting off: islands
+mount `client:visible`, so a browser check on a hydrated page passes even when the SSR output is
+wrong — exactly the failure #69's lane had, passing 59/59 while 113 data points sat in the
+scripting-off tab order. And G2's claim ("this group's `aria-labelledby` names a span inside its
+**own ancestor figure**") is structural; it is invisible once the accessibility tree has flattened a
+name to text.
+
+The risk of choosing static is that `accessible_name()` is a **model** of the accname algorithm. So
+**B1** (`tests/browser/smoke.test.ts`) reads Chromium's real accessibility tree via
+`locator.ariaSnapshot()` and asserts 8 distinct names on `/government`, preceded by a scripting-off
+count of the same 8 groups and their two-token lists. On 2026-08-27 the engine and the model agreed
+name-for-name on all eight. If they ever disagree, the model is what is wrong.
+
+#### The guards
+
+| # | Function | Claim |
+|---|---|---|
+| G1 | `duplicate_choice_set_name_failures` | No two controls of the same choice-set role share a resolved name on a page. A control with **no** name is reported too — an anonymous control cannot collide, so uniqueness alone would call it correct |
+| G2 | `figure_bound_name_failures` | Every `radiogroup` inside a `<figure>` uses `aria-labelledby`, and one token resolves to a `.figure-no` span **whose own ancestor figure is that same figure**. Ancestry, not name-matching |
+| G3 | `label_in_name_failures` | Every `radiogroup`'s resolved name contains the text of the `.controls-label` in its own `.controls` row (WCAG 2.5.3) |
+| floor | `test_the_choice_set_coverage_did_not_narrow` | The guards see **9** radiogroup, **4** combobox, **1** tablist site-wide, as equalities, plus `set(counts) == CHOICE_SET_ROLES` |
+
+**The three are not redundant, and the mutations below prove it individually.** G1 alone is
+satisfied by naming the groups "A", "B", "C" — unique and useless. G2 alone permits a name the
+reader cannot say. G3 alone permits two figures naming each other's labels.
+
+#### Mutation proofs — EXECUTED 2026-08-27
+
+Every mutation was applied to source, rebuilt, observed red, and reverted; `git status --porcelain`
+was empty afterwards. **Two of the eleven did not behave as the plan predicted, and the finding is
+recorded rather than the mutation quietly adjusted.**
+
+| # | Mutation | Predicted | Observed |
+|---|---|---|---|
+| M1 | `RevenueChart`'s toggle points at `net-interest-units` (two groups, one id) | G1 | **G1 red** |
+| M2 | Figure 10's `figure-no` text reads "Figure 7" (two ids, identical text) | G1 | **G1 red** |
+| M3 | `NetInterest` reverts to `aria-label="Measured in"` | G1 **and** G2 | **G2 red; G1 GREEN** — see below |
+| M3b | `NetInterest` **and** `RevenueChart` both revert — the #35 shape | — | **G1 and G2 both red** |
+| M4 | `DebtChart`'s toggle points at `fig-revenue-no` (real span, wrong figure) | G2 | **G2 red** (G1 also red: the name duplicates the real Figure 10's) |
+| M5 | `labelledByFigure` drops the `fig-…-no` token | G2 | **G2 red on `/government` and `/households`** |
+| M6 | Visible span text changed without changing the name | G3 | **G3 red; G1 and G2 GREEN** — see below |
+| M7 | `labelledByFigure` drops the local label id, leaving only `fig-…-no` | G3 | **G3 red on both pages; G1 green** |
+| M8 | `CHOICE_SET_ROLES` narrowed to `{"radiogroup"}` | the floor | **floor red; G1 GREEN** |
+| M9 | Every role string typo'd so the guards match nothing | the floor | **floor red; G1 GREEN** |
+| M10 | `RevenueChart` reverted in source, rebuilt, browser lane only | B1 | **B1 red** |
+| M11 | Every `id` removed from `Figure.astro`'s `figure-no` span | G2 on all nine | **G2 red on both pages, every group** |
+
+**M3 did not turn G1 red, and G1 is right.** Reverting **one** toggle to `aria-label="Measured in"`
+produces a name no other group holds — the other eight are "Figure N Measured in". A unique,
+plausible, wrong name is precisely what G1 cannot see and what G2 exists for. The plan predicted
+both; only G2 fires, and M3b (reverting *two* toggles, the actual shape #35 created) is what turns
+G1 red. This is evidence the two guards are independent, not evidence one is broken.
+
+**M6 as written could not bite, and the reason is structural.** "Change the visible span's text
+without changing the name" is *impossible* under the new mechanism: the name is derived from that
+very span, so changing it to "Units" changes the name to "Figure 7 Units", which still contains
+"Units". G3 correctly stays green. To create the defect M6 targets, the name has to be sourced from
+a **different** span than the visible one — so M6 was performed that way (visible "Units", name
+sourced from `revenue-units`). It turns **G3 red while G1 and G2 both stay green**, which is a
+stronger proof than the original. The fact that the literal M6 cannot be constructed is itself the
+result: this class of drift is now unreachable by construction, not merely guarded.
+
+**M8 and M9 are the anti-hollow proofs and are why the coverage floor exists.** Both leave G1, G2
+and G3 reporting green while the guards look at a narrowed or empty set. A guard that sees nothing
+is indistinguishable from a guard that sees everything and finds nothing, and only the floor tells
+them apart.
+
+#### Boundaries
+
+**Not in scope, still open.** Chart-mark hit targets and hover affordance **#73**; §11's legend
+swatch wrapping **#74**; focus-ring width **#75**; the visible at-rest scroll affordance **#76**; the
+open data-table height cap **#77**; how any of this *reads* in NVDA or JAWS **#30**/**#80**.
+
+**`role="group"` is outside `CHOICE_SET_ROLES` by decision**, per the scope table above. Recorded
+here as a boundary, not an oversight: if a chart `<svg>` and a scroll container ever do collide on a
+finding sentence, that is a different rule with a different remedy.
+
 ### Greyscale, per chart
 
 Computed from the rendered DOM: the `fill` and `stroke` of every category mark, per plot panel,
@@ -1528,9 +1699,9 @@ say so.
 1. **Tab and Shift-Tab traversal**, start to finish: focus order follows reading order and every
    control (route nav, TOC, unit toggle, chart data points, table disclosure) is reachable and
    operable. — **EXECUTED 2026-08-24**, Chrome 151, all four routes. Skip link first, `main`
-   focusable, zero positive `tabindex`. FAILs: **#72** alone (four identically named
-   `radiogroup`s). #69 (no bypass past the data points) and #71 (table scroll container not
-   keyboard reachable) have both shipped. Row `M1`.
+   focusable, zero positive `tabindex`. The last standing FAIL was **#72** (four identically named
+   `radiogroup`s); it has shipped, alongside #69 (no bypass past the data points) and #71 (table
+   scroll container not keyboard reachable). No FAILs outstanding on this row. Row `M1`.
 2. **Screen-reader pass** (VoiceOver + Safari, NVDA + Firefox): the chart's `aria-label` announces
    usefully, the `<details>` table reads coherently when opened, and the `aria-live` readout
    announces once per focus move rather than flooding. — **NOT EXECUTED.** No assistive technology
@@ -1574,7 +1745,8 @@ say so.
    do render:
    - **`role="radio"` button groups** (`UnitToggle`, and the Government route's four measure
      toggles) — 20 radios site-wide, roving tabindex, `aria-checked` on each. **EXECUTED**, PASS,
-     Chrome 151, 2026-08-24. Their *naming* is a separate open defect (#72).
+     Chrome 151, 2026-08-24. Their *naming* was a separate defect (#72), **fixed 2026-08-27**: each
+     group is now named by its own figure, e.g. "Figure 5 Measured in".
    - **Filter dropdown buttons** — the Radix `Select` consumers: three on `/government/` §8
      (`Select.tsx`) and §11's jurisdiction picker (`StateTaxMix.tsx`). Escape closes and restores
      focus to the trigger. **EXECUTED**, PASS, Chrome 151, 2026-08-24. The menu's width at 390px
