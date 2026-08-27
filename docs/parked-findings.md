@@ -815,3 +815,34 @@ time. Appended to, never rewritten. None of these have been acted on.
   `uv run pytest` runs on a pull request — deploy is push-to-`main`, refresh-data is scheduled — so
   both gates #50 adds are unenforced at review time and were proved locally instead. That is #67.
   Found while planning #50's verification. Severity: CI coverage, non-blocking.
+- [2026-08-26] `BRIEF.md:144` and `BRIEF.md:193` still name `content/sections.md`; the file is
+  `sections.md` at the repository root and has been since before #41, which fixed only the fenced
+  file list — `test_brief_file_list_paths_exist` cannot see a prose reference. Not fixable under
+  #51, whose Definition of done caps `BRIEF.md` at one line and spends it on `:77-78`. Found while
+  writing Ruling 3 for #51. Severity: dangling path in the brief, non-blocking.
+- [2026-08-26] `pipeline/lib/report.py:135` and `pipeline/curated/prose_figures.yaml:3` name
+  `content/sections.md` as the origin of quoted prose. Wrong twice over after #51's Ruling 3: the
+  path has never resolved, and the deck is no longer the editing surface — the three route pages
+  are. `pipeline/lib/report.py:3` has the path right and the origin wrong. The ruling records the
+  consequence; the edit belongs to the follow-on that migrates the eight `test_pipeline.py` cases
+  off the deck. Found while writing Ruling 3 for #51. Severity: stale doc string, non-blocking.
+- [2026-08-26] `sections.md:3` says "Eleven sections"; the file holds twelve, the last opening at
+  `sections.md:406`. Frozen historical record under #51's Ruling 3, so the header is now wrong
+  about a file nothing edits. Found while writing Ruling 3 for #51. Severity: stale count,
+  non-blocking.
+- [2026-08-26] `docs/test-plan.md`'s `GOV-1` row carries two unescaped `|` characters inside its
+  `Build-time` cell (from `grep … | wc -l` and a `/` alternation), so the row renders as seven
+  columns against the table's five and any positional edit of it has to count cells from both ends.
+  `INTRO-1` escapes its pipes correctly and is the model. Found while adding the prose-contract
+  columns for #51. Severity: table rendering, non-blocking.
+- [2026-08-26] `src/content/glossary/` has 23 entries and not one of them is an acronym, so
+  `REGISTERED_INITIALISMS` in `pipeline/tests/test_prose.py` cannot be derived from the glossary and
+  is hand-kept. `docs/contracts/prose.md` Criterion 4 records the move and assigns it to #59, which
+  is the issue that would add the entries. Found while sizing #51's capitals check. Severity:
+  duplicated vocabulary, non-blocking.
+- [2026-08-26] `docs/feature-matrix.md` and `docs/test-plan.md` carry 29 prose-bearing rows, not the
+  24 `.claude/plans/issue-51.md` states in its Definition of done item 15 — the plan's own
+  enumeration (`INTRO-1`, `ECO-1..6`, `GOV-1..12`, `HH-1..7`, `REF-1..3`) sums to 29. The
+  enumeration was followed; the count was a miscount. Recorded so a later audit against the plan
+  does not read the difference as a missed row. Found while executing #51. Severity: plan
+  arithmetic, non-blocking.
