@@ -21,6 +21,39 @@ _comment: |
     cited_in_prose_only  named in body copy, ingested by nothing. Exempt from the
                          "every entry is cited by some output" rule and from shape
                          checking, NOT from having to be registered in SOURCES.md.
+                         NOT a tier: an entry carrying it states a tier as well.
+    tier                 what KIND of source this is, from the vocabulary below.
+                         Required on every entry (rule F).
+    url                  the canonical page a READER can open, so every source line
+                         on the site is followable. Required unless url_exempt (rule G).
+    url_exempt           a WRITTEN REASON no single URL is truthful, never a bare
+                         bool -- an exemption with no reason is how a check turns
+                         back into a skip.
+    justification        required where tier is `secondary` (rule H).
+    compiled_from        required where tier is `compilation` (rule H): the register
+                         keys this source assembles its numbers from.
+
+  The tier vocabulary. Five terms, each earning its place against a real entry;
+  a tier outside this set fails the build (rule F).
+
+    primary                  the body that produced the data publishes it.
+    official republication   an official redistributor republishes another agency's
+                             series unaltered. FRED for a BLS deflator; the JEC for
+                             a Treasury debt statistic.
+    scholarly republication  an academic or institutional publication of, or derived
+                             directly from, a primary record, traceable back to it.
+                             Voteview is why this term exists: it is not official
+                             and it is not secondary, and a vocabulary whose only
+                             word for it was "secondary" would be the wrong
+                             vocabulary (#57).
+    compilation              assembled from named primary sources; not a source in
+                             its own right. Requires compiled_from.
+    secondary                anything else. Requires a written justification. No
+                             entry carries it today, and that is the point: the term
+                             exists so the next one cannot be added silently.
+
+  A tier describes what a source IS. It is never a licence to swap which source a
+  figure uses -- that is an editorial act, and it is not this file's to make.
 
   outputs
     cites                the register keys that output's _meta.source names
@@ -69,34 +102,60 @@ registry:
   cbo_historical_budget:
     registered_as: "Congressional Budget Office, Historical Budget Data, February 2026"
     cited_as: "CBO Historical Budget Data"
+    tier: primary
+    url: "https://github.com/US-CBO/cbo-data"
 
   cbo_historical_economic:
     registered_as: "Congressional Budget Office, Historical Economic Data, February 2026"
     cited_as: "CBO Historical Economic Data"
+    tier: primary
+    url: "https://github.com/US-CBO/cbo-data"
 
   cbo_jct_scores:
     registered_as: "CBO and Joint Committee on Taxation cost estimates"
     cited_as: "CBO and JCT cost estimates"
+    tier: primary
+    # cbo.gov refuses automated requests (403 to every path, root included), so this
+    # URL is stated from the document rather than probed. It is the section CBO has
+    # published its cost estimates under for the life of the site.
+    url: "https://www.cbo.gov/cost-estimates"
 
   crs_party_control:
     registered_as: "Congressional Research Service and House/Senate historical records"
     cited_as: "CRS and chamber records"
+    tier: official republication
+    # CRS's party-division tables restate the two chambers' own historical records.
+    # The chambers are the primary; CRS is the official body that redistributes them.
+    url_exempt: >-
+      No single landing page covers both CRS's party-division tables and the House and
+      Senate historical records behind them: CRS reports, the House Clerk's archive and
+      the Senate Historical Office publish separately, and there is no combined page.
+      Naming one of the three would misdescribe the other two.
 
   cbo_household_income_distribution:
     registered_as: "CBO, The Distribution of Household Income, 2022"
     cited_as:
       - "CBO, The Distribution of Household Income"
       - "CBO Distribution of Household Income"
+    tier: primary
+    url: "https://www.cbo.gov/topics/income-distribution"
 
   treasury_debt_to_the_penny:
     registered_as: "US Treasury, Historical Debt Outstanding and Debt to the Penny"
     cited_as:
       - "US Treasury, Historical Debt Outstanding and Debt to the Penny"
       - "US Treasury Debt to the Penny"
+    tier: primary
+    url: "https://fiscaldata.treasury.gov/datasets/debt-to-the-penny/debt-to-the-penny"
 
   treasury_mspd:
     registered_as: "US Treasury, Monthly Statement of the Public Debt"
     cited_as: "Treasury Monthly Statement of the Public Debt"
+    tier: primary
+    # The dataset's own landing page, not the API endpoint the pipeline fetches: url is
+    # what a READER opens, and the endpoint serves JSON. The endpoint stays named in the
+    # SOURCES.md block, which is what a rebuilder needs.
+    url: "https://fiscaldata.treasury.gov/datasets/monthly-statement-public-debt/summary-of-treasury-securities-outstanding"
     # Table 1, fetched from
     # api.fiscaldata.treasury.gov/.../v1/debt/mspd/mspd_table_1 by
     # pipeline/lib/mspd.py (#56). The statement month is pinned in
@@ -106,6 +165,8 @@ registry:
   treasury_tic:
     registered_as: "US Treasury, Treasury International Capital"
     cited_as: "Treasury International Capital"
+    tier: primary
+    url: "https://ticdata.treasury.gov/Publish/mfhhis01.txt"
     # Major Foreign Holders of Treasury Securities, fetched from
     # https://ticdata.treasury.gov/Publish/mfhhis01.txt by pipeline/lib/tic.py.
     # NOT mfh.txt, which serves a January-2023 vintage from the same host. The
@@ -116,6 +177,15 @@ registry:
   jec_debt_update:
     registered_as: "Joint Economic Committee, monthly debt update, August 2026"
     cited_as: "Joint Economic Committee monthly debt update"
+    # NOT primary, and the distinction is the one #56 was filed over. The average
+    # maturity of marketable debt is computed and published by Treasury's Office of Debt
+    # Management; the JEC update restates it. The committee is an official body, so this
+    # is an official republication rather than a compilation -- but it is not the origin
+    # of the number, and labelling it primary would repeat the Peterson shape in a
+    # quieter place. WHICH source debt_maturity cites is out of #57's scope; naming what
+    # kind of source it is, is not.
+    tier: official republication
+    url: "https://www.jec.senate.gov"
 
   peterson_foundation:
     registered_as: "Peter G Peterson Foundation"
@@ -128,58 +198,117 @@ registry:
     # which #56 does not reopen. It is also in not_a_source: above, so it can
     # never source an emitted value again.
     cited_in_prose_only: true
+    # The tier is stated as well as the flag, never instead of it: cited_in_prose_only
+    # is a build-gate exemption for rules C and D and is NOT a tier
+    # (docs/contracts/interfaces/content-sources.md).
+    tier: compilation
+    compiled_from: [treasury_mspd]
+    url: "https://www.pgpf.org"
 
   oecd_revenue_statistics:
     registered_as: "OECD, Revenue Statistics 2025, United States country note"
     cited_as: "OECD Revenue Statistics"
+    tier: primary
+    # OECD compiles Revenue Statistics from member submissions and publishes the
+    # comparable series itself; no other body publishes it. oecd.org refuses automated
+    # requests (403 to every path), so this URL is stated rather than probed.
+    url: "https://www.oecd.org/en/data/datasets/global-revenue-statistics-database.html"
 
   irs_soi_individual:
     registered_as: "IRS, Statistics of Income, individual tables by tax rate and income percentile, tax year 2023"
     cited_as: "IRS Statistics of Income, individual tables by tax rate and income percentile"
+    tier: primary
+    url: "https://www.irs.gov/statistics/soi-tax-stats-individual-statistical-tables-by-tax-rate-and-income-percentile"
 
   irs_soi_table_5:
     registered_as: "IRS Statistics of Income, SOI Data Book Table 5, Gross Collections by Type of Tax and State"
     cited_as: "IRS Statistics of Income, SOI Data Book Table 5, Gross Collections by Type of Tax and State"
+    tier: primary
+    # The directory, not a year's file: the basename is discovered per run
+    # (25db-1-05-co.xlsx for FY2025), so a pinned filename would be a dead link
+    # the first time the vintage moves.
+    url: "https://www.irs.gov/pub/irs-soi/"
 
   usaspending_geography:
     registered_as: "USASpending.gov"
     cited_as: "USASpending.gov spending_by_geography"
+    tier: primary
+    url: "https://www.usaspending.gov"
 
   census_stc:
     registered_as: "US Census Bureau, Annual Survey of State Government Tax Collections (STC)"
     cited_as: "US Census Bureau, Annual Survey of State Government Tax Collections (STC)"
+    tier: primary
+    url: "https://www.census.gov/programs-surveys/stc.html"
 
   census_via_fred:
     registered_as: "Census Bureau, via FRED"
     cited_as: "Census Bureau via FRED"
+    tier: official republication
+    # One entry, two series. url is the income series the figures headline;
+    # GINIALLRF is linked from the same SOURCES.md block, which is where a
+    # reader who wants the other one looks.
+    url: "https://fred.stlouisfed.org/series/MEHOINUSA672N"
 
   statutory_rate_schedules:
     registered_as: "Statutory rate schedules"
     cited_as: "Statutory rate schedules"
+    tier: primary
+    url_exempt: >-
+      Not a document but a derivation: the bracket ladder assembled here, read as a
+      top-rate series, with twelve statute/published-rate disagreements reconciled in
+      pipeline/curated/bracket_adjustments.yaml. The statutes behind it are the IRS
+      Revenue Procedures and PL 115-97, which carry their own entries and their own
+      URLs. Any single link would point at one of its inputs and claim to be the whole.
 
   tax_foundation_rates:
     registered_as: "Tax Foundation income-tax-rates dataset"
     cited_as: "Tax Foundation income-tax-rates dataset"
+    # #55 argued this in prose, once, inside bracket_history's source string: a
+    # compilation of federal numbers reorganised into per-bracket rows, not a source
+    # in its own right. compiled_from says it in a field a check can read.
+    tier: compilation
+    compiled_from: [irs_soi_table_23, irs_revenue_procedures]
+    url: "https://github.com/TaxFoundation/data"
 
   irs_soi_table_23:
     registered_as: "IRS SOI Historical Table 23"
     cited_as: "IRS SOI Historical Table 23"
+    tier: primary
+    url: "https://www.irs.gov/pub/irs-soi/histab23.xls"
 
   irs_revenue_procedures:
     registered_as: "IRS Revenue Procedures"
     cited_as: "IRS Revenue Procedures"
+    tier: primary
+    # The Internal Revenue Bulletin is where a Revenue Procedure is published; the
+    # site cites a run of them (2018-57 through 2024-40) rather than any one.
+    url: "https://www.irs.gov/irb"
 
   fred_cpiaucns:
     registered_as: "FRED CPIAUCNS"
     cited_as: "FRED CPIAUCNS"
+    # FRED redistributes the BLS series unaltered. The deflator is BLS's; the
+    # convenience of a machine-readable feed is FRED's.
+    tier: official republication
+    url: "https://fred.stlouisfed.org/series/CPIAUCNS"
 
   voteview:
     registered_as: "Voteview roll-call records"
     cited_as: "Voteview"
+    # The load-bearing term (#57). Voteview is not official -- it is not the House
+    # Clerk -- and it is not secondary: it republishes the primary roll-call record and
+    # the join it feeds is regressed against the Clerk's independently published record
+    # for PL 115-97, which fails the build if it drifts. A vocabulary whose only word
+    # for it was "secondary" would be the wrong vocabulary, so the vocabulary widened.
+    tier: scholarly republication
+    url: "https://voteview.com/data"
 
   house_clerk:
     registered_as: "House Clerk record"
     cited_as: "House Clerk roll call"
+    tier: primary
+    url: "https://clerk.house.gov/Votes"
 
   rockefeller_bop:
     registered_as: "Rockefeller Institute of Government, state balance-of-payments studies"
@@ -187,7 +316,13 @@ registry:
     # comparison; its series ends at FY2022 with no machine-readable feed, so it is cited
     # and never ingested. A named exemption, not a weakened assertion.
     cited_in_prose_only: true
-
+    # A university-affiliated policy institute publishing its own balance-of-payments
+    # estimates, documented back to the federal records they derive from. Same reason as
+    # voteview: not official, and calling the authoritative comparison "secondary" would
+    # be the failing vocabulary the issue names. The tier is stated as well as the
+    # prose-only flag, never instead of it.
+    tier: scholarly republication
+    url: "https://rockinst.org/issue-area/balance-of-payments/"
 outputs:
   bracket_history:
     cites:

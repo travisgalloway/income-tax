@@ -2025,8 +2025,13 @@ def test_check_sources_fails_when_a_cited_source_is_not_registered(monkeypatch, 
         c = validate.Checks()
         validate.check_sources(c, OUTPUTS)
 
-        assert len(c.failures) == 1, f"{key}: expected exactly one failure, got {c.failures}"
-        assert key in c.failures[0]
+        # Two failures since #57, both about this one entry and both correct: rule B
+        # (the registered name is gone from the document) and rule I (so is the
+        # lead-in carrying its tier, which is composed from that same name). Every
+        # failure must still name THIS key -- the guard is that a mutation to one
+        # entry does not ripple into a report about the others.
+        assert len(c.failures) == 2, f"{key}: expected rules B and I to fail, got {c.failures}"
+        assert all(key in f for f in c.failures), c.failures
         assert "SOURCES.md" in c.failures[0]
 
 
@@ -2117,6 +2122,239 @@ def test_check_sources_fails_when_a_cited_document_number_changes(monkeypatch, t
     assert len(c.failures) == 1, f"expected exactly one failure, got {c.failures}"
     assert "cbo_effective_rates" in c.failures[0]
     assert "Table 4" in c.failures[0]
+
+
+# ---- #57: a stated source tier, and a source line a reader can follow -------
+
+def _tiered_register() -> dict:
+    """A deep copy of the real register, for mutating one entry at a time."""
+    return copy.deepcopy(curated.source_register())
+
+
+def test_every_registered_source_states_a_tier_from_the_vocabulary():
+    """#57 criterion 1. No grandfathering and no exemption list: the population is
+    every entry in the register, not the ones that happened to be easy to classify.
+    A source with no stated kind is one the reader has to guess about, and the guess
+    a reader makes about an unlabelled citation is "primary"."""
+    registry = curated.source_register()["registry"]
+    assert registry, "the register is empty; this test would pass by checking nothing"
+    untiered = sorted(k for k, e in registry.items() if e.get("tier") not in validate.SOURCE_TIERS)
+    assert untiered == [], f"entries with no tier from the vocabulary: {untiered}"
+
+
+def test_every_registered_source_is_followable_or_carries_a_written_exemption():
+    """#57 criterion 2. Every source line the reader meets has to reach a page. Where
+    no single URL is truthful the reason is WRITTEN -- never a bare bool, the idiom
+    TITLE_RANGE_EXEMPT already establishes: an exemption with no reason is how a
+    check turns back into a skip."""
+    registry = curated.source_register()["registry"]
+    for key, entry in sorted(registry.items()):
+        url, exempt = entry.get("url"), entry.get("url_exempt")
+        if isinstance(url, str) and url:
+            assert url.startswith("https://"), f"{key}: url {url!r} is not https://"
+            assert not exempt, f"{key}: carries both a url and a url_exempt reason"
+        else:
+            assert isinstance(exempt, str) and exempt.strip(), (
+                f"{key}: no url and no written url_exempt reason. A bare bool is not a "
+                f"reason and never was."
+            )
+
+
+def test_voteview_is_describable_without_calling_it_secondary():
+    """#57's named acceptance test, and the reason the vocabulary widened past the
+    issue's own three terms. Voteview is an academic republication of the primary
+    roll-call record: not official (it is not the House Clerk) and not secondary (the
+    join it feeds is regressed against the Clerk's record for PL 115-97, which fails
+    the build if it drifts). The issue says it plainly -- "if the tier vocabulary can
+    only call it secondary, the vocabulary is wrong" -- so this asserts the tier AND
+    that party_splits still cites the same source it always did."""
+    registry = curated.source_register()["registry"]
+    assert registry["voteview"]["tier"] == "scholarly republication"
+    assert registry["voteview"]["tier"] != "secondary"
+    assert registry["house_clerk"]["tier"] == "primary", (
+        "the Clerk's own record is the primary Voteview is checked against; if it is not "
+        "primary, `scholarly republication` has nothing to be scholarly ABOUT"
+    )
+    # Assigning a tier is not a licence to swap a source (#57 "Out").
+    assert curated.source_register()["outputs"]["party_splits"]["cites"] == [
+        "voteview",
+        "house_clerk",
+    ]
+
+
+def test_a_compilation_names_what_it_compiles():
+    """#57 criterion 4, and #55's prose distinction made machine-readable. Until now
+    "a compilation of IRS SOI Historical Table 23 and IRS Revenue Procedures rather
+    than a source in its own right" lived inside one _meta.source string, argued once,
+    for one source, where no check could read it."""
+    registry = curated.source_register()["registry"]
+    compilations = sorted(k for k, e in registry.items() if e.get("tier") == "compilation")
+    assert "tax_foundation_rates" in compilations
+    for key in compilations:
+        compiled = registry[key].get("compiled_from")
+        assert isinstance(compiled, list) and compiled, f"{key}: compiled_from is empty"
+        for source_key in compiled:
+            assert source_key in registry, f"{key}: compiled_from names unregistered {source_key!r}"
+    assert set(registry["tax_foundation_rates"]["compiled_from"]) == {
+        "irs_soi_table_23",
+        "irs_revenue_procedures",
+    }
+
+
+def test_sources_doc_states_the_same_tier_as_the_register():
+    """#57 criterion 6, rule I against the real tree. The tier the reader sees on
+    /sources and the tier the register holds are one claim, not two -- and SOURCES.md
+    is still never parsed OUT of: the composed lead-in is matched INTO it, exactly as
+    rule B matches registered_as."""
+    doc = (LEGACY / "SOURCES.md").read_text()
+    normalized = validate._normalize_source(doc)
+    for key, entry in sorted(curated.source_register()["registry"].items()):
+        needle = f"{entry['registered_as']}** \u2014 {entry['tier']}"
+        assert validate._normalize_source(needle) in normalized, f"{key}: SOURCES.md omits {needle!r}"
+        url = entry.get("url")
+        if url:
+            assert url in doc, f"{key}: SOURCES.md does not carry the register's url {url!r}"
+
+
+def test_the_cbo_table_9_citation_is_read_from_meta_not_typed():
+    """#57 criterion 8. The Table 9 source line was hand-typed beside the figure it
+    labels -- byte-identical to cbo_effective_rates._meta.source and free to drift
+    from it the moment CBO republishes. It now reads the dataset. The literal is
+    banned by grep because that is the only thing a test can see from here."""
+    figures = (LEGACY / "src" / "data" / "figures.ts").read_text()
+    literal = (
+        "CBO, The Distribution of Household Income, 2022 (January 2026), Supplemental "
+        "Data Table 9, Average Federal Tax Rates by Income Group, 1979 to 2022."
+    )
+    assert literal not in figures, (
+        "src/data/figures.ts has retyped the CBO Table 9 citation. It is "
+        "cboEffectiveRates._meta.source; type it here and the two drift apart at the "
+        "next CBO republication, silently, because nothing compares them (#57)."
+    )
+    meta_source = json.loads((DATA / "cbo_effective_rates.json").read_text())["_meta"]["source"]
+    assert meta_source + "." == literal, (
+        "the rendered string is supposed to be UNCHANGED by this fold; if _meta.source "
+        "no longer composes to it, the caption moved and the fold was not a no-op"
+    )
+
+
+# Four negative tests, one per rule. This repository has removed nine checks that
+# were not looking; a rule that has never been observed to fail is one of them.
+
+def test_check_sources_fails_when_a_source_states_no_tier(monkeypatch):
+    """Rule F bites. The failure it exists for is not a typo -- it is the twenty-fifth
+    source, added in a hurry, describing itself as nothing at all."""
+    register = _tiered_register()
+    del register["registry"]["oecd_revenue_statistics"]["tier"]
+    monkeypatch.setattr(curated, "source_register", lambda: register)
+
+    c = validate.Checks()
+    validate.check_sources(c, OUTPUTS)
+
+    tier_failures = [f for f in c.failures if "oecd_revenue_statistics" in f and "tier" in f]
+    assert tier_failures, c.failures
+    assert "None" in tier_failures[0]
+
+
+def test_check_sources_fails_on_a_tier_outside_the_vocabulary(monkeypatch):
+    """Rule F's other half. A vocabulary that accepts anything is not a vocabulary,
+    and "official" for "official republication" is exactly the near-miss a typo
+    produces."""
+    register = _tiered_register()
+    register["registry"]["fred_cpiaucns"]["tier"] = "official"
+    monkeypatch.setattr(curated, "source_register", lambda: register)
+
+    c = validate.Checks()
+    validate.check_sources(c, OUTPUTS)
+
+    assert [f for f in c.failures if "fred_cpiaucns" in f and "'official'" in f], c.failures
+
+
+def test_check_sources_fails_when_a_secondary_source_carries_no_justification(monkeypatch):
+    """Rule H bites, on the tier no entry carries today. That is the point of the
+    term: `secondary` exists so the next source that is genuinely secondary cannot be
+    added silently, and an unargued one fails the build rather than the review."""
+    register = _tiered_register()
+    register["registry"]["oecd_revenue_statistics"]["tier"] = "secondary"
+    monkeypatch.setattr(curated, "source_register", lambda: register)
+
+    c = validate.Checks()
+    validate.check_sources(c, OUTPUTS)
+
+    assert [
+        f for f in c.failures if "oecd_revenue_statistics" in f and "justification" in f
+    ], c.failures
+
+    # And it passes the moment the argument is written down.
+    register["registry"]["oecd_revenue_statistics"]["justification"] = (
+        "a fixture, not a ruling about the OECD"
+    )
+    c = validate.Checks()
+    validate.check_sources(c, OUTPUTS)
+    assert not [f for f in c.failures if "justification" in f], c.failures
+
+
+def test_check_sources_fails_when_the_doc_tier_disagrees_with_the_register(monkeypatch):
+    """Rule I bites. The drift this catches is the quiet one: the register is edited,
+    the page is not, and /sources goes on telling the reader that a compilation is a
+    primary source with every other check green."""
+    register = _tiered_register()
+    register["registry"]["tax_foundation_rates"]["tier"] = "primary"
+    monkeypatch.setattr(curated, "source_register", lambda: register)
+
+    c = validate.Checks()
+    validate.check_sources(c, OUTPUTS)
+
+    assert [
+        f for f in c.failures if "tax_foundation_rates" in f and "SOURCES.md" in f
+    ], c.failures
+
+
+def test_check_sources_fails_when_a_source_has_no_url_and_no_written_reason(monkeypatch):
+    """Rule G bites, in both of the shapes that matter: no URL at all, and a bare
+    `url_exempt: true`. The second is the dangerous one -- it looks like a decision
+    and carries none, and an exemption with no reason is how a check turns back into
+    a skip (TITLE_RANGE_EXEMPT, validate.py)."""
+    # Taken once, before the first monkeypatch: _tiered_register() copies whatever
+    # curated.source_register currently is, which after one iteration is the mutated
+    # fixture rather than the real register.
+    pristine = _tiered_register()
+    for missing in ({}, {"url_exempt": True}):
+        register = copy.deepcopy(pristine)
+        entry = register["registry"]["census_stc"]
+        del entry["url"]
+        entry.update(missing)
+        monkeypatch.setattr(curated, "source_register", lambda r=register: r)
+
+        c = validate.Checks()
+        validate.check_sources(c, OUTPUTS)
+
+        assert [
+            f for f in c.failures if "census_stc" in f and "url_exempt" in f
+        ], f"{missing!r}: {c.failures}"
+
+
+def test_check_sources_tolerates_a_vintage_refresh_of_a_tiered_lead_in(monkeypatch, tmp_path):
+    """E10. Rule I's prose side is vintage-normalized like rule B's, so a CBO
+    February-2026 -> February-2027 refresh that moves BOTH the register and the
+    document must stay green. The URL is deliberately not normalized -- a "2026-02"
+    in a filename identifies a document rather than dating it -- so this refreshes
+    only the vintage in the lead-in."""
+    register = _tiered_register()
+    original = (LEGACY / "SOURCES.md").read_text()
+    old = "Congressional Budget Office, Historical Budget Data, February 2026"
+    new = "Congressional Budget Office, Historical Budget Data, February 2027"
+    assert old in original, "the fixture no longer matches SOURCES.md"
+    register["registry"]["cbo_historical_budget"]["registered_as"] = new
+
+    doc = tmp_path / "SOURCES.md"
+    doc.write_text(original.replace(old, new))
+    monkeypatch.setattr(validate, "SOURCES_DOC", doc)
+    monkeypatch.setattr(curated, "source_register", lambda: register)
+
+    c = validate.Checks()
+    validate.check_sources(c, OUTPUTS)
+    assert c.failures == [], c.failures
 
 
 # ---- #50: a glossary definition cites the register, not free text ---------
@@ -2230,9 +2468,15 @@ def test_check_sources_rule_c_accepts_a_glossary_only_citation(monkeypatch, tmp_
     # registered_as INTO SOURCES.md and a made-up name would fail for that reason instead
     # of exercising rule C. It used to borrow "Tax Policy Center"; #55 removed that source
     # from SOURCES.md entirely, so the fixture moved to a string that is still there.
+    # tier and url are the fixture's too, since #57: a register entry with neither is
+    # rejected by rules F and G, which would fail this test for a reason that has
+    # nothing to do with rule C. Both borrow the real entry's values for the same
+    # reason registered_as does.
     register["registry"]["irs_soi_table_23_definitional"] = {
         "registered_as": "IRS SOI Historical Table 23",
         "cited_as": "IRS SOI Historical Table 23",
+        "tier": "primary",
+        "url": "https://www.irs.gov/pub/irs-soi/histab23.xls",
     }
     monkeypatch.setattr(curated, "source_register", lambda: register)
 

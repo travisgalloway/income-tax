@@ -396,7 +396,8 @@ def check_sources(c: Checks, names: list[str]) -> None:
     registry: dict[str, Any] = reg["registry"]
     outputs: dict[str, Any] = reg["outputs"]
 
-    doc = _normalize_source(SOURCES_DOC.read_text()) if SOURCES_DOC.exists() else ""
+    raw_doc = SOURCES_DOC.read_text() if SOURCES_DOC.exists() else ""
+    doc = _normalize_source(raw_doc)
     c.ok(
         bool(doc),
         f"SOURCES.md not found or empty at {SOURCES_DOC}; the source register cannot "
@@ -465,6 +466,130 @@ def check_sources(c: Checks, names: list[str]) -> None:
         )
 
     _check_no_outlet_sources_a_figure(c, reg)
+    _check_source_tiers(c, registry, raw_doc, doc)
+
+
+# The tier vocabulary (#57). Five terms, each earning its place against a real
+# register entry. `scholarly republication` is the load-bearing one: Voteview is
+# not official (it is not the House Clerk) and it is not secondary (it
+# republishes the primary roll-call record, and the join it feeds is regressed
+# against the Clerk's), so a three-term primary/official/secondary vocabulary
+# could only call it secondary -- which is the failing vocabulary the issue
+# names. `compilation` is the other: #55 argued in prose, once, inside one
+# source string, that the Tax Foundation CSV is "a compilation ... rather than a
+# source in its own right", and nothing could read that argument. compiled_from
+# says it in a field a check can read.
+SOURCE_TIERS = (
+    "primary",
+    "official republication",
+    "scholarly republication",
+    "compilation",
+    "secondary",
+)
+
+
+def _check_source_tiers(c: Checks, registry: dict[str, Any], raw_doc: str, doc: str) -> None:
+    """Rules F-I -- every source states what KIND of source it is, and is followable.
+
+    Rules A-E make the register COMPLETE: every cited source is in SOURCES.md.
+    They say nothing about what the source is or where a reader goes next, and
+    until #57 the site had no machine-readable answer to either. The one place
+    the distinction had been drawn -- Tax Foundation as "a compilation ... rather
+    than a source in its own right" -- was drawn in prose, once, for one source,
+    inside a string nothing parses.
+
+    | F | every entry states a tier from SOURCE_TIERS                          |
+    | G | every entry has an https:// url, or a WRITTEN url_exempt reason      |
+    | H | secondary => justification; compilation => compiled_from (real keys) |
+    | I | the tier and the url stated in SOURCES.md match the register         |
+
+    Rule I preserves the never-parse-out invariant. It matches a COMPOSED string
+    INTO SOURCES.md exactly as rule B does -- "{registered_as}** -- {tier}",
+    which is the document's own lead-in form -- and SOURCES.md is still never
+    parsed OUT of. The prose side is vintage-normalized by _normalize_source,
+    like rule B, so an ordinary refresh still passes; the URL is compared RAW,
+    because a "2026-02" in a filename identifies a document rather than dating
+    it and normalizing it away would let the link drift to another vintage's
+    file unnoticed.
+
+    Where a later rule reads a field an earlier one just rejected -- I needs F's
+    tier, the url-in-doc check needs G's url -- the later rule stays silent for
+    that entry rather than piling a second confusing message onto the same
+    defect. That is not a skip: F or G has already failed loudly, by name, for
+    the same key in the same pass.
+    """
+    for key, entry in sorted(registry.items()):
+        tier = entry.get("tier")
+        stated = isinstance(tier, str) and tier in SOURCE_TIERS
+
+        # F -- a source added with no stated kind, or a typo'd tier.
+        c.ok(
+            stated,
+            f"{key}: tier is {tier!r}, which is not one of {', '.join(SOURCE_TIERS)}. "
+            f"Every registered source must say what KIND of source it is; a source with "
+            f"no stated kind is one the reader has to guess about (#57).",
+        )
+
+        url = entry.get("url")
+        exempt = entry.get("url_exempt")
+        followable = isinstance(url, str) and url.startswith("https://") and len(url) > 8
+        excused = isinstance(exempt, str) and bool(exempt.strip())
+
+        # G -- an unfollowable source line, or an exemption used as a silent skip.
+        c.ok(
+            followable or excused,
+            f"{key}: has no well-formed https:// url and no written url_exempt reason. "
+            f"Every source line the reader meets must be followable to a page; where no "
+            f"single URL is truthful, say WHY in url_exempt -- an exemption with no "
+            f"reason is how a check turns back into a skip (#57).",
+        )
+        c.ok(
+            not (followable and excused),
+            f"{key}: carries both a url and a url_exempt reason. One of the two is false; "
+            f"an exemption beside a working link is an exemption nobody will notice going "
+            f"stale.",
+        )
+
+        # H -- a secondary source slipped in unargued; a compilation passed off as a
+        # source in its own right.
+        if tier == "secondary":
+            justification = entry.get("justification")
+            c.ok(
+                isinstance(justification, str) and bool(justification.strip()),
+                f"{key}: tier is secondary and it carries no justification. Every other "
+                f"tier describes a source that publishes or republishes a record; "
+                f"secondary is the residue, and the residue has to be argued for in "
+                f"writing before it ships (#57).",
+            )
+        if tier == "compilation":
+            compiled = entry.get("compiled_from")
+            c.ok(
+                isinstance(compiled, list)
+                and bool(compiled)
+                and all(isinstance(k, str) and k in registry for k in compiled),
+                f"{key}: tier is compilation and compiled_from is {entry.get('compiled_from')!r}. "
+                f"A compilation is not a source in its own right, so it must name the "
+                f"registered sources it assembles -- every element a real register key "
+                f"(#55, #57).",
+            )
+
+        # I -- the tier or the URL on the page drifting from the register.
+        if stated:
+            c.ok(
+                _normalize_source(f"{entry['registered_as']}** — {tier}") in doc,
+                f"{key}: SOURCES.md does not state this source's tier as the register does "
+                f"(looked for {entry['registered_as'] + '** — ' + tier!r}). /sources renders "
+                f"SOURCES.md in full, so a tier that lives only in the register is a tier "
+                f"the reader never sees, and one the page states alone is one nothing checks "
+                f"(#57).",
+            )
+        if followable:
+            c.ok(
+                url in raw_doc,
+                f"{key}: the register's url {url!r} does not appear in SOURCES.md. The link "
+                f"a reader follows from a figure caption and the link /sources offers must "
+                f"be the same link, or one of the two is stale.",
+            )
 
 
 def _check_no_outlet_sources_a_figure(c: Checks, reg: dict[str, Any]) -> None:
