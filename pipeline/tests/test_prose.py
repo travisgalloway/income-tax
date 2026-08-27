@@ -362,7 +362,10 @@ def test_prose_contract_cites_lines_that_resolve():
 # 5. The rubric the six C-issues cite
 # ---------------------------------------------------------------------------
 
-CRITERION_RE = re.compile(r"^### Criterion (\d+)\b", re.MULTILINE)
+#: A rubric heading is `### Criterion N — <name>`, and the em dash is part of the match. Without it
+#: this also collects `### Criterion 1 audit`, the per-section table #52 added below the rubric, and
+#: the consecutive-numbering assertion then fails on a second 1 that is not a criterion at all.
+CRITERION_RE = re.compile(r"^### Criterion (\d+) —", re.MULTILINE)
 
 
 def test_prose_contract_has_a_numbered_rubric():
