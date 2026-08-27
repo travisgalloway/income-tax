@@ -1495,3 +1495,278 @@ def test_term_popovers_are_not_animated(page):
             "`short` verbatim, so the aria-describedby target does not hold "
             f"the definition. Served: {body[0].text().strip()!r}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Radix `Select` popper width at 390px (#62). On a phone the "Control at
+# enactment" listbox laid itself out 427px wide, x=10 to x=437, so 46px of
+# every option sat past the viewport edge — and `documentElement.scrollWidth`
+# stayed 390 with the popper wrapper computing `overflow-x: visible`, which
+# makes the overrun unreachable rather than merely awkward.
+#
+# **None of the three checks below can see that defect, and none of them
+# claims to.** `dist/government/index.html` contains `select-content` zero
+# times — Radix mounts `Content` only while the listbox is open, so the
+# listbox is never in the served bytes — and width and overflow are computed,
+# not serialised, so even a mounted popper would not expose its rendered size
+# to a static reader. What these check is that the three *declarations* that
+# bound the popup are still present: a later sweep that deletes any one of
+# them turns one of these red instead of silently restoring the defect.
+#
+# The rendered proof is a browser measurement, recorded in
+# `docs/contracts/accessibility.md` § Manual pass results. Automating that
+# observation in CI is #67, which owns exactly that capability.
+#
+# Each check is a plain function over text, so each is paired below with a
+# negative test that feeds it the mutant it exists to catch — an absence
+# asserted against source that was never mutated proves only that the source
+# is unchanged.
+# ---------------------------------------------------------------------------
+
+#: The two `position="popper"` listbox classes. Both are clamped against
+#: `--radix-select-content-available-width`, which Radix 2.3.7 mounts on the
+#: `Content` element itself and computes as the collision boundary minus the
+#: `collisionPadding` the call site passes.
+POPPER_CONTENT_CLASSES = (".select-content", ".tax-mix-select-content")
+
+AVAILABLE_WIDTH_VAR = "--radix-select-content-available-width"
+
+_MAX_WIDTH_RE = re.compile(r"(?:^|;)\s*max-width\s*:\s*([^;]+)")
+_MAX_HEIGHT_RE = re.compile(r"(?:^|;)\s*max-height\s*:\s*([^;]+)")
+_OVERFLOW_Y_RE = re.compile(r"(?:^|;)\s*overflow-y\s*:\s*([^;]+)")
+_OVERFLOW_X_RE = re.compile(r"(?:^|;)\s*overflow-x\s*:\s*([^;]+)")
+
+
+def popper_width_bound_failures(css_text: str) -> list[str]:
+    """Every popper listbox class declares a `max-width` measured against the
+    viewport. Returns one string per failure, empty when all are bound."""
+    rules = list(iter_css_rules(css_text))
+    failures = []
+    for cls in POPPER_CONTENT_CLASSES:
+        bodies = [body for selectors, body in rules if cls in selectors]
+        if not bodies:
+            failures.append(f"{cls} has no rule in global.css at all")
+            continue
+        declared = [m.group(1).strip() for b in bodies for m in [_MAX_WIDTH_RE.search(b)] if m]
+        if not declared:
+            failures.append(
+                f"{cls} declares no max-width, so the popper sizes itself to "
+                "its widest option and opens past a 390px viewport (#62)"
+            )
+            continue
+        if not any(AVAILABLE_WIDTH_VAR in d for d in declared):
+            failures.append(
+                f"{cls} declares max-width: {declared[-1]!r}, which does not "
+                f"reference {AVAILABLE_WIDTH_VAR} — the only value that knows "
+                "the collision boundary and the side the popper chose"
+            )
+    return failures
+
+
+def test_every_radix_popper_content_class_bounds_its_width():
+    failures = popper_width_bound_failures(GLOBAL_CSS.read_text())
+    assert not failures, "; ".join(failures)
+
+
+def _select_namespaces(source: str) -> list[str]:
+    """The local names `@radix-ui/react-select` is bound to in one island.
+
+    Resolved from the import rather than matched as a bare `Select.Content`,
+    so `Tabs.Content` and `Dialog.Content` — which are not poppers and need no
+    collision configuration — are not swept in, and so a third `Select`
+    consumer is covered the moment its file lands, whatever it names the
+    namespace.
+    """
+    return re.findall(
+        r"import\s+\*\s+as\s+(\w+)\s+from\s+['\"]@radix-ui/react-select['\"]", source
+    )
+
+
+def _opening_tag(source: str, start: int) -> str:
+    """The full JSX opening tag beginning at `start`, brace-aware.
+
+    A regex to the first `>` would stop inside `{() => …}`; every prop value
+    here is a brace expression, so depth is tracked instead."""
+    depth = 0
+    for i in range(start, len(source)):
+        c = source[i]
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+        elif c == ">" and depth == 0:
+            return source[start : i + 1]
+    return source[start:]
+
+
+def collision_padding_failures(sources: dict[str, str]) -> list[str]:
+    """Every Radix `Select` `Content` in `src/components/islands/` passes an
+    explicit `collisionPadding`.
+
+    Not decoration: `collisionPadding` is the number
+    `--radix-select-content-available-width` is measured against, so the
+    `max-width` clamp checked above is only as good as this prop. The two are
+    a pair and neither is a fix on its own (#62).
+    """
+    failures = []
+    found = 0
+    for name, source in sorted(sources.items()):
+        for ns in _select_namespaces(source):
+            for m in re.finditer(rf"<{re.escape(ns)}\.Content\b", source):
+                found += 1
+                tag = _opening_tag(source, m.start())
+                if "collisionPadding" not in tag:
+                    line = source[: m.start()].count("\n") + 1
+                    failures.append(
+                        f"{name}:{line}: <{ns}.Content> passes no "
+                        "collisionPadding, so the available-width var the "
+                        "listbox is clamped against is measured against a "
+                        "boundary nobody chose (#62)"
+                    )
+    if not found:
+        failures.append(
+            "no Radix Select Content element found in any island — this check "
+            "has nothing to read and would pass vacuously"
+        )
+    return failures
+
+
+def test_every_radix_select_content_passes_collision_padding():
+    failures = collision_padding_failures({p.name: p.read_text() for p in ISLANDS})
+    assert not failures, "; ".join(failures)
+
+
+def two_axis_scroll_box_failures(css_text: str) -> list[str]:
+    """`.tax-mix-select-content` scrolls on one axis, and says so.
+
+    Load-bearing rather than pedantic: CSS forces a used `overflow-x` of
+    `auto` whenever `overflow-y` is not `visible`, so "we never wrote
+    `overflow-x`" is not the same as "there is no horizontal scroll box" —
+    measured at 390px before this rule existed, the listbox computed
+    `overflow-x: auto`. Nothing is clipped by declaring `hidden`, because the
+    width clamp above stops the content exceeding the box.
+    """
+    cls = ".tax-mix-select-content"
+    bodies = [body for selectors, body in iter_css_rules(css_text) if cls in selectors]
+    if not bodies:
+        return [f"{cls} has no rule in global.css at all"]
+    body = "".join(bodies)
+    failures = []
+    if not _MAX_HEIGHT_RE.search(body):
+        failures.append(
+            f"{cls} declares no max-height — the 51-jurisdiction list is no "
+            "longer bounded to a scrolling box"
+        )
+    overflow_y = _OVERFLOW_Y_RE.search(body)
+    if not overflow_y or overflow_y.group(1).strip() != "auto":
+        failures.append(
+            f"{cls} does not declare `overflow-y: auto`, so the jurisdictions "
+            "past the fold are unreachable"
+        )
+    overflow_x = _OVERFLOW_X_RE.search(body)
+    if not overflow_x:
+        failures.append(
+            f"{cls} declares no overflow-x, which CSS then computes as `auto` "
+            "because overflow-y is not `visible` — a two-axis scroll box"
+        )
+    elif overflow_x.group(1).strip() in {"auto", "scroll"}:
+        failures.append(
+            f"{cls} declares overflow-x: {overflow_x.group(1).strip()!r} — a "
+            "horizontal scrollbar on a listbox nothing is too wide for"
+        )
+    return failures
+
+
+def test_the_tax_mix_listbox_is_not_a_two_axis_scroll_box():
+    failures = two_axis_scroll_box_failures(GLOBAL_CSS.read_text())
+    assert not failures, "; ".join(failures)
+
+
+# --- and the proof that each of the three bites ------------------------------
+# This repository has removed checks that could not fail. Each mutant below is
+# the exact edit that reintroduces the 390px defect.
+
+
+def test_the_width_guard_bites_a_popper_that_lost_its_clamp():
+    css = GLOBAL_CSS.read_text()
+    dropped = css.replace(
+        f"max-width: var({AVAILABLE_WIDTH_VAR}, calc(100vw - 1.5rem));", "", 1
+    )
+    assert dropped != css, "the mutant did not apply — the declaration moved"
+    assert popper_width_bound_failures(dropped), "a popper with no clamp passed"
+
+    # And the subtler regression: a clamp that is *there* but measured against
+    # something that does not know where the popper was placed.
+    naive = css.replace(
+        f"max-width: var({AVAILABLE_WIDTH_VAR}, calc(100vw - 1.5rem));",
+        "max-width: 30rem;",
+    )
+    assert popper_width_bound_failures(naive), "a fixed-rem clamp passed"
+
+
+def test_the_collision_guard_bites_a_content_that_dropped_the_prop():
+    sources = {p.name: p.read_text() for p in ISLANDS}
+    assert not collision_padding_failures(sources), (
+        "the mutants below prove nothing if the real sources already fail"
+    )
+
+    mutants = {
+        name: source.replace("collisionPadding={8}", "")
+        for name, source in sources.items()
+    }
+    assert mutants != sources, "no island carries collisionPadding to remove"
+    failures = collision_padding_failures(mutants)
+    assert len(failures) == 2, failures
+    assert all("collisionPadding" in f for f in failures), failures
+
+    # A third consumer, added without the prop, is caught without editing this
+    # suite (E9) — and an alias other than `RadixSelect` is still resolved.
+    newcomer = {
+        "Newcomer.tsx": (
+            "import * as Sel from '@radix-ui/react-select'\n"
+            "const C = () => <Sel.Content className='x' position='popper'>"
+            "{null}</Sel.Content>\n"
+        )
+    }
+    assert collision_padding_failures({**sources, **newcomer}), (
+        "a new Select consumer with no collisionPadding passed"
+    )
+
+    # `Tabs.Content` is not a popper and must not be swept in.
+    tabs = {
+        "Tabby.tsx": (
+            "import * as Tabs from '@radix-ui/react-tabs'\n"
+            "const C = () => <Tabs.Content value='a'>{null}</Tabs.Content>\n"
+        )
+    }
+    assert not collision_padding_failures({**sources, **tabs}), (
+        "a non-Select Content was demanded to carry collisionPadding"
+    )
+
+
+def _mutate_rule(css_text: str, selector: str, old: str, new: str) -> str:
+    """`old` -> `new`, inside one rule's block only.
+
+    A bare `str.replace` would hit the first `overflow-y: auto` in the
+    stylesheet, which belongs to another rule entirely — a mutant that lands
+    somewhere else proves the guard bites something else."""
+    m = re.search(rf"{re.escape(selector)}\s*\{{([^{{}}]*)\}}", css_text)
+    assert m, f"{selector} block not found in global.css"
+    body = m.group(1)
+    assert old in body, f"{old!r} is not declared in {selector}"
+    return css_text[: m.start(1)] + body.replace(old, new, 1) + css_text[m.end(1) :]
+
+
+def test_the_scroll_box_guard_bites_each_way_it_can_regress():
+    css = GLOBAL_CSS.read_text()
+    assert not two_axis_scroll_box_failures(css)
+
+    cls = ".tax-mix-select-content"
+    for mutant, why in (
+        (_mutate_rule(css, cls, "overflow-x: hidden;", ""), "overflow-x deleted"),
+        (_mutate_rule(css, cls, "overflow-x: hidden;", "overflow-x: auto;"), "overflow-x: auto"),
+        (_mutate_rule(css, cls, "max-height: 20rem;", ""), "max-height deleted"),
+        (_mutate_rule(css, cls, "overflow-y: auto;", ""), "overflow-y deleted"),
+    ):
+        assert mutant != css, f"the mutant for {why!r} did not apply"
+        assert two_axis_scroll_box_failures(mutant), f"{why} passed"
