@@ -3758,3 +3758,325 @@ def test_the_target_size_guards_bite_each_way_the_fix_can_regress():
         ".select-item is gone from global.css; the must-not-fire check above "
         "is asserting against nothing"
     )
+
+
+# ---------------------------------------------------------------------------
+# Keyboard-operable horizontal scroll containers (#71)
+#
+# WCAG 2.1.1, Level A. A wrapper with `overflow-x: auto` that carries no
+# `tabindex`, no role and no name is a box a pointer can scroll and a keyboard
+# cannot; on `/economy` `#prices-rates` that hid columns 4 to 7 of seven.
+# `src/components/islands/scrollRegion.ts` makes such a wrapper focusable
+# EXACTLY when it overflows.
+#
+# The three guards below own the halves a browser cannot see, and the halves a
+# browser is the wrong place to assert:
+#
+#   S1  what the SERVED BYTES say, which is where the scripting-off Tab order
+#       lives and where `dist/` is the only witness;
+#   S2  that the population is COMPLETE — every `overflow-x` scroller class in
+#       the stylesheet is rendered by a consumer that spreads the hook, so a
+#       fourth wide table cannot ship unwired without anyone editing a list;
+#   S3  that the contract NAMES each of those classes, so it cannot ship
+#       undocumented either.
+#
+# `two_axis_scroll_box_failures` above is the deliberate opposite of S2 and the
+# two must not be merged: a Radix listbox must NOT be a horizontal scroll box,
+# a table wrapper deliberately is one.
+# ---------------------------------------------------------------------------
+
+#: The classes #71 governs, as they appear in `class` attributes.
+SCROLL_CLASSES = ("tableview-scroll", "law-table-scroll")
+
+#: The hook every consumer of such a class must spread.
+SCROLL_HOOK = "useScrollableRegion"
+
+#: Attributes that must NOT reach the served bytes on one of those elements.
+#: Focusability follows overflow, overflow is a computed layout property, and no
+#: build step can compute it — so the honest server render is a bare `<div>`.
+SERVER_FORBIDDEN = ("tabindex", "role", "aria-label")
+
+_OVERFLOW_X_SCROLLS_RE = re.compile(r"(?:^|;)\s*overflow-x\s*:\s*(auto|scroll)\b")
+_CLASS_IN_SELECTOR_RE = re.compile(r"\.([A-Za-z_][\w-]*)")
+_JSX_OPEN_TAG_RE = re.compile(r"<[A-Za-z][\w.]*\b[^<>]*>")
+_JSX_CLASSNAME_RE = re.compile(r'className="([^"]*)"')
+_HOOK_BINDING_RE = re.compile(rf"const\s+(\w+)\s*=\s*{SCROLL_HOOK}\(")
+
+
+def focusable_scroll_container_failures(root: Node) -> list[str]:
+    """S1. Any #71 container in the served HTML that was born focusable."""
+    failures: list[str] = []
+    for n in root.iter_descendants():
+        classes = n.classes()
+        cls = next((c for c in SCROLL_CLASSES if c in classes), None)
+        if cls is None:
+            continue
+        for attr in SERVER_FORBIDDEN:
+            value = n.get(attr)
+            if value is not None:
+                failures.append(
+                    f".{cls} ships {attr}={value!r} in the built HTML. Focusability "
+                    "follows OVERFLOW, which no build step can compute — a "
+                    "server-rendered attribute here adds an empty Tab stop for "
+                    "every table that happens to fit, and moves the scripting-off "
+                    "Tab order off its asserted 136/118 (#71)."
+                )
+    return failures
+
+
+def test_the_served_bytes_carry_no_focusable_scroll_container(page):
+    path, root = page
+    failures = focusable_scroll_container_failures(root)
+    assert not failures, f"{path}: " + "; ".join(failures)
+
+
+def test_the_served_bytes_guard_bites(page):
+    """One synthetic fragment per forbidden attribute, parsed by the same
+    parser that reads the real build."""
+    _path, root = page
+    assert not focusable_scroll_container_failures(root)
+
+    for attr, value in (
+        ("tabindex", "0"),
+        ("role", "group"),
+        ("aria-label", "Some table, scrollable table"),
+    ):
+        mutant = parse_fragment(
+            f'<div class="tableview-scroll" {attr}="{value}"><table></table></div>'
+        )
+        found = focusable_scroll_container_failures(mutant)
+        assert len(found) == 1, f"{attr} produced {found}"
+        assert attr in found[0], found
+
+    # Both classes are governed, not just the shared one.
+    law = parse_fragment('<div class="law-table-scroll" tabindex="0"></div>')
+    assert focusable_scroll_container_failures(law), "law-table-scroll passed"
+
+    # And an unrelated container is not swept in: `tabindex="-1"` on the page's
+    # own `<main>` is the skip-link target and must stay invisible here.
+    clean = parse_fragment('<main tabindex="-1"><div class="tableview"></div></main>')
+    assert not focusable_scroll_container_failures(clean)
+
+
+def horizontal_scroll_selectors(css_text: str) -> list[str]:
+    """Every selector in `global.css` declaring `overflow-x: auto|scroll`.
+
+    `hidden` is excluded by the regex rather than by an exception list, which
+    is what keeps `.tax-mix-select-content` — declared `hidden` precisely so it
+    is NOT a horizontal scroller (#62) — out of this population without anyone
+    maintaining a name. `overflow-y`-only rules such as `.navbar-panel` never
+    match at all."""
+    found: list[str] = []
+    for selectors, body in iter_css_rules(css_text):
+        if not _OVERFLOW_X_SCROLLS_RE.search(body):
+            continue
+        found.extend(s.strip() for s in selectors if s.strip())
+    return sorted(set(found))
+
+
+def _scrolling_class(selector: str) -> str | None:
+    """The class of the element a selector actually styles — its LAST class, so
+    `.a .b` resolves to `b`. `None` for a selector with no class at all, which
+    the caller reports rather than silently skipping."""
+    classes = _CLASS_IN_SELECTOR_RE.findall(selector)
+    return classes[-1] if classes else None
+
+
+def scroll_coverage_failures(css_text: str, sources: dict[str, str]) -> list[str]:
+    """S2. Every `overflow-x` scroller class is rendered through the hook.
+
+    `sources` maps a path to its text, as `hardcoded_mark_failures` takes it."""
+    selectors = horizontal_scroll_selectors(css_text)
+    if not selectors:
+        return [
+            "global.css declares `overflow-x: auto|scroll` on nothing at all — "
+            "either every wide table stopped scrolling or this guard is reading "
+            "the wrong stylesheet"
+        ]
+
+    failures: list[str] = []
+    for selector in selectors:
+        cls = _scrolling_class(selector)
+        if cls is None:
+            failures.append(
+                f"{selector!r} declares overflow-x: auto|scroll but names no "
+                "class, so #71's rule cannot be attached to it. Give the "
+                "scroller a class, or say in the contract why it is exempt."
+            )
+            continue
+
+        rendered_by: list[tuple[str, bool]] = []
+        for name in sorted(sources):
+            src = sources[name]
+            binding = _HOOK_BINDING_RE.search(src)
+            spread = f"{{...{binding.group(1)}}}" if binding else None
+            for tag in _JSX_OPEN_TAG_RE.finditer(src):
+                attrs = tag.group(0)
+                names = _JSX_CLASSNAME_RE.search(attrs)
+                if names is None or cls not in names.group(1).split():
+                    continue
+                rendered_by.append((name, spread is not None and spread in attrs))
+
+        if not rendered_by:
+            failures.append(
+                f".{cls} declares overflow-x: auto|scroll in global.css but no "
+                "element under src/components renders it — a scroll box nothing "
+                "builds, or a dead rule. Wire it to "
+                f"{SCROLL_HOOK}() or delete the rule (#71)."
+            )
+            continue
+        for name, wired in rendered_by:
+            if not wired:
+                failures.append(
+                    f"{name} renders .{cls} without spreading {SCROLL_HOOK}()'s "
+                    "props. It is a horizontal scroll box, so without them a "
+                    "keyboard reader cannot scroll it and its right-hand columns "
+                    "do not exist for them (WCAG 2.1.1, #71)."
+                )
+    return failures
+
+
+def _component_sources() -> dict[str, str]:
+    return {
+        p.relative_to(SRC).as_posix(): p.read_text()
+        for p in sorted((SRC / "components").glob("**/*.tsx"))
+    }
+
+
+def test_every_horizontal_scroll_class_is_keyboard_operable():
+    sources = _component_sources()
+    assert sources, "no components found under src/components"
+    failures = scroll_coverage_failures(GLOBAL_CSS.read_text(), sources)
+    assert not failures, "\n".join(failures)
+
+
+def test_the_scroll_coverage_guard_bites():
+    css = GLOBAL_CSS.read_text()
+    sources = _component_sources()
+    assert not scroll_coverage_failures(css, sources), (
+        "the mutants below prove nothing if the real sources already fail"
+    )
+
+    # (a) a consumer that renders the class and drops the spread — the exact
+    # state every one of these wrappers was in before #71.
+    unwired = {
+        **sources,
+        "components/islands/Fake.tsx": (
+            "export const F = () => (\n"
+            '  <div className="tableview-scroll">\n'
+            "    <table />\n"
+            "  </div>\n"
+            ")\n"
+        ),
+    }
+    found = scroll_coverage_failures(css, unwired)
+    assert len(found) == 1, found
+    assert "Fake.tsx" in found[0] and SCROLL_HOOK in found[0], found
+
+    # And a consumer that calls the hook but spreads it somewhere else does not
+    # satisfy the guard either.
+    misplaced = {
+        **sources,
+        "components/islands/Fake.tsx": (
+            f"const s = {SCROLL_HOOK}('x')\n"
+            "export const F = () => (\n"
+            "  <section {...s}>\n"
+            '    <div className="tableview-scroll"><table /></div>\n'
+            "  </section>\n"
+            ")\n"
+        ),
+    }
+    assert scroll_coverage_failures(css, misplaced), (
+        "a hook spread onto the wrong element passed"
+    )
+
+    # (b) E9: a fourth scroll-container class, added to the stylesheet with no
+    # consumer at all. Caught without editing any list in this file.
+    newcomer_css = css + "\n.new-scroll { overflow-x: auto; }\n"
+    found = scroll_coverage_failures(newcomer_css, sources)
+    assert len(found) == 1, found
+    assert ".new-scroll" in found[0], found
+
+    # (c) the negative half: the two deliberate exclusions must NOT be swept in.
+    selectors = horizontal_scroll_selectors(css)
+    classes = {_scrolling_class(s) for s in selectors}
+    assert classes == set(SCROLL_CLASSES), (
+        f"the #71 population is {sorted(classes)}, expected {sorted(SCROLL_CLASSES)}"
+    )
+    assert "tax-mix-select-content" not in classes, (
+        "the Radix listbox declares `overflow-x: hidden` precisely so it is not "
+        "a horizontal scroller (#62); demanding the #71 hook on it would put "
+        "this guard in direct conflict with two_axis_scroll_box_failures"
+    )
+    assert "navbar-panel" not in classes, (
+        "the nav panel scrolls on the Y axis only and is already keyboard "
+        "operable — 17 focusable links, and opening it moves focus to the "
+        "container itself"
+    )
+
+
+def _contract_section(doc_text: str, marker: str) -> str | None:
+    """The body of the heading whose text contains `marker`, up to the next
+    heading at the same level or shallower."""
+    lines = doc_text.split("\n")
+    for i, line in enumerate(lines):
+        m = re.match(r"^(#{2,6})\s+(.*)$", line)
+        if not m or marker not in m.group(2):
+            continue
+        depth = len(m.group(1))
+        body = []
+        for later in lines[i + 1 :]:
+            m2 = re.match(r"^(#{1,6})\s", later)
+            if m2 and len(m2.group(1)) <= depth:
+                break
+            body.append(later)
+        return "\n".join(body)
+    return None
+
+
+def scroll_contract_failures(css_text: str, doc_text: str) -> list[str]:
+    """S3. Every class S2 enumerates is named in the contract's #71 section."""
+    section = _contract_section(doc_text, "(#71)")
+    if section is None:
+        return [
+            "docs/contracts/accessibility.md has no heading naming (#71), so the "
+            "rule a future wide table is supposed to inherit is written down "
+            "nowhere"
+        ]
+    failures = []
+    for selector in horizontal_scroll_selectors(css_text):
+        cls = _scrolling_class(selector)
+        if cls is None:
+            continue
+        if f".{cls}" not in section:
+            failures.append(
+                f".{cls} is a horizontal scroll container and the (#71) section of "
+                "docs/contracts/accessibility.md does not name it. The rule is "
+                "meant to be inherited mechanically, which means the enumeration "
+                "has to be there for the next reader to find."
+            )
+    return failures
+
+
+def test_every_horizontal_scroll_class_is_named_in_the_contract():
+    failures = scroll_contract_failures(
+        GLOBAL_CSS.read_text(), ACCESSIBILITY_DOC.read_text()
+    )
+    assert not failures, "\n".join(failures)
+
+
+def test_the_scroll_contract_guard_bites():
+    css = GLOBAL_CSS.read_text()
+    doc = ACCESSIBILITY_DOC.read_text()
+    assert not scroll_contract_failures(css, doc)
+
+    newcomer = css + "\n.new-scroll { overflow-x: scroll; }\n"
+    found = scroll_contract_failures(newcomer, doc)
+    assert len(found) == 1, found
+    assert ".new-scroll" in found[0], found
+
+    # And the section going missing is a failure in its own right, not a pass
+    # by vacuity — the shape a documentation guard fails in most quietly.
+    gutted = doc.replace("(#71)", "(#7l)")
+    assert gutted != doc, "the contract heading this guard reads has moved"
+    assert scroll_contract_failures(css, gutted), "a missing #71 section passed"

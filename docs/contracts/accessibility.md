@@ -426,7 +426,9 @@ does not duplicate it.
 | 34 | M12 JavaScript disabled: page `scrollWidth` == viewport, and the trigger shapes | **ASSERTED** for the width and overflow half, by the scripting-off pass; the trigger-shape half is **COVERED ELSEWHERE** by the static `test_*term*` guards |
 | 35 | #69: the tab order through a chart route, and that every datum stays reachable once it is bounded | **ASSERTED** — `keyboard.test.ts`. A real Tab walk (press, read `document.activeElement`) on `/government` hydrated and with scripting off; per-svg stop enumeration on all three chart routes at both viewports, scripting on and off; arrow traversal over the largest group on each route; and the same enumeration after every option of `#the-laws`' three filters and both `YearRange` extremes |
 
-**Of the 35, 22 are asserted, 3 are covered elsewhere, and 10 remain human-judged** — every one of
+| 36 | #71: that a wide table's scroll container is reachable and scrollable by keyboard, and that making it so does not add empty Tab stops | **ASSERTED** — `tests/browser/scroll.test.ts`. The focusable-exactly-when-it-overflows invariant over all 27 containers on three routes at both viewports with every `<details>` open; arrow/`Home`/`End` movement with clamping; all seven `#prices-rates` columns brought fully into view by keys alone; role, caption-containing name and a solid author focus ring; Tab-order growth equal to exactly the overflowing count, self-baselined; and both `keyboard.test.ts` bounds re-walked in the all-tables-open state. The served-bytes half is `test_the_served_bytes_carry_no_focusable_scroll_container` |
+
+**Of the 36, 23 are asserted, 3 are covered elsewhere, and 10 remain human-judged** — every one of
 the 10 for a stated reason that is not "we ran out of time": assistive technology that does not exist
 in CI, a pixel judgement, a copy judgement, a viewport outside this contract, or a probe whose
 assertion would pin us to a third-party internal.
@@ -498,9 +500,9 @@ same one.
 | Check | Route | Result | Tool | Evidence / issue |
 |---|---|---|---|---|
 | M1 keyboard traversal | `/` | PASS | Chrome 151 + browser lane | Skip link is the first tabbable element at (8,8), 135×44, `href="#main"`, `main[tabindex="-1"]`; zero positive `tabindex` site-wide. **The "389 of 408 tab stops are data points" reading recorded here was `/economy`'s, taken before the intro-route split**: `/` now renders zero figures, zero `<svg>` and 20 tab stops. `/economy`'s own figure was 389 of 437, and is 53 since #69. No wide table renders on this route, so #71 does not arise here either. |
-| M1 keyboard traversal | `/government/` | FAIL | Chrome 151 + browser lane | Skip link and landmark order as above. The "380 of 471" reading predates the intro-route split; at `d69e4e6` it was **364 of 512**, with **438** presses to §11. Since #69 each chart `<svg>` is one roving group: **161** stops and **141** to §11 hydrated, **136** and **118** with scripting off, every one of the 369 marks still reachable by arrow key. Walked on every pull request by `keyboard.test.ts`. Still FAIL, now for #71 alone (wide-table scroll container not keyboard reachable) and #72 (four `radiogroup`s all resolve to the name "Measured in"). |
-| M1 keyboard traversal | `/households/` | FAIL | Chrome 151 + browser lane | Skip link and landmark order as above. The 356 recorded here is the **mark** count, not the tab-stop count; the walk at `d69e4e6` was 428 stops of which 356 were marks. Since #69: **80** stops, all 356 marks still reachable by arrow key, including `BracketHistory`'s 113 — the largest group on the site. Still FAIL for #71. |
-| M1 keyboard traversal | `/sources/` | PASS | Chrome 151 | Skip link first at (8,8) 135×44; `main[tabindex="-1"]`; zero positive `tabindex`; no focusable datum and no scroll container renders on this route. |
+| M1 keyboard traversal | `/government/` | FAIL | Chrome 151 + browser lane | Skip link and landmark order as above. The "380 of 471" reading predates the intro-route split; at `d69e4e6` it was **364 of 512**, with **438** presses to §11. Since #69 each chart `<svg>` is one roving group: **161** stops and **141** to §11 hydrated, **136** and **118** with scripting off, every one of the 369 marks still reachable by arrow key. Since #71 it is **163** and **142**, the two extra stops being the two wide tables that are not inside a `<details>`; scripting off is unchanged at 136/118. Walked on every pull request by `keyboard.test.ts`. Still FAIL, now for **#72 alone** (four `radiogroup`s all resolve to the name "Measured in"). |
+| M1 keyboard traversal | `/households/` | PASS | Chrome 151 + browser lane | Skip link and landmark order as above. The 356 recorded here is the **mark** count, not the tab-stop count; the walk at `d69e4e6` was 428 stops of which 356 were marks. Since #69: **80** stops, all 356 marks still reachable by arrow key, including `BracketHistory`'s 113 — the largest group on the site. #71 resolved the scroll-container half: this route's seven wrappers are focusable exactly while they overflow, and the walk is unchanged at 80/67 because all seven sit inside a `<details>`. **PASS as of #71.** |
+| M1 keyboard traversal | `/sources/` | PASS | Chrome 151 | Skip link first at (8,8) 135×44; `main[tabindex="-1"]`; zero positive `tabindex`; no focusable datum and no scroll container renders on this route, so #71 does not arise here. |
 | M1 keyboard traversal | `/glossary` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. |
 | M1 keyboard traversal | `/contents` | NOT EXECUTED | — | The route postdates the 2026-08-26 pass and has not been walked in a browser. It renders zero `<figure>`, zero `<svg>` and zero islands, so the chart-legibility, greyscale and focus-ring checks are expected to be vacuous here as they are on `/sources/`; that is a prediction, not a result. Its own edge case is the one `/sources/` failed (#79): every line on it is a derived string and the source lines are long, so the 390px rows are the ones that matter. |
 | M2 screen-reader pass | `/` | NOT EXECUTED | — | No assistive technology exists in this environment. Human required — #80. |
@@ -673,7 +675,7 @@ all five sorted orders. Sorting re-renders rows, not layout.
 **Space** both sort, `aria-sort` reads `descending` on exactly one `<th>` after each, and the
 browser brings the focused button inside the viewport by scrolling the wrapper (the second button
 lands at x 140 → 221). The pinned column does not intercept focus — it declares no `tabindex` and
-no role, which is **#71**'s scope, not this issue's.
+no role, and it still does not: #71 made the *wrapper* focusable, never a cell inside it.
 
 **`border-collapse` (E2).** `.sortable-table` is `border-collapse: collapse`, and a sticky cell can
 paint over a collapsed rule that belongs to the table rather than the cell. Screenshotted at both
@@ -711,7 +713,9 @@ today, so there is one palette to match and it matches it.
 fade, no shadow, no persistent scrollbar, no text hint — on this wrapper or on §10's
 `.law-table-scroll`. That is **#76**, which scopes it site-wide; two of #63's Definition-of-done
 boxes were moved there on 2026-08-27 rather than implemented under this number. Keyboard
-operability of the scroll wrappers is **#71**, and the `.sort-button`'s 21px height is **#65**.
+operability of the scroll wrappers shipped under **#71** — this wrapper is focusable while it
+overflows, named after its caption and scrolled by the arrow keys — and the `.sort-button`'s 21px
+height is **#65**.
 
 ### Right-edge annotation clipping (#64)
 
@@ -1327,6 +1331,135 @@ screen. Chromium tab stops from load are `.skip-link` → the `<summary>` → in
 **asserted since #67** — `tests/browser/smoke.test.ts`'s target-size and tab-order checks re-run all
 three on every pull request; the rail's sticky geometry is not, and stays with #80.
 
+### Keyboard-operable scroll containers (#71)
+
+**The rule, and it applies to every table wrapper this site will ever grow.** An element whose
+computed `overflow-x` is `auto` or `scroll` is focusable **exactly when it overflows**; while it
+overflows it carries `role="group"` and an `aria-label` that names what it contains; and
+`ArrowLeft`/`ArrowRight`, `PageUp`/`PageDown`, `Home` and `End` scroll it. A container that fits
+carries `tabindex="-1"` — invisible to the Tab order, but still able to hold a reader who was
+standing on it when the window widened.
+
+Before this, every wrapper was a plain `<div>`: no `tabindex`, no role, no name. Measured at
+`1b2fcd5` on `/economy` `#prices-rates` at 1440×900 — a 1216px table in a 736px box — the
+per-column visibility vector after `End` was `[true,true,true,false,false,false,false]`. **Columns
+4 to 7 of seven did not exist for a reader without a pointing device.** WCAG 2.1.1, Level A.
+
+**The mechanism is `src/components/islands/scrollRegion.ts`**, one hook spread by all three JSX
+sites. The key handler is written out rather than left to the browser's own scrolling of a focused
+container, and that is a deliberate testability decision, not a preference: measured on a minimal
+page in headless **and** headed Chromium, Playwright's synthetic key events do not drive Chromium's
+native scrolling at all — a focused horizontal scroller, a focused vertical scroller and the
+document itself all stayed at 0 after `ArrowRight`/`ArrowDown`/`End`. A `tabindex`-only fix would
+have shipped behaviour **no check in this repository can observe**.
+
+**`role="group"`, not `role="region"`.** A *named* `region` is a landmark, and this would mint up to
+fifteen of them on `/government` alone; the site already refuses that kind of AT noise
+(`test_live_regions_do_not_outnumber_charts`). `group` takes an accessible name, is announced on
+focus, and is the role every chart `<svg>` already carries for the same "keyboard-operable
+composite" reason. The name is the table's own `<caption>` plus `, scrollable table`: the caption
+says *what is in it*, which a bare "scrollable region" does not, and the phrasing lives in one
+function so it cannot drift across 27 containers.
+
+**Every horizontal scroll container, enumerated from `global.css` rather than from memory.** Two
+class selectors declare `overflow-x: auto`, rendered at exactly three JSX sites:
+
+| Class | Rendered at | Instances | Inside a `<details>`? |
+|---|---|---|---|
+| `.tableview-scroll` | `src/components/islands/TableView.tsx` | 25 (5 `/economy`, 7 `/households`, 13 `/government`) | yes |
+| `.tableview-scroll` | `src/components/islands/StateGiveGet.tsx` | 1 (`/government` §11) | **no** |
+| `.law-table-scroll` | `src/components/islands/LawExplorer.tsx` | 1 (`/government` §10) | **no** |
+
+`/`, `/sources`, `/glossary` and `/contents` render none.
+
+**Deliberately excluded, each for a stated reason.**
+
+- `.navbar-panel` (`global.css:223`) — `overflow-y` only, and already keyboard operable: it holds 17
+  focusable links, opening it moves focus to the container, and arrow keys then scroll it. Recorded
+  above as "not a new instance of #71" and still true.
+- `.tax-mix-select-content` (`global.css:1073`) — a Radix listbox that declares `overflow-x: hidden`
+  *precisely so* it is not a horizontal scroller (#62), guarded by `two_axis_scroll_box_failures`.
+  That guard and this rule are opposites on purpose: a listbox must not be a horizontal scroll box,
+  a table wrapper deliberately is one.
+- `overflow-wrap: anywhere` sites (`:357`, `:1212`, `:1308`, `:1324`) — text wrapping, not scroll.
+- `overflow: hidden` (`:111`) — clipping, no scroll.
+
+**The enumeration is self-maintaining.** `test_every_horizontal_scroll_class_is_keyboard_operable`
+(S2) fails on a new `overflow-x: auto|scroll` class whose consumer does not spread the hook, and
+`test_every_horizontal_scroll_class_is_named_in_the_contract` (S3) fails on one this section does
+not name. A future wide table inherits the rule mechanically, not aspirationally.
+
+**Measured Tab-stop cost, `/government`, by a real Tab walk.**
+
+| Walk | before (`1b2fcd5`) | after | bound |
+|---|---|---|---|
+| whole page, hydrated @1440 | 161 | **163** | `MAX_STOPS_GOVERNMENT` 200 |
+| whole page, hydrated @390 | 143 | **145** | 200 |
+| to §11, hydrated @1440 | 141 | **142** | `MAX_STOPS_TO_SECTION_11` 160 |
+| whole page, **scripting off** @1440 | 136 | **136 — unchanged** | 200 |
+| to §11, scripting off @1440 | 118 | **118 — unchanged** | 160 |
+| whole page, every table open @1440 / @390 | — | **166 / 175** | 200 |
+| to §11, every table open @1440 / @390 | — | **144 / 153** | 160 |
+
+The two stops the default state gains are §10's law table (1481px in 736px) and §11's by-state table
+(745px in 736px) — the only two containers not inside a `<details>`, and both genuinely overflowing
+at every asserted viewport, so neither is an empty stop. The other thirteen contribute nothing until
+a reader opens them. **No bound was raised**, and the worst state the site can reach — every one of
+`/government`'s thirteen tables open at 390px, where eleven overflowing containers sit above §11 —
+still clears `MAX_STOPS_TO_SECTION_11` by 7 and `MAX_STOPS_GOVERNMENT` by 25. That all-open state is
+asserted by `scroll.test.ts`; no test exercised it before #71.
+
+**The focus ring needed no stylesheet change.** The global
+`:focus-visible { outline: 1.5px solid var(--ink); outline-offset: 2px; }` paints on the container,
+whose box is exactly the `<figure>`'s, and `documentElement.scrollWidth` stays at the viewport width
+at both 390 and 1440 — the ring introduces no page overflow. Asserted, with Chromium's own
+`outline-style: auto` UA ring explicitly excluded, so a page whose author rules were deleted cannot
+satisfy it.
+
+#### Known limitation: with scripting off, no scroll container is keyboard-scrollable
+
+The served bytes carry **no** `tabindex`, `role` or `aria-label` on `.tableview-scroll` or
+`.law-table-scroll`, and `test_the_served_bytes_carry_no_focusable_scroll_container` (S1) holds that
+as an invariant rather than an accident. Overflow is a *computed layout property*: no build step can
+know whether a given table is wider than the box it will land in, because that depends on the
+viewport, the fonts and whether a `<details>` is open. So a scripting-off reader gets the same wide
+tables and the same inability to scroll them that this issue was filed about.
+
+Server-rendering `tabindex="0"` on every wrapper and removing it at hydration was considered and
+rejected. It would give scripting-off readers the browser's native arrow scrolling, and in the page's
+default state it costs the same two stops (measured: 138 against 136 scripting-off stops on
+`/government`, both of those containers genuinely overflowing). It is rejected because it breaks the
+"not focusable unless it overflows" half of the rule for a scripting-off reader who opens a table
+that fits — an empty Tab stop per such table, which is the cost #68 and #69 spent two issues
+removing. The residual gap is recorded in `docs/parked-findings.md` rather than dropped.
+
+The consequence is asserted in both directions: the scripting-off Tab walk on `/government` stays at
+**136** stops and **118** to §11, byte-identical to `1b2fcd5`, in `keyboard.test.ts`.
+
+#### What is asserted, and what is only measured
+
+**ASSERTED**, `tests/browser/scroll.test.ts` (Chromium, both viewports, every pull request): the
+focusable-exactly-when-it-overflows invariant over all 27 containers on all three routes with every
+`<details>` open; arrow/`Home`/`End`/`PageDown` movement with clamping at both ends; all seven
+`#prices-rates` columns reaching full visibility during a `Home` → N×`ArrowRight` → `End` traversal;
+`role`, the caption-containing name, and a solid author focus ring; Tab-order growth equal to
+exactly the overflowing count, self-baselined; both bounds in the all-tables-open state; the
+`ResizeObserver`'s two jobs (an inactive Radix tab panel measured 0/0 becoming 545/350 on
+activation, and a live 1440→390 resize with no reload); and the invariant after every option of
+`#the-laws`' three filters. **ASSERTED**, `pipeline/tests/test_accessibility.py`: S1, S2 and S3.
+**ASSERTED**, `src/components/islands/scrollRegion.test.ts`: the pure key→target function.
+
+**MEASURED, NOT ASSERTED.** Closed-`<details>` geometry in Firefox and WebKit. Chromium reports a
+closed `<details>`'s true `scrollWidth`/`clientWidth` while contributing zero Tab stops; Firefox and
+WebKit `display: none` the subtree, which would measure 0/0. The design does not depend on either —
+the `ResizeObserver` fires on the display transition — but only the Chromium behaviour was executed,
+because the browser lane is Chromium. **HUMAN**: whether `role="group"` plus this name *reads* well
+in NVDA or JAWS. #30/#80.
+
+**NOT IN SCOPE, and still open.** The *visible* at-rest sign that a table scrolls — fade, shadow,
+persistent scrollbar, text hint — is **#76**. `, scrollable table` is an accessible name, not a
+visible affordance; no ink moved.
+
 ### Greyscale, per chart
 
 Computed from the rendered DOM: the `fill` and `stroke` of every category mark, per plot panel,
@@ -1386,8 +1519,9 @@ say so.
 1. **Tab and Shift-Tab traversal**, start to finish: focus order follows reading order and every
    control (route nav, TOC, unit toggle, chart data points, table disclosure) is reachable and
    operable. — **EXECUTED 2026-08-24**, Chrome 151, all four routes. Skip link first, `main`
-   focusable, zero positive `tabindex`. FAILs: #69 (no bypass past the data points), #71 (table
-   scroll container not keyboard reachable), #72 (four identically named `radiogroup`s). Row `M1`.
+   focusable, zero positive `tabindex`. FAILs: **#72** alone (four identically named
+   `radiogroup`s). #69 (no bypass past the data points) and #71 (table scroll container not
+   keyboard reachable) have both shipped. Row `M1`.
 2. **Screen-reader pass** (VoiceOver + Safari, NVDA + Firefox): the chart's `aria-label` announces
    usefully, the `<details>` table reads coherently when opened, and the `aria-live` readout
    announces once per focus move rather than flooding. — **NOT EXECUTED.** No assistive technology

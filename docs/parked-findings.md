@@ -1290,3 +1290,28 @@ time. Appended to, never rewritten. None of these have been acted on.
   walk is what made it visible: the walk had to target the section rather than the control. The same
   shape applies to `.unit-toggle-item` and `.attrib-tabs`. Found while measuring the scripting-off
   tab order for #69. Severity: accessibility, user-visible.
+- [2026-08-27] `src/styles/global.css:520` — `.tableview-scroll` declares only `overflow-x: auto`,
+  so CSS computes `overflow-y` to `auto` as well (measured `overflowY: "auto"` on the live element).
+  That is the same two-axis shape `two_axis_scroll_box_failures` rejects for
+  `.tax-mix-select-content` (#62). No user-visible effect today — no table body is taller than its
+  box, so no vertical scrollbar appears — but the intent is undeclared. Found while wiring the #71
+  scroll-region hook. Severity: correctness of intent, non-blocking.
+- [2026-08-27] With scripting off, no horizontal scroll container is keyboard-scrollable, because
+  overflow is a computed layout property no build step can know and #71's own contract forbids a
+  blanket server-rendered `tabindex`. Measured cost of the rejected alternative: identical in the
+  default page state (138 against 136 scripting-off stops on `/government`, both containers
+  genuinely overflowing); the difference appears only when a scripting-off reader opens a table that
+  fits. Recorded as a known limitation in `docs/contracts/accessibility.md` and asserted by
+  `test_the_served_bytes_carry_no_focusable_scroll_container`. Found while implementing #71.
+  Severity: accessibility, user-visible, scripting-off only.
+- [2026-08-27] `tests/browser/harness.ts` — `markStopsPerSvg` and `tabWalk` are the only shared
+  measurement helpers, and #71 adds a fourth spec file with a private container enumeration
+  (`containers`, `focusScrollRegionByTab`, `settleContainers`, `pinTabindex`). If a fifth spec needs
+  any of them they belong in the harness. Found while writing `tests/browser/scroll.test.ts`.
+  Severity: structure, non-blocking.
+- [2026-08-27] `tests/browser/scroll.test.ts` — the all-tables-open Tab walk to §11 on `/government`
+  at 390px measures **153** against `MAX_STOPS_TO_SECTION_11` = 160, a margin of 7. The plan for #71
+  predicted 134; the difference is that opening a `<details>` at 390px adds stops beyond its scroll
+  container. Nothing is over the bound and no bound was raised, but that is the thinnest margin any
+  walk in this repository now has, and the next section added above §11 will spend it. Found while
+  measuring #71's worst case. Severity: coverage, non-blocking.
