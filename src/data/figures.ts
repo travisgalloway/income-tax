@@ -26,7 +26,6 @@
 import {
   bracketHistory,
   budget,
-  curatedVintage,
   debt,
   debtHolders,
   debtMaturity,
@@ -180,7 +179,11 @@ const declared = {
       section: 'how-old',
       title: 'Maturity structure of marketable Treasury debt, June 2026',
       source: debtMaturity._meta.source,
-      vintage: curatedVintage(debtMaturity._meta, debtMaturity.data.avg_maturity_as_of),
+      vintage: mixedVintage(debtMaturity._meta, debtMaturity.data.avg_maturity_as_of, {
+        fetched: 'Treasury Monthly Statement of the Public Debt',
+        curated: 'Joint Economic Committee monthly debt update',
+        curatedAs: 'month',
+      }),
     },
     {
       key: 'whole-budget',

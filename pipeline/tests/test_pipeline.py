@@ -18,7 +18,7 @@ from pathlib import Path
 import jsonschema
 import pytest
 
-from lib import curated, emit, tic, validate
+from lib import curated, emit, mspd, tic, validate
 from lib import fetch as lib_fetch
 from lib.errors import SourceUnavailable
 from lib.fetch import fetch
@@ -878,28 +878,41 @@ def test_tic_revision_note_is_carried():
 
 
 def test_maturity_instruments_are_not_an_exhaustive_partition():
-    """EC2: 6.8 + 15.9 + 5.4 = 28.1 against a curated marketable_total_t of
-    28.0. This must stay true and must stay stated in words, or a reader could
-    mistake the three instrument families for an exhaustive partition."""
+    """EC2, rebased by #56 onto the real total. Bills + notes + bonds is about
+    $28.1T against a $30.91T marketable total, and the $2.8T between them is
+    TIPS and floating-rate notes.
+
+    The old assertion here was `> 0.01` against a curated total of 28.0, and
+    28.0 WAS the three-instrument subtotal: the gap it measured was a $0.05T
+    rounding residue, so the test passed while asserting nothing. The floor is
+    the point of the test now, not the tolerance."""
     d = load("debt_maturity")["data"]
     total = sum(c["amount_t"] for c in d["composition"])
-    assert abs(total - d["marketable_total_t"]) > 0.01
+    assert d["marketable_total_t"] - total >= 2.0, \
+        "the gap is smaller than TIPS plus floating-rate notes; marketable_total_t may " \
+        "again be the three-instrument subtotal wearing the total's label"
     notes = " ".join(load("debt_maturity")["_meta"]["notes"]).lower()
-    assert "not an exhaustive partition" in notes or "do not sum" in notes
+    assert "not all of them" in notes or "do not sum" in notes
+    assert "inflation-protected" in notes and "floating-rate" in notes, \
+        "the note must name what the difference IS, not only that there is one"
 
 
 def test_maturity_percentages_are_never_derived_from_amounts():
-    """EC3: bills.share_pct (22) disagrees with amount_t / marketable_total_t
-    (24.3%) on purpose. Only bills carries a curated share; DebtMaturity.tsx
-    must never compute one from amount_t / marketable_total_t."""
+    """EC3, inverted by #56. The published 22% bills share now RECONCILES with
+    amount_t / marketable_total_t (21.9%); it only ever "disagreed on purpose"
+    because the denominator beside it was the subtotal.
+
+    The half that is real and stands: only bills carries a share, so
+    DebtMaturity.tsx has nothing to derive one from for notes and bonds."""
     d = load("debt_maturity")["data"]
     comp = {c["k"]: c for c in d["composition"]}
     assert "share_pct" in comp["bills"]
     assert "share_pct" not in comp["notes"] and "share_pct" not in comp["bonds"]
 
-    derived = round(100 * comp["bills"]["amount_t"] / d["marketable_total_t"], 1)
-    assert derived != comp["bills"]["share_pct"], \
-        "the curated bills share and the derived amount now agree; the EC3 trap may be stale"
+    derived = 100 * comp["bills"]["amount_t"] / d["marketable_total_t"]
+    assert abs(derived - comp["bills"]["share_pct"]) <= 0.5, \
+        f"bills read {derived:.1f}% of the marketable total against a published " \
+        f"{comp['bills']['share_pct']}%; one of the two moved and the other did not"
 
     src = (ISLANDS / "DebtMaturity.tsx").read_text()
     assert "marketable_total_t" not in src or "amount_t /" not in src, \
@@ -925,21 +938,41 @@ def test_curated_snapshots_expose_their_as_of():
 
     Since #54, `debt_holders` is no longer in that set: its foreign holdings are
     fetched, so it carries `mode: "mixed"` and TWO dates, and `mixedVintage()`
-    renders both. The distinction is load-bearing rather than cosmetic --
-    `curatedVintage` THROWS at build time on a non-curated dataset, which is
-    what makes "this output is honestly described" un-skippable."""
-    assert load("debt_maturity")["_meta"].get("refresh", {}).get("mode") == "curated"
+    renders both. Since #56 `debt_maturity` is out of it too, for the same
+    reason and with the same shape -- its instrument composition comes from the
+    pinned MSPD statement, its average maturity from the JEC update. The
+    distinction is load-bearing rather than cosmetic: `curatedVintage` THROWS at
+    build time on a non-curated dataset and `mixedVintage` throws on anything
+    that is not mixed, which is what makes "this output is honestly described"
+    un-skippable.
 
-    holders = load("debt_holders")["_meta"]
-    assert holders.get("refresh", {}).get("mode") == "mixed"
-    assert holders["refresh"]["reason"], "a mixed dataset must say what is fetched and what is not"
-    assert holders["provenance"]["vintage"] and holders["provenance"]["retrieved_at"]
+    `curatedVintage` is now called by nothing in the manifest and is kept as the
+    helper the remaining curated outputs will need; the assertion here is
+    therefore about which helper each MIXED dataset gets, not about a count of
+    curated ones."""
+    for name, fetched, curated_as_of in (
+        ("debt_holders", "tic_as_of", "as_of"),
+        ("debt_maturity", "mspd_as_of", "avg_maturity_as_of"),
+    ):
+        doc = load(name)
+        meta = doc["_meta"]
+        assert meta.get("refresh", {}).get("mode") == "mixed", name
+        assert meta["refresh"]["reason"], \
+            f"{name}: a mixed dataset must say what is fetched and what is not"
+        assert meta["provenance"]["vintage"] and meta["provenance"]["retrieved_at"], name
+        # TWO dates on the data, and the fetched one equals the recorded vintage.
+        assert doc["data"][fetched] == meta["provenance"]["vintage"], name
+        assert doc["data"][curated_as_of], name
+        assert doc["data"][fetched] != doc["data"][curated_as_of], \
+            f"{name}: the fetched and curated halves are as of different dates; one date " \
+            f"standing for both is the failure mixedVintage() exists to prevent"
 
     manifest = FIGURES_MANIFEST.read_text()
-    assert manifest.count("curatedVintage(") >= 1, \
-        "figures.ts should call curatedVintage() for debtMaturity"
-    assert manifest.count("mixedVintage(") == 1, \
-        "figures.ts should call mixedVintage() for debtHolders, and for nothing else yet"
+    assert manifest.count("mixedVintage(") == 2, \
+        "figures.ts should call mixedVintage() for debtHolders and debtMaturity"
+    assert manifest.count("curatedVintage(") == 0, \
+        "no manifest entry is curated-only any more; a curatedVintage() call on a mixed " \
+        "dataset throws at build time"
     assert GOV_PAGE.read_text().count("curatedVintage(") == 0, \
         "the government page should take its vintages from the manifest, not compose its own"
     assert GOV_PAGE.read_text().count("mixedVintage(") == 0
@@ -2690,3 +2723,184 @@ def test_g6_bites_an_outlet_reappearing_in_an_emitted_file(tmp_path, monkeypatch
     clean = validate.Checks()
     validate.check_sources(clean, names)
     assert clean.failures == []
+
+
+# ---- #56: the debt_maturity guards, and the proof that each of them bites ----
+#
+# `-k mspd` selects this block. The mutations are of a COPY of src/data, the
+# shape #54 established: check_snapshots reads five outputs and would fail for
+# an unrelated reason against a directory holding only the mutant.
+
+
+def _mutated_maturity_dir(tmp_path: Path, mutate: Callable[[dict], None]) -> Path:
+    staged = tmp_path / f"mspd{len(list(tmp_path.glob('mspd*')))}"
+    shutil.copytree(DATA, staged)
+    doc = json.loads((staged / "debt_maturity.json").read_text())
+    mutate(doc)
+    (staged / "debt_maturity.json").write_text(json.dumps(doc, indent=1))
+    return staged
+
+
+def _mspd_failures(tmp_path, monkeypatch, mutate) -> list[str]:
+    monkeypatch.setattr(validate, "DATA_DIR", _mutated_maturity_dir(tmp_path, mutate))
+    c = validate.Checks()
+    validate.check_snapshots(c)
+    return c.failures
+
+
+def test_the_mspd_guards_pass_on_what_is_actually_published(tmp_path, monkeypatch):
+    """The inverse of every negative test below, so none of them can pass by
+    failing for an unrelated reason."""
+    assert _mspd_failures(tmp_path, monkeypatch, lambda doc: None) == []
+
+
+def test_mspd_g1_bites_a_malformed_or_disagreeing_statement_month(tmp_path, monkeypatch):
+    def mutate(doc):
+        doc["_meta"]["provenance"]["vintage"] = "2026-13"
+    failures = _mspd_failures(tmp_path, monkeypatch, mutate)
+    assert any("must be a YYYY-MM MSPD statement month" in f for f in failures), failures
+
+    def disagree(doc):
+        doc["data"]["mspd_as_of"] = "2026-04"
+    failures = _mspd_failures(tmp_path, monkeypatch, disagree)
+    assert any("must equal data.mspd_as_of" in f for f in failures), failures
+
+
+def test_mspd_g2_bites_a_statement_nobody_pinned(tmp_path, monkeypatch):
+    """MSPD publishes monthly. A builder that adopted the newest statement would
+    move three published figures and the marketable total on every re-run with
+    nobody deciding to."""
+    def mutate(doc):
+        doc["_meta"]["provenance"]["vintage"] = "2026-07"
+        doc["data"]["mspd_as_of"] = "2026-07"
+    failures = _mspd_failures(tmp_path, monkeypatch, mutate)
+    assert any("adopted a statement nobody chose" in f for f in failures), failures
+
+
+def test_mspd_g3_bites_the_subtotal_wearing_the_totals_label(tmp_path, monkeypatch):
+    """THE LOAD-BEARING ONE. Restore the figure the site actually published --
+    marketable_total_t = 28.0, which is bills + notes + bonds -- and the build
+    must fail. The check this replaced used a tolerance of `> 0.01`, which 28.0
+    satisfied by a $0.05T rounding residue, so it passed for as long as the
+    defect was live."""
+    def mutate(doc):
+        doc["data"]["marketable_total_t"] = 28.0
+    failures = _mspd_failures(tmp_path, monkeypatch, mutate)
+    assert any("wearing the total's label" in f for f in failures), failures
+
+
+def test_mspd_g4_bites_a_bills_share_that_stops_reconciling(tmp_path, monkeypatch):
+    """24 was the share the old, wrong denominator implied. It must now fail."""
+    def mutate(doc):
+        next(r for r in doc["data"]["composition"] if r["k"] == "bills")["share_pct"] = 24
+    failures = _mspd_failures(tmp_path, monkeypatch, mutate)
+    assert any("against a published share_pct of 24" in f for f in failures), failures
+
+    def spread(doc):
+        for row in doc["data"]["composition"]:
+            row["share_pct"] = 33
+    failures = _mspd_failures(tmp_path, monkeypatch, spread)
+    assert any("share_pct must be present on bills only" in f for f in failures), failures
+
+
+def test_mspd_g5_bites_a_class_set_that_silently_narrowed(tmp_path, monkeypatch):
+    """A query narrowed to five classes would leave a total that still looks
+    plausible and would make G3 pass for the wrong reason."""
+    def mutate(doc):
+        doc["_meta"]["mspd_classes"] = [
+            k for k in doc["_meta"]["mspd_classes"]
+            if k != "Treasury Inflation-Protected Securities"
+        ]
+    failures = _mspd_failures(tmp_path, monkeypatch, mutate)
+    assert any("summed over a narrower" in f for f in failures), failures
+
+    def drop(doc):
+        del doc["_meta"]["mspd_classes"]
+    failures = _mspd_failures(tmp_path, monkeypatch, drop)
+    assert any("summed over a narrower" in f for f in failures), failures
+
+
+def test_mspd_g6_bites_the_compiler_reappearing_in_an_emitted_file(tmp_path, monkeypatch):
+    """Rule E. Rules A-D reconcile the SOURCE LINE against the register and are
+    blind to a publisher named anywhere else in the payload -- which is where
+    the Peterson attribution would come back, since it is the note field that
+    used to carry "for instrument shares"."""
+    def mutate(doc):
+        doc["_meta"]["notes"].append("Instrument shares via the Peter G Peterson Foundation.")
+    staged = _mutated_maturity_dir(tmp_path, mutate)
+    monkeypatch.setattr(validate, "DATA_DIR", staged)
+    names = sorted(p.stem for p in staged.glob("*.json"))
+
+    c = validate.Checks()
+    validate.check_sources(c, names)
+    assert any("not_a_source" in f and "debt_maturity.json" in f for f in c.failures), c.failures
+
+    clean_dir = _mutated_maturity_dir(tmp_path, lambda doc: None)
+    monkeypatch.setattr(validate, "DATA_DIR", clean_dir)
+    clean = validate.Checks()
+    validate.check_sources(clean, names)
+    assert clean.failures == []
+
+
+def test_mspd_parser_refuses_a_month_that_resolves_to_more_than_one_statement():
+    """The pin is resolved by a bounded query, never by scanning and picking. A
+    window that returned two month-ends means the filter did not bind, and
+    taking the newer of the two is exactly the auto-adoption G2 forbids."""
+    payload = {"data": [
+        {"record_date": "2026-05-31", "security_class_desc": "Bills", "total_mil_amt": "1"},
+        {"record_date": "2026-04-30", "security_class_desc": "Bills", "total_mil_amt": "1"},
+    ]}
+    with pytest.raises(SourceUnavailable, match="must resolve to exactly one"):
+        mspd.read_release(payload, "2026-05", retrieved_at="now", url=mspd.request_url("2026-05"))
+
+
+def test_mspd_parser_refuses_a_class_set_without_tips():
+    """The absence of TIPS is what a silently-narrowed query looks like, and it
+    is the half of the gap that makes the three families non-exhaustive."""
+    payload = {"data": [
+        {"record_date": "2026-05-31", "security_class_desc": k, "total_mil_amt": "1000000"}
+        for k in ("Bills", "Notes", "Bonds", "Floating Rate Notes")
+    ]}
+    with pytest.raises(SourceUnavailable, match="Treasury Inflation-Protected Securities"):
+        mspd.read_release(payload, "2026-05", retrieved_at="now", url="u")
+
+
+def test_mspd_parser_refuses_an_empty_response_rather_than_publishing_nothing():
+    with pytest.raises(SourceUnavailable, match="no marketable rows"):
+        mspd.read_release({"data": []}, "2026-05", retrieved_at="now", url="u")
+
+
+def test_mspd_parser_refuses_an_unparseable_amount():
+    payload = {"data": [
+        {"record_date": "2026-05-31", "security_class_desc": k, "total_mil_amt": "1000000"}
+        for k in mspd.REQUIRED_CLASSES
+    ]}
+    payload["data"][0]["total_mil_amt"] = "n/a"
+    with pytest.raises(SourceUnavailable, match="is not a number"):
+        mspd.read_release(payload, "2026-05", retrieved_at="now", url="u")
+
+
+def test_mspd_total_is_summed_over_every_class_not_the_three_drawn():
+    """The defect, stated as a unit test. Filtering to bills/notes/bonds before
+    totalling is how $28.0T came to be published as the marketable total."""
+    payload = {"data": [
+        {"record_date": "2026-05-31", "security_class_desc": k, "total_mil_amt": amt}
+        for k, amt in (
+            ("Bills", "6000000"), ("Notes", "15000000"), ("Bonds", "5000000"),
+            ("Treasury Inflation-Protected Securities", "2000000"),
+            ("Floating Rate Notes", "1000000"),
+        )
+    ]}
+    rel = mspd.read_release(payload, "2026-05", retrieved_at="now", url="u")
+    assert rel.marketable_total_t == 29.0, "the two undrawn families were left out of the total"
+    assert sum(rel.instruments.values()) == 26.0
+    assert "Treasury Inflation-Protected Securities" in rel.classes
+
+
+def test_mspd_window_is_half_open_on_the_pinned_month():
+    """December must roll the year rather than asking for a thirteenth month."""
+    assert mspd._month_bounds("2026-05") == ("2026-05-01", "2026-06-01")
+    assert mspd._month_bounds("2026-12") == ("2026-12-01", "2027-01-01")
+    url = mspd.request_url("2026-05")
+    assert "record_date:gte:2026-05-01" in url and "record_date:lt:2026-06-01" in url
+    assert "security_type_desc:eq:Marketable" in url

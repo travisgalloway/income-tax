@@ -33,8 +33,15 @@ are one event, not two figures. Debt to the Penny stood at $39.89T on
 7 August 2026 and $39.84T on 30 July.
 
 **US Treasury, Monthly Statement of the Public Debt**
-Instrument composition of marketable debt. Bills roughly 22%, notes about $15.9T,
-bonds about $5.4T as of May 2026.
+Instrument composition of marketable debt, May 2026 statement.
+`api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/debt/mspd/mspd_table_1`,
+machine-readable and fetched directly. Bills $6.76T (22%), notes $15.94T, bonds
+$5.41T against a $30.91T marketable total; the remaining $2.80T is TIPS and
+floating-rate notes, which the maturity chart does not draw. The pinned statement
+month is recorded in `debt_maturity._meta.provenance.vintage` and moving it is an
+editorial act, not a refresh. Until #56 these figures were curated constants
+credited to the Peterson Foundation, and the total among them read $28.0T —
+which is bills plus notes plus bonds, not the marketable total.
 
 **US Treasury, Treasury International Capital**
 Major Foreign Holders of Treasury Securities, November 2025 release.
@@ -113,10 +120,13 @@ Ten-year scores for each of the 23 laws, as estimated at enactment.
 Average maturity of marketable debt, 71 months as of June 2026.
 
 **Peter G Peterson Foundation**
-Instrument shares of marketable debt — the split between bills, notes and bonds.
-Secondary to the Monthly Statement of the Public Debt above, and used only for
-the share breakdown; see "Federal Reserve holdings" under Known discrepancies
-for a figure where this source and TIC disagree.
+**Sources nothing.** It supplied the instrument shares of marketable debt until
+#56, which was a compiler of the Monthly Statement of the Public Debt standing in
+for the statement; the composition is fetched from Treasury directly now. It is
+named here only as one side of the Federal Reserve holdings figure under Known
+discrepancies below, which is the origin of a circulating claim rather than the
+source of a published value. It is listed in `curated/sources.yaml` under
+`not_a_source:`, so it cannot appear in any emitted dataset.
 
 **Congressional Research Service and House/Senate historical records**
 Party control of the presidency, House and Senate by Congress.

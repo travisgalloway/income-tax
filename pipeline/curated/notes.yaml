@@ -80,8 +80,8 @@ outputs:
       than pick one.
   debt_maturity:
     title: Maturity structure of marketable Treasury debt
-    source: Treasury Monthly Statement of the Public Debt; Joint Economic Committee monthly debt
-      update (Jun 2026 average maturity); Peter G Peterson Foundation for instrument shares
+    source: Treasury Monthly Statement of the Public Debt (instrument composition, May 2026);
+      Joint Economic Committee monthly debt update (Jun 2026 average maturity)
     notes:
     - The 30-year bond is the longest instrument issued, so nothing outstanding today was issued
       before 1996.
@@ -91,10 +91,12 @@ outputs:
       link to the net interest chart.
     - Savings bonds (Series EE and I) reach final maturity at 20-30 years and are non-marketable;
       excluded from these figures.
-    - Bills, notes and bonds are the three instrument families and their amounts do not sum exactly
-      to the $28.0T marketable total; they are not an exhaustive partition. The bills share_pct
-      (22) is the curated figure and disagrees with amount_t / marketable_total_t (24.3); geometry
-      comes from amount_t, the percentage only from this curated field.
+    - Bills, notes and bonds are three of the marketable instrument families, not all of them.
+      They sum to about $28.1T against a $30.9T marketable total; the $2.8T difference is
+      Treasury Inflation-Protected Securities and floating-rate notes, which this chart does not
+      draw. The bills share_pct is the published 22 and reconciles with amount_t /
+      marketable_total_t (21.9); geometry still comes from amount_t and the percentage only from
+      the curated field, so no component derives a share.
     - history_months is a four-point maturity time series and is deliberately NOT charted.
       sections.md is explicit that this section is not built as a time series; the field is kept
       in the data for reference but no component may reference it.
