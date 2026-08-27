@@ -106,7 +106,7 @@ export function Annotation({
     >
       {lines?.length
         ? all.map((line, i) => (
-            <tspan key={line} x={placed.x} dy={i === 0 ? undefined : '1.15em'}>
+            <tspan key={i} x={placed.x} dy={i === 0 ? undefined : '1.15em'}>
               {line}
             </tspan>
           ))

@@ -2477,11 +2477,11 @@ def test_the_annotation_clipping_guard_bites():
 
     # E8: the lowercasing trap, demonstrated rather than described. A camelCase
     # read finds no SVG at all, so every mutant above would pass.
-    assert not _annotated_svgs(
+    assert _annotated_svgs(
         _parse_html_string(
             '<svg VIEWBOX="0 0 720 396"><text x="900" class="annotation">off the edge</text></svg>'
         )
-    ) or True
+    ), "an uppercase VIEWBOX in source, lowercased by html.parser, was not found by the guard"
     svg_node = [n for n in over_right_start.iter_descendants() if n.tag == "svg"][0]
     assert svg_node.get("viewBox") is None and svg_node.get("viewbox") is not None, (
         "html.parser stopped lowercasing attribute names; the guard reads `viewbox` and "
