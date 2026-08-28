@@ -50,7 +50,7 @@ A null chamber means **no roll call exists**, almost always a voice vote, and ne
 zero vote. Only the CARES Act (`116-136`) has a null chamber (`house: null`), and it carries a
 `note` explaining why (verbatim, quoted in the table's `‡` footnote). A consumer must never render
 a null chamber as `0-0`, `unanimous`, or a blank cell; `LawExplorer`'s `houseCellText` renders
-`"no roll call — passed the House by voice vote"` instead
+`"no roll call, passed the House by voice vote"` instead
 (`test_cares_house_cell_has_no_countable_vote`).
 
 ## The cross-party threshold

@@ -7,8 +7,8 @@ _comment: |
   This exists because a CBO revision does not touch the prose. Without it, a
   vintage change silently leaves "$223 billion" sitting in section 7 while the
   chart beside it shows something else. Drift here is an EDITORIAL event: it is
-  reported, not auto-corrected, and it does not fail the build. The load-bearing
-  invariants that MUST fail the build live in lib/validate.py instead.
+  reported, not auto-corrected, and it does not fail the build. The invariants that
+  MUST fail the build live in lib/validate.py instead.
 
   resolver grammar:
     output   which src/data/*.json file

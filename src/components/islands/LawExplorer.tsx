@@ -56,7 +56,7 @@ const CHARACTER_LABEL: Record<string, string> = {
 /** Shared by the table's House cell and the chart's live-region readout, so
  *  the two never disagree (C3). Never `0-0`, never blank, never "unanimous". */
 function houseCellText(split: PartySplit, basis: Basis): string {
-  if (split.house == null) return 'no roll call — passed the House by voice vote'
+  if (split.house == null) return 'no roll call, passed the House by voice vote'
   return chamberLine(split.house, basis) ?? 'no data'
 }
 
