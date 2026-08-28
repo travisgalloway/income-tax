@@ -26,8 +26,8 @@ export function trillions(v: number, digits = 1): string {
 /** The same magnitude as `trillions`, with the word spelled out. Screen-reader
  *  text and annotations use this because `trillions`' `"T"` suffix is announced
  *  as a bare letter ("nineteen point five seven T"), which is not a unit a
- *  listener can act on. Sighted-only surfaces — axis ticks, table cells under a
- *  unit-bearing header — keep the compact form. */
+ *  listener can act on. Sighted-only surfaces, axis ticks, table cells under a
+ *  unit-bearing header, keep the compact form. */
 export function trillionsLong(v: number, digits = 2): string {
   return `$${v.toFixed(digits)} trillion`
 }
@@ -69,7 +69,7 @@ export function fiscalYear(y: number): string {
  *  nominal/real/GDP toggle): `60000 -> "$60k"`, `30000000 -> "$30M"`.
  *
  *  The suffix is picked by magnitude rather than fixed at `k`, because a left
- *  axis tick has `margin.left - 8` units to live in — 42 at the 360 preset,
+ *  axis tick has `margin.left - 8` units to live in, 42 at the 360 preset,
  *  about six characters (#66). `$30,000,000` needs eleven and shipped CLIPPED,
  *  as `0,000,000`: a complete-looking number that is not the number. Below
  *  1e6 the output is byte-identical to what this function always emitted, so
@@ -82,7 +82,7 @@ export function dollarsCompact(v: number): string {
 }
 
 /** A unitless ratio (e.g. the Gini index) to three decimal places: `0.456 ->
- *  "0.456"`. The unit itself is not "index points" — it is that there is no
+ *  "0.456"`. The unit itself is not "index points", it is that there is no
  *  unit, which is why the axis title (`AxisLeft`'s required `label`) is the
  *  only place the 0-to-1 range gets stated, not this formatter. */
 export function indexValue(v: number): string {

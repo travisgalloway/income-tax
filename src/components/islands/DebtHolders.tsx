@@ -99,8 +99,8 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
 
   // Segment labels are middle-anchored on their own segment, so two things
   // bound them: the distance to the neighbouring label's centre, and the SVG's
-  // own edges. The long foreign variant — the amount followed by `foreignShare`
-  // in full — needs 416 units against the 231 it has, and shipped CUT after
+  // own edges. The long foreign variant, the amount followed by `foreignShare`
+  // in full, needs 416 units against the 231 it has, and shipped CUT after
   // `…of publicly held d`: a complete-looking figure that is not the figure
   // (#66, the #64 shape). The intragovernmental label overran by 24.8 the same
   // way.
@@ -222,7 +222,7 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
               const leaderLabel = `${d.top_foreign[idx].country} ${fmtT(d.top_foreign[idx].amount_t)}`
               // One label per ROW, staggered down. The three leader points are
               // 46.6 units apart and `United Kingdom $880B` alone is 136, so on
-              // a shared baseline they sat on top of each other — every
+              // a shared baseline they sat on top of each other, every
               // clipping assertion green, and the figure unreadable (E8). A
               // leader line is the idiom that makes a label at a different
               // depth still name its own point.

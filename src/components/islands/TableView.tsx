@@ -2,8 +2,8 @@
  *
  *  BRIEF.md: a REAL table anyone can open, not a screen-reader-only one. Native
  *  <details>/<summary> handles the disclosure semantics, focus and keyboard
- *  operation for free, and — unlike a Radix Collapsible, which unmounts its
- *  content while closed — keeps the table present in the server-rendered HTML
+ *  operation for free, and, unlike a Radix Collapsible, which unmounts its
+ *  content while closed, keeps the table present in the server-rendered HTML
  *  even with scripting off.
  *
  *  The `.tableview-scroll` wrapper is a horizontal scroll container, and since

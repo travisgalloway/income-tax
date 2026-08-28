@@ -27,11 +27,11 @@ import type { DebtYear } from '../../data/types'
 import { ChartHint } from '../charts/ChartHint'
 
 /** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
- *  this key rather than typed — see `figureLabel.ts` (#72). */
+ *  this key rather than typed, see `figureLabel.ts` (#72). */
 const FIGURE = 'debt'
 
-/** Debt has no real-dollar series — deflating a stock of borrowing to FY2025
- *  dollars would answer no question this section asks — so §1 offers two of the
+/** Debt has no real-dollar series, deflating a stock of borrowing to FY2025
+ *  dollars would answer no question this section asks, so §1 offers two of the
  *  three shared units, not all three. */
 type DebtUnit = Extract<Unit, 'nominal' | 'gdp'>
 

@@ -2,11 +2,11 @@
  *
  *  Pure derivation, no React and no DOM. Joins `laws` (src/data/index.ts) to
  *  the counted per-party roll-call splits (src/data/party_splits.json) on
- *  `public_law` — through `../laws/join`, the one implementation of that join,
- *  shared with §8's law explorer — drops the two laws that predate the ten-year scoring
+ *  `public_law`, through `../laws/join`, the one implementation of that join,
+ *  shared with §8's law explorer, drops the two laws that predate the ten-year scoring
  *  convention, and buckets the rest two ways: by the counted voting coalition
  *  and by the signing president. Both ways must land on the same total, to the
- *  cent — see the invariant thrown at the bottom of this module.
+ *  cent, see the invariant thrown at the bottom of this module.
  *
  *  Astro imports this module while prerendering (via AttributionSplit.tsx), so
  *  a drift between the two breakdowns fails `npm run build`. It cannot ship.
@@ -21,7 +21,7 @@ export interface Bucket {
   /** 'cross-party' | 'party-line-r' | 'party-line-d' | a president name. */
   key: string
   label: string
-  /** The non-colour carrier of the party fact — read aloud and printed even
+  /** The non-colour carrier of the party fact, read aloud and printed even
    *  where colour is absent or, in the president view, deliberately unused. */
   detail: string
   /** $T, sum of positive scores. */
@@ -40,7 +40,7 @@ export interface Bucket {
 }
 
 /** Sum a chamber's yeas by counted party, treating a null chamber (no roll
- *  call, e.g. the CARES Act's House voice vote) as contributing NOTHING —
+ *  call, e.g. the CARES Act's House voice vote) as contributing NOTHING,
  *  never as a zero vote. */
 function countedYeas(split: PartySplit): { r: number; d: number } {
   let r = 0
@@ -54,7 +54,7 @@ function countedYeas(split: PartySplit): { r: number; d: number } {
 }
 
 /** The counted coalition key for one law. Reads ONLY `character` and the yea
- *  counts in `party_splits.json` — never any field carrying a hand-classified
+ *  counts in `party_splits.json`, never any field carrying a hand-classified
  *  (not counted) vote character. See docs/contracts/interfaces/attribution.md
  *  for which fields those are and why they are excluded. */
 function coalitionKey(split: PartySplit): 'cross-party' | 'party-line-r' | 'party-line-d' {
@@ -106,7 +106,7 @@ let totalIncThou = 0
 let totalRedThou = 0
 
 // The unmatched-law rule (throw, with the law named) lives in join.ts and is
-// shared with §8 — see docs/contracts/interfaces/attribution.md "## Join key".
+// shared with §8, see docs/contracts/interfaces/attribution.md "## Join key".
 for (const { law, split } of joinLawsToSplits(laws, partySplits.data)) {
   const cKey = coalitionKey(split)
   const cMeta = COALITION_META[cKey]
@@ -179,7 +179,7 @@ export const TOTALS = {
 // it, and every government page render imports that). A drift between the
 // two breakdowns, or between either breakdown and the all-laws total, fails
 // `npm run build` rather than shipping a figure whose two halves disagree.
-// Compared as INTEGER thousandths of a trillion — never as the rounded,
+// Compared as INTEGER thousandths of a trillion, never as the rounded,
 // already-displayed values, which is exactly the rounding-order artifact
 // (`$5.21T + $2.31T` = `$7.52T` but `5.206 + 2.306` = `$7.51T`) this guards.
 function sumThou(buckets: Bucket[], field: 'increases' | 'reductions' | 'net'): number {

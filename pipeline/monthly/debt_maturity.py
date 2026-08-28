@@ -5,7 +5,7 @@ hand-typed constant carrying the reason "source publishes as a document, not a
 machine-readable feed". That sentence was false (#56). The Monthly Statement of
 the Public Debt publishes Table 1 through fiscaldata at exactly the granularity
 this section needs, and the constants were attributed to the Peter G Peterson
-Foundation -- a compiler of the release, standing in for the release.
+Foundation, a compiler of the release, standing in for the release.
 
 What the curated attribution cost is worth stating, because it is why the fetch
 was not optional. `marketable_total_t` read $28.0T, which is bills plus notes
@@ -15,12 +15,12 @@ were therefore artefacts rather than editorial judgements: that the three
 instruments "do not sum exactly" to the total (a $0.05T rounding residue, not
 the $2.80T of TIPS and floating-rate notes it was reaching for), and that the
 published 22% bills share "disagrees on purpose" with 6.8/28.0 = 24.3% (it does
-not disagree at all -- 6.76/30.91 is 21.9%).
+not disagree at all, 6.76/30.91 is 21.9%).
 
 Average maturity, the longest instrument and the maturity history stay curated:
 they come from the Joint Economic Committee's monthly debt update, a different
 release with a different as-of date, and no MSPD field supplies them. So the
-output is honestly `refresh.mode: "mixed"` and carries TWO dates -- `mspd_as_of`
+output is honestly `refresh.mode: "mixed"` and carries TWO dates, `mspd_as_of`
 for the statement month and `avg_maturity_as_of` for the JEC update. Presenting
 one date for both is the failure `mixedVintage` in src/data/index.ts exists to
 prevent.
@@ -91,7 +91,7 @@ def build(dry_run: bool = False) -> list[str]:
         # Summed over EVERY marketable class, not over the three drawn below.
         "marketable_total_t": round(release.marketable_total_t, 3),
         # `share_pct` is carried through only where curated/snapshots.yaml
-        # carries it -- bills, and only bills. Filling it in for notes and bonds
+        # carries it, bills, and only bills. Filling it in for notes and bonds
         # from amount_t / marketable_total_t is exactly what the island is
         # forbidden to do, and doing it here would launder the same derivation
         # into the data.

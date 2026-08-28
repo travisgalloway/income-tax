@@ -1,4 +1,4 @@
-/** The driven half of issue #71 — keyboard-operable horizontal scroll
+/** The driven half of issue #71, keyboard-operable horizontal scroll
  *  containers. Run by `npm run test:browser` alongside `smoke.test.ts`,
  *  `driven.test.ts` and `keyboard.test.ts`.
  *
@@ -11,7 +11,7 @@
  *
  *  WHY THE HANDLER IS ASSERTED RATHER THAN THE BROWSER'S OWN SCROLLING.
  *  Measured on a minimal page in headless *and* headed Chromium: Playwright's
- *  synthetic key events do not drive Chromium's native scrolling at all — a
+ *  synthetic key events do not drive Chromium's native scrolling at all, a
  *  focused horizontal scroller, a focused vertical scroller and the document
  *  itself all stayed at 0 after `ArrowRight`/`ArrowDown`/`End`. A `tabindex`-
  *  only fix that leaned on the UA default would therefore be invisible to this
@@ -21,7 +21,7 @@
  *  WHY THE MUTATIONS LIVE HERE. Every guard below is paired with a test that
  *  performs the exact regression it exists to catch and asserts the checker
  *  goes red. The checkers are therefore pure functions returning failure
- *  STRINGS — the same shape `keyboard.test.ts` uses — so one function serves
+ *  STRINGS, the same shape `keyboard.test.ts` uses, so one function serves
  *  both the guard and its proof.
  */
 import { test, before, after } from 'node:test'
@@ -58,7 +58,7 @@ const WALK_MAX = 1200
 const SECTION_11 = '#by-state, #by-state *'
 
 /** Per-test ceiling. The slowest test here measures 3.5s on a developer's
- *  machine, so 90s is 25x headroom — this is not a tolerance, it is the
+ *  machine, so 90s is 25x headroom, this is not a tolerance, it is the
  *  difference between a lane that REPORTS and a lane that hangs. `node --test`
  *  has no default test timeout, and the CI job has no step timeout, so a single
  *  wait that never settles burns the six-hour job limit and names nothing. A
@@ -94,7 +94,7 @@ async function open(route: Route, viewport: Viewport) {
 interface ContainerRow {
   index: number
   cls: string
-  /** The container's own `<caption>` text — what the accessible name has to
+  /** The container's own `<caption>` text, what the accessible name has to
    *  say, and the reason a bare "scrollable region" is not enough. */
   caption: string
   scrollWidth: number
@@ -102,7 +102,7 @@ interface ContainerRow {
   overflows: boolean
   /** In the layout at all. A container inside an INACTIVE Radix `Tabs.Content`
    *  is `display: none` and so can never be a Tab stop whatever its
-   *  `tabindex` says — the one place a count of attributes and a count of Tab
+   *  `tabindex` says, the one place a count of attributes and a count of Tab
    *  presses are entitled to disagree. */
   rendered: boolean
   tabIndex: string | null
@@ -137,8 +137,8 @@ function name(r: ContainerRow): string {
 /** B1's invariant, as a pure function: **focusable exactly when it overflows.**
  *
  *  Both directions matter and they fail differently. `overflows && !focusable`
- *  is the #71 defect itself — columns off the right edge with no way to reach
- *  them. `!overflows && focusable` is the #68/#69 defect — an empty Tab stop on
+ *  is the #71 defect itself, columns off the right edge with no way to reach
+ *  them. `!overflows && focusable` is the #68/#69 defect, an empty Tab stop on
  *  a table that does not scroll, which is the cost that made a blanket
  *  `tabindex` unacceptable. */
 function focusabilityFailures(rows: ContainerRow[]): string[] {
@@ -214,8 +214,8 @@ async function openAllDetails(page: Page): Promise<number> {
 /** Let the hook's effect run and its `ResizeObserver` deliver.
  *
  *  Two stages, and the second one is deliberately allowed to time out. First
- *  wait on a signal that is NOT the invariant — every container carries a
- *  `tabindex` once it has been measured at all — so a hook that never runs
+ *  wait on a signal that is NOT the invariant, every container carries a
+ *  `tabindex` once it has been measured at all, so a hook that never runs
  *  fails loudly here. Then give the observer a bounded chance to converge on
  *  the invariant, and swallow the timeout: the ASSERTION is what reports, so a
  *  container that never converges gets named by `focusabilityFailures` instead
@@ -273,7 +273,7 @@ async function pinTabindex(page: Page, selector: string, value: string): Promise
 }
 
 /** Arrive at a container BY KEYBOARD, so `:focus-visible` is guaranteed rather
- *  than left to an engine heuristic — the trap `roving.ts` needed
+ *  than left to an engine heuristic, the trap `roving.ts` needed
  *  `[data-roving]` for. Focus the last focusable element before it in document
  *  order, then Tab until the container is active. */
 async function focusScrollRegionByTab(page: Page, index: number): Promise<void> {
@@ -346,14 +346,14 @@ function widest(rows: ContainerRow[]): ContainerRow {
 }
 
 /* ------------------------------------------------------------------------- *
- * B1 — focusable exactly when it overflows, every container, every route,
+ * B1, focusable exactly when it overflows, every container, every route,
  *      both viewports, every `<details>` open.
  *
  * ONE test rather than six, because the non-vacuity assertion is over the
  * whole population: at 390px every container on `/economy` overflows, so a
  * per-route "both populations non-empty" check would be false there while the
- * property it protects — that the FITTING half is actually being exercised
- * somewhere — is true across the sweep.
+ * property it protects, that the FITTING half is actually being exercised
+ * somewhere, is true across the sweep.
  * ------------------------------------------------------------------------- */
 
 test('every scroll container is focusable exactly when it overflows', T, async (t) => {
@@ -414,7 +414,7 @@ test('the focusability guard bites in both directions', T, async () => {
     assert.ok(clean.some((r) => r.overflows), 'nothing overflows here')
     assert.ok(clean.some((r) => !r.overflows), 'everything overflows here')
 
-    // (a) a container that FITS is made focusable — the empty Tab stop.
+    // (a) a container that FITS is made focusable, the empty Tab stop.
     const fits = clean.find((r) => !r.overflows) as ContainerRow
     await page.evaluate(
       ({ sel, index }) => document.querySelectorAll(sel)[index].setAttribute('tabindex', '0'),
@@ -429,7 +429,7 @@ test('the focusability guard bites in both directions', T, async () => {
     )
     assert.deepEqual(focusabilityFailures(await containers(page)), [], 'revert failed')
 
-    // (b) a container that OVERFLOWS loses its tabindex — the #71 defect.
+    // (b) a container that OVERFLOWS loses its tabindex, the #71 defect.
     const over = clean.find((r) => r.overflows) as ContainerRow
     await page.evaluate(
       ({ sel, index }) => document.querySelectorAll(sel)[index].removeAttribute('tabindex'),
@@ -444,7 +444,7 @@ test('the focusability guard bites in both directions', T, async () => {
 })
 
 /* ------------------------------------------------------------------------- *
- * B2 — the keys actually move the box.
+ * B2, the keys actually move the box.
  * ------------------------------------------------------------------------- */
 
 for (const route of CHART_ROUTES) {
@@ -576,7 +576,7 @@ test('the scroll guard bites when the key handler never runs', T, async () => {
 })
 
 /* ------------------------------------------------------------------------- *
- * B3 — DoD item 4, by name: `/economy` `#prices-rates`, all seven columns.
+ * B3, DoD item 4, by name: `/economy` `#prices-rates`, all seven columns.
  * ------------------------------------------------------------------------- */
 
 const PRICES_RATES = '#prices-rates .tableview-scroll'
@@ -616,7 +616,7 @@ test('/economy #prices-rates: all seven columns are reachable by keyboard alone'
     }, PRICES_RATES)
     assert.ok(geometry, `${PRICES_RATES} is not on the page`)
     // Asserted BEFORE the traversal: a table that stopped overflowing, or that
-    // lost columns, would make every check below pass by vacuity — and the
+    // lost columns, would make every check below pass by vacuity, and the
     // reader whose defect this is would never know.
     assert.equal(geometry.cols, 7, `#prices-rates draws ${geometry.cols} columns, expected 7`)
     assert.ok(
@@ -638,7 +638,7 @@ test('/economy #prices-rates: all seven columns are reachable by keyboard alone'
     await page.keyboard.press('Home')
     merge(await visibleColumns(page))
     // Enough presses to cross the whole scroll range at ARROW_STEP_PX a time,
-    // with room to spare — then `End`, which is the other way a reader gets
+    // with room to spare, then `End`, which is the other way a reader gets
     // to the last column.
     const presses = Math.ceil((geometry.scrollWidth - geometry.clientWidth) / 40) + 2
     for (let i = 0; i < presses; i += 1) {
@@ -705,7 +705,7 @@ test('the seven-column guard bites when the key handler never runs', T, async ()
 })
 
 /* ------------------------------------------------------------------------- *
- * B4 — role, name, and a ring a reader can see.
+ * B4, role, name, and a ring a reader can see.
  * ------------------------------------------------------------------------- */
 
 interface Ring {
@@ -872,7 +872,7 @@ test('the ring guard bites with every :focus-visible rule deleted', T, async () 
 })
 
 /* ------------------------------------------------------------------------- *
- * B5 — the Tab order grows by exactly the overflowing count, and no more.
+ * B5, the Tab order grows by exactly the overflowing count, and no more.
  * ------------------------------------------------------------------------- */
 
 for (const viewport of VIEWPORTS) {
@@ -891,7 +891,7 @@ for (const viewport of VIEWPORTS) {
       // Then EVERY table open, which is the state the growth claim is about.
       // Thirteen of the fifteen containers live inside a `<details>`, and a
       // closed `<details>` contributes zero Tab stops in Chromium however
-      // focusable its contents are — so the default state cannot distinguish
+      // focusable its contents are, so the default state cannot distinguish
       // "focusable only when it overflows" from "focusable never", and a
       // comparison made there would be measuring the disclosure widget.
       await openAllDetails(page)
@@ -966,7 +966,7 @@ test('the growth guard bites when every container is made focusable', T, async (
 })
 
 /* ------------------------------------------------------------------------- *
- * B5b — the worst state the site can reach: every one of `/government`'s
+ * B5b, the worst state the site can reach: every one of `/government`'s
  *       thirteen tables open. No existing test exercises it, and
  *       `MAX_STOPS_TO_SECTION_11`'s margin is the thin one.
  * ------------------------------------------------------------------------- */
@@ -1014,7 +1014,7 @@ for (const viewport of VIEWPORTS) {
 test('the all-open walk reports a number when the §11 bound is actually threatened', T, async () => {
   // 390px is the worse viewport: eleven of the thirteen containers above §11
   // overflow there. The mutation is the two things that could spend the
-  // remaining margin — a blanket tabindex on the containers that fit, and one
+  // remaining margin, a blanket tabindex on the containers that fit, and one
   // chart that stopped roving.
   const { context, page } = await open(GOVERNMENT, NARROW)
   try {
@@ -1064,7 +1064,7 @@ test('the all-open walk reports a number when the §11 bound is actually threate
 })
 
 /* ------------------------------------------------------------------------- *
- * B6 — runtime state. The `ResizeObserver`'s two jobs, and the filters.
+ * B6, runtime state. The `ResizeObserver`'s two jobs, and the filters.
  * ------------------------------------------------------------------------- */
 
 test('/government §9: an inactive tab panel is not a scroll box, and becomes one (E3)', T, async () => {
@@ -1084,7 +1084,7 @@ test('/government §9: an inactive tab panel is not a scroll box, and becomes on
     assert.equal(hidden.role, null, 'a 0x0 panel is announced as a scroll region')
 
     // Activate the panel through its own tab, found FROM the container rather
-    // than hardcoded — the section that owns it is not this guard's subject.
+    // than hardcoded, the section that owns it is not this guard's subject.
     const panelId = await page.evaluate(
       ({ sel, index }) => {
         let panel: Element | null = document.querySelectorAll(sel)[index] as HTMLElement
@@ -1171,8 +1171,8 @@ test('/economy: a live resize past the fit point makes a container focusable, ke
 test('the runtime-state guards bite with ResizeObserver stubbed out', T, async () => {
   const { context, page } = await openRoute(site, ECONOMY, WIDE)
   try {
-    // The INITIAL measurement still runs — the effect calls `measure()` before
-    // it observes anything — so only the transitions fail. That is precisely
+    // The INITIAL measurement still runs, the effect calls `measure()` before
+    // it observes anything, so only the transitions fail. That is precisely
     // the discriminator: a hook that measures once and never again passes every
     // static check on this page and fails the reader who resizes a window.
     await page.addInitScript(() => {

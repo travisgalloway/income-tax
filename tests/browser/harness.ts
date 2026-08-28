@@ -4,12 +4,12 @@
  *  route/viewport tables the specs iterate, the preview server's lifecycle, and
  *  the island-mount step that every geometric measurement depends on.
  *
- *  WHY NOT `astro preview`. It was the obvious choice — it reads the same config
+ *  WHY NOT `astro preview`. It was the obvious choice, it reads the same config
  *  the build did, so `base: '/income-tax/'`, `build.format: 'directory'` and
  *  `trailingSlash: 'ignore'` resolve without being reimplemented. Astro 7 makes
  *  it unusable here: `astro preview` is a PROJECT-GLOBAL SINGLETON that
- *  daemonises itself. A second invocation — a second spec file, a developer with
- *  the site already up — exits 0 with
+ *  daemonises itself. A second invocation, a second spec file, a developer with
+ *  the site already up, exits 0 with
  *  `Preview server already running at http://localhost:4321`, and the harness
  *  then measures a server it did not start, on a `dist/` it did not build, and
  *  cannot shut down. That failure is silent and it reads as a pass.
@@ -24,7 +24,7 @@
  *  documents a deliberate system-font stack with no webfont, so macOS and Linux
  *  metrics differ by design and will keep differing. A pinned container makes CI
  *  reproducible at the cost of making the *developer's* local run the divergent
- *  one — the run that has to be trusted while someone is fixing a failure. So:
+ *  one, the run that has to be trusted while someone is fixing a failure. So:
  *  `TOLERANCE_PX` on containment, and every other assertion is an integer or a
  *  one-sided inequality that font drift can only make stricter.
  */
@@ -68,7 +68,7 @@ export interface ViewportSize {
 /** Console messages the production build is permitted to emit.
  *
  *  DELIBERATELY EMPTY. If the production build starts emitting something
- *  benign, the entry goes here with a one-line reason and a contract note — the
+ *  benign, the entry goes here with a one-line reason and a contract note, the
  *  severity filter in `collectConsole()` is never widened instead. */
 export const CONSOLE_ALLOWLIST: readonly string[] = []
 
@@ -95,13 +95,13 @@ export const ROUTES = [
 export type Route = (typeof ROUTES)[number]
 
 /** The routes that carry charts. Used by the checks that only make sense where
- *  an island mounts — the NARROW-viewBox tell, the interactive-control pass. */
+ *  an island mounts, the NARROW-viewBox tell, the interactive-control pass. */
 export const CHART_ROUTES = ROUTES.filter((r) => r.figures > 0)
 
 const BASE = '/income-tax'
 /** Not 4321: that is `astro dev`/`astro preview`'s default, and colliding with a
  *  developer's running site is the one failure this harness cannot detect from
- *  the inside — it would serve a DIFFERENT build than the one under test. */
+ *  the inside, it would serve a DIFFERENT build than the one under test. */
 const PORT = Number(process.env.BROWSER_TEST_PORT ?? 4331)
 const DIST = resolve(import.meta.dirname, '..', '..', 'dist')
 
@@ -122,7 +122,7 @@ const CONTENT_TYPES: Record<string, string> = {
 }
 
 /** Resolve a request URL to a file in `dist/`, applying `base`,
- *  `build.format: 'directory'` and `trailingSlash: 'ignore'` — and NOTHING
+ *  `build.format: 'directory'` and `trailingSlash: 'ignore'`, and NOTHING
  *  else. There is no index fallback and no SPA rewrite: an unresolvable path is
  *  a 404, because a 404 rendered with status 200 is precisely how a suite ends
  *  up measuring four blank pages and reporting green. */
@@ -242,7 +242,7 @@ export async function openRoute(
     viewport: { width: viewport.width, height: viewport.height },
     javaScriptEnabled: opts.javaScriptEnabled ?? true,
     // `hasTouch` alone yields `(pointer: coarse)`, `(hover: none)`,
-    // `(any-pointer: coarse)` and `maxTouchPoints = 1` — measured, and the
+    // `(any-pointer: coarse)` and `maxTouchPoints = 1`, measured, and the
     // reason `isMobile` is deliberately NOT set: it forces a mobile UA and a
     // viewport meta override, neither of which the touch contract (#73) is
     // about, and both of which would make the lane measure a different page
@@ -269,7 +269,7 @@ export async function openRoute(
  *
  *  `/government` is ~26,000px tall at 390px. A single `scrollTo(bottom)` can
  *  jump clean past an `IntersectionObserver` threshold, which produces a
- *  *passing* run over unmounted islands — the most expensive outcome available
+ *  *passing* run over unmounted islands, the most expensive outcome available
  *  here. So: step-scroll at 0.8x the viewport, then wait on the count. A short
  *  count is a failure, never a smaller passing set. */
 export async function mountIslands(page: Page, expected: number): Promise<void> {
@@ -341,7 +341,7 @@ export interface LegendMarker {
   /** Which side of the marker the text it belongs to is on, or `none` when the
    *  marker abuts no text at all and is therefore not a legend key. */
   side: 'after' | 'before' | 'none'
-  /** The abutting text, trimmed and clipped — enough to name the offender. */
+  /** The abutting text, trimmed and clipped, enough to name the offender. */
   text: string
   /** The marker's own box. */
   marker: { top: number; bottom: number; left: number; right: number }
@@ -352,12 +352,12 @@ export interface LegendMarker {
    *  A WORD, not the range's first line box. The two differ exactly where it
    *  matters: `.state-legend`'s keys read swatch, glyph, words, and a break
    *  between the glyph and the words leaves the glyph sitting beside the
-   *  swatch — so a first-line-box rule reports a legend whose LABEL has walked
+   *  swatch, so a first-line-box rule reports a legend whose LABEL has walked
    *  off as intact. Measured: a `display: contents` mutant of
    *  `.state-legend-item` passed that formulation and fails this one. */
   line: { top: number; bottom: number } | null
-  /** The marker's own box and the box that lays those boxes out — its parent
-   *  and grandparent — with their horizontal overflow, so a "fix" that stops a
+  /** The marker's own box and the box that lays those boxes out, its parent
+   *  and grandparent, with their horizontal overflow, so a "fix" that stops a
    *  wrap by overflowing instead is caught in the same sweep.
    *
    *  TWO LEVELS, DELIBERATELY, not a walk to the root. Above the legend the
@@ -376,15 +376,15 @@ export interface LegendMarker {
 
 /** Every legend marker on the page, with the line box of the text it abuts.
  *
- *  A MARKER is an element outside a chart `<svg>` — or a top-level inline
- *  `<svg>`, which is how `StatutoryVsEffective` draws its CBO keys — with a
+ *  A MARKER is an element outside a chart `<svg>`, or a top-level inline
+ *  `<svg>`, which is how `StatutoryVsEffective` draws its CBO keys, with a
  *  non-zero box no larger than 26x26px that paints a background. That is a
  *  generic rule, not a list of the classes this site happens to use today, so a
  *  legend added tomorrow is swept without anyone remembering to add it.
  *
  *  ITS TEXT is a `Range` from the marker's next sibling through its parent's
  *  last child; if that range holds no text, from the parent's first child
- *  through the marker's previous sibling — `LawExplorer`'s in-cell dots trail
+ *  through the marker's previous sibling, `LawExplorer`'s in-cell dots trail
  *  their text rather than leading it. A marker with text on neither side (the
  *  year-range slider's four thumbs) is reported with `side: 'none'` and left
  *  for the caller to count rather than silently dropped.
@@ -394,7 +394,7 @@ export interface LegendMarker {
  *  `[object SVGAnimatedString]`, which would make every failure message here
  *  useless. Hit while prototyping this sweep.
  *
- *  Plain data, no assertions — this file owns no assertions. */
+ *  Plain data, no assertions, this file owns no assertions. */
 export async function legendMarkers(page: Page): Promise<LegendMarker[]> {
   return page.evaluate(() => {
     const MAX_PX = 26
@@ -509,8 +509,8 @@ export async function legendMarkers(page: Page): Promise<LegendMarker[]> {
 /** Selector for everything the target-size floor applies to. */
 export const TARGET_SELECTOR = 'button, summary, input, [role="slider"], [role="option"]'
 
-/** Each control's hit area: the computed `::before` overlay where one exists —
- *  the contract's own method (`docs/contracts/accessibility.md:856-858`) — and
+/** Each control's hit area: the computed `::before` overlay where one exists,
+ *  the contract's own method (`docs/contracts/accessibility.md:856-858`), and
  *  the element box otherwise. The floor itself is read from `--target-min` at
  *  runtime and never hardcoded; its value is #65's decision, not this lane's. */
 export async function hitAreas(page: Page, selector: string): Promise<{
@@ -584,7 +584,7 @@ export function collectConsole(page: Page): string[] {
 }
 
 /** Per chart `<svg>`: how many marks it draws, and how many Tab stops it
- *  offers. DOM enumeration, not a Tab walk — exact for the one-stop invariant
+ *  offers. DOM enumeration, not a Tab walk, exact for the one-stop invariant
  *  and cheap enough to run on every route, viewport and driven state.
  *
  *  `stops` counts EVERY `tabindex="0"` descendant, not only the ones carrying
@@ -592,7 +592,7 @@ export function collectConsole(page: Page): string[] {
  *  goes back to a hardcoded `tabIndex={0}` loses its `data-mark` in the same
  *  edit, so a `[data-mark][tabindex="0"]` count would report the regressed
  *  figure as `0 marks, 0 stops` and pass. It was written that way first, and a
- *  mutation of `BracketHistory` — 113 marks back in the Tab order — went
+ *  mutation of `BracketHistory`, 113 marks back in the Tab order, went
  *  straight through the lane while the static suite caught it.
  *
  *  Returned as plain data so a failure can name the offending svg. The caller
@@ -613,9 +613,9 @@ export async function markStopsPerSvg(
 
 /** A REAL Tab walk: press Tab, read `document.activeElement`, repeat.
  *
- *  Not a count of selector matches. The two disagree by around 10% — disabled
+ *  Not a count of selector matches. The two disagree by around 10%, disabled
  *  controls, `inert` subtrees and elements the engine declines to focus are all
- *  invisible to a selector and decisive to a person — and the walk is the one
+ *  invisible to a selector and decisive to a person, and the walk is the one
  *  that matches what a keyboard reader experiences.
  *
  *  Stops when `stopAt` matches the focused element, when `max` presses have been

@@ -30,8 +30,8 @@ export interface Meta {
   provenance: Provenance
   coverage?: Record<string, unknown>
   estimate_boundary?: { last_actual_fy: number; note: string }
-  /** How this output is kept current. `'curated'` — nothing is fetched, see
-   *  `curatedVintage()`. `'mixed'` — part fetched and part curated, carrying two
+  /** How this output is kept current. `'curated'`, nothing is fetched, see
+   *  `curatedVintage()`. `'mixed'`, part fetched and part curated, carrying two
    *  dates, see `mixedVintage()`. Absent on a fully fetched output, where
    *  `vintageOf()` answers the freshness question. */
   refresh?: { mode: 'curated' | 'mixed'; reason: string }
@@ -103,7 +103,7 @@ export interface EconomyYear {
   nairu: number | null
   lfpr: number | null
   cpi: number | null
-  /** Chained CPI-U index level. null before FY2002 — CBO carries no earlier value. */
+  /** Chained CPI-U index level. null before FY2002, CBO carries no earlier value. */
   chained_cpiu: number | null
   /** Core CPI-U index level. null before FY1958. */
   core_cpiu: number | null
@@ -148,7 +148,7 @@ export interface ChamberVote {
 }
 
 /** One published observation of the CBO top 1% income share. Two of these
- *  exist in total (1979, 2022) — see `IncomeGroups` below. Never a
+ *  exist in total (1979, 2022), see `IncomeGroups` below. Never a
  *  continuous annual series. */
 export interface Top1IncomeSharePoint {
   year: number
@@ -157,7 +157,7 @@ export interface Top1IncomeSharePoint {
 
 /** One row of the OECD total-tax-revenue comparison. `is_us` and `is_average`
  *  are mutually exclusive flags: at most one row of each per dataset. Absent
- *  on every other country row — never `false`. */
+ *  on every other country row, never `false`. */
 export interface OecdCountry {
   c: string
   v: number
@@ -241,11 +241,11 @@ export interface PartySplit {
 }
 
 /** One jurisdiction's give/get row. `is_state` is true ONLY for the 50 actual
- *  states — DC is false, deliberately, because it is excluded from the
+ *  states, DC is false, deliberately, because it is excluded from the
  *  colour-scale domain. `in_grid` is the 51 the tile cartogram draws (the 50
  *  states plus DC); territories are in the data but not on the grid. Every
  *  derived field (`*_pc`, `balance_*`, `ratio`) is null when either side is
- *  missing — see docs/contracts/interfaces/state-data.md. */
+ *  missing, see docs/contracts/interfaces/state-data.md. */
 export interface StateJurisdiction {
   code: string
   name: string
@@ -325,7 +325,7 @@ export interface DebtMaturity {
   mspd_as_of: string
   longest_instrument_years: number
   /** The total over EVERY marketable class, TIPS and floating-rate notes
-   *  included — NOT the bills + notes + bonds subtotal. It read `28.0` while it
+   *  included, NOT the bills + notes + bonds subtotal. It read `28.0` while it
    *  was a curated constant, which was the subtotal wearing this label (#56). */
   marketable_total_t: number
   /** `share_pct` is present on bills only, and RECONCILES with amount_t /
@@ -339,7 +339,7 @@ export interface DebtMaturity {
 
 /** One percentile group of tax units, IRS Statistics of Income.
  *
- *  The groups are NESTED — "Top 1%" is inside "Top 5%" — so they never
+ *  The groups are NESTED, "Top 1%" is inside "Top 5%", so they never
  *  partition a whole. They must not be summed, and must not be drawn as one
  *  bar divided into parts.
  *

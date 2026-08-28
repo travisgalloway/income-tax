@@ -18,7 +18,7 @@ Two things this module reconciles rather than glosses over:
    the fetched CSV (which stays authoritative for 2019).
 
 Every threshold is emitted in both nominal dollars and constant 2024 dollars,
-deflated by the FRED CPIAUCNS series averaged to a calendar year -- the
+deflated by the FRED CPIAUCNS series averaged to a calendar year, the
 existing monthly/fred.py `_series` helper keys on `int(r[0][:4])` and
 OVERWRITES, which yields December rather than an annual mean, so this module
 parses CPI itself.
@@ -58,7 +58,7 @@ TCJA_LADDER = [0.10, 0.12, 0.22, 0.24, 0.32, 0.35, 0.37]
 
 # The October 2025 CPI-U was never collected: the 2025 government shutdown
 # lapsed BLS's field collection for that month, and BLS said it could not
-# retroactively gather it -- the first gap in this monthly series since 1921.
+# retroactively gather it, the first gap in this monthly series since 1921.
 # No later run of this pipeline will ever see a 12th observation for 2025, so
 # the guard below accepts 11 for that one year rather than treating a
 # structurally permanent gap as a fetch failure. Every other year must still
@@ -107,7 +107,7 @@ def _drop_phantom_zero_row(key: tuple[int, str], brackets: list[dict[str, Any]])
     """The fetched CSV has exactly one corrupt row: 1985 single carries both a
     real 0%-bracket-up-to-$2,390 (the "zero bracket amount" that stood in for
     the standard deduction from 1977-1986) AND a duplicate 0% row with an
-    open-ended top (lo=0, hi=None) -- a phantom "0% top bracket" that
+    open-ended top (lo=0, hi=None), a phantom "0% top bracket" that
     contradicts the 50% row already present. A duplicate `lo` in any other
     year/status is a NEW corruption this code has not seen and must fail loud
     rather than guess how to resolve it.

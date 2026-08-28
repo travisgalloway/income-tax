@@ -1,7 +1,7 @@
 /** Section 5, figure A: who pays the individual income tax.
  *
- *  The six percentile groups are NESTED, not a partition — Top 1% sits inside
- *  Top 5%, inside Top 10%, and so on — so no group's value may ever be added
+ *  The six percentile groups are NESTED, not a partition, Top 1% sits inside
+ *  Top 5%, inside Top 10%, and so on, so no group's value may ever be added
  *  to another's or drawn as one bar divided into parts. Each group gets its
  *  own pair of independent bars from a common left baseline at 0: AGI share
  *  above, tax share below. Three groups have no published AGI share and one
@@ -63,15 +63,15 @@ export function WhoPays({ rows }: { rows: IncomeTaxGroup[] }) {
           // The six group strings are the axis's CATEGORIES, so they cannot be
           // abbreviated without changing what the figure says. `Bottom 50%`
           // needs 68.2 units and the left gutter has 64 at the 720 preset and
-          // 42 at 360 — so it shipped clipped, the #64 shape on axis text (#66).
+          // 42 at 360, so it shipped clipped, the #64 shape on axis text (#66).
           //
           // The choice is all-or-none and made from the frame's own numbers,
           // never from a viewport constant: a per-label decision would put some
           // categories in the gutter and others in the plot on one axis, which
           // reads as a rendering fault. When they fit, this is byte-identical
           // to what shipped before. When they do not, each label moves above
-          // its own bar pair, start-anchored at x=0 — the same in-plot idiom
-          // this figure already uses for its AGI and tax markers — and the two
+          // its own bar pair, start-anchored at x=0, the same in-plot idiom
+          // this figure already uses for its AGI and tax markers, and the two
           // markers take the gutter the categories vacated.
           const gutterLabels = everyLeftGutterLabelFits(rows.map((g) => g.g), fr)
           const labelBand = gutterLabels ? 0 : 15

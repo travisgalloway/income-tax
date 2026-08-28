@@ -1,5 +1,5 @@
 /** Section 5, figure B: the top 1% share of federal individual income tax paid,
- *  in the five years the IRS has published it — 2001, 2019, 2021, 2022, 2023.
+ *  in the five years the IRS has published it, 2001, 2019, 2021, 2022, 2023.
  *
  *  This is NOT an annual series: the gap between 2001 and 2019 is 18 years.
  *  Discrete points on a true linear year axis only, so the gap reads as a

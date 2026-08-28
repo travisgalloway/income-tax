@@ -12,7 +12,7 @@ Design rules, all of which exist because the failure they prevent is silent:
 4. A failed request is not attempted a second time, by design. One call is one
    request: no repeat loop, no pause-and-try-again, no exponential anything. A
    source that is down surfaces as a single loud failure rather than as a run
-   that takes six times as long and fails anyway. Do not add one -- and note
+   that takes six times as long and fails anyway. Do not add one, and note
    that the grep proving its absence is part of the contract, so the words for
    it are deliberately absent from this module.
 
@@ -62,9 +62,9 @@ def _cache_path(url: str) -> Path:
 def _write_cache(cache_key: str, url_field: str, body: str | bytes, retrieved_at: str) -> None:
     """Atomically record `body` under `cache_key`.
 
-    Two on-disk shapes, both load-bearing and neither to be "tidied": text
+    Two on-disk shapes, both depended on and neither to be "tidied": text
     bodies store `text`, binary bodies store `b64`. `url_field` is what goes in
-    the `"url"` slot -- the URL itself for GETs, the composite key for
+    the `"url"` slot, the URL itself for GETs, the composite key for
     `post_json`, whose key includes its payload.
     """
     entry = {"url": url_field}
@@ -98,13 +98,13 @@ def _retrieve(
 
     Returns `(body, retrieved_at, from_cache)`. `body` is `bytes` when `binary`,
     `str` otherwise. Raises SourceUnavailable on transport error, on any non-200,
-    and on a body shorter than `min_bytes` -- never returns an empty body.
+    and on a body shorter than `min_bytes`, never returns an empty body.
 
     `write_cache=False` is for `post_json`, which must decode before it caches so
     that a 200 carrying a non-JSON body is never written to disk; it calls
     `_write_cache` itself once the decode has succeeded.
 
-    `method` must be exactly "GET" or "POST" -- anything else (a typo like
+    `method` must be exactly "GET" or "POST", anything else (a typo like
     "post") is rejected here rather than silently treated as a GET, per the
     "fail loud" contract above. POST additionally requires a `payload`.
     """
@@ -254,8 +254,8 @@ def post_json(
         write_cache=False,
     )
 
-    # A cached entry was decodable when it was written -- that is the whole
-    # point of decoding before caching, below -- so it is decoded unguarded, as
+    # A cached entry was decodable when it was written, that is the whole
+    # point of decoding before caching, below, so it is decoded unguarded, as
     # it always has been. Only a hand-edited cache file can fail here.
     if from_cache:
         return json.loads(text)

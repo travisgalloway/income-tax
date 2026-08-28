@@ -6,14 +6,14 @@ section quietly growing a private copy of something shared:
 1. `DebtChart.tsx` re-implementing its own unit toggle and its own number
    formatters. It did exactly that from Government section 1's first PR until
    #35, which is why the check names that one file rather than asserting a
-   site-wide rule — `NetInterest`, `RevenueChart`, `StateGiveGet`, `PayrollBill`
+   site-wide rule, `NetInterest`, `RevenueChart`, `StateGiveGet`, `PayrollBill`
    and `LawExplorer` all import Radix `ToggleGroup` directly and legitimately,
    for toggles whose options are not units.
 
 2. Section 1's spelled-out magnitudes turning back into a bare `T` suffix, or
    its nominal axis floor turning into `$0B`. Both are screen-reader-facing
    decisions recorded in `docs/contracts/interfaces/charts.md`, and both are
-   invisible in a diff of the component once the shared formatter is in place —
+   invisible in a diff of the component once the shared formatter is in place,
    the only place they show up is the built HTML.
 
 Standard library only: `re`, `pathlib`. No new dependency, matching
@@ -70,8 +70,8 @@ def test_section_1_spells_out_its_trillions() -> None:
         )
     sec = section(GOVERNMENT_PAGE.read_text(encoding="utf-8"), "forty-trillion", "who-holds-it")
 
-    # The two annotated marker years — the ten-year doubling the section leads
-    # with — and the word, not the letter.
+    # The two annotated marker years, the ten-year doubling the section leads
+    # with, and the word, not the letter.
     assert "$19.57 trillion" in sec
     assert "$40.05 trillion" in sec
     assert "$19.570T" not in sec and "$40.049T" not in sec, (

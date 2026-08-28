@@ -2,7 +2,7 @@
  *
  *  BRIEF.md rule 3 / edge case 3: `share` (percent of total revenue) sums to
  *  100 BY CONSTRUCTION and is the only normalised view here. `gdp` and
- *  `nominal` are NOT normalised — their y-domain is derived from the real
+ *  `nominal` are NOT normalised, their y-domain is derived from the real
  *  totals (g_tot ranges 14.5-20.0), so the stack visibly tops out well short
  *  of "the whole thing" and can never be mistaken for the 100%-share view.
  *  The axis title always names which view is active.
@@ -22,7 +22,7 @@ import { labelledByFigure } from './figureLabel'
 import { ChartHint } from '../charts/ChartHint'
 
 /** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
- *  this key rather than typed — see `figureLabel.ts` (#72). */
+ *  this key rather than typed, see `figureLabel.ts` (#72). */
 const FIGURE = 'revenue'
 
 type View = 'nominal' | 'gdp' | 'share'
@@ -79,7 +79,7 @@ const COLOR: Record<Component, string> = {
 const LABELED_WIDE: Component[] = ['ii', 'pr', 'ci', 'cu']
 const LABELED_NARROW: Component[] = ['ii', 'pr', 'ci']
 
-/** Raw field access. Returns null rather than substituting 0 — this series has
+/** Raw field access. Returns null rather than substituting 0, this series has
  *  no nulls (validated by the pipeline), but a consumer must never assume it. */
 function field(r: RevenueYear, key: string): number | null {
   const v = r[key]

@@ -2,7 +2,7 @@
 
 Until #56 the instrument split between bills, notes and bonds was a set of
 hand-typed constants in curated/snapshots.yaml, attributed to the Peter G
-Peterson Foundation -- a compiler of Treasury's own release, standing in for the
+Peterson Foundation, a compiler of Treasury's own release, standing in for the
 release. The MSPD is machine-readable at exactly the granularity the site needs,
 so there was never a document to be curated from:
 
@@ -109,7 +109,7 @@ def read_release(payload: object, vintage: str, *, retrieved_at: str, url: str) 
     """Parse an already-fetched MSPD Table 1 response into one release.
 
     Split from `marketable_composition` so the parser is exercised by unit tests
-    without a network call or a builder -- the shape `lib/tic.py` and
+    without a network call or a builder, the shape `lib/tic.py` and
     `lib/xlsx.py` establish.
     """
     if not VINTAGE_RE.match(vintage):
@@ -178,7 +178,7 @@ def read_release(payload: object, vintage: str, *, retrieved_at: str, url: str) 
 def marketable_composition(vintage: str, *, use_cache: bool = True) -> MspdRelease:
     """Fetch MSPD Table 1 for the pinned month, or raise.
 
-    Goes through `lib.fetch.fetch` -- the one HTTP core (#40), the same entry
+    Goes through `lib.fetch.fetch`, the one HTTP core (#40), the same entry
     point `lib/tic.py` uses. No second client, no retry loop, no fallback to a
     curated constant. `fetch_json` is the same core plus a `json.loads`, and it
     returns the parsed body WITHOUT the Response; this output has to record the

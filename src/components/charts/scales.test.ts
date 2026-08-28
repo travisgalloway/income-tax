@@ -1,10 +1,10 @@
 /** Unit tests for the axis-domain helpers, run by `npm run test:unit`
- *  (`node --test`, which strips the types natively — Node >= 22.18 / >= 23.6).
+ *  (`node --test`, which strips the types natively, Node >= 22.18 / >= 23.6).
  *
  *  The rule under test (#34): `niceExtent` pads a range outward by a fraction of
  *  its span, then anchors the low end at exactly `0` for any series with no
  *  negative observation. A series that does go negative keeps the padded
- *  negative low end it has always had — those domains must not move, because
+ *  negative low end it has always had, those domains must not move, because
  *  they are what every `<ZeroLine>` panel on the site is drawn against.
  */
 import { test } from 'node:test'

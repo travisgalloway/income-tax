@@ -1,13 +1,13 @@
-/** The browser lane — six checks, seven routes, two viewports, plus a
+/** The browser lane, six checks, seven routes, two viewports, plus a
  *  scripting-off pass. Run by `npm run test:browser` (`node --test`, the same
  *  runner as `npm run test:unit`; one runner, two lanes).
  *
  *  WHY THIS EXISTS. Every other lane in this repository asserts geometry it
  *  cannot see. `pipeline/tests/test_accessibility.py` reads the served bytes;
  *  `src/**\/*.test.ts` exercises pure functions. Neither can measure a box, so
- *  every computed value — a popper's width, a table's `scrollWidth`, a `<text>`
+ *  every computed value, a popper's width, a table's `scrollWidth`, a `<text>`
  *  node's rendered right edge, a `::before` hit area, a console warning during
- *  hydration — was recorded in `docs/contracts/accessibility.md` as a
+ *  hydration, was recorded in `docs/contracts/accessibility.md` as a
  *  measurement a person took once, and nothing re-ran it. #62, #63 and #64 were
  *  each one `getBoundingClientRect()` away from being caught automatically, and
  *  all three were found by a human looking at the deployed site.
@@ -17,7 +17,7 @@
  *  and does not re-derive what the pytest suite already holds statically. It
  *  measures only what a rendered box can tell you.
  *
- *  FONT METRICS. macOS and Linux differ by design — `src/styles/tokens.css:4-5`
+ *  FONT METRICS. macOS and Linux differ by design, `src/styles/tokens.css:4-5`
  *  ships a system-font stack with no webfont. Every assertion here is an integer,
  *  a one-sided inequality, or a containment with `TOLERANCE_PX` slack, so metric
  *  drift can only ever make this stricter. See `harness.ts`'s header.
@@ -46,7 +46,7 @@ import {
 
 /** Vertical clipping measured on this branch (#83), per route and viewport.
  *
- *  Not a tolerance and not a skip — a recorded baseline, asserted with `<=` so
+ *  Not a tolerance and not a skip, a recorded baseline, asserted with `<=` so
  *  a new clip fails and a fix also fails, forcing a deliberate re-baseline.
  *  Every entry is enumerated in the failure message when the budget is
  *  exceeded. `/economy` is absent because it has none. */
@@ -55,7 +55,7 @@ export const VERTICAL_CLIP_BASELINE: Record<string, Record<string, number>> = {
   '/government': { narrow: 11, wide: 4 },
 }
 
-/** The `<text>` classes whose width `estimateTextWidth` estimates — the keys of
+/** The `<text>` classes whose width `estimateTextWidth` estimates, the keys of
  *  `Annotation.tsx`'s FONT_PX_BY_CLASS. ADVANCE_EM governs these and nothing
  *  else, so this is the corpus its measurement is taken over. */
 const ANNOTATION_SELECTOR = [
@@ -69,7 +69,7 @@ const ANNOTATION_SELECTOR = [
 /** Controls whose hit area this lane measured under `--target-min` on its first
  *  run, with the reason each one is carried rather than fixed here.
  *
- *  `.basis-toggle-item` — the by-state "per person / in total" toggle — is
+ *  `.basis-toggle-item`, the by-state "per person / in total" toggle, is
  *  `.unit-toggle-item`'s visual twin but was never given the shared `::before`
  *  overlay (`src/styles/global.css:462` covers the one, `:928` declares the
  *  other with no overlay), so it measures 16px tall against a 24px floor. That
@@ -92,7 +92,7 @@ after(async () => {
 
 /** Check 1. Horizontal overflow, on `documentElement` ONLY.
  *  `.tableview-scroll` and `.law-table-scroll` legitimately exceed their
- *  clients — walking every element would fire on intended scroll containers. */
+ *  clients, walking every element would fire on intended scroll containers. */
 async function assertNoHorizontalOverflow(page: import('playwright').Page, where: string) {
   const { scrollWidth, clientWidth } = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
@@ -106,7 +106,7 @@ async function assertNoHorizontalOverflow(page: import('playwright').Page, where
 }
 
 /** Check 6. The skip link is the first tab stop, its target exists and is
- *  focusable, and — below 62rem, where the navbar is the navigation — the next
+ *  focusable, and, below 62rem, where the navbar is the navigation, the next
  *  two stops are the nav disclosure and something inside `<main>`. Inventory
  *  #27; the contract already records this order at
  *  `docs/contracts/accessibility.md:1181`.
@@ -159,7 +159,7 @@ for (const route of ROUTES) {
       try {
         // --- Check 2, chart mount. The count is WAITED ON, never sampled: a
         // short count means an island never mounted, and measuring anyway is a
-        // green run over nothing — the most expensive outcome available here.
+        // green run over nothing, the most expensive outcome available here.
         const figures = await page.locator('figure').count()
         assert.equal(figures, route.figures, `${where}: <figure> count`)
         await mountIslands(page, route.hydratedSvg)
@@ -216,7 +216,7 @@ for (const route of ROUTES) {
         await assertNoHorizontalOverflow(page, where)
 
         // --- Check 3, clipping. EVERY `<text>` in EVERY `<svg>`, not only
-        // `.annotation` — that widening is what closes #66's unrun pass and #64's
+        // `.annotation`, that widening is what closes #66's unrun pass and #64's
         // rendered-pixel row. Failures name route, viewport, svg and text; a bare
         // count is unactionable.
         const texts = await textBoxes(page)
@@ -278,7 +278,7 @@ for (const route of ROUTES) {
         // font drift can only make it stricter; the contract's rule is that
         // ADVANCE_EM is raised, never lowered (`:732`).
         //
-        // Scoped to the classes `estimateTextWidth` is actually applied to —
+        // Scoped to the classes `estimateTextWidth` is actually applied to,
         // `Annotation.tsx`'s FONT_PX_BY_CLASS, which is the same corpus the
         // contract measured (`:714-730`). Axis ticks and state abbreviations are
         // NOT estimated by this constant, and a two-glyph tick like "0%" reports
@@ -335,7 +335,7 @@ for (const route of ROUTES) {
 
         // Inventory #16, the case #65 could not settle from the stylesheet: an
         // 8px row gap plus a 16px line box is a 24px pitch against a 24px floor.
-        // No `.controls` row wraps today, so it does not arise — asserting ZERO
+        // No `.controls` row wraps today, so it does not arise, asserting ZERO
         // intersecting pairs is what makes it bite the day one does.
         const overlaps: string[] = []
         for (let i = 0; i < areas.length; i++) {
@@ -376,7 +376,7 @@ for (const route of ROUTES) {
   }
 }
 
-/** The scripting-off pass — inventory #10 (#63 E4) and #34 (M12).
+/** The scripting-off pass, inventory #10 (#63 E4) and #34 (M12).
  *  Checks 2-5 do not apply with no islands mounted; checks 1 and 6 do, and so
  *  does the by-state table's geometry, which is server-rendered. */
 test('scripting off @ 390x844', async () => {
@@ -408,10 +408,10 @@ test('scripting off @ 390x844', async () => {
   }
 })
 
-/** #72 — the calibration test, and the only place a real engine is asked.
+/** #72, the calibration test, and the only place a real engine is asked.
  *
  *  `pipeline/tests/test_accessibility.py` enforces the uniqueness rule over the
- *  served bytes, using `accessible_name()` — a deliberately partial model of the
+ *  served bytes, using `accessible_name()`, a deliberately partial model of the
  *  accname algorithm. That model is the right enforcement point (the names must
  *  be correct with scripting off, and the ancestry claims G2 makes are invisible
  *  once a name has flattened to text), but a model can drift from the algorithm
@@ -424,7 +424,7 @@ test('scripting off @ 390x844', async () => {
  *  THE SERVED-BYTES COUNT COMES FIRST, deliberately. Islands mount
  *  `client:visible`, so a name that only becomes correct at hydration would
  *  satisfy a check on a hydrated page while the scripting-off reader hears
- *  nothing useful — the shape #69's lane had, passing 59/59 while 113 data
+ *  nothing useful, the shape #69's lane had, passing 59/59 while 113 data
  *  points sat in the tab order. The scripting-off pass below proves the eight
  *  groups and their `aria-labelledby` lists are in the HTML Astro shipped;
  *  only then is Chromium asked what it makes of them.
@@ -477,7 +477,7 @@ test('every radiogroup on /government has a distinct accessible name (#72)', { t
       `${groups.length} radiogroups after hydration, expected ${EXPECTED}`,
     )
 
-    // `ariaSnapshot()` yields `- radiogroup "Figure 1 Measured in":` — the name
+    // `ariaSnapshot()` yields `- radiogroup "Figure 1 Measured in":`, the name
     // Chromium computed, not the attribute we wrote.
     const names: string[] = []
     for (const g of groups) {

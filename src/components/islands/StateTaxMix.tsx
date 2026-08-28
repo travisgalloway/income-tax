@@ -1,7 +1,7 @@
 /** Section 11 companion: what each state's own tax collections are made of.
  *
  *  A Census 'X' means a state does not levy that tax at all (Alaska has no
- *  general sales tax) — a FACT, never rendered the same way as a genuinely
+ *  general sales tax), a FACT, never rendered the same way as a genuinely
  *  missing figure. See docs/contracts/interfaces/state-data.md.
  */
 import { useMemo, useState } from 'react'
@@ -64,7 +64,7 @@ export function StateTaxMix({ data }: { data: StatesTaxMix }) {
           <Select.Portal>
             {/* `collisionPadding` is what `--radix-select-content-available-width`
                 is measured against, and that var is the `max-width` clamp in
-                `.tax-mix-select-content` — the two ship together, as in
+                `.tax-mix-select-content`, the two ship together, as in
                 `Select.tsx` (#62). `avoidCollisions` keeps its default `true`. */}
             <Select.Content
               className="tax-mix-select-content"

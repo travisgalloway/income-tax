@@ -1,10 +1,10 @@
 /** Unit tests for annotation placement, run by `npm run test:unit`
- *  (`node --test`, which strips the types natively — Node >= 22.18 / >= 23.6).
+ *  (`node --test`, which strips the types natively, Node >= 22.18 / >= 23.6).
  *
  *  This lane exists because it is the ONLY one that reaches the 360-unit NARROW
  *  geometry. `useChartSize` returns the WIDE preset before measurement, so the
- *  server render — and therefore every assertion the pytest suite can make
- *  against `dist/` — only ever sees 720. NARROW is client-only, it is where #64
+ *  server render, and therefore every assertion the pytest suite can make
+ *  against `dist/`, only ever sees 720. NARROW is client-only, it is where #64
  *  is worst (`innerWidth` 296 against 622, while label text does not shrink),
  *  and it is the only geometry where a label clips off the LEFT edge.
  *
@@ -95,7 +95,7 @@ test('a right overrun flips start to end at the same reference point', () => {
 test('a left overrun flips end to start at the same reference point', () => {
   // E1: WhoWorks / PricesAndRates / LaborAndCapital / GrowthAndShadow /
   // PayrollBill anchor `end`, and clip LEFT when the last actual year sits near
-  // the left of a filtered range. Invisible to pytest — NARROW-only in
+  // the left of a filtered range. Invisible to pytest, NARROW-only in
   // practice, and never emitted by SSR.
   const p = placeAnnotation({ x: -40, label: 'Unemployment', frame: NARROW, anchor: 'end' })
   assert.equal(p?.textAnchor, 'start')
@@ -233,7 +233,7 @@ test('gap is clearance in the anchor\'s own direction, so it survives a flip', (
   // The bug this exists to prevent, from /economy §1: BoundaryRule wants its
   // label 4 units clear of the rule. Written as a pre-offset (`x: rule + 4`)
   // that reads correctly while the anchor is `start` and inverts the moment the
-  // clamp flips it to `end` — the label then overlaps the rule by 4 and runs
+  // clamp flips it to `end`, the label then overlaps the rule by 4 and runs
   // into its neighbour.
   const rule = 620
 
@@ -257,7 +257,7 @@ test('gap is clearance in the anchor\'s own direction, so it survives a flip', (
   assertInside(left, 'Unemployment', NARROW)
 
   // Far enough out that neither anchor fits, the gap must not stop the shift
-  // from rescuing it — the label still lands wholly inside the span.
+  // from rescuing it, the label still lands wholly inside the span.
   const hopeless = placeAnnotation({ x: -60, gap: 4, label: 'Unemployment', frame: NARROW, anchor: 'end' })
   assert.equal(hopeless?.textAnchor, 'end', 'a shift keeps the anchor it was given')
   assertInside(hopeless, 'Unemployment', NARROW)

@@ -4,7 +4,7 @@
  *  above a sortable/filterable table of all 23 laws driven by COUNTED
  *  per-party votes (`src/data/party_splits.json`), joined on `public_law`.
  *  This replaces the retired PLR/PLD/XP classification derived from
- *  published vote character — see `docs/contracts/interfaces/law-data.md`.
+ *  published vote character, see `docs/contracts/interfaces/law-data.md`.
  *
  *  `client:load`, not `client:visible` (see the page and the plan's Risks):
  *  Astro still server-renders this markup, so the chart, all 23 rows, the
@@ -39,7 +39,7 @@ import { labelledByFigure } from './figureLabel'
 import { ChartHint } from '../charts/ChartHint'
 
 /** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
- *  this key rather than typed — see `figureLabel.ts` (#72). */
+ *  this key rather than typed, see `figureLabel.ts` (#72). */
 const FIGURE = 'law-explorer'
 
 const FY_START = 1995
@@ -301,7 +301,7 @@ export function LawExplorer({
             {/* Every fiscal-year point is Tab-focusable and reports the same
                text hover does, via the shared fyReadout formatter (C3). The
                hit-target circle keeps a constant radius so hovering the
-               focused state doesn't shrink out from under the pointer and
+               focused state does not shrink out from under the pointer and
                flicker; the visible marker is a separate, non-interactive
                circle layered on top. */}
             {shownYears.map((r) => (

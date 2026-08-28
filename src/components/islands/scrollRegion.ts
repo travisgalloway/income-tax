@@ -1,8 +1,8 @@
 /** Keyboard-operable horizontal scroll containers. Issue #71.
  *
  *  WCAG 2.1.1, Level A. Every wide data table sits in a wrapper with
- *  `overflow-x: auto`. Before this hook those wrappers were plain `<div>`s — no
- *  `tabindex`, no role, no name — so a reader without a pointing device could
+ *  `overflow-x: auto`. Before this hook those wrappers were plain `<div>`s, no
+ *  `tabindex`, no role, no name, so a reader without a pointing device could
  *  not scroll them and the columns past the right edge did not exist for them.
  *  On `/economy` `#prices-rates` that was columns 4 to 7 of seven.
  *
@@ -10,7 +10,7 @@
  *  scroll container scrolls on arrow keys natively, so `tabindex="0"` alone
  *  would appear to be enough. It is not enough HERE: measured on a minimal page
  *  in headless *and* headed Chromium, Playwright's synthetic key events do not
- *  drive Chromium's native scrolling at all — a focused horizontal scroller, a
+ *  drive Chromium's native scrolling at all, a focused horizontal scroller, a
  *  focused vertical scroller and the document itself all stayed at 0 after
  *  `ArrowRight`/`ArrowDown`/`End`. Relying on the UA default would therefore
  *  ship a behaviour NO CHECK IN THIS REPOSITORY CAN OBSERVE, which is the
@@ -19,13 +19,13 @@
  *
  *  WHY FOCUSABILITY IS RENDERED FROM REACT STATE AND NOT INSTALLED BY AN
  *  EFFECT. The same reason `roving.ts` records: React owns the prop, and any
- *  re-render — a sort, a filter, a slider drag — clobbers an attribute a
+ *  re-render, a sort, a filter, a slider drag, clobbers an attribute a
  *  `useEffect` wrote into the DOM.
  *
  *  WHY NOTHING IS FOCUSABLE ON THE SERVER. Overflow is a computed layout
  *  property; no build step can know it. Server-rendering `tabindex="0"` on
  *  every wrapper would add an EMPTY Tab stop for every table that happens to
- *  fit — the thing #68 and #69 spent two issues removing. So the served bytes
+ *  fit, the thing #68 and #69 spent two issues removing. So the served bytes
  *  carry no `tabindex`, no `role` and no `aria-label` on these classes at all
  *  (asserted by `test_the_served_bytes_carry_no_focusable_scroll_container`),
  *  the cost is stated as a known limitation in
@@ -59,7 +59,7 @@ export interface ScrollBox {
 
 /** Where a key should take `scrollLeft`, or `null` if this key is not ours.
  *
- *  CLAMP, NEVER WRAP — the same rule `roving.ts` states for marks: a table's
+ *  CLAMP, NEVER WRAP, the same rule `roving.ts` states for marks: a table's
  *  columns are an ordered series and jumping from the last back to the first
  *  reads as a discontinuity.
  *
@@ -109,7 +109,7 @@ export interface ScrollRegionProps {
 
 /** The accessible name, in ONE place so it cannot drift across 27 containers.
  *
- *  The caption is what the region CONTAINS — the half a bare "scrollable
+ *  The caption is what the region CONTAINS, the half a bare "scrollable
  *  region" leaves out, and the half DoD item 2 of #71 is about. */
 export function scrollRegionLabel(caption: string): string {
   return `${caption}, scrollable table`
@@ -121,7 +121,7 @@ export function scrollRegionLabel(caption: string): string {
  * `role="group"`, not `role="region"`: a NAMED region is a landmark, and this
  * would mint up to fifteen of them on `/government` alone. `group` takes an
  * accessible name, is announced on focus, and is already the role every chart
- * `<svg>` carries for the same "keyboard-operable composite" reason — so the
+ * `<svg>` carries for the same "keyboard-operable composite" reason, so the
  * site says one thing rather than two.
  *
  * A container that stops overflowing renders `tabindex="-1"` rather than
@@ -149,7 +149,7 @@ export function useScrollableRegion(caption: string): ScrollRegionProps {
     el.scrollLeft = to
   }, [])
 
-  // NO DEPENDENCY ARRAY, deliberately — `roving.ts`'s precedent, for the same
+  // NO DEPENDENCY ARRAY, deliberately, `roving.ts`'s precedent, for the same
   // class of reason. The observed nodes are not stable across the lifetime of
   // the component that owns this hook: `LawExplorer` removes the container from
   // the DOM entirely when a filter matches nothing and puts it back afterwards,
@@ -159,7 +159,7 @@ export function useScrollableRegion(caption: string): ScrollRegionProps {
   //
   // Two observers, because they catch different regressions. The CONTAINER's
   // box changes on viewport resize, on a `<details>` opening in the engines
-  // that `display: none` a closed subtree (Firefox, WebKit — Chromium reports
+  // that `display: none` a closed subtree (Firefox, WebKit, Chromium reports
   // true geometry while closed), and on a Radix `Tabs.Content` panel becoming
   // active (§9's by-signing-president table is 0/0 while inactive). The
   // TABLE's width changes when `LawExplorer`'s three filters or `YearRange`'s

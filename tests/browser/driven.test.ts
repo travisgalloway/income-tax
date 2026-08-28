@@ -1,4 +1,4 @@
-/** The driven half of the browser lane — the measurements that only exist once
+/** The driven half of the browser lane, the measurements that only exist once
  *  a control has been operated. Run by `npm run test:browser` alongside
  *  `smoke.test.ts`.
  *
@@ -8,7 +8,7 @@
  *  state regressed", not "the site is broken".
  *
  *  These close the **ASSERTED (driven)** rows of the deferred-measurement
- *  inventory in `docs/contracts/accessibility.md` — #1, #2, #5, #7, #8, #18,
+ *  inventory in `docs/contracts/accessibility.md`, #1, #2, #5, #7, #8, #18,
  *  #19, #20 and #25. Every one of them was, until now, a number a person
  *  measured once by hand and nothing re-ran.
  *
@@ -73,7 +73,7 @@ async function assertNothingClipped(page: import('playwright').Page, where: stri
 }
 
 /* ------------------------------------------------------------------------- *
- * Inventory #1, #2, #5, #20 — the Radix Select popper.
+ * Inventory #1, #2, #5, #20, the Radix Select popper.
  *
  * #62 shipped a listbox wider than the viewport at 390px. The fix clamps to
  * `calc(100vw - 1.5rem)` and wraps option text instead of truncating it, and
@@ -152,7 +152,7 @@ for (const viewport of [NARROW, WIDE]) {
         )
 
         // #20 (#65 E2). The open popper does not sit on top of its trigger's
-        // 24px hit band — a tap meant for the list must not land on the trigger.
+        // 24px hit band, a tap meant for the list must not land on the trigger.
         const band = { top: triggerBox!.y, bottom: triggerBox!.y + triggerBox!.height }
         const intersects =
           Math.min(m.box.bottom, band.bottom) - Math.max(m.box.top, band.top) > TOLERANCE_PX
@@ -188,7 +188,7 @@ for (const viewport of [NARROW, WIDE]) {
 }
 
 /* ------------------------------------------------------------------------- *
- * Inventory #7, #8 — the by-state table, scrolled and sorted.
+ * Inventory #7, #8, the by-state table, scrolled and sorted.
  *
  * #63 shipped a by-state table whose pinned row header scrolled away with the
  * body, so a reader at full-right scroll could not tell which state a row was.
@@ -198,8 +198,8 @@ test('#by-state pins its row header at full-right scroll, through every sort', a
   const { context, page } = await open(GOVERNMENT, NARROW)
   const where = '/government#by-state @ 390px'
   try {
-    // `#by-state` carries two tables; the pinned-column one — the jurisdiction
-    // table #63 was about — is the first. `querySelector` below picks the same
+    // `#by-state` carries two tables; the pinned-column one, the jurisdiction
+    // table #63 was about, is the first. `querySelector` below picks the same
     // one, so the locator is scoped to match.
     await page.locator('#by-state .tableview-scroll').first().waitFor({ state: 'attached' })
 
@@ -228,7 +228,7 @@ test('#by-state pins its row header at full-right scroll, through every sort', a
 
     const before = await geometry()
     assert.notEqual(before, null, `${where}: no .tableview-scroll`)
-    // The container overflows its client — that is the design (#63, E6) — while
+    // The container overflows its client, that is the design (#63, E6), while
     // the PAGE does not. Both halves asserted together, because the fix for one
     // is the classic way to break the other.
     assert.ok(before!.maxScroll > 0, `${where}: the table no longer overflows its container`)
@@ -297,7 +297,7 @@ test('#by-state pins its row header at full-right scroll, through every sort', a
 })
 
 /* ------------------------------------------------------------------------- *
- * Inventory #18, #19 — the year-range slider.
+ * Inventory #18, #19, the year-range slider.
  * ------------------------------------------------------------------------- */
 
 test('the year-range track takes taps, and its two thumbs never collide', async () => {
@@ -372,7 +372,7 @@ test('the year-range track takes taps, and its two thumbs never collide', async 
 })
 
 /* ------------------------------------------------------------------------- *
- * Inventory #25 — the five figures whose deferral names an INTERACTIVE state.
+ * Inventory #25, the five figures whose deferral names an INTERACTIVE state.
  *
  * A default-state sweep measures every chart in the one state it ships in.
  * These five carry a control that changes their geometry, and are the only rows

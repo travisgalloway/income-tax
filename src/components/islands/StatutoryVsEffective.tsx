@@ -1,11 +1,11 @@
 /** Section 4: statutory is not effective.
  *
  *  One panel, one unit (percent), 1979-2022. The top statutory rate draws as a
- *  continuous line -- bracket_history has every year. The CBO average federal
+ *  continuous line, bracket_history has every year. The CBO average federal
  *  tax rates are PUBLISHED ANCHOR POINTS, not an annual series, so they draw
  *  as discrete markers with no connecting line; joining them would assert a
  *  series that was never observed. Marker SHAPE plus a legend distinguishes
- *  the six income groups, so colour never carries meaning alone -- none of
+ *  the six income groups, so colour never carries meaning alone, none of
  *  this data is partisan, so no --dem/--gop/--mix token belongs here either.
  */
 import { useMemo, useState } from 'react'

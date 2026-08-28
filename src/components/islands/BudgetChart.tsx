@@ -26,7 +26,7 @@ import type { BudgetYear, Control, Law } from '../../data/types'
 import { ChartHint } from '../charts/ChartHint'
 
 /** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
- *  this key rather than typed — see `figureLabel.ts` (#72). */
+ *  this key rather than typed, see `figureLabel.ts` (#72). */
 const FIGURE = 'whole-budget'
 
 interface Row {
@@ -50,7 +50,7 @@ function toleranceFor(unit: Unit): number {
 
 /**
  * `ma` is GROSS mandatory (docs/contracts/interfaces/budget-data.md). The net
- * figure that belongs in the stack is `ma + or` -- never bare `ma`, which is
+ * figure that belongs in the stack is `ma + or`, never bare `ma`, which is
  * the one substitution that would silently break the stack against `ot`.
  */
 function deriveRows(rows: BudgetYear[], unit: Unit): Row[] {
@@ -196,7 +196,7 @@ export function BudgetChart({ rows: source }: { rows: BudgetYear[] }) {
   // together. This used to guard the net-interest/revenue pair alone, on the
   // reasoning that net interest is the smallest segment and the revenue line
   // often sits just above it. On FY2025 data it is DISCRETIONARY and revenue
-  // that collide — their centres are 0.24T apart — so the specific pair was the
+  // that collide, their centres are 0.24T apart, so the specific pair was the
   // wrong thing to name. Sorting and spacing covers whichever pair the current
   // vintage happens to bring together.
   //
@@ -254,7 +254,7 @@ export function BudgetChart({ rows: source }: { rows: BudgetYear[] }) {
               )
             })}
 
-            {/* The control strip. Cells render ONLY for FY1995-2025 -- years
+            {/* The control strip. Cells render ONLY for FY1995-2025, years
                 outside that range are genuinely empty: no rect, no outline. */}
             <text x={0} y={captionY} textAnchor="start" className="axis-title">
               {narrow ? 'Control: FY1995–2025' : 'Party control curated for FY1995–2025 only'}
@@ -263,7 +263,7 @@ export function BudgetChart({ rows: source }: { rows: BudgetYear[] }) {
               <g key={row.key}>
                 {/* Picked by FIT rather than by the `narrow` boolean (#66):
                     `Presidency` needs 68.2 units and the 720 preset's gutter
-                    has 66, so the full label was cut at the wide width too —
+                    has 66, so the full label was cut at the wide width too,
                     a breakpoint cannot see a gutter it is not measuring. */}
                 <text x={-6} y={rowCenterY(i)} dy="0.32em" textAnchor="end" className="axis-label">
                   {firstThatFits([row.label, row.labelNarrow], leftGutterRoom(fr, 6), AXIS_LABEL_FONT_PX) ??
@@ -301,7 +301,7 @@ export function BudgetChart({ rows: source }: { rows: BudgetYear[] }) {
             ))}
 
             {/* 2. The three stacked areas, back to front: mandatory, then
-                discretionary, then net interest on top. Straight segments --
+                discretionary, then net interest on top. Straight segments,
                 a smoothed curve would invent values between fiscal years. */}
             <path d={mandArea(rows) ?? ''} fill="var(--mand)" />
             <path d={discArea(rows) ?? ''} fill="var(--disc)" />

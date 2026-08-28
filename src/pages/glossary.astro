@@ -21,7 +21,7 @@ const ids = new Set(entries.map((e) => e.id))
 
 /* Precomputed once for the see_also render below: an O(1) lookup instead of an O(n) `.find` per
  * reference, and a safe `.get` in place of a non-null assertion. Defense-in-depth behind the
- * dangling-see_also throw in the validation loop below, not a replacement for it — that throw
+ * dangling-see_also throw in the validation loop below, not a replacement for it, that throw
  * still gates the build. */
 const entriesById = new Map(entries.map((e) => [e.id, e]))
 
@@ -81,13 +81,13 @@ for (const item of sorted) {
   if (last && last.letter === letter) last.terms.push(item)
   else {
     /* The display label stays "#" so readers see the grouping rule, but `#` inside an `id`
-     * needs escaping in fragment links and CSS selectors — use an alphanumeric id instead. */
+     * needs escaping in fragment links and CSS selectors, use an alphanumeric id instead. */
     const id = letter === '#' ? 'terms-other' : `terms-${letter.toLowerCase()}`
     groups.push({ letter, id, terms: [item] })
   }
 }
 
-/* One contents entry per letter actually present, in the order the sections render — so the
+/* One contents entry per letter actually present, in the order the sections render, so the
  * `sections` prop names real `<section id>` elements in document order, which is what
  * `test_every_contents_anchor_is_addressable_by_the_spy` asserts. */
 const sections = groups.map((g) => ({ id: g.id, label: g.letter }))

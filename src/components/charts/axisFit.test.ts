@@ -1,5 +1,5 @@
 /** Unit tests for axis text fit, run by `npm run test:unit` (`node --test`,
- *  which strips the types natively — Node >= 22.18 / >= 23.6). Issue #66.
+ *  which strips the types natively, Node >= 22.18 / >= 23.6). Issue #66.
  *
  *  This file is to `axisFit.ts` what `annotate.test.ts` is to `annotate.ts`,
  *  and it is a SEPARATE file on purpose: #64's NARROW annotation coverage is
@@ -7,11 +7,11 @@
  *
  *  It exists because this is the only lane that reaches the 360-unit NARROW
  *  geometry. `useChartSize` returns WIDE before measurement, so the server
- *  render — and every assertion `pipeline/tests/test_accessibility.py` can make
- *  against `dist/` — only ever observes 720. Three axis properties are worse at
+ *  render, and every assertion `pipeline/tests/test_accessibility.py` can make
+ *  against `dist/`, only ever observes 720. Three axis properties are worse at
  *  360 and invisible to pytest:
  *
- *    1. the left gutter is 42 units, not 64 — six characters, not nine;
+ *    1. the left gutter is 42 units, not 64, six characters, not nine;
  *    2. `margin.right` is 12, not 24, so a bottom tick at the right end of the
  *       domain overruns where at 720 it did not;
  *    3. a rotated axis title runs down a 316-unit SVG, not a 396-unit one, and
@@ -63,7 +63,7 @@ function paintedBox(x: number, w: number, anchor: string): [number, number] {
 }
 
 // ---------------------------------------------------------------------------
-// The left gutter — the geometry that shipped `$30,000,000` as `0,000,000`.
+// The left gutter, the geometry that shipped `$30,000,000` as `0,000,000`.
 // ---------------------------------------------------------------------------
 
 test('the left gutter is 64 units wide at 720 and 42 at 360', () => {
@@ -124,8 +124,8 @@ test('every formatter in format.ts fits the narrow left gutter at its real magni
 })
 
 test('everyLeftGutterLabelFits is all-or-none over a category axis', () => {
-  // WhoPays' six groups. `Bottom 50%` needs 68.2 units — more than either
-  // preset's gutter — so the whole axis takes the in-plot treatment.
+  // WhoPays' six groups. `Bottom 50%` needs 68.2 units, more than either
+  // preset's gutter, so the whole axis takes the in-plot treatment.
   const groups = ['Top 1%', 'Top 5%', 'Top 10%', 'Top 25%', 'Top 50%', 'Bottom 50%']
   assert.equal(everyLeftGutterLabelFits(groups, WIDE), false)
   assert.equal(everyLeftGutterLabelFits(groups, NARROW), false)
@@ -137,7 +137,7 @@ test('everyLeftGutterLabelFits is all-or-none over a category axis', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Bottom ticks — shift-only, and by the minimum the edge forces.
+// Bottom ticks, shift-only, and by the minimum the edge forces.
 // ---------------------------------------------------------------------------
 
 test('an interior bottom tick is returned unchanged', () => {
@@ -269,7 +269,7 @@ test("HouseholdSpread's panel titles pick a variant that fits the narrow panel",
 test("DebtHolders' variant ladders survive three different segment splits (E6)", () => {
   // The foreign share moves with every Treasury release, so a fix keyed on
   // today's segment widths would regress on the next refresh. Place the same
-  // ladder at three split ratios and require a whole label or none — never a
+  // ladder at three split ratios and require a whole label or none, never a
   // truncated one, and never two boxes that overlap on one bar row.
   const ladder = (amount: string) => [
     `Foreign ${amount} (30% of publicly held debt, 24% of gross debt)`,
@@ -298,7 +298,7 @@ test("DebtHolders' variant ladders survive three different segment splits (E6)",
 })
 
 // ---------------------------------------------------------------------------
-// The rotated axis title — length on the vertical axis (E7).
+// The rotated axis title, length on the vertical axis (E7).
 // ---------------------------------------------------------------------------
 
 test('the rotated axis title is measured against the SVG height, not its width', () => {
@@ -362,8 +362,8 @@ test('placeAxisTitleY leaves a title that already fits on the plot centre', () =
   assert.equal(placeAxisTitleY('Percent of GDP', WIDE), WIDE.innerHeight / 2)
   assert.equal(placeAxisTitleY('Percent of GDP', NARROW), NARROW.innerHeight / 2)
 
-  // A short panel has asymmetric margins — 50 below against 22 above at the 360
-  // preset — so its plot centre sits well above the SVG centre and a long title
+  // A short panel has asymmetric margins, 50 below against 22 above at the 360
+  // preset, so its plot centre sits well above the SVG centre and a long title
   // runs off the TOP. It shifts down by the minimum, and no further.
   const short = frame(360, 240, NARROW.margin)
   const label = 'Families Gini index, ratio 0 to 1'

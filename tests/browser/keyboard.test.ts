@@ -1,4 +1,4 @@
-/** The keyboard half of the browser lane — issue #69. Run by
+/** The keyboard half of the browser lane, issue #69. Run by
  *  `npm run test:browser` alongside `smoke.test.ts` and `driven.test.ts`.
  *
  *  ONE FIGURE, AT MOST ONE TAB STOP. Every chart `<svg>` is a roving-tabindex
@@ -9,9 +9,9 @@
  *
  *  WHY THE BOUND IS WALKED AND NOT COUNTED. `MAX_STOPS_*` below is measured by
  *  pressing Tab and reading `document.activeElement`, not by counting selector
- *  matches. The two disagree by around 10% — a `disabled` control, an `inert`
+ *  matches. The two disagree by around 10%, a `disabled` control, an `inert`
  *  subtree and an element the engine simply declines to focus are all invisible
- *  to a selector and decisive to a person — and the walk is the one that
+ *  to a selector and decisive to a person, and the walk is the one that
  *  matches what a keyboard reader experiences.
  *
  *  WHY THE SCRIPTING-OFF PASS IS NOT OPTIONAL. Islands mount `client:visible`,
@@ -52,19 +52,19 @@ import type { Page } from 'playwright'
  *  scroll container focusable exactly when it overflows: one such container is
  *  above §11 and rendered in the page's default state (§10's law table, 1481px
  *  in a 736px box). The scripting-off number is UNCHANGED, and that is an
- *  asserted invariant rather than a coincidence — overflow is a computed
+ *  asserted invariant rather than a coincidence, overflow is a computed
  *  property, so no container is focusable in the served bytes
  *  (`test_the_served_bytes_carry_no_focusable_scroll_container`).
  *
- *  The worst state the site can reach — every one of `/government`'s thirteen
- *  tables open, where eleven containers above §11 overflow at 390px — is
+ *  The worst state the site can reach, every one of `/government`'s thirteen
+ *  tables open, where eleven containers above §11 overflow at 390px, is
  *  measured by `tests/browser/scroll.test.ts` against this same bound: 144 at
  *  1440px and 153 at 390px.
  *
  *  The headroom to 160 is deliberate: this must not go red when a section gains
  *  a link, while a chart that loses its roving jumps by 30 to 113 stops and
  *  blows straight through it. IF A MEASURED VALUE EXCEEDS THIS, DO NOT RAISE
- *  IT — it means a figure is not roving, and the fix is the figure. */
+ *  IT, it means a figure is not roving, and the fix is the figure. */
 const MAX_STOPS_TO_SECTION_11 = 160
 
 /** Tab stops on the whole of `/government`. Measured **163** hydrated and
@@ -154,7 +154,7 @@ async function assertOneStopPerSvg(page: Page, where: string): Promise<StopRow[]
 }
 
 /* ------------------------------------------------------------------------- *
- * B1 — one Tab stop per chart svg, every route, both viewports, scripting on
+ * B1, one Tab stop per chart svg, every route, both viewports, scripting on
  *      and off.
  * ------------------------------------------------------------------------- */
 
@@ -230,7 +230,7 @@ test('the one-stop checker reports the all-minus-one state, which is the worse o
 })
 
 /* ------------------------------------------------------------------------- *
- * B2 — the bound, walked. Criterion 2.
+ * B2, the bound, walked. Criterion 2.
  *
  * The full walk runs on `/government` only, hydrated once and with scripting
  * off once: a real walk is a key press plus an `evaluate` per stop, and every
@@ -326,7 +326,7 @@ test('the walk would see a figure that stopped roving', async () => {
 })
 
 /* ------------------------------------------------------------------------- *
- * B3 — every mark is still reachable. Criterion 3, and the one that proves
+ * B3, every mark is still reachable. Criterion 3, and the one that proves
  *      nothing became unreachable in exchange for a shorter tab order.
  * ------------------------------------------------------------------------- */
 
@@ -434,7 +434,7 @@ test('the traversal guard bites when the key handler never runs', async () => {
     // The mutation: a CAPTURE-phase listener on the svg that stops the event
     // dead. React's `onKeyDown` is delegated to the root container in the
     // bubble phase, so this is what it looks like when the handler is wired up
-    // but never fires — the failure a traversal test exists to catch.
+    // but never fires, the failure a traversal test exists to catch.
     await page.evaluate((i) => {
       const svg = document.querySelectorAll('svg')[i] as SVGSVGElement
       svg.addEventListener('keydown', (e) => e.stopImmediatePropagation(), true)
@@ -454,10 +454,10 @@ test('the traversal guard bites when the key handler never runs', async () => {
 })
 
 /* ------------------------------------------------------------------------- *
- * B4 — the active mark is visible. Criterion 4's second half.
+ * B4, the active mark is visible. Criterion 4's second half.
  *
  * Asserts NON-ZERO, not >= 2px, because B4's subject is WHETHER A RING PAINTS
- * on a programmatically focused mark — an engine's :focus-visible heuristic is
+ * on a programmatically focused mark, an engine's :focus-visible heuristic is
  * entitled to decline that focus, and #69's fallback is what covers it. The
  * WIDTH is `focus.test.ts` F1's, over all seven ring-painting classes and both
  * viewports, against the `--focus-ring` token. #75 is closed.
@@ -555,7 +555,7 @@ test('the focus-ring guard bites, and the data-roving fallback alone carries it'
     // page whose stylesheet paints nothing.
     assert.equal(stripped.style, 'auto', 'expected only the UA focus ring to remain')
 
-    // Now put back ONLY the fallback — no `:focus-visible` anywhere. This is
+    // Now put back ONLY the fallback, no `:focus-visible` anywhere. This is
     // the engine that declines to treat a programmatic `.focus()` as
     // keyboard-visible, and the mark must still be ringed for that reader.
     await page.addStyleTag({
@@ -579,11 +579,11 @@ test('the focus-ring guard bites, and the data-roving fallback alone carries it'
 })
 
 /* ------------------------------------------------------------------------- *
- * B5 — the bound holds in every runtime state. Criterion E4, E5 and E8.
+ * B5, the bound holds in every runtime state. Criterion E4, E5 and E8.
  *
  * `LawExplorer`'s three filters and `YearRange`'s two thumbs change how many
  * marks exist WHILE THE PAGE IS OPEN. An active index left past the end of a
- * shrunken mark set leaves the group with zero Tab stops — the figure drops out
+ * shrunken mark set leaves the group with zero Tab stops, the figure drops out
  * of the tab order and its data becomes unreachable. Every assertion here is
  * EXACTLY one, never "at most one".
  * ------------------------------------------------------------------------- */

@@ -4,7 +4,7 @@ import { getEntry } from 'astro:content'
 /** An in-prose glossary marker: the term's one-sentence `short` arrives where the reader is
  *  standing, on hover, on keyboard focus and on a tap, without losing their place.
  *
- *  Zero islands, no `client:` directive and no script of its own — the disclosure is driven by
+ *  Zero islands, no `client:` directive and no script of its own, the disclosure is driven by
  *  `termPopovers()`, one `is:inline` IIFE in `BaseLayout.astro` shared by every marked term on
  *  the page. With scripting off the trigger is a plain, followable link to the term's `/glossary`
  *  anchor and the definition is still in the served bytes, referenced by `aria-describedby`.
@@ -43,11 +43,11 @@ const popId = `def-${id}`
 {/* No `role` on the popover: not `role="tooltip"` (Windows AT treats tooltip content as
  * non-interactive, and this one contains a link), not `role="note"` (a role on an
  * aria-describedby target risks a double announcement). The description mechanism is
- * `aria-describedby` itself, which flattens the referenced subtree to text — including while
+ * `aria-describedby` itself, which flattens the referenced subtree to text, including while
  * `hidden`, which is what gets the definition to a screen reader with scripting off.
  *
  * No `aria-expanded` server-side either: `termPopovers()` writes it at init. With scripting off
- * there is no disclosure, so advertising a collapsed state would be a lie — the same reasoning
+ * there is no disclosure, so advertising a collapsed state would be a lie, the same reasoning
  * `sectionSpy()` uses for writing no aria-current server-side. */}
 <span class="term" data-term={id}>
   <a class="term-trigger" href={href} aria-describedby={popId}><slot /></a>

@@ -137,12 +137,12 @@ function longMonth(isoMonth: string): string {
  *  `debt_maturity` is the second (#56): its instrument composition comes from
  *  the Monthly Statement of the Public Debt month pinned in the same place,
  *  while its average maturity is curated from the Joint Economic Committee's
- *  monthly update — and that second date is a MONTH, not a day, which is why
+ *  monthly update, and that second date is a MONTH, not a day, which is why
  *  `curatedAs` says which of the two to render. Passing a `YYYY-MM` to the
  *  day-precision branch is what put "as of **undefined** June 2026" on the
  *  published source line for as long as this figure used `curatedVintage`.
  *
- *  Throws when the mode is not `'mixed'`, and when the vintage is missing — a
+ *  Throws when the mode is not `'mixed'`, and when the vintage is missing, a
  *  mixed dataset with no release month has nothing to render here, and a blank
  *  date is worse than a loud failure. */
 export function mixedVintage(
@@ -180,7 +180,7 @@ export function mixedVintage(
 
 export const laws = budget.data.flatMap((y) => y.L)
 
-// The laws-to-splits join lives in src/components/laws/join.ts (issue #33) —
+// The laws-to-splits join lives in src/components/laws/join.ts (issue #33),
 // the one implementation, shared by §8 and §9. No map is exported from here.
 
 /** _meta.gini_basis, surfaced rather than hardcoded. SOURCES.md: the family
@@ -189,5 +189,5 @@ export const giniBasis = income._meta.gini_basis as string
 
 /** The CBO series is TWO PUBLISHED POINTS, not an annual series. `incomeGroups`
  *  is fully typed as `IncomeGroups` above (issue #11), so this field reads
- *  straight off `.data` — no narrowing cast needed. */
+ *  straight off `.data`, no narrowing cast needed. */
 export const cboTop1IncomeShare = incomeGroups.data.cbo_top1_income_share

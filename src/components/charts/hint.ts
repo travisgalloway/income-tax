@@ -1,7 +1,7 @@
 /** The chart hint's three sentences, one per input modality. Issue #73.
  *
  *  Before this, every chart said `Focus or hover a year to read its value.` on
- *  every device — 24 occurrences in the served bytes. On a phone that names two
+ *  every device, 24 occurrences in the served bytes. On a phone that names two
  *  interactions the device does not have, and the reader's only actual route to
  *  a number was "View as table", which the sentence never mentioned.
  *
@@ -19,7 +19,7 @@
  *  about the sentence, so the query is about hover. A touchscreen laptop
  *  (`hover: hover` AND `any-pointer: coarse`) is told the thing that works for
  *  its primary input, and the touch path still works there because the
- *  INTERACTION never consults a media query — it keys on `e.pointerType`.
+ *  INTERACTION never consults a media query, it keys on `e.pointerType`.
  *
  *  WHY THE HOVER SENTENCE CHANGED TOO. #73's own verification greps `dist/` for
  *  the literal `Focus or hover`; a span still carrying it would be in the served
@@ -39,7 +39,7 @@ export const HINT_MODES = ['nojs', 'hover', 'touch'] as const
 export type HintMode = (typeof HINT_MODES)[number]
 
 /** The class the CSS switches on, for one mode. The single place the name is
- *  formed — the component, the stylesheet's guard and the static suite all
+ *  formed, the component, the stylesheet's guard and the static suite all
  *  count through this shape rather than through three separate literals. */
 export function hintClass(mode: HintMode): string {
   return `hint-${mode}`

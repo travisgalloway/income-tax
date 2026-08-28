@@ -119,7 +119,7 @@ def check_meta_titles(c: Checks, names: list[str]) -> None:
 
     The defect this exists for (#41): budget's `_meta.title` read FY1995-FY2025
     for the length of the build while `_meta.coverage.start` was 1962 and
-    `_meta.notes[3]` said FY1962-FY2025 -- the same file contradicting itself in
+    `_meta.notes[3]` said FY1962-FY2025, the same file contradicting itself in
     three places, and a regeneration of `_meta` reproduced it faithfully because
     the range was hand-curated, not derived. Correcting the string alone would
     leave the next coverage extension free to do it again.
@@ -129,9 +129,9 @@ def check_meta_titles(c: Checks, names: list[str]) -> None:
     A. The CURATED title in `curated/notes.yaml` may not carry a literal year.
        It writes `FY{start}-FY{end}` and `emit.expand_title` fills it, so the
        range follows the series instead of standing still while it moves. The
-       stale budget title passed rule B on its own -- FY1995-FY2025 is a real
+       stale budget title passed rule B on its own, FY1995-FY2025 is a real
        window, `control_start`/`control_end`, just not the one the sentence
-       attached it to -- which is exactly why a check on the output alone is
+       attached it to, which is exactly why a check on the output alone is
        not enough.
     B. Every range in the EMITTED title is a window `_meta.coverage` declares.
        This catches a published file that has drifted from the curated source
@@ -192,7 +192,7 @@ def check_schema(c: Checks, names: list[str]) -> None:
     prevent. A schema file that is not valid JSON, or that does not conform
     to the JSON Schema metaschema, is a named failure too. Note this does
     NOT cover a typo'd or unknown keyword within an otherwise well-formed
-    schema (e.g. "requred" instead of "required") — jsonschema silently
+    schema (e.g. "requred" instead of "required"), jsonschema silently
     ignores unrecognized keywords per the spec, so that class of mistake
     still validates cleanly and is caught only by review or by the schema
     actually asserting the wrong thing."""
@@ -248,9 +248,9 @@ def _normalize_source(s: str) -> str:
     is off is a check that is not looking.
 
     Only DATES are stripped, never arbitrary digits. A number is as often the
-    identity of a document as it is its vintage -- "SOI Data Book Table 5" and
+    identity of a document as it is its vintage, "SOI Data Book Table 5" and
     "SOI Historical Table 23" are different tables, "MEHOINUSA672N" and
-    "MEHOINUSA646N" are different FRED series, "PL 115-97" is a specific law --
+    "MEHOINUSA646N" are different FRED series, "PL 115-97" is a specific law,
     and a normalizer that erased those would let rule B match a registered
     source against some OTHER table's line in SOURCES.md, and let rule D's
     shape hold while the cited document changed underneath it. That is the
@@ -294,12 +294,12 @@ def _glossary_frontmatter() -> list[tuple[str, dict[str, Any]]]:
     """(term id, parsed frontmatter) for every src/content/glossary/*.md, sorted.
 
     The term id is the filename stem, which is what Astro's glob loader derives the
-    entry id from -- see docs/contracts/interfaces/glossary.md. Frontmatter is the text
+    entry id from, see docs/contracts/interfaces/glossary.md. Frontmatter is the text
     between the opening `---` fence and the next line that is exactly `---`; nothing
     calls render() on these entries, so the body is empty by contract and is not read
     here. Matching fences by line position (not `str.split("---")`) means a `---` inside
-    a YAML string -- e.g. a source title containing an em dash written as `---` -- can't
-    be mistaken for a fence.
+    a YAML string, for example a source title containing an em dash written as
+    `---`, cannot be mistaken for a fence.
 
     Returns [] for an absent or empty directory. That is NOT treated as clean: the
     caller turns it into a named failure, the #37 rule.
@@ -331,7 +331,7 @@ def check_glossary_sources(c: Checks) -> None:
 
     The site's figures have carried this discipline since #39; a definition had none.
     Each of the 23 terms carried a hand-typed citation restating a line already in
-    SOURCES.md, with nothing relating either copy to the other -- so a vintage bump in
+    SOURCES.md, with nothing relating either copy to the other, so a vintage bump in
     SOURCES.md left 23 stale citations with every check green.
 
     Layer 1 is the Zod schema in src/content.config.ts, which fails `astro check` and
@@ -340,15 +340,15 @@ def check_glossary_sources(c: Checks) -> None:
     a site build. A source discipline enforced only where a human is watching is the
     "check that is not looking" shape of #36, #37 and #38.
 
-    The glossary is NOT a pipeline output -- nothing emits it and there is no
-    src/data/glossary.json -- so it gets no schema file and no sources.yaml `outputs:`
+    The glossary is NOT a pipeline output, nothing emits it and there is no
+    src/data/glossary.json, so it gets no schema file and no sources.yaml `outputs:`
     entry, either of which would be an orphan. This check reads the term files directly
     instead, as a second population beside src/data/*.json.
     """
     registry: dict[str, Any] = curated.source_register()["registry"]
     entries = _glossary_entries()
 
-    # An empty or unreadable glossary is UNKNOWN, never clean -- the #37 rule, in the
+    # An empty or unreadable glossary is UNKNOWN, never clean, the #37 rule, in the
     # same register as check_sources' own "an unreadable register is unknown".
     c.ok(
         bool(entries),
@@ -381,7 +381,7 @@ def check_sources(c: Checks, names: list[str]) -> None:
     check_meta only asserts that _meta.source is non-empty and not the summary
     string "CBO data". NOTHING reconciled a citation against the register, so a
     source could be named on the page and absent from /sources with every check
-    green -- the same "check that is not looking" shape as #36 (a manual check
+    green, the same "check that is not looking" shape as #36 (a manual check
     nobody ran), #37 (a missing schema read as a skip) and #38 (an unregistered
     prose figure). Adding the missing sources alone would leave the next one
     just as silent; this is the check that makes the class impossible.
@@ -404,7 +404,7 @@ def check_sources(c: Checks, names: list[str]) -> None:
         f"be checked, and an unreadable register is unknown, never clean",
     )
 
-    # B -- the #39 defect itself: a cited source absent from what /sources renders.
+    # B, the #39 defect itself: a cited source absent from what /sources renders.
     for key, entry in sorted(registry.items()):
         c.ok(
             _normalize_source(entry["registered_as"]) in doc,
@@ -413,7 +413,7 @@ def check_sources(c: Checks, names: list[str]) -> None:
             f"unregistered source is one the reader cannot trace (#39).",
         )
 
-    # C -- no orphan entries left behind by a rename. Spans outputs AND glossary terms
+    # C, no orphan entries left behind by a rename. Spans outputs AND glossary terms
     # since #50: a term's `source` is a list of register keys, so a definitional-only
     # source is legitimately cited by no output, and deleting the sole term that cites a
     # key orphans it here rather than passing unnoticed.
@@ -441,7 +441,7 @@ def check_sources(c: Checks, names: list[str]) -> None:
         norm = _normalize_source(src)
         known = []
 
-        # A -- a citation renamed or dropped out from under the register.
+        # A, a citation renamed or dropped out from under the register.
         for key in spec["cites"]:
             if key not in registry:
                 c.ok(False, f"{n}: cites unknown register key {key!r}")
@@ -454,7 +454,7 @@ def check_sources(c: Checks, names: list[str]) -> None:
                 f"drop it from cites.",
             )
 
-        # D -- a source ADDED to the source line and never registered.
+        # D, a source ADDED to the source line and never registered.
         got = _shape(src, known, registry)
         c.ok(
             got == spec["source_shape"],
@@ -470,11 +470,11 @@ def check_sources(c: Checks, names: list[str]) -> None:
 
 
 # The tier vocabulary (#57). Five terms, each earning its place against a real
-# register entry. `scholarly republication` is the load-bearing one: Voteview is
+# register entry. `scholarly republication` is the term that settles it: Voteview is
 # not official (it is not the House Clerk) and it is not secondary (it
 # republishes the primary roll-call record, and the join it feeds is regressed
 # against the Clerk's), so a three-term primary/official/secondary vocabulary
-# could only call it secondary -- which is the failing vocabulary the issue
+# could only call it secondary, which is the failing vocabulary the issue
 # names. `compilation` is the other: #55 argued in prose, once, inside one
 # source string, that the Tax Foundation CSV is "a compilation ... rather than a
 # source in its own right", and nothing could read that argument. compiled_from
@@ -489,13 +489,13 @@ SOURCE_TIERS = (
 
 
 def _check_source_tiers(c: Checks, registry: dict[str, Any], raw_doc: str, doc: str) -> None:
-    """Rules F-I -- every source states what KIND of source it is, and is followable.
+    """Rules F-I, every source states what KIND of source it is, and is followable.
 
     Rules A-E make the register COMPLETE: every cited source is in SOURCES.md.
     They say nothing about what the source is or where a reader goes next, and
     until #57 the site had no machine-readable answer to either. The one place
-    the distinction had been drawn -- Tax Foundation as "a compilation ... rather
-    than a source in its own right" -- was drawn in prose, once, for one source,
+    the distinction had been drawn, Tax Foundation as "a compilation ... rather
+    than a source in its own right", was drawn in prose, once, for one source,
     inside a string nothing parses.
 
     | F | every entry states a tier from SOURCE_TIERS                          |
@@ -504,16 +504,17 @@ def _check_source_tiers(c: Checks, registry: dict[str, Any], raw_doc: str, doc: 
     | I | the tier and the url stated in SOURCES.md match the register         |
 
     Rule I preserves the never-parse-out invariant. It matches a COMPOSED string
-    INTO SOURCES.md exactly as rule B does -- "{registered_as}** -- {tier}",
-    which is the document's own lead-in form -- and SOURCES.md is still never
+    INTO SOURCES.md exactly as rule B does, looking for the literal
+    "{registered_as}** [em dash] {tier}", which is the document's own lead-in
+    form. SOURCES.md is still never
     parsed OUT of. The prose side is vintage-normalized by _normalize_source,
     like rule B, so an ordinary refresh still passes; the URL is compared RAW,
     because a "2026-02" in a filename identifies a document rather than dating
     it and normalizing it away would let the link drift to another vintage's
     file unnoticed.
 
-    Where a later rule reads a field an earlier one just rejected -- I needs F's
-    tier, the url-in-doc check needs G's url -- the later rule stays silent for
+    Where a later rule reads a field an earlier one just rejected, I needs F's
+    tier, the url-in-doc check needs G's url, the later rule stays silent for
     that entry rather than piling a second confusing message onto the same
     defect. That is not a skip: F or G has already failed loudly, by name, for
     the same key in the same pass.
@@ -522,7 +523,7 @@ def _check_source_tiers(c: Checks, registry: dict[str, Any], raw_doc: str, doc: 
         tier = entry.get("tier")
         stated = isinstance(tier, str) and tier in SOURCE_TIERS
 
-        # F -- a source added with no stated kind, or a typo'd tier.
+        # F, a source added with no stated kind, or a typo'd tier.
         c.ok(
             stated,
             f"{key}: tier is {tier!r}, which is not one of {', '.join(SOURCE_TIERS)}. "
@@ -535,7 +536,7 @@ def _check_source_tiers(c: Checks, registry: dict[str, Any], raw_doc: str, doc: 
         followable = isinstance(url, str) and url.startswith("https://") and len(url) > 8
         excused = isinstance(exempt, str) and bool(exempt.strip())
 
-        # G -- an unfollowable source line, or an exemption used as a silent skip.
+        # G, an unfollowable source line, or an exemption used as a silent skip.
         c.ok(
             followable or excused,
             f"{key}: has no well-formed https:// url and no written url_exempt reason. "
@@ -550,7 +551,7 @@ def _check_source_tiers(c: Checks, registry: dict[str, Any], raw_doc: str, doc: 
             f"stale.",
         )
 
-        # H -- a secondary source slipped in unargued; a compilation passed off as a
+        # H, a secondary source slipped in unargued; a compilation passed off as a
         # source in its own right.
         if tier == "secondary":
             justification = entry.get("justification")
@@ -573,7 +574,7 @@ def _check_source_tiers(c: Checks, registry: dict[str, Any], raw_doc: str, doc: 
                 f"(#55, #57).",
             )
 
-        # I -- the tier or the URL on the page drifting from the register.
+        # I, the tier or the URL on the page drifting from the register.
         if stated:
             c.ok(
                 _normalize_source(f"{entry['registered_as']}** — {tier}") in doc,
@@ -593,7 +594,7 @@ def _check_source_tiers(c: Checks, registry: dict[str, Any], raw_doc: str, doc: 
 
 
 def _check_no_outlet_sources_a_figure(c: Checks, reg: dict[str, Any]) -> None:
-    """Rule E -- no emitted value is attributed to a news outlet (#54).
+    """Rule E, no emitted value is attributed to a news outlet (#54).
 
     Rules A-D reconcile the source LINE against the register. They say nothing
     about a publisher named somewhere else in the payload, and that is exactly
@@ -604,7 +605,7 @@ def _check_no_outlet_sources_a_figure(c: Checks, reg: dict[str, Any]) -> None:
     Curated and explicit rather than scraped, the shape #39 established: the
     banned list is a written decision in curated/sources.yaml with a reason
     beside each name, and an empty or malformed list is a FAILURE rather than a
-    check with nothing to do. Scoped to src/data/*.json deliberately --
+    check with nothing to do. Scoped to src/data/*.json deliberately,
     SOURCES.md may still name an outlet as the ORIGIN OF A CIRCULATING CLAIM,
     which is a different thing from sourcing a published figure to it.
     """
@@ -871,9 +872,9 @@ def _check_foreign_holdings(
 
     Foreign holdings used to be hand-typed constants traceable to a news
     report; they are now a column of a Treasury release. Everything that can go
-    wrong with that is a SILENT failure -- a column read one to the left, a
+    wrong with that is a SILENT failure, a column read one to the left, a
     builder that adopted the newest release, a parser that grabbed a shifted
-    row -- so each has a guard here and each guard has a negative test proving
+    row, so each has a guard here and each guard has a negative test proving
     it bites.
     """
     d = holders["data"]
@@ -881,7 +882,7 @@ def _check_foreign_holdings(
     vintage = meta.get("provenance", {}).get("vintage")
     pin = curated._load("snapshots")["snapshots"]["debt_holders"].get("tic_vintage")
 
-    # G1 -- the vintage is present, well formed, and describes the data beside
+    # G1, the vintage is present, well formed, and describes the data beside
     # it. A fetch that fell back to a different column would leave these two
     # disagreeing.
     c.ok(
@@ -892,7 +893,7 @@ def _check_foreign_holdings(
         f"without its release month is the trap SOURCES.md exists to prevent.",
     )
 
-    # G2 -- the pin is honoured. TIC revises monthly and publishes with a lag,
+    # G2, the pin is honoured. TIC revises monthly and publishes with a lag,
     # so "whatever is newest" would move published figures on every re-run
     # without anyone deciding to. Moving the vintage is an editorial act.
     c.ok(
@@ -902,7 +903,7 @@ def _check_foreign_holdings(
         f"adopted a release nobody chose.",
     )
 
-    # G3 -- exactly the three countries, no more and no other. Catches a parser
+    # G3, exactly the three countries, no more and no other. Catches a parser
     # that read a shifted row, and closes the door the Fed omission depends on.
     c.ok(
         {row["country"] for row in d["top_foreign"]} == FOREIGN_HOLDERS
@@ -911,7 +912,7 @@ def _check_foreign_holdings(
         f"{[row['country'] for row in d['top_foreign']]}",
     )
 
-    # G4 -- THE REBUTTAL, MACHINE-CHECKED. discrepancies.yaml ->
+    # G4, THE REBUTTAL, MACHINE-CHECKED. discrepancies.yaml ->
     # foreign_share_of_debt answers the circulating "32% of gross" claim with
     # arithmetic: 30% of the $32.14T held by the public is ~$9.6T, which is 24%
     # of $39.88T gross. If a future edit moves either share without the other,
@@ -931,7 +932,7 @@ def _check_foreign_holdings(
             f"foreign_share_history says {gross_pct}%. Fix both or neither.",
         )
 
-    # G5 -- TIC's own all-country total corroborates the curated foreign share.
+    # G5, TIC's own all-country total corroborates the curated foreign share.
     # A CROSS-CHECK, not a published figure: the TIC release month and Debt to
     # the Penny's as_of are different dates, so their quotient is not a
     # well-defined share and the 30/24 stay curated. 3pp of slack is what those
@@ -950,7 +951,7 @@ def _check_foreign_holdings(
             f"of the two has moved and the other has not.",
         )
 
-    # G-china -- discrepancies.yaml -> china_holdings keeps a chosen value, and
+    # G-china, discrepancies.yaml -> china_holdings keeps a chosen value, and
     # it is now the editorial BOUND the fetched figure is checked against rather
     # than the source of the published number. TIC November 2025 reads 683.9,
     # which the site publishes as 0.684; the resolution's 0.683 is what that is
@@ -985,7 +986,7 @@ def _check_debt_maturity(c: Checks, maturity: dict[str, Any]) -> None:
     vintage = meta.get("provenance", {}).get("vintage")
     pin = curated._load("snapshots")["snapshots"]["debt_maturity"].get("mspd_vintage")
 
-    # G1 -- the statement month is present, well formed, and describes the data
+    # G1, the statement month is present, well formed, and describes the data
     # beside it. A fetch that resolved a different month would leave these two
     # disagreeing.
     c.ok(
@@ -996,7 +997,7 @@ def _check_debt_maturity(c: Checks, maturity: dict[str, Any]) -> None:
         f"figure without its release month is the trap SOURCES.md exists to prevent.",
     )
 
-    # G2 -- the pin is honoured. MSPD publishes monthly, so "whatever is newest"
+    # G2, the pin is honoured. MSPD publishes monthly, so "whatever is newest"
     # would move three published figures and the marketable total on every
     # re-run without anyone deciding to.
     c.ok(
@@ -1006,7 +1007,7 @@ def _check_debt_maturity(c: Checks, maturity: dict[str, Any]) -> None:
         f"adopted a statement nobody chose.",
     )
 
-    # G3 (was EC2) -- the three instruments are NOT the marketable total, and
+    # G3 (was EC2), the three instruments are NOT the marketable total, and
     # the gap is the two families the chart does not draw. The old tolerance was
     # `> 0.01`, which a $0.05T rounding residue satisfied: the check passed for
     # eighteen months while the total beside it was the subtotal. A floor of
@@ -1022,7 +1023,7 @@ def _check_debt_maturity(c: Checks, maturity: dict[str, Any]) -> None:
         f"#56 removed. It is not a rounding residue and must not be tolerated as one.",
     )
 
-    # G4 (was EC3, inverted) -- bills' published share must RECONCILE with the
+    # G4 (was EC3, inverted), bills' published share must RECONCILE with the
     # amounts beside it. The old check asserted the two must DISAGREE, which was
     # true only of the wrong denominator; 6.76/30.91 is 21.9% against a
     # published 22%. Keeping that assertion would forbid the correct state.
@@ -1043,7 +1044,7 @@ def _check_debt_maturity(c: Checks, maturity: dict[str, Any]) -> None:
         "debt_maturity: share_pct must be present on bills only",
     )
 
-    # G5 -- the class set is the published one. A query that silently narrowed
+    # G5, the class set is the published one. A query that silently narrowed
     # to the three drawn families would make G3 fail loudly, but one that
     # narrowed to five would make it pass for the wrong reason, so the set the
     # total was summed over is recorded and checked rather than inferred.
@@ -1232,7 +1233,7 @@ def check_top_rates_anchor(c: Checks) -> None:
     Table 23's highest-bracket rate for that year (#55).
 
     curated/top_rates.yaml used to cite "IRS SOI Historical Table 23; Tax Policy
-    Center" and nothing checked either claim -- the anchor was a sentence in a
+    Center" and nothing checked either claim, the anchor was a sentence in a
     comment. curated/top_rates_soi_anchor.yaml is Table 23's column transcribed
     with its SHA-256, and this is the check that makes the citation an
     OBSERVATION. It runs unconditionally, not behind an `if "bracket_history" in
@@ -1241,7 +1242,7 @@ def check_top_rates_anchor(c: Checks) -> None:
 
     Table 23 stops at 2018, so 2019-2025 are out of its reach by construction and
     are anchored on PL 115-97 and Rev. Proc. 2018-57 through 2024-40 instead. The
-    anchor must cover 1913-2018 with NO GAPS -- a year silently dropped by a
+    anchor must cover 1913-2018 with NO GAPS, a year silently dropped by a
     footnote-prefixed cell would otherwise shrink the check's reach without
     failing anything, which is the failure this no-gaps assertion exists to stop.
     """

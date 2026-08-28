@@ -1,7 +1,7 @@
 /** Section 6: the payroll tax bill that section 5's chart never counts.
  *
- *  Two lines over `revenue_sources`, FY1962-FY2025 — payroll and individual
- *  income tax — with a toggle between percent of GDP and percent of total
+ *  Two lines over `revenue_sources`, FY1962-FY2025, payroll and individual
+ *  income tax, with a toggle between percent of GDP and percent of total
  *  revenue. Individual income is drawn alongside payroll because the
  *  comparison is what makes the scale concrete.
  *
@@ -24,7 +24,7 @@ import { labelledByFigure } from './figureLabel'
 import { ChartHint } from '../charts/ChartHint'
 
 /** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
- *  this key rather than typed — see `figureLabel.ts` (#72). */
+ *  this key rather than typed, see `figureLabel.ts` (#72). */
 const FIGURE = 'payroll-bill'
 
 type View = 'gdp' | 'revenue'

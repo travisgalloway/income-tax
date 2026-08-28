@@ -1,4 +1,4 @@
-/** The focus-ring half of the browser lane — issue #75. Run by
+/** The focus-ring half of the browser lane, issue #75. Run by
  *  `npm run test:browser` alongside `smoke.test.ts`, `driven.test.ts`,
  *  `keyboard.test.ts`, `scroll.test.ts`, `legend.test.ts` and `touch.test.ts`.
  *
@@ -7,7 +7,7 @@
  *  base `:focus-visible`, `.datum:focus-visible`, #69's
  *  `[data-roving] [data-mark]:focus` fallback, `.state-tile:focus-visible` and
  *  `.year-range-thumb:focus-visible`. Before #75 those five declared `1.5px`
- *  four times and `2px` once, and both engines round 1.5 DOWN — Chromium and
+ *  four times and `2px` once, and both engines round 1.5 DOWN, Chromium and
  *  WebKit each computed the old rule as **1 device pixel**, so the shipped ring
  *  was half what the stylesheet claimed and under WCAG 2.2 SC 2.4.13's 2px
  *  minimum.
@@ -15,7 +15,7 @@
  *  WHY EVERY ASSERTION HERE IS A COMPUTED STYLE AND NEVER CSS SOURCE TEXT. The
  *  build's minifier merges `.datum:focus-visible` and
  *  `[data-roving] [data-mark]:focus` into one rule because their declarations
- *  are identical — confirmed in `dist/_astro/*.css`. No source-level or
+ *  are identical, confirmed in `dist/_astro/*.css`. No source-level or
  *  built-CSS-level check can see those two apart, which is the same trap
  *  `keyboard.test.ts:512` documents. So: focus the element, read
  *  `getComputedStyle`.
@@ -28,16 +28,16 @@
  *  clears the standard. Mutations M2 and M3 below turn exactly one of them red
  *  each; a single assertion written twice could not do that.
  *
- *  WHY `vector-effect` IS LOAD-BEARING. `stroke-width` on an SVG shape resolves
+ *  WHY `vector-effect` IS REQUIRED. `stroke-width` on an SVG shape resolves
  *  in USER units and every chart `<svg>` is scaled to its container, so the
- *  `stroke` fallback — the only ring WebKit paints on an SVG shape, since it
- *  does not honour `outline` there — rendered **1.944 CSS px at 390px** (screen
+ *  `stroke` fallback, the only ring WebKit paints on an SVG shape, since it
+ *  does not honour `outline` there, rendered **1.944 CSS px at 390px** (screen
  *  CTM scale 0.9722) and 2.044 at 1440px from a bare `stroke-width: 2`. Under
  *  the minimum, in the one engine where that stroke IS the ring, and it would
  *  have stayed under it if only the `outline` had changed.
  *  `vector-effect: non-scaling-stroke` makes it resolve in CSS pixels whatever
  *  the transform. F2 measures that, and refuses to run on a page where no chart
- *  has a scale other than 1 — without a non-unit scale a scaling stroke and a
+ *  has a scale other than 1, without a non-unit scale a scaling stroke and a
  *  non-scaling one are indistinguishable and the guard would pass vacuously.
  *
  *  This closes inventory row 29 in `docs/contracts/accessibility.md` and
@@ -118,7 +118,7 @@ interface Ring {
 
 /** The site's own ring, as distinct from the browser's.
  *
- *  COPIED from `keyboard.test.ts:484` deliberately, not imported — the same
+ *  COPIED from `keyboard.test.ts:484` deliberately, not imported, the same
  *  reason `scroll.test.ts:54` copies #69's stop bounds: that shape is
  *  `keyboard.test.ts`'s contract with #69 and this file must not be able to
  *  change it. A fresh `outlineWidth > 0` check is NOT an acceptable substitute:
@@ -147,19 +147,19 @@ async function ringOfActive(page: Page): Promise<Ring & { desc: string }> {
 }
 
 /* ------------------------------------------------------------------------- *
- * F1 — every author ring computes the token width, and the token meets the
+ * F1, every author ring computes the token width, and the token meets the
  * minimum. Definition of done 1, 2 and 8.
  *
  * Seven ring-painting classes, and the count of classes actually MEASURED is
  * asserted before a single width is compared. A representative whose selector
- * stops matching must turn this red rather than silently shrink the sample —
+ * stops matching must turn this red rather than silently shrink the sample,
  * the failure mode a guard over "whatever we found" cannot detect.
  *
  * The seven are spread over two routes because two of them exist on one route
  * each: `.state-tile` is §11's cartogram on `/government`, and
  * `.year-range-thumb` is `MedianIncome`/`HouseholdSpread` on `/households`.
  * (The plan named `/economy` for the second; `/economy` renders no
- * `.year-range-thumb` at either viewport — measured — so `/households` carries
+ * `.year-range-thumb` at either viewport, measured, so `/households` carries
  * it.)
  * ------------------------------------------------------------------------- */
 
@@ -309,7 +309,7 @@ for (const viewport of VIEWPORTS) {
 
 test('F1 edge case: the skip link keeps its own colour while inheriting the token width', async () => {
   // Definition of done 8. `.skip-link:focus-visible` overrides `outline-color`
-  // ONLY — it paints on `--ink`, where an ink ring is invisible — so it is the
+  // ONLY, it paints on `--ink`, where an ink ring is invisible, so it is the
   // one rule that must inherit its width from the base rule rather than declare
   // one. If a later edit gives it a full `outline` shorthand, the width would
   // silently stop tracking the token and the colour override would be lost.
@@ -347,7 +347,7 @@ test('F1 edge case: the skip link keeps its own colour while inheriting the toke
 })
 
 /* ------------------------------------------------------------------------- *
- * F2 — the SVG stroke fallback renders exactly the token width in CSS pixels.
+ * F2, the SVG stroke fallback renders exactly the token width in CSS pixels.
  * Definition of done 3.
  * ------------------------------------------------------------------------- */
 
@@ -360,7 +360,7 @@ const DATUM_SVGS: Record<string, number> = { '/economy': 5, '/households': 8, '/
 /** Of those, the ones that are actually LAID OUT and can therefore be focused.
  *
  *  `/government` renders 14 and measures 13. The missing one is `AttribChart`'s
- *  second panel — "Net ten-year legislative cost by signing president" sits in
+ *  second panel, "Net ten-year legislative cost by signing president" sits in
  *  a `.attrib-panel` whose sibling is showing, so it computes `display: none`,
  *  its `<svg>` is 0x0 and its marks decline focus. Both numbers are asserted:
  *  the first says no chart vanished, the second says none of the ones on screen
@@ -416,9 +416,9 @@ for (const route of CHART_ROUTES) {
         }[] = []
 
         // ONE ARROW PRESS PER CHART, not a bare `.focus()`. Three of
-        // `/government`'s groups carry `[data-mark]` with NO `.datum` class —
+        // `/government`'s groups carry `[data-mark]` with NO `.datum` class,
         // `BudgetChart`'s 64 transparent hit rects, §11's 51 `<g.state-tile>`s
-        // and `StateTaxMix`'s five segment groups — so `.datum:focus-visible`
+        // and `StateTaxMix`'s five segment groups, so `.datum:focus-visible`
         // never matches them and #69's `[data-roving] [data-mark]:focus` is
         // their only ring. `data-roving` is set by the hook only while the last
         // move came from a key, which is why this drives the keyboard rather
@@ -504,7 +504,7 @@ for (const route of CHART_ROUTES) {
   }
 }
 /* ------------------------------------------------------------------------- *
- * F3(a) — no ring is clipped on a container's NON-SCROLLABLE axis.
+ * F3(a), no ring is clipped on a container's NON-SCROLLABLE axis.
  * Definition of done 5.
  *
  * THE EXCLUDED EDGES ARE COMPUTED, NOT NAMED. The plan for this issue excluded
@@ -513,7 +513,7 @@ for (const route of CHART_ROUTES) {
  * view. That reasoning is right and the hardcoding was wrong: `.navbar-panel`
  * is the one container that scrolls VERTICALLY (`overflow-y: auto`,
  * scrollHeight - clientHeight = 117px on /government at 390px), and its last
- * link overhangs its BOTTOM edge — 2.48px before this change and 3.48px after.
+ * link overhangs its BOTTOM edge, 2.48px before this change and 3.48px after.
  * Excluding "right" would have left that as a false failure and excluding
  * "bottom" everywhere would have blinded the guard on the table containers. So
  * each container's scrollable axes are measured and only those edges are
@@ -526,7 +526,7 @@ for (const route of CHART_ROUTES) {
  * ------------------------------------------------------------------------- */
 
 /** Containers matched, and focusable descendants that actually took focus, per
- *  route and viewport. Equalities, asserted before any clearance is compared —
+ *  route and viewport. Equalities, asserted before any clearance is compared,
  *  M7 points the selector at a class matching nothing and this is what bites.
  *
  *  The wide zeros are a fact, not a skip: at 1440px `.navbar-panel` is
@@ -615,17 +615,17 @@ for (const route of CHART_ROUTES) {
 }
 
 /* ------------------------------------------------------------------------- *
- * F3(b) — no focused control adds page overflow. Definition of done 6, and
+ * F3(b), no focused control adds page overflow. Definition of done 6, and
  * `scroll.test.ts`'s E10 assertion held at the wider ring.
  *
  * The overflow assertion runs over EVERY element that takes focus, scroll
- * containers included — that sweep is the point of the guard and nothing is
+ * containers included, that sweep is the point of the guard and nothing is
  * excluded from it. What is FLOORED is a narrower population, and deliberately.
  *
  * WHY THE FLOOR EXCLUDES #71's SCROLL CONTAINERS. They are focusable **exactly
  * when they overflow**, and overflow is a text-width property. `tokens.css:4-5`
  * commits to a system-font stack with no webfont, so macOS and Linux metrics
- * differ by design and will keep differing — the same fact that makes
+ * differ by design and will keep differing, the same fact that makes
  * `harness.ts` carry a tolerance rather than pin a container. Measured:
  * `/government` at 1440px has **two** focusable containers in the default
  * (disclosures-closed) state on macOS and **one** on CI's Linux runner, so an
@@ -633,13 +633,13 @@ for (const route of CHART_ROUTES) {
  * the first CI run of this spec. Padding the floor with a margin would have
  * hidden a real platform dependence behind a fudge factor; dropping the
  * font-dependent members from the counted population removes it at the source.
- * Their existence is still guarded — a one-sided `>= 1` on the routes that have
+ * Their existence is still guarded, a one-sided `>= 1` on the routes that have
  * any, and `scroll.test.ts` in full.
  *
  * The counts below are FLOORS and not equalities, and the precedent is #69's
  * `MAX_STOPS_*`: a content route gains a link and an equality goes red for a
  * reason that has nothing to do with focus rings. IF A MEASURED VALUE FALLS
- * BELOW A FLOOR, DO NOT LOWER IT — controls have stopped being focusable, and
+ * BELOW A FLOOR, DO NOT LOWER IT, controls have stopped being focusable, and
  * this sweep would then be passing over a smaller site than it claims to cover.
  * That instruction now means what it says, because platform drift can no longer
  * be the explanation for crossing one.
@@ -729,11 +729,11 @@ for (const viewport of VIEWPORTS) {
 }
 
 /* ------------------------------------------------------------------------- *
- * F4 — the ring does not swallow an adjacent datum at 390px. Definition of
+ * F4, the ring does not swallow an adjacent datum at 390px. Definition of
  * done 7.
  *
- * The case the issue names — `/economy`'s 87-mark group, 3.31px marks at a
- * 3.35px pitch — is ZERO at the old 1.5px rule and zero at 2px: the ring box
+ * The case the issue names, `/economy`'s 87-mark group, 3.31px marks at a
+ * 3.35px pitch, is ZERO at the old 1.5px rule and zero at 2px: the ring box
  * grows from 7.31px to 9.31px and reaches the same two neighbour centres
  * either way. Both offenders below are pinned by GROUP IDENTITY rather than by
  * magnitude, so a third chart crossing the line turns this red while ordinary
@@ -744,7 +744,7 @@ for (const viewport of VIEWPORTS) {
  *  measured at 390px against the old 1.5px rule as well as the new token:
  *
  *  - `BracketHistory` on `/households`: 113 marks, 5.83px hit rects at a
- *    **2.465px** pitch — the rects already overlap each other by 3.4px. 0
+ *    **2.465px** pitch, the rects already overlap each other by 3.4px. 0
  *    enclosed at 1.5px, 224 at 2px (~2 per focused mark). 0 at 1440px. This is
  *    mark density (#73 measured 0.9px per datum at 390px), not ring width: no
  *    ring that meets WCAG can be narrower than a 2.465px pitch. PARKED, not
@@ -753,7 +753,7 @@ for (const viewport of VIEWPORTS) {
  *    reference band, a `<rect>` 11.67px wide and **272.21px tall** spanning the
  *    whole plot, so the countries whose dots fall inside its x-span are
  *    enclosed by its ring whatever the width. **2 enclosed at 1.5px, 3 at
- *    2px** — pre-existing, and the plan for this issue did not have it. PARKED.
+ *    2px**, pre-existing, and the plan for this issue did not have it. PARKED.
  */
 const F4_EXCEPTIONS = [
   '/government:Total tax revenue as a share of GDP',
@@ -762,7 +762,7 @@ const F4_EXCEPTIONS = [
 
 /** Groups with three or more marks per chart route at 390px, asserted as an
  *  equality before any enclosure is counted. (`/households` has eight
- *  mark-bearing `<svg>`s but only seven with three or more marks — the eighth
+ *  mark-bearing `<svg>`s but only seven with three or more marks, the eighth
  *  is `TopShare`'s two-mark comparison.) */
 const F4_GROUPS: Record<string, number> = { '/economy': 5, '/households': 7, '/government': 14 }
 

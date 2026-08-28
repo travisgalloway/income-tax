@@ -2,7 +2,7 @@
  *  budget.
  *
  *  Mandatory is charted NET of offsetting receipts (`ma + or`), never `ma`
- *  alone -- see the "gross/net trap" in
+ *  alone, see the "gross/net trap" in
  *  docs/contracts/interfaces/budget-data.md. Series are also named with
  *  direct end-of-line text labels so colour is never the only way to tell
  *  them apart. FY2015 net interest is marked on the chart so the "endpoints
@@ -23,7 +23,7 @@ import type { BudgetYear } from '../../data/types'
 import { ChartHint } from '../charts/ChartHint'
 
 /** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
- *  this key rather than typed — see `figureLabel.ts` (#72). */
+ *  this key rather than typed, see `figureLabel.ts` (#72). */
 const FIGURE = 'voted-and-not'
 
 const START = 1995

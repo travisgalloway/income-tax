@@ -2,14 +2,14 @@
 
 Walks every built page under `dist/**/index.html` and every island component
 under `src/components/islands/*.tsx`, checking the parts of issue #15's
-Definition of done that are provable from source and build output alone —
+Definition of done that are provable from source and build output alone,
 no DOM, no assistive technology, no rendered pixels. THAT BOUNDARY IS
 UNCHANGED and it is the point of this suite: it asserts what the served bytes
 say, which is the one thing a browser cannot tell you about a build.
 
 Since #67 the rendered-pixel half is no longer a human's job. `npm run
 test:browser` (`tests/browser/`, `node --test` driving Playwright's Chromium)
-re-measures it on every pull request — seven routes at 390x844 and 1440x900,
+re-measures it on every pull request, seven routes at 390x844 and 1440x900,
 plus a scripting-off pass. What is left for a person is the *assistive
 technology* half: screen-reader passes, the greyscale reading judgement, and
 Safari.app's focus ring, itemised in `docs/contracts/accessibility.md` and
@@ -19,7 +19,7 @@ docstring is not the place to blur that.
 Written generically on purpose: only thirteen of the fourteen sections this
 issue was meant to audit exist yet (Government section 1; everything else on
 `main` renders "Not built yet."). This suite makes no assumption about which
-routes or how many charts exist — it walks whatever `dist/` contains, so each
+routes or how many charts exist, it walks whatever `dist/` contains, so each
 section is covered the moment its own PR lands, without editing this file.
 
 Standard library only: `html.parser`, `re`, `pathlib`. No new dependency.
@@ -51,7 +51,7 @@ FOCUSABLE_TAGS = {"button", "summary"}
 
 # ---------------------------------------------------------------------------
 # A minimal HTML tree, enough to answer "what are this element's ancestors"
-# and "what is document order" — the two things a flat regex scan cannot do.
+# and "what is document order", the two things a flat regex scan cannot do.
 # ---------------------------------------------------------------------------
 
 
@@ -144,7 +144,7 @@ def deep_text(n: Node) -> str:
     """All text in a node's subtree, whitespace-collapsed.
 
     `Node.text()` reads only direct `#text` children, which is right for a leaf
-    but wrong for a label span that a build step has split — Astro's island
+    but wrong for a label span that a build step has split, Astro's island
     boundaries and comment markers routinely break one authored string across
     several text nodes. A name resolver that read only direct children would
     return `""` for such a span, and an empty name is indistinguishable from a
@@ -176,7 +176,7 @@ def accessible_name(n: Node, root: Node) -> str:
     Why a model at all, rather than asking a browser? Because the names must be
     right in the bytes Astro ships, with scripting off. Islands mount
     `client:visible`, so a browser reading a hydrated page agrees with a build
-    whose server-rendered names are wrong — the exact failure #69's browser lane
+    whose server-rendered names are wrong, the exact failure #69's browser lane
     had, passing 59/59 while 113 data points sat in the scripting-off tab order.
     `tests/browser/smoke.test.ts` calibrates this model against Chromium's real
     accessibility tree (#72) so the approximation cannot drift unnoticed.
@@ -207,7 +207,7 @@ def has_accessible_name(n: Node, root: Node) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Fixture data: fail loudly, don't skip — a skip on a missing build reports
+# Fixture data: fail loudly and do not skip, because a skip on a missing build reports
 # green on a tree that was never built, which is worse than no test at all.
 # ---------------------------------------------------------------------------
 
@@ -401,8 +401,8 @@ def test_every_figure_server_renders_its_chart_svg(page):
 
     Every other chart test in this module iterates the SVGs it finds and
     asserts about them, so a chart whose SVG vanished from the server render
-    — a mount switched to `client:only`, a `mounted` gate added to
-    `useChartSize` — would contribute zero assertions and leave the suite
+   , a mount switched to `client:only`, a `mounted` gate added to
+    `useChartSize`, would contribute zero assertions and leave the suite
     green. This test is the one that goes red instead.
     """
     path, root = page
@@ -429,7 +429,7 @@ def test_government_section_1_renders_its_whole_apparatus_without_scripting(page
     The generic guard above proves the `<svg>` exists. Section 1's contract
     enumerates more than that: prose, axis labels, tick text, the figcaption
     apparatus and the table caption all have to survive with scripting off.
-    Kept literal and §1-shaped — a generic "every chart has axis labels" test
+    Kept literal and §1-shaped, a generic "every chart has axis labels" test
     would false-fail on the axis-free islands (`DebtHolders`, the
     `StateGiveGet` cartogram).
     """
@@ -514,7 +514,7 @@ def keyboard_reachable_points(svg: Node) -> list[Node]:
     `tabindex in {"0", "-1"}`. Before #69 every mark shipped `tabindex="0"`, so
     the two readings agreed. Since #69 each `<svg>` is a roving-tabindex group:
     exactly one mark carries `"0"` and the rest carry `"-1"`, and a `"-1"` mark
-    is reached by an arrow key rather than by Tab — it is not one bit less
+    is reached by an arrow key rather than by Tab, it is not one bit less
     reachable, and its `aria-label` is what a reader hears when they get there.
 
     Reading only `"0"` here would silently collapse this suite's label coverage
@@ -555,8 +555,8 @@ def test_focusable_data_points_are_labelled_and_grouped(page):
 
 def test_the_labelled_and_grouped_guard_bites():
     """The widening in `keyboard_reachable_points` is only worth having if an
-    unlabelled `tabindex="-1"` mark — the shape every mark but one per figure
-    now has — actually turns it red."""
+    unlabelled `tabindex="-1"` mark, the shape every mark but one per figure
+    now has, actually turns it red."""
     unlabelled_roving = parse_fragment(
         '<svg role="group">'
         '<rect data-mark="" tabindex="0" aria-label="a"></rect>'
@@ -718,7 +718,7 @@ def test_the_one_tab_stop_guard_bites(page):
 # four different figures were indistinguishable by name alone.
 #
 # Three guards, because uniqueness alone is a hollow property. G1 on its own is
-# satisfied by naming the groups "A", "B" and "C" — unique and useless. G2 ties
+# satisfied by naming the groups "A", "B" and "C", unique and useless. G2 ties
 # each name to the figure it controls BY DOM ANCESTRY, so a copy-pasted key
 # naming the wrong figure fails rather than passing on a technicality. G3 keeps
 # the name containing what the reader can see, which is both WCAG 2.5.3 and
@@ -735,7 +735,7 @@ def test_the_one_tab_stop_guard_bites(page):
 # 136 links under 57 distinct names (the nav is rendered twice by design,
 # "Full entry in the glossary" appears 16 times), /government has 13 legitimate
 # "View as table" buttons, one per figure, and 20 radios named "Nominal" or
-# "% of GDP" — those are disambiguated by their GROUP, which is the thing this
+# "% of GDP", those are disambiguated by their GROUP, which is the thing this
 # section makes unique.
 #
 # So the scope is the choice-set container roles. `role="group"` is
@@ -748,15 +748,15 @@ def test_the_one_tab_stop_guard_bites(page):
 #: that wraps a set of choices, where the name is what a reader hears on entry
 #: and the only thing distinguishing one set from the next.
 #:
-#: `radiogroup` is the mandatory floor — it is where the bug was. `combobox`
+#: `radiogroup` is the mandatory floor, it is where the bug was. `combobox`
 #: (LawExplorer's three filters, StateGiveGet's jurisdiction picker) and
 #: `tablist` have zero violations today and are included precisely because they
 #: cost nothing to include: they lock the same bug out of `Select.tsx` and the
 #: Radix tabs before it can be written.
 #: The one role G2 and G3 speak about. Named rather than written as a literal
 #: in each of them, because a typo in a bare `"radiogroup"` inside a guard body
-#: would make that guard sweep an empty set while the coverage floor — counting
-#: through `CHOICE_SET_ROLES` — went on reporting 9. The floor asserts THIS
+#: would make that guard sweep an empty set while the coverage floor, counting
+#: through `CHOICE_SET_ROLES`, went on reporting 9. The floor asserts THIS
 #: constant, so the two cannot drift apart. Found by M9 (2026-08-27), which
 #: proved the floor caught a typo in `CHOICE_SET_ROLES` but would not have
 #: caught one here.
@@ -770,7 +770,7 @@ def choice_sets(root: Node, roles=CHOICE_SET_ROLES) -> list[Node]:
 
 
 def duplicate_choice_set_name_failures(root: Node) -> list[str]:
-    """G1 — no two choice-set controls of the same role share a name on a page.
+    """G1, no two choice-set controls of the same role share a name on a page.
 
     Grouped by role, not globally: a `tablist` and a `radiogroup` that happened
     to share a name are still told apart by the role a screen reader announces
@@ -803,13 +803,13 @@ def duplicate_choice_set_name_failures(root: Node) -> list[str]:
 
 
 def figure_bound_name_failures(root: Node) -> list[str]:
-    """G2 — a radiogroup inside a figure is named by THAT figure's number span.
+    """G2, a radiogroup inside a figure is named by THAT figure's number span.
 
     Ancestry, not string matching. `aria-labelledby` must name a node whose
     class is `figure-no` and whose own nearest `<figure>` ancestor is the same
     `<figure>` the group sits in. A group pointing at a real figure-number span
-    belonging to some other figure produces a unique, plausible, wrong name —
-    "Figure 10 Measured in" on Figure 1's toggle — which G1 would happily pass.
+    belonging to some other figure produces a unique, plausible, wrong name,
+    "Figure 10 Measured in" on Figure 1's toggle, which G1 would happily pass.
 
     This is also what forbids `aria-label` from returning to these controls: a
     hardcoded string has no figure ancestry to check, so it fails here. M3
@@ -861,7 +861,7 @@ def figure_bound_name_failures(root: Node) -> list[str]:
 
 
 def label_in_name_failures(root: Node) -> list[str]:
-    """G3 — WCAG 2.5.3 Label in Name (Level A).
+    """G3, WCAG 2.5.3 Label in Name (Level A).
 
     A radiogroup's accessible name must contain the text of the
     `.controls-label` span sitting in its own `.controls` container. Found live
@@ -1106,7 +1106,7 @@ def test_the_choice_set_coverage_did_not_narrow():
     both turn this red. That is the whole argument for its existence.
 
     Asserted as equalities, per role, site-wide. Re-baseline only alongside a
-    figure that genuinely gained or lost a choice-set control — never to make a
+    figure that genuinely gained or lost a choice-set control, never to make a
     number go green.
     """
     counts: dict[str, int] = {}
@@ -1466,7 +1466,7 @@ _RULE_RE = re.compile(r"([^{}]+)\{([^{}]*)\}")
 
 def iter_css_rules(css_text: str):
     """Yield (selectors, body) for every simple rule, including rules nested
-    one level inside an @-rule (e.g. @media) — the only nesting this
+    one level inside an @-rule (e.g. @media), the only nesting this
     stylesheet uses. The @-rule's own condition is discarded, not returned
     as a selector."""
     text = _COMMENT_RE.sub("", css_text)
@@ -1521,7 +1521,7 @@ def narrow_media_block() -> str:
     """The raw body of `@media (max-width: 62rem){…}` in global.css.
 
     `iter_css_rules` flattens every @-rule and discards its condition, so it
-    cannot tell a narrow-viewport rule from a desktop one — and "the bar is
+    cannot tell a narrow-viewport rule from a desktop one, and "the bar is
     fixed" and "anchors clear the bar" are claims about the narrow block
     specifically. Raises rather than returning "" if the block moves or is
     renamed: a helper that finds nothing to check reads exactly like one whose
@@ -1549,7 +1549,7 @@ def layout_inline_script() -> str:
     on purpose so the built page carries no double-quoted literal of it.
 
     Raises rather than returning `""` if the block moves, is renamed or is
-    split in two — same contract, and same reason, as `narrow_media_block()`
+    split in two, same contract, and same reason, as `narrow_media_block()`
     above: a helper that finds nothing to check reads exactly like one whose
     checks passed.
     """
@@ -1699,7 +1699,7 @@ def test_nav_bar_tap_targets_clear_44px():
 
 def test_the_suite_ran_against_a_real_build():
     # If this test executed at all, module-level collection already found
-    # dist/ and src/components/islands/ non-empty — see the RuntimeErrors
+    # dist/ and src/components/islands/ non-empty, see the RuntimeErrors
     # raised at import time above. This assertion exists so a future refactor
     # that accidentally removes those guards has something failing here too.
     assert DIST.exists() and PAGES
@@ -1709,7 +1709,7 @@ def test_the_suite_ran_against_a_real_build():
 # Reading position in the contents list (#44). One IntersectionObserver in
 # `BaseLayout.astro`'s inline <script> marks the section containing the viewport
 # midpoint with aria-current='true' on both contents lists at once. Nothing is
-# marked at build time and nothing is marked with scripting off — marking
+# marked at build time and nothing is marked with scripting off, marking
 # section 1 statically would be wrong for every reader not at the top.
 # ---------------------------------------------------------------------------
 
@@ -1719,7 +1719,7 @@ def test_no_built_page_ships_a_section_level_aria_current(page):
 
     A build that dropped the route markers entirely would satisfy "no
     aria-current='true' anywhere" vacuously, so this also pins the route
-    markers at exactly two per page — the rail's and the panel's, the same
+    markers at exactly two per page, the rail's and the panel's, the same
     duplication that puts two in the DOM and one in the accessibility tree.
     """
     path, root = page
@@ -1755,8 +1755,8 @@ def _anchors_in(root: Node, ol_class: str, exclude: str | None = None) -> list[N
 def test_every_contents_anchor_is_addressable_by_the_spy(page):
     """The spy writes to `a[data-section="<id>"]` and reads `main section[id]`.
 
-    A section added to a page but not to its `sections` array — or the reverse
-    — is silently unmarkable, and no rendered check would notice on a route
+    A section added to a page but not to its `sections` array, or the reverse
+   , is silently unmarkable, and no rendered check would notice on a route
     nobody re-scrolls.
     """
     path, root = page
@@ -1773,7 +1773,7 @@ def test_every_contents_anchor_is_addressable_by_the_spy(page):
     if not any(lists.values()):
         # `/sources` passes no `sections` prop: one section, no contents list,
         # and the spy returns before observing anything (E6). `/` left this
-        # branch when #48 shipped — it now passes a page-local array of four.
+        # branch when #48 shipped, it now passes a page-local array of four.
         return
     for ol_class, anchors in lists.items():
         assert anchors, (
@@ -1802,7 +1802,7 @@ def test_contents_lists_are_not_live_regions(page):
 
     An `aria-current` change on an element that is neither focused nor inside a
     live region is not announced, so rapid scrolling produces no stream of
-    announcements — the state is there when the reader navigates into the list
+    announcements, the state is there when the reader navigates into the list
     and silent until then. That holds only while no live region is added to or
     above either contents list, which is what this checks. Complements
     `test_live_regions_do_not_outnumber_charts`, which counts them site-wide.
@@ -1828,7 +1828,7 @@ def test_contents_lists_are_not_live_regions(page):
 def test_section_state_selector_is_scoped_and_not_bare():
     """`[aria-current]` bare would restyle the route links too.
 
-    Two values live on this page — `page`, server-rendered on route links and
+    Two values live on this page, `page`, server-rendered on route links and
     styled ink-with-underline, and `true`, client-set on contents links and
     styled ink alone. A bare attribute selector collapses the distinction.
     """
@@ -1855,7 +1855,7 @@ def test_section_state_selector_is_scoped_and_not_bare():
 # `behavior\s*:` is anchored with a lookbehind so it matches the scroll
 # options bag (`behavior: 'smooth'`) and not the CSS properties
 # `overscroll-behavior` or `scroll-behavior`, which are declarations about
-# containment and about motion preference, not scripted scrolls — and which
+# containment and about motion preference, not scripted scrolls, and which
 # would otherwise make this regex unusable over served HTML that inlines CSS.
 _SCROLL_API_RE = re.compile(
     r"scrollIntoView|scrollTo\s*\(|scrollBy\s*\(|(?<![\w-])behavior\s*:"
@@ -1866,13 +1866,13 @@ def test_the_section_spy_introduces_no_scripted_scrolling():
     """What makes "reduced motion is satisfied vacuously" an observation.
 
     The rail is not a scroll container and the panel is never auto-scrolled, so
-    the spy reads scroll position and writes an attribute — it moves nothing.
+    the spy reads scroll position and writes an attribute, it moves nothing.
     The `IntersectionObserver` assertion is what stops this passing by finding
     no script at all.
 
     Reads `src/`; `test_no_built_page_scripts_a_scroll` (#46) makes the same
     check over `dist/`, where an island bundled into the page would show up and
-    here it would not. The overlap is deliberate — neither is redundant.
+    here it would not. The overlap is deliberate, neither is redundant.
     """
     block = layout_inline_script()
     assert "IntersectionObserver" in block, (
@@ -1893,7 +1893,7 @@ def test_the_section_spy_introduces_no_scripted_scrolling():
 # `history.scrollRestoration = 'auto'` default already returns the reader to
 # the place they were reading on Back and Forward, and scroll anchoring already
 # absorbs both the post-hydration chart growth and the collapsed <details>
-# tables. Measured, not assumed — the numbers are in
+# tables. Measured, not assumed, the numbers are in
 # `docs/contracts/accessibility.md` § Manual pass results.
 #
 # So the code change is a guard. Five one-line changes elsewhere in this repo
@@ -1917,8 +1917,8 @@ def test_scroll_restoration_is_left_to_the_browser():
 
     Setting it to `'manual'` opts out of the browser's restore *and* of scroll
     anchoring's correction of it, replacing a pixel-exact result with a
-    hand-rolled offset — which the `<details>` case, where the document is
-    11,854–11,970px shorter on return, would put thousands of pixels wrong. Reading it
+    hand-rolled offset, which the `<details>` case, where the document is
+    11,854-11,970px shorter on return, would put thousands of pixels wrong. Reading it
     is harmless, but there is no reason to and no way to tell the two apart by
     grep, so the string is barred outright.
 
@@ -1972,12 +1972,12 @@ def test_no_stylesheet_requests_smooth_scrolling():
 
 
 def test_scroll_anchoring_is_not_disabled():
-    """`overflow-anchor` is declared nowhere, and that absence is load-bearing.
+    """`overflow-anchor` is declared nowhere, and the restore depends on that absence.
 
     Scroll anchoring is the single mechanism that absorbs layout change landing
     *after* a history restore: Government's charts grow by ~123px when
     `useChartSize` swaps the WIDE preset for NARROW, and the document is
-    11,854–11,970px shorter on return because `<details>` `open` is not restored. Both
+    11,854-11,970px shorter on return because `<details>` `open` is not restored. Both
     self-correct to the pixel with anchoring on (default `auto`), and neither
     would with `overflow-anchor: none` on `html`, `body` or `main`. Nobody
     would think to look for a declaration that is not there, so this test looks
@@ -2012,7 +2012,7 @@ def test_the_layout_registers_no_bfcache_disqualifying_listener():
     Either one permanently disqualifies the page from the back/forward cache,
     so *every* Back navigation takes the full-reload path instead of the free
     one. The measurements behind #46 were all taken on that slow path and hold
-    there — but there is no reason to force it, and a listener added for an
+    there, but there is no reason to force it, and a listener added for an
     unrelated purpose would do so invisibly.
 
     The substring `unload` is barred outright: it catches `beforeunload`,
@@ -2040,7 +2040,7 @@ def test_no_built_page_scripts_a_scroll(page):
     bundled into the page, which the source check cannot see. Keep both.
 
     This is also #46's `prefers-reduced-motion` proof, and it is a vacuous one
-    on purpose — a scroll that never happens needs no `behavior: 'auto'`. A
+    on purpose, a scroll that never happens needs no `behavior: 'auto'`. A
     scripted scroll after load would also fight the history restore, producing
     the double-jump the issue names.
     """
@@ -2061,7 +2061,7 @@ def test_no_built_page_scripts_a_scroll(page):
 # ---------------------------------------------------------------------------
 # In-prose glossary markers (#47). `src/components/Term.astro` wraps a term's
 # first use per page in a real <a href> to its /glossary anchor, with the
-# term's `short` as a `hidden` sibling inside the same wrapper — the popover
+# term's `short` as a `hidden` sibling inside the same wrapper, the popover
 # `termPopovers()` discloses. Everything below is provable from the built HTML
 # and the stylesheet; the hover, focus, touch and Escape behaviour is a browser
 # question and is recorded as manual rows M9-M12 in
@@ -2080,7 +2080,7 @@ _UNICODE_ESCAPE_RE = re.compile(r"\\u([0-9a-fA-F]{4})")
 
 def _short_of(path: Path) -> str:
     """The `short` field of a glossary file, with its JSON-style `\\uXXXX`
-    escapes resolved — several entries write an em dash that way."""
+    escapes resolved, several entries write an em dash that way."""
     m = _SHORT_RE.search(path.read_text())
     assert m, f"{path}: no `short` field in the frontmatter"
     return _UNICODE_ESCAPE_RE.sub(lambda x: chr(int(x.group(1), 16)), m.group(1))
@@ -2089,7 +2089,7 @@ def _short_of(path: Path) -> str:
 def glossary_terms() -> dict[str, str]:
     """Every glossary entry id mapped to the route its `first_used` names.
 
-    The ids are filenames, which is the collection's durability guarantee —
+    The ids are filenames, which is the collection's durability guarantee,
     `docs/contracts/interfaces/glossary.md`, "The filename is the slug".
     """
     entries: dict[str, str] = {}
@@ -2131,7 +2131,7 @@ def test_every_term_marker_is_a_real_link(page):
     """Every marker is an `<a href>` to its own base-path-joined anchor.
 
     Fails if a trigger becomes a `<button>`, loses its `href`, or emits an
-    unbased `/glossary#…` — #70's failure mode, which 404s in production.
+    unbased `/glossary#…`, #70's failure mode, which 404s in production.
     """
     path, root = page
     # `/`, `/sources` and `/glossary` carry no marked term, by design. That
@@ -2191,7 +2191,7 @@ def test_every_first_used_route_carries_its_term_marker():
 
     A term renamed, or added without a marker, fails here rather than rotting
     quietly. The exception list is asserted too: every id in it must still be a
-    real term, and none of them may be marked on the route it names — so a
+    real term, and none of them may be marked on the route it names, so a
     later prose edit that makes one markable forces the list to shrink instead
     of leaving a stale entry behind.
     """
@@ -2229,7 +2229,7 @@ def test_term_popovers_are_not_animated(page):
     """Reduced motion, and the no-JS guarantee, in one check.
 
     No `.term*` rule declares a transition or an animation, so
-    `prefers-reduced-motion` is satisfied vacuously and greppably — the same
+    `prefers-reduced-motion` is satisfied vacuously and greppably, the same
     way `test_nav_bar_open_close_is_not_animated` proves it for the nav bar,
     rather than by relying on the global reduce block to zero out a motion that
     was written anyway.
@@ -2286,14 +2286,14 @@ def test_term_popovers_are_not_animated(page):
 # ---------------------------------------------------------------------------
 # Radix `Select` popper width at 390px (#62). On a phone the "Control at
 # enactment" listbox laid itself out 427px wide, x=10 to x=437, so 46px of
-# every option sat past the viewport edge — and `documentElement.scrollWidth`
+# every option sat past the viewport edge, and `documentElement.scrollWidth`
 # stayed 390 with the popper wrapper computing `overflow-x: visible`, which
 # makes the overrun unreachable rather than merely awkward.
 #
 # **None of the three checks below can see that defect, and none of them
 # claims to.** `dist/government/index.html` contains `select-content` zero
-# times — Radix mounts `Content` only while the listbox is open, so the
-# listbox is never in the served bytes — and width and overflow are computed,
+# times, Radix mounts `Content` only while the listbox is open, so the
+# listbox is never in the served bytes, and width and overflow are computed,
 # not serialised, so even a mounted popper would not expose its rendered size
 # to a static reader. What these checks verify is that the three *declarations* that
 # bound the popup are still present: a later sweep that deletes any one of
@@ -2304,7 +2304,7 @@ def test_term_popovers_are_not_animated(page):
 # observation in CI is #67, which owns exactly that capability.
 #
 # Each check is a plain function over text, so each is paired below with a
-# negative test that feeds it the mutant it exists to catch — an absence
+# negative test that feeds it the mutant it exists to catch, an absence
 # asserted against source that was never mutated proves only that the source
 # is unchanged.
 # ---------------------------------------------------------------------------
@@ -2358,8 +2358,8 @@ def _select_namespaces(source: str) -> list[str]:
     """The local names `@radix-ui/react-select` is bound to in one island.
 
     Resolved from the import rather than matched as a bare `Select.Content`,
-    so `Tabs.Content` and `Dialog.Content` — which are not poppers and need no
-    collision configuration — are not swept in, and so a third `Select`
+    so `Tabs.Content` and `Dialog.Content`, which are not poppers and need no
+    collision configuration, are not swept in, and so a third `Select`
     consumer is covered the moment its file lands, whatever it names the
     namespace.
     """
@@ -2425,9 +2425,9 @@ def test_every_radix_select_content_passes_collision_padding():
 def two_axis_scroll_box_failures(css_text: str) -> list[str]:
     """`.tax-mix-select-content` scrolls on one axis, and says so.
 
-    Load-bearing rather than pedantic: CSS forces a used `overflow-x` of
+    The distinction matters rather than being pedantic: CSS forces a used `overflow-x` of
     `auto` whenever `overflow-y` is not `visible`, so "we never wrote
-    `overflow-x`" is not the same as "there is no horizontal scroll box" —
+    `overflow-x`" is not the same as "there is no horizontal scroll box",
     measured at 390px before this rule existed, the listbox computed
     `overflow-x: auto`. Nothing is clipped by declaring `hidden`, because the
     width clamp above stops the content exceeding the box.
@@ -2506,7 +2506,7 @@ def test_the_collision_guard_bites_a_content_that_dropped_the_prop():
     assert all("collisionPadding" in f for f in failures), failures
 
     # A third consumer, added without the prop, is caught without editing this
-    # suite (E9) — and an alias other than `RadixSelect` is still resolved.
+    # suite (E9), and an alias other than `RadixSelect` is still resolved.
     newcomer = {
         "Newcomer.tsx": (
             "import * as Sel from '@radix-ui/react-select'\n"
@@ -2534,7 +2534,7 @@ def _mutate_rule(css_text: str, selector: str, old: str, new: str) -> str:
     """`old` -> `new`, inside one rule's block only.
 
     A bare `str.replace` would hit the first `overflow-y: auto` in the
-    stylesheet, which belongs to another rule entirely — a mutant that lands
+    stylesheet, which belongs to another rule entirely, a mutant that lands
     somewhere else proves the guard bites something else."""
     m = re.search(rf"{re.escape(selector)}\s*\{{([^{{}}]*)\}}", css_text)
     assert m, f"{selector} block not found in global.css"
@@ -2780,7 +2780,7 @@ def test_the_by_state_guards_bite_the_ways_the_fix_can_regress():
     )
 
     # And the guard must not sweep in a rule that hides something which is not
-    # a table cell — `.tableview .tv-close` and the navbar chrome are both
+    # a table cell, `.tableview .tv-close` and the navbar chrome are both
     # `display: none` today.
     assert not hidden_table_cell_failures(
         css + "\n.tableview .tv-close { display: none; }\n"
@@ -2794,13 +2794,13 @@ def test_the_by_state_guards_bite_the_ways_the_fix_can_regress():
 # is the figure's redundant carrier for a reader who cannot separate the amber
 # and teal ends of the ramp (docs/contracts/accessibility.md, GOV-11). A glyph
 # nothing explains is a weak carrier, and the legend is the only place on the
-# route that explains one — the prose under the figure covers the midpoint, DC
+# route that explains one, the prose under the figure covers the midpoint, DC
 # and the grid geometry and says nothing about the marks.
 #
 # `markFor` has FOUR branches and the legend has three entries. That is a
 # decision: `?` is not shipped by any tile today, and the missing-figure case is
 # already spelled out in words by `describe()` in the tile's own aria-label. This
-# guard is what makes it a decision with a tripwire — the day a `?` ships, this
+# guard is what makes it a decision with a tripwire, the day a `?` ships, this
 # test fails and the legend gains an entry.
 #
 # NOTE this is NOT covered by `test_no_island_encodes_a_category_only_in_colour`.
@@ -2904,7 +2904,7 @@ def test_the_legend_glyph_guard_bites():
 # Unlike the CSS-layout defects in #62 and #63, this one is fully provable from
 # the served bytes: an annotation's `x`, its `text-anchor`, its ancestor
 # `transform`s, its text content and its SVG's `viewBox` are ALL in `dist/`.
-# Only the text width is estimated — and it is estimated with the same constant
+# Only the text width is estimated, and it is estimated with the same constant
 # `src/components/charts/annotate.ts` clamps against, so these guards prove the
 # clamp was APPLIED, using the arithmetic the clamp itself is built on.
 #
@@ -2933,19 +2933,19 @@ ANNOTATION_FONT_PX = {
     "maturity-marker-label": 10.5,
 }
 
-# Must equal ADVANCE_EM in src/components/charts/annotate.ts — asserted below.
+# Must equal ADVANCE_EM in src/components/charts/annotate.ts, asserted below.
 ADVANCE_EM = 0.62
 
 # Every other `<text>` class that ships today. This is an `==` audit, not an
 # ignore list: a class that appears in neither set fails the audit, so a new
 # annotation cannot ship unguarded (E10). Splitting the corpus this way is
-# deliberate — axis text, tick text and the labels named here belong to the
+# deliberate, axis text, tick text and the labels named here belong to the
 # broad 390px legibility sweep in #66, NOT to #64, and a later reader should
 # not "complete" this guard into that issue's scope.
 #
 # `holders-label` was the parked defect this set was holding for #66 (two
 # clipped labels on /government, not the one that was written down). It is FIXED
-# — DebtHolders now routes both bar rows through <Annotation> — and it is
+#, DebtHolders now routes both bar rows through <Annotation>, and it is
 # checked by `test_no_chart_text_is_clipped_by_its_svg` below along with every
 # other class here. It stays in THIS set rather than moving to
 # ANNOTATION_CLASSES because its three leader labels are interactive and keep
@@ -2984,7 +2984,7 @@ def _without_comments(source: str) -> str:
 
     These guards forbid CALLING `getBBox` and friends; annotate.ts's own header
     NAMES them, in the sentence explaining why it does not use them. Scanning
-    raw text would fail on the documentation of the rule it is enforcing — and
+    raw text would fail on the documentation of the rule it is enforcing, and
     the obvious "fix" for that is to delete the explanation.
     """
     return _TS_COMMENT.sub("", source)
@@ -3001,7 +3001,7 @@ def _label_and_width(node: Node) -> tuple[str, float]:
     """The label's text, and an upper bound on its rendered advance width.
 
     A multi-line label (`<tspan>` children, as OecdChart's two-line average
-    marker) is as wide as its WIDEST LINE, never the concatenation of them —
+    marker) is as wide as its WIDEST LINE, never the concatenation of them,
     reading the parent's flattened text would over-estimate by 2x and report a
     fictitious overrun (E9).
     """
@@ -3019,8 +3019,8 @@ def _local_x(node: Node, svg: Node) -> float:
     """`x`, plus every ancestor `translate()` up to the SVG.
 
     An absent `x` is 0, NOT "skip this node". BracketHistory emitted exactly
-    that shape — a `<text>` positioned entirely by an ancestor `<g transform>`
-    — and a guard that skipped it would pass green over a real overrun (E7).
+    that shape, a `<text>` positioned entirely by an ancestor `<g transform>`
+   , and a guard that skipped it would pass green over a real overrun (E7).
     """
     dx = float(node.get("x") or 0)
     parent = node.parent
@@ -3038,7 +3038,7 @@ def _annotated_svgs(root: Node) -> list[tuple[Node, float]]:
     `html.parser` LOWERCASES attribute names, so the attribute in `dist/` is
     `viewbox`, and `svg.get("viewBox")` returns None for every SVG on the site.
     A guard written the obvious way finds zero annotations and passes green on a
-    broken tree — which is what `..._sees_the_whole_corpus` below exists to
+    broken tree, which is what `..._sees_the_whole_corpus` below exists to
     catch (E8).
     """
     out = []
@@ -3089,7 +3089,7 @@ def annotation_clipping_failures(root: Node) -> list[str]:
 
 def test_no_chart_annotation_is_clipped_by_its_svg(page):
     """Chart.tsx renders with a viewBox and no `overflow: visible`, so a label
-    drawn past the SVG edge is CLIPPED, not spilled — cut mid-glyph, with no
+    drawn past the SVG edge is CLIPPED, not spilled, cut mid-glyph, with no
     ellipsis and no scrollbar.
 
     That is a correctness defect, not a layout one. `2022: top 1% 31.5%` was
@@ -3169,8 +3169,8 @@ def test_no_annotation_class_ships_outside_the_guarded_set():
 
 def test_the_annotation_constants_match_the_source_and_the_stylesheet():
     """The width arithmetic above is only a proof of the clamp while it uses the
-    clamp's own numbers. Three copies exist — this file, annotate.ts, and
-    global.css — so pin them to each other."""
+    clamp's own numbers. Three copies exist, this file, annotate.ts, and
+    global.css, so pin them to each other."""
     ts = ANNOTATE_TS.read_text()
 
     advance = re.search(r"export const ADVANCE_EM = ([\d.]+)", ts)
@@ -3199,8 +3199,8 @@ def test_annotation_placement_is_not_measured_at_runtime():
     """Criterion 5: the server render and the hydrated render must agree, so
     nothing shifts under the reader on hydration.
 
-    Guaranteed by construction — placement is a pure function of `(x, label,
-    frame, anchor)` — and that is what this pins. A `getBBox()` introduced later
+    Guaranteed by construction, placement is a pure function of `(x, label,
+    frame, anchor)`, and that is what this pins. A `getBBox()` introduced later
     to "measure it properly" would produce a server placement and a client
     placement that differ, and the difference would be a visible jump.
     """
@@ -3221,7 +3221,7 @@ def test_annotation_placement_is_not_measured_at_runtime():
     #                    gesture, to resolve which datum a finger meant. It runs
     #                    only from a `pointerdown` handler, never during render
     #                    and never on the server, so it cannot make the server
-    #                    and client renders disagree — which is the divergence
+    #                    and client renders disagree, which is the divergence
     #                    this test exists to prevent. It measures boxes, not
     #                    text, so annotation placement stays pure.
     #
@@ -3248,7 +3248,7 @@ def test_every_annotation_is_placed_through_the_clamp():
     """Criterion 2, in greppable form.
 
     `placeAnnotation` returns `null` for a label too wide to fit anywhere, and
-    the caller must then render NOTHING — absent beats truncated. A call site
+    the caller must then render NOTHING, absent beats truncated. A call site
     that emitted a bare `<text className="annotation">` would have skipped both
     the clamp and the `null`, i.e. would be free to draw exactly the partial
     number this issue is about. So every annotation class appears in exactly one
@@ -3273,7 +3273,7 @@ def test_every_annotation_is_placed_through_the_clamp():
         f"label cannot fit."
     )
 
-    # The classes are not merely absent elsewhere — Annotation.tsx really does
+    # The classes are not merely absent elsewhere, Annotation.tsx really does
     # emit all of them, so the check above is about routing, not about the
     # family having quietly emptied out.
     component = _without_comments(ANNOTATION_TSX.read_text())
@@ -3293,7 +3293,7 @@ def test_every_annotation_is_placed_through_the_clamp():
 def _enclosing_jsx_tag(source: str, index: int) -> str:
     """The JSX element whose attribute list contains `source[index]`.
 
-    Naming a class on `<Annotation className="…">` is fine — that prop still
+    Naming a class on `<Annotation className="…">` is fine, that prop still
     goes through the clamp. Naming it on a bare `<text>` is the escape hatch
     this audit exists to close, and the two are textually identical apart from
     the tag. Regexing `<text …>` cannot tell them apart either, because these
@@ -3371,7 +3371,7 @@ def test_the_annotation_clipping_guard_bites():
     ) == 700, "the ancestor translate was not accumulated"
 
     # E9: two lines are as wide as the widest, not their concatenation. This one
-    # must NOT be flagged — over-reading here would be a false alarm that a
+    # must NOT be flagged, over-reading here would be a false alarm that a
     # later reader "fixes" by loosening the guard.
     two_lines = _parse_html_string(
         '<svg viewBox="0 0 720 396">'
@@ -3418,9 +3418,9 @@ def test_the_annotation_clipping_guard_bites():
 #   /government  holders-label  middle  +90.7, +24.8 right
 #   /households  axis-label     end     +23.0, +23.0, +16.2, +16.2, +2.2 left
 #
-# All seven are the #64 shape on classes #64 did not own — `$30,000,000`
+# All seven are the #64 shape on classes #64 did not own, `$30,000,000`
 # shipping as `0,000,000`, the foreign holdings label cut after `…publicly held
-# d` — so the arithmetic below stays the clamp's own (`ADVANCE_EM`, `_local_x`,
+# d`, so the arithmetic below stays the clamp's own (`ADVANCE_EM`, `_local_x`,
 # `_annotated_svgs` verbatim). A guard that measured differently from the code
 # it guards would prove nothing about the code.
 #
@@ -3461,7 +3461,7 @@ INHERITS_FONT_SIZE = {
 }
 
 _ROTATE = re.compile(r"rotate\(")
-# `translate(x,y) rotate(-90)` — AxisLeft's title, the only rotated text on the
+# `translate(x,y) rotate(-90)`, AxisLeft's title, the only rotated text on the
 # site. Captures the y, because that is the axis its LENGTH runs on.
 _ROTATED_TITLE = re.compile(r"translate\(\s*-?[\d.]+\s*,\s*(-?[\d.]+)\s*\)\s*rotate\(\s*-?90")
 _TRANSLATE_XY = re.compile(r"translate\(\s*-?[\d.]+\s*,\s*(-?[\d.]+)")
@@ -3553,8 +3553,8 @@ def chart_text_clipping_failures(root: Node) -> list[str]:
     for node, svg, width, _height in _chart_text_nodes(root):
         # A rotated node's advance runs DOWN the page, so its horizontal box is
         # not what bounds it and a horizontal test would be meaningless rather
-        # than merely lenient. Excluded here BY NAME — the only ones are
-        # AxisLeft's titles — and checked on the axis they actually run on by
+        # than merely lenient. Excluded here BY NAME, the only ones are
+        # AxisLeft's titles, and checked on the axis they actually run on by
         # `test_no_rotated_axis_title_is_clipped_by_its_svg` below. Do not
         # "complete" this walk by deleting the skip; delete the vertical guard
         # instead, and it will be obvious that something was lost.
@@ -3611,7 +3611,7 @@ def left_gutter_failures(root: Node) -> list[str]:
     """Left-axis tick labels wider than the gutter they are drawn into.
 
     `AxisLeft` places every tick at `x = -8`, `end`-anchored, so the label grows
-    leftward into `margin.left` and NOTHING clamps it — deliberately, because a
+    leftward into `margin.left` and NOTHING clamps it, deliberately, because a
     left tick shifted inward lands on the data it labels (see axisFit.ts). The
     contract is the caller's, and this is where it is checked.
     """
@@ -3637,7 +3637,7 @@ def holders_label_row_overlaps(root: Node) -> list[str]:
 
     Criterion 2's second half. `DebtHolders` picks each segment label by fit
     against the distance to its row-mate's centre, which makes a collision
-    impossible BY CONSTRUCTION — this asserts the construction actually holds in
+    impossible BY CONSTRUCTION, this asserts the construction actually holds in
     the served bytes, because "legible now" and "still correct now" are
     different claims (E8) and #64's first pass passed every clipping assertion
     while breaking exactly this way.
@@ -3668,7 +3668,7 @@ def test_no_chart_text_is_clipped_by_its_svg(page):
     """Criterion 1, and the core of #66.
 
     `Chart.tsx` renders with a viewBox and no `overflow: visible`, so a label
-    past the SVG edge is CUT MID-GLYPH — no ellipsis, no scrollbar, nothing that
+    past the SVG edge is CUT MID-GLYPH, no ellipsis, no scrollbar, nothing that
     says a number is missing. `$30,000,000` shipped as `0,000,000` and the
     foreign holdings label as `…of publicly held d`.
 
@@ -3683,7 +3683,7 @@ def test_no_chart_text_is_clipped_by_its_svg(page):
 
 
 def test_every_left_axis_tick_fits_its_gutter(page):
-    """Criterion 3's static half — the specific shape of five of the seven.
+    """Criterion 3's static half, the specific shape of five of the seven.
 
     The narrow preset's gutter is 42 units, six characters at 11px, and
     `axisFit.test.ts` asserts every formatter in `format.ts` against it. This
@@ -3711,7 +3711,7 @@ def test_no_rotated_axis_title_is_clipped_by_its_svg(page):
 
 
 def test_no_two_holders_labels_on_one_row_intersect(page):
-    """Criterion 2's second half — see `holders_label_row_overlaps`."""
+    """Criterion 2's second half, see `holders_label_row_overlaps`."""
     path, root = page
     failures = holders_label_row_overlaps(root)
     assert not failures, f"{path}: holders-label collision:\n  " + "\n  ".join(failures)
@@ -3785,8 +3785,8 @@ def test_the_text_clipping_guard_sees_every_text_class():
 def test_the_text_font_sizes_match_the_stylesheet():
     """Every width in this file is wrong if one of these drifts.
 
-    Three copies of each size exist — global.css, the TS constants, and this
-    table — so pin them to each other rather than trusting any one.
+    Three copies of each size exist, global.css, the TS constants, and this
+    table, so pin them to each other rather than trusting any one.
     """
     css = GLOBAL_CSS.read_text()
     for cls, expected in sorted(TEXT_FONT_PX.items()):
@@ -3797,7 +3797,7 @@ def test_the_text_font_sizes_match_the_stylesheet():
             f"this file would be wrong"
         )
 
-    # The classes that inherit really do declare no size of their own — the
+    # The classes that inherit really do declare no size of their own, the
     # claim this suite makes about them, rather than an unexamined default.
     for cls in sorted(INHERITS_FONT_SIZE):
         assert _css_font_px(css, cls) is None, (
@@ -3949,7 +3949,7 @@ def test_the_text_clipping_guards_bite_each_way_the_fix_can_regress():
 # ---- Target size for controls (#65) ---------------------------------------
 #
 # Every interactive control in this design is styled as text with a hairline
-# rule under it and `padding: 0`, so its hit area is exactly its line box —
+# rule under it and `padding: 0`, so its hit area is exactly its line box,
 # 15px to 24px tall, under the 24px floor of WCAG 2.2 SC 2.5.8 Target Size
 # (Minimum), Level AA. The repair is one technique everywhere: a transparent
 # `::before` overlay of `--target-min`, absolutely positioned and centred.
@@ -3958,7 +3958,7 @@ def test_the_text_clipping_guards_bite_each_way_the_fix_can_regress():
 # which for absolute units are literal bytes: the value of `--target-min`, the
 # `height`/`width`/`position`/inset/`z-index` of each overlay rule, the
 # vertical padding of each host, and the `gap` of the two flex containers.
-# They cannot read a *computed* box — `.unit-toggle-item` measures 16px
+# They cannot read a *computed* box, `.unit-toggle-item` measures 16px
 # precisely because a `<button>` does not inherit `body`'s `line-height: 1.62`
 # and keeps the UA's `normal`, and that number appears nowhere in `src/`. The
 # overlay technique is chosen so that this does not matter: it contributes
@@ -3970,7 +3970,7 @@ def test_the_text_clipping_guards_bite_each_way_the_fix_can_regress():
 # controls at 390px: an 8px row gap plus a 16px computed line box is a 24px
 # pitch against a 24px floor, so the areas touch at 0px clearance and do not
 # overlap. **That clause is a browser observation and no test here asserts
-# it** — it is recorded in `docs/contracts/accessibility.md` § "Target size
+# it**, it is recorded in `docs/contracts/accessibility.md` § "Target size
 # for controls (#65)" and #67 owns automating it.
 
 YEAR_RANGE_TSX = SRC / "components" / "islands" / "YearRange.tsx"
@@ -3993,7 +3993,7 @@ _TARGET_HOSTS = (
 # the eight already carried a bottom padding holding the hairline off the word,
 # and a guard demanding zero would have been red on arrival. `None` means the
 # host declares no `padding` at all. Growing any of these is the criterion-3
-# regression — it pushes the hairline off the text and, on a flex item under
+# regression, it pushes the hairline off the text and, on a flex item under
 # `align-items: baseline`, shifts the control against its siblings.
 _TARGET_HOST_VERTICAL_PADDING = {
     ".unit-toggle-item": ("0", "0"),
@@ -4028,8 +4028,8 @@ def target_overlay_bodies(css_text: str) -> dict[str, str]:
     Raises rather than returning a short dict if any selector is missing: a
     helper that finds nothing to check reads exactly like one whose checks
     passed (the `narrow_media_block()` rule, applied to the overlays). One
-    rule may carry several of the eight — `.law-name-button::before` and
-    `.sort-button::before` share theirs — so this is keyed by selector, never
+    rule may carry several of the eight, `.law-name-button::before` and
+    `.sort-button::before` share theirs, so this is keyed by selector, never
     by rule, which is also how it covers `.sort-button` in *both* tables."""
     bodies: dict[str, str] = {}
     for selector in _TARGET_HOSTS:
@@ -4104,7 +4104,7 @@ def test_the_target_size_floor_is_at_least_24px():
     assert m, f"{TOKENS_CSS} declares no `--target-min` in rem"
     rem = float(m.group(1))
     # `html` sets no `font-size`, so the root is the 16px default and a rem
-    # floor is exact — the same reading `test_nav_bar_tap_targets_clear_44px`
+    # floor is exact, the same reading `test_nav_bar_tap_targets_clear_44px`
     # already makes of `2.75rem`.
     assert rem * 16 >= 24, (
         f"--target-min is {rem}rem = {rem * 16}px, under the 24px floor of "
@@ -4115,8 +4115,8 @@ def test_the_target_size_floor_is_at_least_24px():
 def target_overlay_inset_failures(css_text: str) -> list[str]:
     """Every overlay declaring a negative inset.
 
-    Seven of the eight are `left: 0; right: 0` — exactly the host's own width
-    — so today's clearances between neighbours are preserved exactly. A
+    Seven of the eight are `left: 0; right: 0`, exactly the host's own width
+   , so today's clearances between neighbours are preserved exactly. A
     negative inset is how an overlay starts stealing its neighbour's taps."""
     failures: list[str] = []
     for selector, body in target_overlay_bodies(css_text).items():
@@ -4149,7 +4149,7 @@ def test_no_target_overlay_reaches_into_a_neighbours_hit_area():
     # silently (#65, E8).
     # Read past the comments. `YearRange.tsx`'s own header block *describes*
     # `minStepsBetweenThumbs={4}`, so a substring search over the raw file
-    # stays green after the prop itself is deleted — caught by mutating this
+    # stays green after the prop itself is deleted, caught by mutating this
     # guard rather than by reading it.
     code = re.sub(r"/\*.*?\*/", "", YEAR_RANGE_TSX.read_text(), flags=re.DOTALL)
     assert re.search(r"minStepsBetweenThumbs\s*=\s*\{\s*4\s*\}", code), (
@@ -4229,8 +4229,8 @@ def test_every_target_host_is_a_containing_block_for_its_overlay():
     """The overlay must anchor to its own control, not to an ancestor.
 
     Asserted on the *cascade result* rather than per rule, because
-    `.sort-button` is declared three times — the rule it shares with
-    `.law-name-button`, `#63`'s by-state rule, and a bare `display: block` —
+    `.sort-button` is declared three times, the rule it shares with
+    `.law-name-button`, `#63`'s by-state rule, and a bare `display: block`,
     and at equal specificity the last `position` in document order is the one
     in effect. A single edit turning one of them `static` is the regression
     that would silently re-anchor the overlay to `.year-range-track` or a
@@ -4347,13 +4347,13 @@ def test_the_target_size_guards_bite_each_way_the_fix_can_regress():
     assert mutant != css, "the mutant for 'the dot grown to 24px' did not apply"
     assert dict(_declarations(_rules_for(mutant, ".year-range-thumb")[0]))["width"] == "24px"
 
-    # 10 and 11 — the must-not-fire half. #64 shipped a guard that over-read
+    # 10 and 11, the must-not-fire half. #64 shipped a guard that over-read
     #     into #66's scope; these two are the same shape, pinned.
     #
     #     `.select-item` already measures 32px and is deliberately unchanged;
     #     `.datum` is a chart mark and belongs to #73. Neither declares a
     #     `::before` overlay, so if either were ever added to `_TARGET_HOSTS`
-    #     the real stylesheet — checked immediately above and clean — would go
+    #     the real stylesheet, checked immediately above and clean, would go
     #     red on arrival.
     for out_of_scope in (".select-item", ".datum"):
         assert out_of_scope not in _TARGET_HOSTS, (
@@ -4384,7 +4384,7 @@ def test_the_target_size_guards_bite_each_way_the_fix_can_regress():
 #
 #   S1  what the SERVED BYTES say, which is where the scripting-off Tab order
 #       lives and where `dist/` is the only witness;
-#   S2  that the population is COMPLETE — every `overflow-x` scroller class in
+#   S2  that the population is COMPLETE, every `overflow-x` scroller class in
 #       the stylesheet is rendered by a consumer that spreads the hook, so a
 #       fourth wide table cannot ship unwired without anyone editing a list;
 #   S3  that the contract NAMES each of those classes, so it cannot ship
@@ -4403,7 +4403,7 @@ SCROLL_HOOK = "useScrollableRegion"
 
 #: Attributes that must NOT reach the served bytes on one of those elements.
 #: Focusability follows overflow, overflow is a computed layout property, and no
-#: build step can compute it — so the honest server render is a bare `<div>`.
+#: build step can compute it, so the honest server render is a bare `<div>`.
 SERVER_FORBIDDEN = ("tabindex", "role", "aria-label")
 
 _OVERFLOW_X_SCROLLS_RE = re.compile(r"(?:^|;)\s*overflow-x\s*:\s*(auto|scroll)\b")
@@ -4472,8 +4472,8 @@ def horizontal_scroll_selectors(css_text: str) -> list[str]:
     """Every selector in `global.css` declaring `overflow-x: auto|scroll`.
 
     `hidden` is excluded by the regex rather than by an exception list, which
-    is what keeps `.tax-mix-select-content` — declared `hidden` precisely so it
-    is NOT a horizontal scroller (#62) — out of this population without anyone
+    is what keeps `.tax-mix-select-content`, declared `hidden` precisely so it
+    is NOT a horizontal scroller (#62), out of this population without anyone
     maintaining a name. `overflow-y`-only rules such as `.navbar-panel` never
     match at all."""
     found: list[str] = []
@@ -4485,7 +4485,7 @@ def horizontal_scroll_selectors(css_text: str) -> list[str]:
 
 
 def _scrolling_class(selector: str) -> str | None:
-    """The class of the element a selector actually styles — its LAST class, so
+    """The class of the element a selector actually styles, its LAST class, so
     `.a .b` resolves to `b`. `None` for a selector with no class at all, which
     the caller reports rather than silently skipping."""
     classes = _CLASS_IN_SELECTOR_RE.findall(selector)
@@ -4567,7 +4567,7 @@ def test_the_scroll_coverage_guard_bites():
         "the mutants below prove nothing if the real sources already fail"
     )
 
-    # (a) a consumer that renders the class and drops the spread — the exact
+    # (a) a consumer that renders the class and drops the spread, the exact
     # state every one of these wrappers was in before #71.
     unwired = {
         **sources,
@@ -4686,7 +4686,7 @@ def test_the_scroll_contract_guard_bites():
     assert ".new-scroll" in found[0], found
 
     # And the section going missing is a failure in its own right, not a pass
-    # by vacuity — the shape a documentation guard fails in most quietly.
+    # by vacuity, the shape a documentation guard fails in most quietly.
     gutted = doc.replace("(#71)", "(#7l)")
     assert gutted != doc, "the contract heading this guard reads has moved"
     assert scroll_contract_failures(css, gutted), "a missing #71 section passed"
@@ -4696,7 +4696,7 @@ def test_the_scroll_contract_guard_bites():
 # Reading a datum with no hover (#73). Static half.
 #
 # WHAT WAS MEASURED. At 390x844 a chart mark is 3.317px x 237px and `/economy`
-# draws 389 of them across a 350px plot — 0.9px per datum. Site-wide: 1,111
+# draws 389 of them across a 350px plot, 0.9px per datum. Site-wide: 1,111
 # marks, 1,092 of them under 44px wide. No per-mark geometry change reaches the
 # target-size floor, so on a device that cannot hover the marks stop being hit
 # targets and the plot becomes one target with the nearest visible mark
@@ -4707,14 +4707,14 @@ def test_the_scroll_contract_guard_bites():
 # WHY THE SCOPE IS STATIC. What a browser cannot tell you is what the SERVED
 # bytes say, and DoD 2 is a claim about them: all three sentences ship on every
 # device and CSS picks one, so a reader on a slow connection sees the right one
-# before a line of JavaScript runs. The behaviour — that a tap actually selects
-# a mark, that the media queries resolve the way they are written — is
+# before a line of JavaScript runs. The behaviour, that a tap actually selects
+# a mark, that the media queries resolve the way they are written, is
 # `tests/browser/touch.test.ts` (B1-B4), not this file. G4 here is calibration
 # for that lane, not a substitute for it.
 #
 # WHAT EACH GUARD CATCHES THAT NO OTHER ONE DOES.
 #   G1  the pre-#73 literal is gone from the bytes. Restoring one island's old
-#       string turns only this red — the spans would still be well-formed.
+#       string turns only this red, the spans would still be well-formed.
 #   G2  every hint carrier has one span per mode. Dropping `.hint-touch` from
 #       one island leaves G1 green and G3's count green (the element still
 #       carries SOME hint), and only this notices.
@@ -4776,7 +4776,7 @@ READOUT_CLASS = "readout"
 # 23 `p.readout` elements carry the full hint set, out of 24 on the site. The
 # 24th is `AttributionSplit`'s, whose idle text is an announcement of the
 # current tab ("By voting coalition. 3 coalitions, net total ...") rather than
-# an instruction — it never named a gesture, so it was never part of #73's
+# an instruction, it never named a gesture, so it was never part of #73's
 # defect and did not gain a hint.
 #
 # 24 elements carry the hint in total: those 23 plus `BudgetChart`'s, which is
@@ -4850,7 +4850,7 @@ def test_the_hint_reaches_every_readout_that_had_one():
     """G3, the floor. How many carriers exist at all, counted two ways.
 
     G1 and G2 are both satisfied vacuously by a page with no hints on it. This
-    is the guard that notices an island losing its <ChartHint> — and, because
+    is the guard that notices an island losing its <ChartHint>, and, because
     the selector it counts through is a named constant, the guard that fails
     loudly rather than sweeping an empty set if that selector ever stops
     matching.
@@ -5008,7 +5008,7 @@ def test_the_hint_guards_bite():
 
     # (d) THE MODE LIST SHRINKS. Because a hint span is recognised by shape and
     #     not by membership, the observation does not shrink with the
-    #     expectation, and every carrier on the site fails G2 — rather than the
+    #     expectation, and every carrier on the site fails G2, rather than the
     #     sweep quietly covering one mode fewer.
     original_classes = HINT_CLASSES
     try:

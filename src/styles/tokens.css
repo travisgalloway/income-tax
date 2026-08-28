@@ -85,9 +85,9 @@
      2.4.11 (Focus Not Obscured) assumes. 2px and not 1.5px because both
      engines round 1.5 down: Chromium and WebKit each computed the old rule as
      1 device pixel, so the shipped ring was half what the stylesheet claimed.
-     Every ring rule in `global.css` reads this — the base `:focus-visible`,
+     Every ring rule in `global.css` reads this, the base `:focus-visible`,
      `.datum`, #69's `[data-roving] [data-mark]:focus` fallback, `.state-tile`
-     and `.year-range-thumb` — so one declaration decides the thickness and a
+     and `.year-range-thumb`, so one declaration decides the thickness and a
      sixth rule cannot pick a different number. Only `outline-offset` is
      per-control (2/1/1/1/3px), and the colour stays `--ink` at 13.65:1.
      `tests/browser/focus.test.ts` reads this token from `:root` at runtime and
@@ -96,7 +96,7 @@
   /* WCAG 2.2 SC 2.5.8 Target Size (Minimum), Level AA. 24px, not the 44px of
      SC 2.5.5 (Enhanced, AAA): the controls sit in `.controls` rows whose
      row-gap is 0.5rem, and a 44px hit area centred on a 16px control would
-     reach 14px past it — provably into the row above when the row wraps at
+     reach 14px past it, provably into the row above when the row wraps at
      390px. At 24px the pitch of 24 exactly accommodates the floor: the areas
      tile, touching but not overlapping. The nav bar's own 44px floor
      (`test_nav_bar_tap_targets_clear_44px`) is not lowered; that bar is a
