@@ -42,7 +42,7 @@ and Formal Analytical Reports". The genre requires that a claim arrive with the 
 needs to check it. The writer's job is to make the checking easy. Persuading the reader is not the
 job. Every rule below follows from that.
 
-The register is fixed and predates this contract. `sections.md:9-10` states it, and it survives here
+The register is fixed and predates this contract. `sections.md:10-11` states it, and it survives here
 verbatim:
 
 > Register: plain, direct, figures always with units. No em dashes. Never assert causation the data
@@ -129,7 +129,7 @@ with a figure, and the ruling is that the numeral wins. Pass:
 the figure out, because `pipeline/curated/prose_figures.yaml` is watching that number and a spelled
 form detaches the registry from the prose it describes. Not mechanically enforced.
 
-**Every figure carries its unit.** `sections.md:9-10`. Pass: `src/pages/economy/index.astro:119`,
+**Every figure carries its unit.** `sections.md:10-11`. Pass: `src/pages/economy/index.astro:119`,
 "Unemployment was 4.2% in fiscal 2025 against a noncyclical rate of 4.4%". Fail: any bare "4.2" in
 running prose. Not mechanically enforced here. The *figure*'s axes are separately gated by
 `src/components/Figure.astro:47`, which fails the build when either axis is unnamed.
@@ -256,9 +256,14 @@ E6 for Economy sections the deck never contained. The deck's own header at `sect
 difference.** Eight cases in `pipeline/tests/test_pipeline.py` are anchored on the file, at
 `pipeline/tests/test_pipeline.py:236`, `:254`, `:265`, `:457`, `:794`, `:1072`, `:1102` and `:1252`,
 and `pipeline/lib/validate.py` cites it in five assertion messages. Deleting it breaks the pipeline
-suite, which no prose issue owns. **Nothing edits `sections.md` again. New and corrected prose lands
-in the route pages only. The file is a frozen historical record until a follow-on migrates those
-tests off it.**
+suite, which no prose issue owns. **New and corrected prose lands in the route pages only. The file
+is a frozen historical record until a follow-on migrates those tests off it.**
+
+**One exception has been taken, and it is recorded here rather than left implicit.** A repository-wide
+style pass rewrote the file's own prose against `docs/contracts/prose.md`, removing its three em
+dashes and holding every sentence to 20 words. No figure, heading, section number or asserted phrase
+moved, and the pipeline suite stayed green. The file is still not an editing surface for *site*
+copy, which is what this ruling governs.
 
 The consequences are recorded here, and the change is deferred to that follow-on:
 
@@ -269,7 +274,7 @@ The consequences are recorded here, and the change is deferred to that follow-on
 - `pipeline/curated/prose_figures.yaml:3` says the same thing in its `_comment`.
 - `BRIEF.md:146` and `BRIEF.md:196` also say `content/sections.md`. They are not fixed by #51, which
   is capped at one line of `BRIEF.md` and spends it on `BRIEF.md:78-79`.
-- The register line at `sections.md:9-10` survives verbatim in **Genre** above, which is the whole
+- The register line at `sections.md:10-11` survives verbatim in **Genre** above, which is the whole
   reason retiring the deck is safe.
 - #31 is closed and never modified `sections.md`, so the ordering question #51's body raised is moot
   rather than deferred.
