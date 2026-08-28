@@ -1,9 +1,9 @@
-# Pull-request checks — the browser lane, and the two lanes that precede it.
+# Pull-request checks: the browser lane, and the two lanes that precede it.
 #
 # THIS IS THIS REPOSITORY'S FIRST PULL-REQUEST-TRIGGERED WORKFLOW. Before it,
 # `deploy.yml` fired on push to main and `refresh-data.yml` was a monthly cron,
-# so `gh pr checks` reported nothing on every pull request. #67's capability —
-# "a layout regression fails a pull request" — cannot be delivered without one,
+# so `gh pr checks` reported nothing on every pull request. #67's capability,
+# "a layout regression fails a pull request", cannot be delivered without one,
 # and `deploy.yml` cannot carry it, because a `pull_request`-triggered deploy
 # workflow deploys from pull requests.
 #
@@ -15,10 +15,10 @@
 #
 # NOT A REQUIRED STATUS CHECK, deliberately, and not made one here. A required
 # check that never reports blocks every merge, permanently, with no error
-# message — and this repository had zero CI contexts until this file. The
+# message, and this repository had zero CI contexts until this file. The
 # precondition for requiring it is that it has reported green on a real pull
-# request. That is a repository-settings change, not a file in this diff; it is
-# parked in `docs/parked-findings.md`.
+# request. That is a repository-settings change rather than a file in this diff,
+# and it is not made here.
 name: Checks
 
 on:
@@ -71,7 +71,7 @@ jobs:
           key: playwright-chromium-${{ runner.os }}-${{ steps.playwright.outputs.version }}
 
       # Chromium only. Firefox and WebKit are minutes of download for engines
-      # this lane does not drive — and Playwright's WebKit is not Safari.app, so
+      # this lane does not drive, and Playwright's WebKit is not Safari.app, so
       # installing it would not close the Safari focus-ring check either (#80).
       - if: steps.browser-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium

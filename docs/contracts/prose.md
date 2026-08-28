@@ -2,7 +2,7 @@
 
 Prose was the only part of this site with no contract. `docs/contracts/accessibility.md` governs the
 charts, and `docs/contracts/interfaces/` holds 15 data contracts. The words had one rule
-(`BRIEF.md:78`, "Never use em dashes in prose"). That rule was broken on every route, banned a
+(`BRIEF.md:79`, "Never use em dashes in prose"). That rule was broken on every route, banned a
 character without naming a replacement, and had nothing behind it.
 
 This contract has three parts, in the shape `docs/contracts/accessibility.md` uses. **Conventions**
@@ -48,7 +48,7 @@ verbatim:
 > Register: plain, direct, figures always with units. No em dashes. Never assert causation the data
 > does not support.
 
-`BRIEF.md:193-199` adds the hype ban. Do not write "shocking," "staggering," or "crisis."
+`BRIEF.md:196-203` adds the hype ban. Do not write "shocking," "staggering," or "crisis."
 
 ## Scope
 
@@ -115,14 +115,14 @@ CamelCase word is not a run, so "USASpending" and "HSall_members.csv" are matche
 than as capitals. Adding an acronym means adding it to the set with a comment saying what it stands
 for, which is a deliberate act and leaves a diff. Enforced by `test_no_prose_string_shouts`.
 
-**Body copy is sentence case.** `BRIEF.md:77`. The kicker is not an exception, because it carries no
+**Body copy is sentence case.** `BRIEF.md:79`. The kicker is not an exception, because it carries no
 literal capitals. `src/styles/global.css:60-66` sets `font-variant-caps: all-small-caps` with
 `letter-spacing: 0.09em` at `0.9375rem`, and no `text-transform`. Pass:
 `src/pages/economy/index.astro:116` writes `<span class="section-no">Section 3</span>`, in sentence
 case, and the CSS does the rest. There is therefore no kicker carve-out anywhere in this contract.
 Enforced, for the capitals half, by `test_no_prose_string_shouts`.
 
-**Numbers are always mono, and a sentence may open with one.** `BRIEF.md:74` makes mono numerals the
+**Numbers are always mono, and a sentence may open with one.** `BRIEF.md:75` makes mono numerals the
 strongest cue tying the site to the deck. Sentence case and that mandate collide where prose opens
 with a figure, and the ruling is that the numeral wins. Pass:
 `src/pages/economy/index.astro:32-35`, "Real GDP was $2.38 trillion in fiscal 1950". Fail: spelling
@@ -134,12 +134,12 @@ form detaches the registry from the prose it describes. Not mechanically enforce
 running prose. Not mechanically enforced here. The *figure*'s axes are separately gated by
 `src/components/Figure.astro:47`, which fails the build when either axis is unnamed.
 
-**No causation the data does not support.** `BRIEF.md:197-198`. Pass:
+**No causation the data does not support.** `BRIEF.md:202-203`. Pass:
 `src/pages/economy/index.astro:109-112`, which states what a series shows and then says outright that
 nothing here identifies a cause. Fail: any sentence in which one series "drove", "caused" or "led to"
 another. Not mechanically enforced. Criterion 5 is where a reviewer catches it.
 
-**No hype vocabulary.** `BRIEF.md:199` names three words: "shocking", "staggering", "crisis". The
+**No hype vocabulary.** `BRIEF.md:203` names three words: "shocking", "staggering", "crisis". The
 rule is broader than the list, and the list is the floor. Not mechanically enforced.
 
 **A finding states one claim a reader could falsify against the figure.** Pass:
@@ -168,12 +168,12 @@ out of date the way the seven checks removed on 2026-08-26 had drifted.
 
 ### Ruling 1: the em dash ban stands, and the prose is wrong
 
-**The ban stands.** A dash set against the site's mandatory mono figures (`BRIEF.md:74`) reads as a
+**The ban stands.** A dash set against the site's mandatory mono figures (`BRIEF.md:75`) reads as a
 minus sign on pages full of deficits and negative rates. OpenStax *Writing Guide* 8.6 supplies a
 comma-based alternative for every job these dashes are doing. Repealing the ban would bless three
 incompatible conventions instead of replacing them with one.
 
-`BRIEF.md:78` banned the character and named no replacement, which is why the ban was ignored. One
+`BRIEF.md:79` banned the character and named no replacement, which is why the ban was ignored. One
 replacement per grammatical job makes remediation a mechanical pass rather than 37 judgements:
 
 | Job | Example, as it read before #58 | Replacement |
@@ -267,8 +267,8 @@ The consequences are recorded here, and the change is deferred to that follow-on
   since before #41 moved the file list, because the file is at the repository root and always was.
   `pipeline/lib/report.py:3` names the file correctly and is only wrong about the origin.
 - `pipeline/curated/prose_figures.yaml:3` says the same thing in its `_comment`.
-- `BRIEF.md:144` and `BRIEF.md:193` also say `content/sections.md`. They are not fixed by #51, which
-  is capped at one line of `BRIEF.md` and spends it on `BRIEF.md:77-78`.
+- `BRIEF.md:146` and `BRIEF.md:196` also say `content/sections.md`. They are not fixed by #51, which
+  is capped at one line of `BRIEF.md` and spends it on `BRIEF.md:78-79`.
 - The register line at `sections.md:9-10` survives verbatim in **Genre** above, which is the whole
   reason retiring the deck is safe.
 - #31 is closed and never modified `sections.md`, so the ordering question #51's body raised is moot
@@ -282,7 +282,7 @@ contract had no answer. The obvious answer, a list of forbidden words, would hav
 **The ruling.** *A heading and a standfirst may be pointed, and the site's second person is not a
 fault. Neither may assert a claim the section's own figures cannot settle.*
 
-Both halves carry equal weight. Deleting the site's register is not the goal. `BRIEF.md:26-27` makes
+Both halves carry equal weight. Deleting the site's register is not the goal. `BRIEF.md:24-25` makes
 the site's job to let a reader check a thing for themselves rather than be persuaded of it. A flat
 heading persuades no one, and it also fails to say what the section found. Criterion 1 already
 requires a heading to state a question or a claim rather than name the variables, and a claim stated
@@ -350,7 +350,7 @@ rather than as an answer to a question. **Cited by #52.**
 routes' built pages. **Enforced by** `pipeline/tests/test_prose.py:453`, `:472`, `:491` and `:515`:
 a `.standfirst` before the section's first `<figure>`; a `.prose` after its **last** `</figure>`; a
 standfirst whose number tokens overlap its finding's by less than `PREEMPTION_CEILING`
-(`pipeline/tests/test_prose.py:387`, 0.5) on Jaccard, because a standfirst quoting the finding's
+(`pipeline/tests/test_prose.py:403`, 0.5) on Jaccard, because a standfirst quoting the finding's
 exact figures posed no question; and no `<h2>` containing a word from `CONSTRUCTION_WORDS`.
 
 Scope is structural, and no exemption list exists anywhere. A section is asked the first two
@@ -384,7 +384,7 @@ matching `aria-label` in the same commit, and the label stays inside
 routes, and about the standfirst beside it. **Enforced by** `pipeline/tests/test_prose.py:635`,
 `:661`, `:695` and `:720`: no standfirst and finding share a number token that is not a four-digit
 calendar year; every finding and every `figure.figure` accessible name clears the finding-shape
-floor; no finding runs past `FINDING_CHARS_MAX` (`pipeline/tests/test_prose.py:610`, 220 characters,
+floor; no finding runs past `FINDING_CHARS_MAX` (`pipeline/tests/test_prose.py:626`, 220 characters,
 with the longest surviving finding at 193); and each section carries at most one finding,
 immediately after its standfirst and before its first figure.
 
@@ -432,7 +432,7 @@ to zero is the criterion being met**, and #58 took it there. **Cited by #58.**
 **The mechanical half now spans three of this checker's numbered blocks.** Sections 1 and 2 are
 punctuation and emphasis, both `==` against the baselines. Section 8, added by #58, is sentence
 length and word spacing. `pipeline/tests/test_prose.py:834` caps a prose sentence at
-`SENTENCE_WORDS_MAX` (`pipeline/tests/test_prose.py:802`, 45 words),
+`SENTENCE_WORDS_MAX` (`pipeline/tests/test_prose.py:818`, 45 words),
 `pipeline/tests/test_prose.py:900` fails a `.term` span that abuts a letter, digit or comma in the
 served bytes, and `pipeline/tests/test_prose.py:946` gates the audit table below. All three assert
 zero.
@@ -585,7 +585,7 @@ that the small mechanical surface reads as a finding rather than an omission:
 | Check considered | Measured against `dist/` | Why it was not added |
 |---|---|---|
 | A **causal-connective word list** (`because`, `this is why`, `which is why`, `accounts for`, `caused`, `as a result`, `since`, `so that`, `therefore`, `due to`, `reflects`) | **47 hits** through `prose_strings()`. 36 **method** (why a series starts where it starts, why a panel is separate, why an axis is not zero-based), 9 **temporal** ("since 1913", "since 1995"), **2 claims about the world** | 45 of 47 are legitimate, or **96%**. The list also found **2 of the 5** sites this issue was opened to fix, because three of the five drew their cause with no connective token in them at all. A list that is 96% false positives and 60% false negatives measures nothing. The judgement is a reading, and it is recorded in the audit table below |
-| A **hype vocabulary list**, `BRIEF.md:199`'s three words plus 21 more (`dramatic`, `soaring`, `skyrocket`, `alarming`, `massive`, `devastating`, `runaway`, `obviously`, `clearly`, `of course`, `undeniabl`, …) | **22 of 24 words at zero**, `shocking` and `staggering` among them. `crisis` 1, in a `figure` `aria-label` naming the 2008-2009 financial crisis. `unprecedented` 1, in `/government` §12 limit 2, naming the distortion the limit warns against | Zero live violations, and both survivors are exemptions the criterion would have to enumerate by name. A 24-word list asserting zero on a site that already writes this way is a check that cannot fail, which method rule 4 rules out. The measurement is recorded, and the judgement is Checklist item 5 |
+| A **hype vocabulary list**, `BRIEF.md:203`'s three words plus 21 more (`dramatic`, `soaring`, `skyrocket`, `alarming`, `massive`, `devastating`, `runaway`, `obviously`, `clearly`, `of course`, `undeniabl`, …) | **22 of 24 words at zero**, `shocking` and `staggering` among them. `crisis` 1, in a `figure` `aria-label` naming the 2008-2009 financial crisis. `unprecedented` 1, in `/government` §12 limit 2, naming the distortion the limit warns against | Zero live violations, and both survivors are exemptions the criterion would have to enumerate by name. A 24-word list asserting zero on a site that already writes this way is a check that cannot fail, which method rule 4 rules out. The measurement is recorded, and the judgement is Checklist item 5 |
 | A **number-without-its-unit detector**, Criterion 5's third clause | **5,753 numbers** in prose, of which **816** are not adjacent to `$` or `%` and are not a four-digit year. Almost all are legitimate: per-datum chart readouts (`Families Gini index, 1996: 0.425`), index values (`1984 = 100`), list numbering, section cross-references, ratios and arithmetic identities (`77.0 = 70 x 1.1`) | Separating the 816 needs a hand-kept vocabulary of allowed units *and* allowed non-unit contexts, which is the stale list method rule 2 forbids. Not mechanically checkable here. Human-judged, and the audit table's column 3 is where a section declares what a reader checks its figures against |
 
 ### Criterion 6 — hand-off

@@ -121,8 +121,8 @@ const CONTROL_ROWS: { key: 'pp' | 'h' | 's'; label: string; labelNarrow: string 
 ]
 
 const ERA_BANDS: { from: number; to: number; label: string; labelNarrow: string }[] = [
-  { from: 2008, to: 2009, label: '2008–09 crisis', labelNarrow: '2008–09' },
-  { from: 2020, to: 2021, label: '2020–21 pandemic', labelNarrow: '2020–21' },
+  { from: 2008, to: 2009, label: '2008-09 crisis', labelNarrow: '2008-09' },
+  { from: 2020, to: 2021, label: '2020-21 pandemic', labelNarrow: '2020-21' },
 ]
 
 export function BudgetChart({ rows: source }: { rows: BudgetYear[] }) {
@@ -257,7 +257,7 @@ export function BudgetChart({ rows: source }: { rows: BudgetYear[] }) {
             {/* The control strip. Cells render ONLY for FY1995-2025, years
                 outside that range are genuinely empty: no rect, no outline. */}
             <text x={0} y={captionY} textAnchor="start" className="axis-title">
-              {narrow ? 'Control: FY1995–2025' : 'Party control curated for FY1995–2025 only'}
+              {narrow ? 'Control: FY1995-2025' : 'Party control curated for FY1995-2025 only'}
             </text>
             {CONTROL_ROWS.map((row, i) => (
               <g key={row.key}>
