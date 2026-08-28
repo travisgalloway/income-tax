@@ -262,8 +262,7 @@ Consequences, recorded here with the change deferred to that follow-on:
   `pipeline/lib/report.py:3` names the file correctly and is only wrong about the origin.
 - `pipeline/curated/prose_figures.yaml:3` says the same thing in its `_comment`.
 - `BRIEF.md:144` and `BRIEF.md:193` also say `content/sections.md`. They are not fixed by #51, which
-  is capped at one line of `BRIEF.md` and spends it on `BRIEF.md:77-78`. Parked in
-  `docs/parked-findings.md`.
+  is capped at one line of `BRIEF.md` and spends it on `BRIEF.md:77-78`.
 - The register line at `sections.md:9-10` survives verbatim in **Genre** above, which is the whole
   reason retiring the deck is safe.
 - #31 is closed and never modified `sections.md`, so the ordering question #51's body raised is moot

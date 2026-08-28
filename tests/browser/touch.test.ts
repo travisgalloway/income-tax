@@ -83,8 +83,8 @@ const HINT_CARRIERS: Record<string, number> = {
  *  `StatutoryVsEffective` plots 44 years of the top statutory rate and tables
  *  only the CBO anchor years, so a tap on 1990, 2001 or 2011 reads out a value
  *  that is genuinely in the chart and genuinely absent from the table below it.
- *  That is a `TableView` completeness question, not #73's — parked in
- *  `docs/parked-findings.md` — and it is named here as an exception rather than
+ *  That is a `TableView` completeness question, not #73's. It is named
+ *  here as an exception rather than
  *  softening B1c's table half into "where present", which would pass over any
  *  number of charts losing their tables. */
 const TABLE_INCOMPLETE = new Set(['/households#4'])

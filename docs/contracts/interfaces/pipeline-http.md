@@ -10,8 +10,7 @@ adds a second one has left this contract.
 
 **Out of scope, and known:** `pipeline/lib/sources.py` builds its own client for a `HEAD` probe when
 discovering the newest Census vintage. That is a fourth request shape outside this core, with its
-own deliberately silent failure handling; it is recorded in `docs/parked-findings.md`, not covered
-here.
+own deliberately silent failure handling, and it is not covered here.
 
 ## Public surface
 

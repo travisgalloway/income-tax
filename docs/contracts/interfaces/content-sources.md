@@ -215,8 +215,8 @@ term is deleted, and rule C names it. No new machinery.
 were already registered and already passing rule B, so #50 was a check to write rather than 23
 citations to backfill. Re-attributing a definition to a statute or an agency methodology note —
 `fiscal-year` to 31 U.S.C. §1102, `chained-dollars` to a BEA methodology note — would change *which*
-source a term cites. That is a substantive editorial claim, not a gate, and it is parked in
-`docs/parked-findings.md`.
+source a term cites. That is a substantive editorial claim rather than a gate, and it is not
+acted on here.
 
 **Six terms lost a citation qualifier, deliberately.** `(MEHOINUSA672N, GINIALLRF)` on `gini-index`
 and `median`, `(published January 2026)` on `effective-rate` and `incidence`, `published top

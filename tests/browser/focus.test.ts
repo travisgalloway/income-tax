@@ -837,6 +837,6 @@ test('F4 narrow: a focused ring encloses no neighbouring mark, outside two pinne
     [...F4_EXCEPTIONS].sort(),
     `the set of chart groups whose focused ring fully encloses a neighbouring mark at 390px is ` +
       `${JSON.stringify(offenders)}, and the carried exceptions are ${JSON.stringify(F4_EXCEPTIONS)}. ` +
-      `Both exceptions are geometry, not ring width — see docs/parked-findings.md.`,
+      `Both exceptions are geometry, not ring width.`,
   )
 })

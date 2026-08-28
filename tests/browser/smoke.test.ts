@@ -249,9 +249,8 @@ for (const route of ROUTES) {
         // real defect on its first run: `Chart.tsx` renders `overflow: hidden`,
         // so axis titles and footnotes drawn below the viewBox are cut mid-glyph
         // (`YEARS TO MATURITY` on `/government` renders as its top halves).
-        // That is #83, parked in `docs/parked-findings.md`, NOT fixed here —
-        // fixing it is #64's clamp generalised to a second axis and is squarely
-        // outside this issue.
+        // That is #83, and it is not fixed here. Fixing it is #64's clamp
+        // generalised to a second axis, and that is outside this issue.
         //
         // It is asserted anyway, against the count measured on this branch, so
         // the discovery is landed rather than dropped: a NEW vertical clip turns

@@ -451,7 +451,7 @@ does not duplicate it.
 | 29 | M8: the focus ring computes under WCAG 2.2's 2px minimum (was a standing **FAIL**, #75) | **RESOLVED** — #75 made the width a `--focus-ring: 2px` token that every ring rule reads, and `tests/browser/focus.test.ts` F1 asserts it over seven ring-painting classes at both viewports. The token is **read from `:root` at runtime**, not hardcoded, so F1's two halves fail apart: one asks whether every rule agrees with the token, the other whether the token clears the standard. `smoke.test.ts`'s expected-failure entry is retired, not inverted |
 | 30 | M1/M3/M5/M6/M7/M8 on `/glossary` and `/contents`: **NOT EXECUTED** | **PARTLY ASSERTED** — the spec covers all seven routes, so the width, overflow, target-size, console and skip-link halves close. The screen-reader and greyscale-reading halves stay **HUMAN** |
 | 31 | M2 screen-reader pass, every route | **HUMAN** — no assistive technology runs in CI. Explicitly out of #67's scope |
-| 32 | M6 greyscale render | **HUMAN** for the reading judgement. The luminance-ratio table below is mechanisable but is #30's artefact — **parked**, `docs/parked-findings.md` |
+| 32 | M6 greyscale render | **HUMAN** for the reading judgement. The luminance-ratio table below is mechanisable, and it is #30's artefact, so it is not acted on here |
 | 33 | Safari.app focus-ring check | **HUMAN** — Playwright's WebKit is **not** Safari.app, and a lookalike engine must not be allowed to satisfy it. #80 |
 | 34 | M12 JavaScript disabled: page `scrollWidth` == viewport, and the trigger shapes | **ASSERTED** for the width and overflow half, by the scripting-off pass; the trigger-shape half is **COVERED ELSEWHERE** by the static `test_*term*` guards |
 | 35 | #69: the tab order through a chart route, and that every datum stays reachable once it is bounded | **ASSERTED** — `keyboard.test.ts`. A real Tab walk (press, read `document.activeElement`) on `/government` hydrated and with scripting off; per-svg stop enumeration on all three chart routes at both viewports, scripting on and off; arrow traversal over the largest group on each route; and the same enumeration after every option of `#the-laws`' three filters and both `YearRange` extremes |
@@ -488,7 +488,7 @@ Two defects, both **parked and not fixed in #67** — the lane reports, it does 
   and installing it would let a lookalike engine appear to close #80.
 - It is **not a required status check**. A required check that never reports blocks every merge
   permanently with no error message, and this repository had zero CI contexts before #67. The
-  precondition — green on a real pull request — is parked in `docs/parked-findings.md`.
+  precondition, green on a real pull request, is not acted on here.
 
 **Font metrics.** `src/styles/tokens.css:4-5` ships a deliberate system-font stack with no webfont,
 so macOS and Linux metrics differ by design. The lane takes a **tolerance, not a pinned container**:
@@ -874,7 +874,7 @@ apart. Naming a specific pair was the bug; the labels are now sorted and spaced.
 **One collision is left, and it is not this issue's.** `/economy` §4's `Fed funds` and `10-year note`
 overlap each other. Both are `end`-anchored at the same x with y offsets of -8 and -20, both fit
 their SVG comfortably, and `placeAnnotation` returns them unchanged — their positions are identical
-to `main`'s. Recorded in `docs/parked-findings.md`.
+to `main`'s. The collision is not acted on here.
 
 **No annotation moves between the SSR paint and hydration.** At 1440x900 the hydrated preset is the
 same WIDE preset SSR emitted, so every placement must be byte-identical; comparing each annotation's
@@ -912,7 +912,7 @@ future measurement comes in lower, leave it alone.
 - **#66** owns chart legibility at 390px generally — axis tick and axis-title text, tick density,
   hit-target size, and the direct labels that are **not** in the annotation family. `holders-label`
   on `/government` §2 is the live example: `Foreign $9.64T (30% of publicly held debt)` still paints
-  past its SVG. It is recorded in `docs/parked-findings.md` and deliberately not fixed here.
+  past its SVG. The overrun is deliberately not fixed here.
   `test_no_annotation_class_ships_outside_the_guarded_set` is an `==` audit over every `<text>` class
   in `dist/`, so that boundary is explicit in the suite rather than implied.
 - **Asserted since #67.** `tests/browser/smoke.test.ts` re-measures the worst ratio on every route
@@ -1079,8 +1079,8 @@ there is nothing for the scroll container to clip horizontally.
 
 **One measurement artefact, not a defect of this change.** `.tax-mix-select` reads 0 × 2.6 until its
 island hydrates, because Radix's `Select.Value` has no text to show until then; it settles at
-38.1 × 17.6 with a 38.1 × 24 hit area. Parked in `docs/parked-findings.md` — it is a hydration
-question, not a target-size one, and this change neither causes nor fixes it.
+38.1 × 17.6 with a 38.1 × 24 hit area. The reading is a hydration question rather than a
+target-size one, and this change neither causes nor fixes it.
 
 ### Chart legibility at 390px (#66)
 
@@ -1232,7 +1232,7 @@ crowding never occurred. That closes the DoD's "amend the Known limitation" item
 | 3 leader labels colliding on one baseline | **Fixed here** |
 | 2 rotated titles longer than their panels | **Fixed here** |
 | 2 narrow-only panel titles over their 298-unit room | **Fixed here** |
-| `/government` §2's foreign label can no longer carry its percentage on the chart | **Parked** — `docs/parked-findings.md`. The full share is still on the figure's `aria-label`, in its live readout, and in both columns of its table |
+| `/government` §2's foreign label can no longer carry its percentage on the chart | Not acted on here. The full share is still on the figure's `aria-label`, in its live readout, and in both columns of its table |
 | `PricesAndRates`' converging series labels | **Parked** by #64, and stays parked: it is annotation text, and it collides at every width, so it is not a 390px defect |
 | Browser lane not run in this pass | **Asserted since #67** — `npm run test:browser`, every pull request |
 | Scripting-off geometry | **#78**; `/government` §1 specifically **#36** |
@@ -1477,7 +1477,7 @@ default state it costs the same two stops (measured: 138 against 136 scripting-o
 `/government`, both of those containers genuinely overflowing). It is rejected because it breaks the
 "not focusable unless it overflows" half of the rule for a scripting-off reader who opens a table
 that fits — an empty Tab stop per such table, which is the cost #68 and #69 spent two issues
-removing. The residual gap is recorded in `docs/parked-findings.md` rather than dropped.
+removing. The residual gap is recorded here rather than dropped.
 
 The consequence is asserted in both directions: the scripting-off Tab walk on `/government` stays at
 **136** stops and **118** to §11, byte-identical to `1b2fcd5`, in `keyboard.test.ts`.
@@ -1721,7 +1721,7 @@ page, they are two unrelated things:
 | 2 | `StateTaxMix`'s "none levied" categories, in a live and visible chart | **Yes** | **The real case.** A keyboard reader can arrow onto "Individual income tax: none levied" with nothing on screen to look at |
 
 `LawExplorer` has no zero-area marks: all 31 render. Only the second row is a finding, and it is
-parked in `docs/parked-findings.md`; *why* those two render is #30/#80 territory, not fixed here.
+not fixed here. Why those two render belongs to #30 and #80.
 
 #### The mechanism, and why the hit target stops being the mark
 
@@ -1968,7 +1968,7 @@ swatch wrapping, and **#75**, the focus-ring width, **have since shipped** — s
 which is why the issue's "'View as table' is a 24px target" line is recorded as stale above rather
 than acted on.
 
-**Parked, not fixed** (`docs/parked-findings.md`): `StateTaxMix`'s 2 focusable zero-area marks on
+**Recorded, not fixed.** `StateTaxMix` has 2 focusable zero-area marks on
 `/government` (the other 5 are an inactive Radix tab panel and are not a defect — see the table
 above); and `StatutoryVsEffective`, whose chart draws 44 years and whose table carries only
 the CBO anchor years, so three of the values a tap can read out are genuinely absent from the table
@@ -2106,7 +2106,7 @@ Every `PASS (note)` above is a chart whose category colours separate by less tha
 whose category is therefore being carried by something other than colour. That redundancy is what
 `test_no_island_encodes_a_category_only_in_colour` locks. The three thinnest cases — GOV-10's identical
 `--rev-pr`/`--rev-eg` luminance, GOV-11's flat cartogram scale, and GOV-11's unlabelled tax-mix bar —
-are recorded in `docs/parked-findings.md` as design observations, not as defects under this contract.
+are recorded as design observations rather than as defects under this contract.
 ## Manual checklist — status per item
 
 Written by PR #15, when no browser, assistive technology or rendered-pixel measurement existed in

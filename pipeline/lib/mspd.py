@@ -61,7 +61,7 @@ REQUIRED_CLASSES = INSTRUMENTS + ("Treasury Inflation-Protected Securities", "Fl
 
 # Copied from monthly/treasury.py's `_paged`, which calls the same API through
 # the same helper, rather than guessed. A `min_bytes` invented from a plan has
-# broken a fetcher here before (docs/parked-findings.md).
+# broken a fetcher here before.
 MIN_BYTES = 200
 
 VINTAGE_RE = re.compile(r"^\d{4}-(?:0[1-9]|1[0-2])$")

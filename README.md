@@ -32,5 +32,3 @@ uv run python build.py --tier monthly --dry-run  # rebuild + validate, no writes
   island builds against.
 - `docs/feature-matrix.md` — what's shipped per route and section.
 - `docs/test-plan.md` — coverage by test type, keyed to the feature matrix.
-- `docs/parked-findings.md` — issues noticed in passing but out of scope for
-  the work that found them.
