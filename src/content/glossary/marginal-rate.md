@@ -1,7 +1,7 @@
 ---
 term: "Marginal rate"
-short: "The rate applied to the next dollar earned. A top marginal rate applies only to the slice of income above the bracket threshold, never to the whole."
-long: "Because the schedule is a ladder, a filer in the top bracket pays the top rate on the income above that bracket's floor and the lower rates on everything beneath it. This is the single most misread number in tax policy: the marginal rate governs the incentive to earn one more dollar, and the effective rate describes the bill. A rise in the top marginal rate changes what a small slice of income is taxed at, not what all income is taxed at."
+short: "The rate applied to the next dollar earned. A top marginal rate applies only to income above the bracket threshold, never to the whole."
+long: "The schedule is a ladder. A filer in the top bracket pays the top rate only on income above that bracket's floor. The lower rates apply to everything beneath it. The marginal rate is the single most misread number in tax policy. It governs the incentive to earn one more dollar, while the effective rate describes the bill. A rise in the top rate changes the tax on a slice of income, not on all of it."
 source:
   - "irs_soi_table_23"
   - "irs_revenue_procedures"
