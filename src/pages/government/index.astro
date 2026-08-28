@@ -51,23 +51,23 @@ const sourcesHref = join('/sources')
     <p class="kicker"><span class="section-no">Section 1</span></p>
     <h2>Ten years, twice the debt</h2>
     <p class="standfirst">
-      Gross federal debt over ten <Term id="fiscal-year">fiscal years</Term>,
-      in <Term id="nominal">nominal</Term> dollars
-      and again as a share of the economy, on a toggle. Measured
+      Gross federal debt over ten <Term id="fiscal-year">fiscal years</Term>, in{' '}
+      <Term id="nominal">nominal</Term> dollars and as a share of the economy, on a toggle.
+      Measured
       against <Term id="gross-domestic-product">GDP</Term> the same decade
       moved it from 105% to 124%. Look at whether the two units tell the same story.
     </p>
     <p class="finding">
-      Debt doubled in ten fiscal years, from $19.57T at the close of FY2016 to $40T at the
-      close of 18 August 2026, reported the following day, a 2.04x rise.
+      Debt doubled in ten fiscal years. It went from $19.57T at the close of FY2016 to $40T at
+      the close of 18 August 2026. That is a 2.04x rise, reported the following day.
     </p>
 
     <Figure
-      ariaLabel="Debt doubled in ten fiscal years, from $19.57 trillion at the close of FY2016 to $40 trillion at the close of 18 August 2026, reported the following day."
+      ariaLabel="Debt doubled in ten fiscal years. It went from $19.57 trillion at the close of FY2016 to $40 trillion at the close of 18 August 2026. The figure was reported the following day."
       fig={fig('debt')}
       xUnit="Fiscal year"
       yUnit="gross debt in nominal $ trillions, or percent of GDP"
-      note="The final point is a daily close, not a fiscal year-end value, and carries no share of GDP because FY2026 GDP is not final."
+      note="The final point is a daily close rather than a fiscal year-end value. It carries no share of GDP, because FY2026 GDP is not final."
     >
       <DebtChart client:visible rows={debt.data} />
     </Figure>
@@ -103,25 +103,23 @@ const sourcesHref = join('/sources')
       fig={fig('debt-holders')}
       xUnit="Share of gross debt, and share of publicly held debt"
       yUnit="holder category"
-      note="Foreign holders are about 30% of publicly held debt. Redo it: 30% of the $32.14 trillion held by the public is about $9.6 trillion, and against $39.88 trillion of gross debt that is 24%. A 32% figure is the share of publicly held debt wearing the gross label, and the two denominators are not interchangeable. Country holdings are the Treasury International Capital release for November 2025, a series revised monthly."
+      note="Foreign holders are about 30% of publicly held debt. Redo it: 30% of the $32.14 trillion held by the public is about $9.6 trillion. Against $39.88 trillion of gross debt that is 24%. A 32% figure is the share of publicly held debt carrying the gross label. The two denominators are not interchangeable. Country holdings are the Treasury International Capital release for November 2025, a series revised monthly."
     >
       <DebtHolders client:visible d={debtHolders.data} />
     </Figure>
 
     <p class="prose">
-      Of the publicly held part, roughly 70% is domestic. The biggest foreign holders are
-      Japan at about $1.20 trillion, the UK at $880 billion and China at $684 billion, each
-      read from the Treasury International Capital release for November 2025. Foreign holders
-      were 5% of the debt in 1970 and are now close to a quarter of it. That is a
-      snapshot of who holds the paper. It counts no payments, so it cannot show where
-      the interest on that paper is spent, and it settles nothing about solvency.
-      Reading a rising foreign share as a constraint is an interpretation, and it is
-      one this chart does not carry.
+      Of the publicly held part, roughly 70% is domestic. The biggest foreign holders are Japan
+      at about $1.20 trillion, the UK at $880 billion and China at $684 billion. Each is read
+      from the Treasury International Capital release for November 2025. Foreign holders were 5%
+      of the debt in 1970 and are now close to a quarter of it. That is a snapshot of who holds
+      the paper. It counts no payments, so it cannot show where the interest on that paper is
+      spent. It settles nothing about solvency. Reading a rising foreign share as a constraint is
+      an interpretation, and this chart does not carry it.
     </p>
     <p class="prose">
-      The intragovernmental piece is a genuine obligation
-      owed to future retirees, but it does not trade in bond markets and does not set interest
-      rates.
+      The intragovernmental piece is a genuine obligation owed to future retirees. It does not
+      trade in bond markets and does not set interest rates.
     </p>
   </section>
 
@@ -143,16 +141,16 @@ const sourcesHref = join('/sources')
       fig={fig('debt-maturity')}
       xUnit="Years to maturity"
       yUnit="amount outstanding, $ trillions"
-      note="Bills, notes and bonds are three of the marketable instrument families, not all of them. They sum to about $28.1 trillion against a $30.9 trillion marketable total. The difference, which this chart does not draw, is mostly inflation-protected and floating-rate securities plus a small Federal Financing Bank balance. Savings bonds (Series EE and I) are non-marketable and excluded throughout."
+      note="Bills, notes and bonds are three of the marketable instrument families, not all of them. They sum to about $28.1 trillion against a $30.9 trillion marketable total. This chart does not draw the difference. It is mostly inflation-protected and floating-rate securities, plus a small Federal Financing Bank balance. Savings bonds (Series EE and I) are non-marketable and excluded throughout."
     >
       <DebtMaturity client:visible d={debtMaturity.data} />
     </Figure>
 
     <p class="prose">
       A maturity this short is a repricing schedule. The government does not lock in a rate
-      for a generation. It refinances continuously, so when rates rose after 2021 the cost
-      of the entire stock repriced within a few years rather than a few decades. What that
-      repricing did to the bill is a different series, and this section does not measure it.{' '}
+      for a generation. It refinances continuously. When rates rose after 2021, the whole stock
+      repriced within a few years rather than a few decades. What that repricing did
+      to the bill is a different series, and this section does not measure it.{' '}
       <a href="#net-interest">Section 7</a> draws that one.
     </p>
   </section>
@@ -181,10 +179,10 @@ const sourcesHref = join('/sources')
 
     <p class="prose">
       Outlays and the deficit are the same arithmetic seen twice. Splitting them across two
-      panels lets each be read on its own scale and hides how small the deficit is next to the
-      budget that produces it. Here the deficit bar is the distance between the revenue line and
-      the top of the stack. Whether that distance is a feature of particular years or of all of
-      them is a different question, and this section does not ask it.{' '}
+      panels lets each be read on its own scale. It also hides how small the deficit is next to
+      the budget that produces it. Here the deficit bar is the distance between the revenue line
+      and the top of the stack. Whether that distance is a feature of particular years or of all
+      of them is a different question. This section does not ask it.{' '}
       <a href="#structural-gap">Section 5</a> takes the categories away and sets the two totals
       against each other.
     </p>
@@ -213,9 +211,9 @@ const sourcesHref = join('/sources')
     </Figure>
 
     <p class="prose">
-      That gap shows up in years with no recession and no major tax bill, which is what
-      makes it <Term id="structural-deficit">structural</Term> rather than circumstantial. The only four years it closed were
-      1998 to 2001.
+      That gap shows up in years with no recession and no major tax bill. That is what makes
+      it <Term id="structural-deficit">structural</Term> rather than circumstantial. The only four
+      years it closed were 1998 to 2001.
     </p>
   </section>
 
@@ -243,11 +241,10 @@ const sourcesHref = join('/sources')
     </Figure>
 
     <p class="prose">
-      In <Term id="real">real</Term> terms <Term id="mandatory-spending">mandatory spending</Term>,
-      net of offsetting receipts, the basis used throughout this section, grew 194% over this
-      span and discretionary grew 79%. Mandatory runs on permanent law
-      and net interest is set by past borrowing; neither requires
-      an annual vote.
+      In <Term id="real">real</Term> terms <Term id="mandatory-spending">mandatory spending</Term>{' '}
+      grew 194% over this span, and discretionary grew 79%. Mandatory is net of offsetting
+      receipts, the basis used throughout this section. Mandatory runs on permanent law and net
+      interest is set by past borrowing. Neither requires an annual vote.
     </p>
     <p class="prose">
       Net interest looks flat endpoint to endpoint, 3.1% to 3.2%. It is not. It fell to
@@ -278,10 +275,10 @@ const sourcesHref = join('/sources')
     </Figure>
 
     <p class="prose">
-      Net interest over the 31 years comes to 39% of the deficits run in them. That is a
-      ratio of two totals, not an earmark: no borrowed dollar is assigned to interest, and
-      the two figures are not drawn from the same pot. There is no vote on this, no
-      appropriation, no debate.
+      Net interest over the 31 years comes to 39% of the deficits run in them. That is a ratio
+      of two totals rather than an earmark. No borrowed dollar is assigned to interest, and the
+      two figures are not drawn from the same pot. There is no vote on this, no appropriation,
+      no debate.
     </p>
     <p class="prose">
       The FY2015 figure of $223 billion is a recent trough, not the series low. The
@@ -294,8 +291,8 @@ const sourcesHref = join('/sources')
     <p class="kicker"><span class="section-no">Section 8</span></p>
     <h2>The bill arrives long after the vote</h2>
     <p class="standfirst">
-      Twenty-three major deficit-moving laws since 1995, with what each was scored to cost, who
-      voted for it, and when it was signed.
+      Twenty-three major deficit-moving laws since 1995. Each carries what it was scored to
+      cost, who voted for it, and when it was signed.
     </p>
     <p class="finding">
       Sixteen of the twenty-three passed with cross-party majorities. Cross-party laws total
@@ -307,7 +304,7 @@ const sourcesHref = join('/sources')
       fig={fig('law-explorer')}
       xUnit="Fiscal year"
       yUnit="deficit or surplus as percent of GDP; ten-year score in $ trillions at enactment"
-      note={`The chart window is FY1995 to FY2025; the underlying deficit series runs from FY1962. Each law's marker sits at its date's position within its enactment fiscal year, not on the year's tick. The two 1997 laws (Balanced Budget Act, Taxpayer Relief Act) predate the ten-year scoring convention and carry no score, so they are excluded from the cost totals. The CARES Act's House vote was a voice vote with no roll call. Three Senate votes (JGTRRA, the Inflation Reduction Act, and the One Big Beautiful Bill Act) tied 50-50 and passed on the Vice President's tiebreak, which does not appear in a roll call. Vote splits: ${partySplits._meta.source}`}
+      note={`The chart window is FY1995 to FY2025; the underlying deficit series runs from FY1962. Each law's marker sits at its date's position within its enactment fiscal year, not on the year's tick. The two 1997 laws predate the ten-year scoring convention and carry no score. They are the Balanced Budget Act and the Taxpayer Relief Act, and both are excluded from the cost totals. The CARES Act's House vote was a voice vote with no roll call. Three Senate votes tied 50-50 and passed on the Vice President's tiebreak, which does not appear in a roll call. They are JGTRRA, the Inflation Reduction Act and the One Big Beautiful Bill Act. Vote splits: ${partySplits._meta.source}`}
     >
       <LawExplorer
         client:load
@@ -320,19 +317,19 @@ const sourcesHref = join('/sources')
 
     <p class="prose">
       A law is voted on once. Its cost runs for a decade or longer, under whoever happens to be in
-      office later. The 2001 tax cuts were signed under unified Republican control, extended by a
-      Democratic president in 2010, and made permanent in 2013 under a divided Congress. The 2017
-      Tax Cuts and Jobs Act passed on a party-line vote, and most of its ten-year cost falls in
-      FY2019 to FY2027, spanning a Democratic House and a Democratic president. The CARES Act
+      office later. The 2001 tax cuts were signed under unified Republican control and extended by
+      a Democratic president in 2010. They were made permanent in 2013 under a divided Congress.
+      The 2017 Tax Cuts and Jobs Act passed on a party-line vote. Most of its ten-year cost falls
+      in FY2019 to FY2027, spanning a Democratic House and a Democratic president. The CARES Act
       passed with cross-party votes under a Republican president, a Democratic House and a
       Republican Senate.
     </p>
     <p class="prose">
       Scored laws net to $16.75 trillion against $24.15 trillion of deficits actually recorded over
       the same span. Mandatory growth, demographics, revenue drift, recessions and compounding
-      interest all move the deficit without a <Term id="roll-call-vote">roll call</Term>, so the
-      gap is what a table of scored laws cannot reach. Which of them accounts for how much of it is
-      a question nothing on this route measures.
+      interest all move the deficit without a <Term id="roll-call-vote">roll call</Term>. The gap
+      is therefore what a table of scored laws cannot reach. Which of them accounts for how much
+      of it is a question nothing on this route measures.
     </p>
   </section>
 
@@ -341,16 +338,16 @@ const sourcesHref = join('/sources')
     <h2>The same $16.75 trillion, two ways</h2>
     <p class="standfirst">
       Every major law scored since 1995, sorted two ways. The left column groups the laws by the
-      coalition that voted for them, the right by the president who signed them. Look at what
-      each column comes to at the bottom.
+      coalition that voted for them. The right groups them by the president who signed them. Look
+      at what each column comes to at the bottom.
     </p>
     <p class="finding">
-      Both attributions total the same $16.75 trillion in net ten-year costs, whether the laws
-      are grouped by the coalition that passed them or by the president who signed them.
+      Both attributions total the same $16.75 trillion in net ten-year costs. That holds whether
+      the laws are grouped by coalition or by signing president.
     </p>
 
     <Figure
-      ariaLabel="Both attributions total the same $16.75 trillion in net ten-year legislative costs: the left column groups the laws by the coalition that passed them, the right by the president who signed them."
+      ariaLabel="Both attributions total the same $16.75 trillion in net ten-year legislative costs. The left column groups the laws by the coalition that passed them, the right by the president who signed them."
       fig={fig('attribution')}
       xUnit="$ trillions, ten-year score at enactment"
       yUnit="voting coalition, or signing president"
@@ -362,18 +359,18 @@ const sourcesHref = join('/sources')
     <p class="prose">
       The bars behind each column. By coalition: cross-party +$9.24T (16 laws), party-line
       Republican +$5.21T (3), party-line Democratic +$2.31T (4). By signing president: Trump I
-      +$6.08T (5), Obama +$3.98T (6), Trump II +$3.40T (1), G.W. Bush +$2.79T (4), Biden
+      +$6.08T (5), Obama +$3.98T (6), Trump II +$3.40T (1). Then G.W. Bush +$2.79T (4) and Biden
       +$0.50T (5).
     </p>
     <p class="prose">
       These are net figures, increases less reductions. Gross increases alone come to $20.73
-      trillion, and on that basis Obama reads $6.22T rather than $3.98T because he also signed
-      $2.24 trillion of scored deficit reduction. If you show both, label both.
+      trillion. On that basis Obama reads $6.22T rather than $3.98T, because he also signed $2.24
+      trillion of scored deficit reduction. If you show both, label both.
     </p>
     <p class="prose">
-      A president signs what Congress sends. Coloring by control credits or blames one party
-      for laws the other party largely voted for: the 2018 and 2019 budget acts passed under
-      unified Republican control but cleared the Senate 71-28 and 67-28.
+      A president signs what Congress sends. Colouring by control credits or blames one party for
+      laws the other party largely voted for. The 2018 and 2019 budget acts passed under unified
+      Republican control, and cleared the Senate 71-28 and 67-28.
     </p>
   </section>
 
@@ -385,8 +382,8 @@ const sourcesHref = join('/sources')
       essentially the same take. What moved is who pays it and through which tax.
     </p>
     <p class="finding">
-      Share of GDP, FY1995 to FY2025: individual income 7.81% to 8.75%, payroll 6.41% to
-      5.76%, corporate 2.08% to 1.49%, customs 0.26% to 0.64%.
+      Share of GDP, FY1995 to FY2025: individual income 7.81% to 8.75%, payroll 6.41% to 5.76%.
+      Corporate went 2.08% to 1.49%, and customs 0.26% to 0.64%.
     </p>
 
     <Figure
@@ -401,16 +398,15 @@ const sourcesHref = join('/sources')
     <p class="prose">
       The individual income tax now raises more than half of all federal revenue, up from
       43.7% in 1995. The corporate share fell from 11.6% to 8.6%. Customs duties went from
-      $19 billion to $195 billion, more than a tenfold nominal rise,
-      and are the fastest growing revenue line in the federal government.
+      $19 billion to $195 billion, more than a tenfold nominal rise. They are the fastest
+      growing federal revenue line.
     </p>
 
     <p class="prose">
       The <Term id="oecd">OECD</Term> figure below counts federal, state and local tax revenue
-      together; the
-      17.2%-of-GDP federal figure above does not include state and local collections. The
-      two are not two readings of the same thing, and this section does not present them as
-      a contradiction.
+      together. The 17.2%-of-GDP federal figure above excludes state and local collections. The
+      two are not two readings of the same thing, and this section does not present them as a
+      contradiction.
     </p>
 
     <Figure
@@ -424,20 +420,18 @@ const sourcesHref = join('/sources')
     </Figure>
 
     <p class="prose">
-      Counting federal, state and local together, the US collected 25.6% of GDP in tax in
-      2024 against an OECD average of 34.1%, ranking 31st of 38 members. The US peaked at
-      28.3% in 2000 and bottomed at 22.9% in 2009. It is also the only OECD member with no
-      value-added tax. How much of the gap that absence explains is not something this
-      comparison settles: it ranks totals, and it does not decompose them.
+      Counting federal, state and local together, the US collected 25.6% of GDP in tax in 2024.
+      The OECD average was 34.1%, and the US ranked 31st of 38 members. The US peaked at 28.3% in
+      2000 and bottomed at 22.9% in 2009. It is also the only OECD member with no value-added
+      tax. This comparison does not settle how much of the gap that absence explains. It ranks
+      totals, and it does not decompose them.
     </p>
 
     <p class="prose">
-      Two dating exceptions to the FY1995/FY2025 convention used elsewhere in this route:
-      the OECD figure above ends at 2024 preliminary data. Who pays the individual income
-      tax by income group is a tax
-      year 2023 <Term id="internal-revenue-service">IRS</Term> figure; it belongs to the households
-      route,
-      not this one.
+      Two dating exceptions to the FY1995/FY2025 convention used elsewhere in this route. The
+      OECD figure above ends at 2024 preliminary data. Who pays the individual income tax by
+      income group is a tax year 2023 <Term id="internal-revenue-service">IRS</Term> figure. It
+      belongs to the households route rather than this one.
     </p>
   </section>
 
@@ -445,13 +439,14 @@ const sourcesHref = join('/sources')
     <p class="kicker"><span class="section-no">Section 11</span></p>
     <h2>By state, and which states give more than they get</h2>
     <p class="standfirst">
-      Every state pays federal tax and every state receives federal spending. Comparing the
-      two by state is not the balance-of-payments question it sounds like: what follows is
-      narrower on both sides, and says so before it says anything else.
+      Every state pays federal tax and every state receives federal spending. Comparing the two
+      by state is not the balance-of-payments question it sounds like. What follows is narrower
+      on both sides, and says so before it says anything else.
     </p>
     <p class="finding">
-      In FY2025, {statesBalance.data.summary.n_get_more} states and DC received more in federal
-      award spending, per person, than the IRS collected from them in gross federal tax; {statesBalance.data.summary.n_give_more} paid more than they received.
+      In FY2025, {statesBalance.data.summary.n_get_more} states and DC took more federal award
+      spending per person than the IRS collected in gross tax.{' '}
+      {statesBalance.data.summary.n_give_more} paid more than they received.
     </p>
 
     <Figure
@@ -467,28 +462,28 @@ const sourcesHref = join('/sources')
     <p class="prose">
       <strong>What this is not.</strong> This is not a balance of payments. The Rockefeller
       Institute's study of that name is the authoritative version, and its series ends at
-      FY2022. What is drawn here is federal tax <strong>collected</strong> in a state against
-      federal award spending <strong>performed</strong> in it, both for FY2025, and the two are
-      not opposite sides of one ledger.
+      FY2022. This chart draws federal tax <strong>collected</strong> in a state against
+      federal award spending <strong>performed</strong> in it, both for FY2025. They are not one
+      ledger's two sides.
     </p>
     <p class="prose">
       <strong>Where the money is counted is not where it lands.</strong> The two sides are
-      booked to different places, and neither location is a claim about who bore the cost or got
-      the benefit. <a href="#limits">Limit 6 in section 12</a> states the principle in full.
-      What it means for these two charts: a corporation's tax follows its principal office and
-      withholding follows the employer's location, which for a border employer may sit in a
-      different state from the people it withholds from. Award spending goes to the state
-      hosting a
-      <strong> military base</strong> rather than the state its personnel came from, and to a
+      booked to different places. Neither location is a claim about who bore the cost or got the
+      benefit. <a href="#limits">Limit 6 in section 12</a> states the principle in full. For
+      these two charts, a corporation's tax follows its principal office. Withholding follows the
+      employer's location. For a border employer that may sit in a different state from the
+      people it withholds from. Award spending goes to the state hosting a
+      <strong> military base</strong> rather than the state its personnel came from. It goes to a
       <strong> federal retiree's</strong> former duty station rather than where they now live.
       <strong> Medicaid</strong> dollars are recorded against the state that passes them through
       to providers.
     </p>
     <p class="prose">
       <strong>Neither side is complete.</strong> Award spending excludes most direct benefit
-      payments, so the "get" side is smaller than what a state actually receives; gross
-      collections include penalties and interest and exclude excise taxes collected by Customs
-      and the Alcohol and Tobacco Tax and Trade Bureau. Read the ordering, not the arithmetic.
+      payments, so the "get" side is smaller than what a state actually receives. Gross
+      collections include penalties and interest. They exclude excise taxes collected by Customs
+      and the Alcohol and Tobacco Tax and Trade Bureau. Read the ordering rather than the
+      arithmetic.
     </p>
 
     <Figure
@@ -496,7 +491,7 @@ const sourcesHref = join('/sources')
       fig={fig('state-tax-mix')}
       xUnit="Tax category"
       yUnit="percent of that state's own total tax collections"
-      note="A category can be genuinely not levied by a state (Alaska has no general sales tax) rather than merely unreported; the two are shown differently, never both as a dash."
+      note="A category can be genuinely not levied by a state rather than merely unreported. Alaska has no general sales tax. The two are shown differently, and never both as a dash."
     >
       <StateTaxMix client:visible data={statesTaxMix.data} />
     </Figure>
@@ -505,15 +500,15 @@ const sourcesHref = join('/sources')
       Give (IRS), get (USASpending) and this state tax mix (Census) are three separately
       discovered <Term id="vintage">vintages</Term>, not one dataset. The IRS and USASpending
       figures above are both FY2025 by construction, and this Census survey is also its FY2025
-      vintage. None of the three shares a publication schedule, and a future run of this pipeline
-      may find them out of step again. Territories (Puerto Rico, Guam, the US Virgin Islands, the
-      Northern Mariana Islands and American Samoa) appear in the award-spending "get" figures but
-      have no state-level breakdown in IRS Table 5. They therefore carry a give figure of "no
-      data" rather than zero, and are not drawn on the map above. Washington DC is drawn on the
-      map and counted in the table, but is excluded from the colour range: as the seat of the federal
-      government it is an outlier by construction, and including it would compress the scale
-      for all 50 states. In the tax-mix table below, "none levied" means the state does not
-      collect that tax at all, not that the figure is missing.
+      vintage. None of the three shares a publication schedule. A future run of this pipeline may
+      find them out of step again. Five territories appear in the award-spending "get" figures
+      but have no state-level breakdown in IRS Table 5. They are Puerto Rico, Guam, the US Virgin
+      Islands, the Northern Mariana Islands and American Samoa. Each therefore carries a give
+      figure of "no data" rather than zero, and none is drawn on the map above. Washington DC is
+      drawn on the map and counted in the table, and is excluded from the colour range. As the
+      seat of the federal government it is an outlier by construction. Including it would
+      compress the scale for all 50 states. In the tax-mix table below, "none levied" means the
+      state does not levy that tax at all. It does not mean the figure is missing.
     </p>
   </section>
 
@@ -521,17 +516,17 @@ const sourcesHref = join('/sources')
     <p class="kicker"><span class="section-no">Section 12</span></p>
     <h2>Six things this data cannot tell you</h2>
     <p class="standfirst">
-      These limits are load bearing, not decorative. Read them before arguing with anyone
-      about the charts above.
+      The charts above rest on these limits. Read them before arguing with anyone about those
+      charts.
     </p>
 
     <ol class="limits">
       <li>
         <h3>Control is not cause.</h3>
         <p class="prose">
-          Most of the budget runs on permanent law that nobody re-votes on, and a fiscal
-          year's spending is largely set by bills passed before that year began. Every chart
-          here records who was in office, not who caused what.
+          Most of the budget runs on permanent law that nobody re-votes on. A fiscal year's
+          spending is largely set by bills passed before that year began. Every chart here
+          records who was in office rather than who caused what.
         </p>
       </li>
       <li>
@@ -548,24 +543,24 @@ const sourcesHref = join('/sources')
           Ten-year cost estimates were made at enactment under assumptions that often did not
           hold. The ACA was scored as deficit-reducing. The IRA was scored at $238 billion of
           savings and CBO later revised its energy credit costs sharply upward. The 2012 fiscal
-          cliff deal scores as +$3.9 trillion against current law and as deficit-reducing
-          against current policy: the same bill.
+          cliff deal scores as +$3.9 trillion against current law. Against current policy the
+          same bill scores as deficit-reducing.
         </p>
       </li>
       <li>
         <h3>The votes are counted, and four things still limit them.</h3>
         <p class="prose">
-          All 23 laws carry per-party yea and nay counts taken from Voteview roll-call records,
-          not a party-line or cross-party label read off the published character of the vote.
-          Four limits remain. The final-passage roll call for each law was chosen by hand,
-          because a bill carries many roll calls and picking one by date returns the wrong vote.
-          The House never took a roll call on the CARES Act, which passed by voice on 27 March
-          2020, so one chamber of one law has no split at all; that is an absence of data, not
-          agreement. The threshold for calling a vote cross-party, at least 10% of the yes votes
-          coming from the minority party in at least one chamber, is a judgement and can be
-          argued with. And party membership and caucus membership differ by two Senate seats
-          through most of this period, so a tally on one basis will not match a tally on the
-          other.
+          All 23 laws carry per-party yea and nay counts taken from Voteview roll-call records.
+          None carries a party-line or cross-party label read off the published character of the
+          vote. Four limits remain. The final-passage roll call for each law was chosen by hand.
+          A bill carries many roll calls, and picking one by date returns the wrong vote. The
+          House never took a roll call on the CARES Act, which passed by voice on 27 March 2020.
+          One chamber of one law therefore has no split at all, which is an absence of data
+          rather than agreement. A vote is cross-party when a chamber gives at least 10% of its
+          yes votes from the minority party. That threshold is a judgement and can be
+          argued with. Party and caucus membership also differ
+          by two Senate seats through most of this period. A tally on one basis will not match a
+          tally on the other.
         </p>
       </li>
       <li>
@@ -574,8 +569,9 @@ const sourcesHref = join('/sources')
           Nominal dollars make everything recent look unprecedented, because prices roughly
           doubled over this span. Share of GDP scales to the economy carrying the burden. Every
           dollar chart on this site can be flipped between them, and readers should. <a
-          href="#forty-trillion">The debt series in section 1</a> is the plainest case: flip it,
-          and the same decade reads as a doubling in nominal dollars and as 105% of GDP to 124%.
+          href="#forty-trillion">The debt series in section 1</a> is the plainest case. Flip it,
+          and the same decade reads as a doubling in nominal dollars and as 105% of GDP to
+          124%.
         </p>
       </li>
       <li>
@@ -584,29 +580,28 @@ const sourcesHref = join('/sources')
           Federal tax is recorded against the address on the filer's return. Federal award
           spending is recorded against the place of performance, meaning the location where the
           work is done. Neither base is a statement about who ultimately paid or who ultimately
-          benefited: a company's tax follows its headquarters rather than the people whose work
-          produced it, and a contract's spending follows the site rather than the taxpayers who
-          funded it. <a href="#by-state">Section 11</a> sets one against the other, and
-          what it draws is a comparison of two accounting locations, not a balance of payments.
+          benefited. A company's tax follows its headquarters rather than the people whose work
+          produced it. A contract's spending follows the site rather than the taxpayers who
+          funded it. <a href="#by-state">Section 11</a> sets one against the other. What it draws
+          is a comparison of two accounting locations rather than a balance of payments.
         </p>
       </li>
     </ol>
 
     <h3>Two more worth knowing</h3>
     <p class="prose num">
-      Four years out of thirty-one, FY2008 to FY2009 and FY2020 to FY2021, produced $7.78
-      trillion of borrowing, 32% of the total, against an average of $0.61 trillion in every
-      other year.
+      Four years out of 31 produced $7.78 trillion of borrowing, 32% of the total. They are
+      FY2008 to FY2009 and FY2020 to FY2021. Every other year averaged $0.61 trillion.
     </p>
     <p class="prose num">
       Cumulative deficits over the period were $24.15 trillion while debt held by the public
       rose $26.74 trillion. The gap is borrowing to finance federal credit programs and other
-      means of financing, which do not appear in the deficit.
+      means of financing. Neither appears in the deficit.
     </p>
     <p class="prose">
       That is the end of the third route, and of what the three of them draw together. The{' '}
       <a href={`${join('/economy')}/`}>economy</a> sets the denominators every number here is
-      measured against, a <a href={`${join('/households')}/`}>household</a> pays its own bill
+      measured against. A <a href={`${join('/households')}/`}>household</a> pays its own bill
       inside them, and this route is the other side of that bill. None of it settles what any of
       it should be. All sources are listed in full, with vintages and known discrepancies, at{' '}
       <a href={sourcesHref}>Sources</a>.

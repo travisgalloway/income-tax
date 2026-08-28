@@ -84,10 +84,10 @@ const sectionCount = blocks.reduce((n, b) => n + b.sections.length, 0)
   <p class="kicker">Reference</p>
   <h1>Contents</h1>
   <p class="standfirst">
-    The whole of the site on one page: {sectionCount} sections across {blocks.length} destinations,{' '}
-    {figureCount} numbered figures with their sources, and {terms.length} defined terms. Nothing
-    here is a list somebody keeps up to date. Every line is read from the same declaration the
-    page it points at renders from.
+    The whole of the site on one page. It holds {sectionCount} sections across{' '}
+    {blocks.length} destinations, {figureCount} numbered figures with their sources, and{' '}
+    {terms.length} defined terms. Nothing here is a list somebody keeps up to date. Every line is
+    read from the same declaration the page it points at renders from.
   </p>
 
   {blocks.map((block) => (
