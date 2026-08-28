@@ -1,17 +1,18 @@
 # Interface: the chart layer (`src/components/charts/`, `src/components/islands/`)
 
 The internal boundary every chart section builds against. Read this before adding a new section
-island — it exists so each section reuses the same primitives rather than re-inlining equivalents.
+island, because it exists so each section reuses the same primitives rather than re-inlining
+equivalents.
 
 ## `Figure.astro` (`src/components/Figure.astro`)
 
 The apparatus wrapper: numbered head, a `<slot />` for the chart, then a Source/Note/Units
 figcaption. Four props are **required and throw at build time** if omitted or empty
-(`BRIEF.md` rules 1–2 made structural):
+(`BRIEF.md` rules 1-2 made structural):
 
 | Prop | Contract |
 |---|---|
-| `ariaLabel` | The finding, as a sentence — not a description of the chart's shape. Rendered as the `<figure>`'s own `aria-label`, so the figure carries an accessible name distinct from "figure"; the inner `<svg>` carries the same sentence as its own label. |
+| `ariaLabel` | The finding, as a sentence, not a description of the chart's shape. Rendered as the `<figure>`'s own `aria-label`, so the figure carries an accessible name distinct from "figure"; the inner `<svg>` carries the same sentence as its own label. |
 | `fig` | The figure's entry in the manifest (below), obtained as `figuresOf('/route')('key')`. Carries the number, the italic title and the composed source line. A missing or malformed entry throws. |
 | `xUnit` / `yUnit` | Unit label for each axis. No bare-number axis is permitted. |
 
@@ -48,12 +49,12 @@ Four throws at module load:
 
 1. a duplicate `key` within a route;
 2. a `section` that is not an id in `routeSections[route]`;
-3. a declared order whose section indices are not non-decreasing — the manifest may not claim a
+3. a declared order whose section indices are not non-decreasing, because the manifest may not claim a
    figure order that contradicts the order the route renders its sections in;
 4. an empty `title` or `source`.
 
 **Numbering.** `n` is the array index + 1, so a duplicated or skipped number is not expressible,
-and numbers restart per route — which is why `/contents` qualifies every one by route label
+and numbers restart per route, which is why `/contents` qualifies every one by route label
 (`Government, Figure 13.`). The number is rendered as real text in `.figure-no`; it was a CSS
 counter (`counter(figure)` on `.figure-head::before`) until #49, which meant it existed only in
 the rendered layout and no other page could read it.
@@ -93,11 +94,11 @@ tab panel outside every `<svg>`) which is itself matched verbatim so a rename re
 stale. The reason is a measurement, not a rule of taste: 25 figures drawing 3 to 113 marks each put
 **364 of `/government`'s 512 tab stops** inside charts, and reaching §11 took **438** Tab presses.
 
-The hook makes each `<svg>` one roving-tabindex group — one mark at `tabindex="0"`, the rest at
+The hook makes each `<svg>` one roving-tabindex group, with one mark at `tabindex="0"`, the rest at
 `"-1"`, arrows/Home/End moving between them in DOM order without wrapping. `Chart` wires it for you.
 A figure that hand-rolls its own `<svg>` (`BracketHistory`, `StateGiveGet`, `StateTaxMix`) calls
 `useRovingMarks()` itself and spreads `groupProps` on the `<svg>`; there is no third option, because
-the roving state must be in the **served HTML** — `client:visible` server-renders the markup and
+the roving state must be in the **served HTML**, and `client:visible` server-renders the markup and
 defers only hydration. See `docs/contracts/accessibility.md` for the full rule and the numbers.
 
 ### Reading a mark with a finger (#73)
@@ -112,7 +113,7 @@ the nearest visible mark with `nearestBox` (`src/components/charts/nearest.ts`) 
 `.focus({ preventScroll: true })` on it.
 
 **That `focus()` call is the entire mechanism, and it is why nothing else in an island changes.**
-`onFocusCapture` sets the roving index, and the island's existing `onFocus` fills the readout — the
+`onFocusCapture` sets the roving index, and the island's existing `onFocus` fills the readout, the
 same handler the keyboard already drives. Do **not** add a parallel activation callback or a second
 readout setter; two writers is how the roving index and the visible value drift apart.
 
@@ -123,28 +124,28 @@ Three rules a new figure inherits and must not break:
   finger must have a rendered box.
 - **`.chart` carries `touch-action: pan-y`** so a vertical swipe still scrolls the page. A figure
   that sets its own `touch-action` takes that away.
-- **Desktop is untouched**: mouse pointerdowns bail out before anything happens, and `data-roving` —
-  the keyboard-only focus-ring flag — is deliberately not set by a finger.
+- **Desktop is untouched.** Mouse pointerdowns bail out before anything happens, and `data-roving`,
+  the keyboard-only focus-ring flag, is deliberately not set by a finger.
 
 The hint sentence is `<ChartHint noun="…" />` (`src/components/charts/ChartHint.tsx`), which renders
-one span per modality; CSS shows exactly one. **Do not write the sentence by hand** — the three
+one span per modality, and CSS shows exactly one. **Do not write the sentence by hand.** The three
 strings live in `src/components/charts/hint.ts`, `test_no_page_tells_a_touch_reader_to_hover` fails
 the build output on the pre-#73 literal, and `test_every_hint_carrier_ships_one_span_per_modality`
 fails on a carrier that ships fewer than three spans.
 
 ## `Axis.tsx`
 
-`AxisLeft` / `AxisBottom` both require a `label` prop (the unit) — there is no bare-axis escape
+`AxisLeft` and `AxisBottom` both require a `label` prop (the unit), and there is no bare-axis escape
 hatch. `ZeroLine` draws the emphasised zero line so a value crossing zero (e.g. a deficit/surplus
 band) is legible by position, not only by which side of a colour boundary it falls on.
 
 ## `TableView` (`src/components/islands/TableView.tsx`)
 
 The "View as table" disclosure every figure carries. A native `<details>`/`<summary>` element, not
-a Radix `Collapsible` — the table, its `<caption>`, and its `th scope="col"`/`scope="row"` cells are
+a Radix `Collapsible`. The table, its `<caption>`, and its `th scope="col"`/`scope="row"` cells are
 present in the server-rendered HTML whether or not scripting runs, and the open/close label swaps
 via `.tableview[open] .tv-open`/`.tv-close` CSS rather than component state. Each `Column` requires
-a `unit` — there is no unitless column. Cell values are read as `row[key] ?? 'no data'`, so a
+a `unit`, and there is no unitless column. Cell values are read as `row[key] ?? 'no data'`, so a
 consumer that wants "no data" instead of "0" for a genuinely absent value must pass `null`, not `0`
 or `''`.
 
@@ -154,32 +155,32 @@ The nominal/real/%-of-GDP toggle and its vocabulary:
 
 - `Unit = 'nominal' | 'real' | 'gdp'`, `UNIT_LABEL` (axis-title text per unit), `UNIT_PREFIX`
   (`n_` / `r_` / `g_`, the field-family prefix a dataset carries per unit).
-- `trillions`, `percentGdp`, `percent`, `dollars` — full-value formatters for tables, tooltips and
+- `trillions`, `percentGdp`, `percent` and `dollars` are full-value formatters for tables, tooltips and
   screen-reader text.
-- `trillionsLong(v, digits = 2)` — `$19.57 trillion`, the magnitude spelled out. Use it wherever the
+- `trillionsLong(v, digits = 2)` gives `$19.57 trillion`, the magnitude spelled out. Use it wherever the
   text is read aloud (`aria-label`s, the `aria-live` readout, on-chart annotations at wide
   viewports); `trillions`' `T` suffix is announced as a bare letter, which is not a unit a listener
   can act on. Sighted-only surfaces keep the compact form.
-- `tick(v, unit)` — compact axis-tick text, always unit-bearing. **Exactly zero renders `$0`, not
+- `tick(v, unit)` gives compact axis-tick text, always unit-bearing. **Exactly zero renders `$0`, not
   `$0B`**: zero has no magnitude, so it takes no magnitude suffix, and `niceExtent` puts an
   exact-zero tick on every non-negative axis on the site.
-- `value(v, unit)` — the standard "full value or `'no data'` if `v == null`" formatter for
+- `value(v, unit)` is the standard "full value or `'no data'` if `v == null`" formatter for
   table/inspector text.
-- `fiscalYear(y)` — `FY{y}`.
+- `fiscalYear(y)` gives `FY{y}`.
 
 `UnitToggle`'s props are `{ value, onChange, figure, label = 'Measured in', labelId?, units? }`.
-`units` narrows the group to a subset of `Unit` for a series with no denominator for every unit —
-`units={['nominal', 'gdp']}` on §1's debt, which has no real-dollar series. Order always comes from
+`units` narrows the group to a subset of `Unit` for a series with no denominator for every unit, as
+in `units={['nominal', 'gdp']}` on §1's debt, which has no real-dollar series. Order always comes from
 the module's own `OPTIONS`, never from the caller, so a unit sits in the same place in every group
 on the page. The component is generic in its unit union (`UnitToggle<U extends Unit>`), so a
 narrowed caller's `onChange` stays typed to its own union instead of widening back to `Unit` and
 needing a cast.
 
-**`figure` is required, and it is a manifest key — not a name (#72).** It is the caller's own key in
+**`figure` is required, and it is a manifest key rather than a name (#72).** It is the caller's own key in
 `src/data/figures.ts` (`'net-interest'`, `'whole-budget'`), declared once as a module-level `FIGURE`
 constant beside the chart. The component composes the group's accessible name from it via
 `labelledByFigure` in `src/components/islands/figureLabel.ts`, giving
-`aria-labelledby="fig-{key}-no {labelId}"` — the figure's own number span plus the control's visible
+`aria-labelledby="fig-{key}-no {labelId}"`, the figure's own number span plus the control's visible
 label, announced as **"Figure 7 Measured in"**. `aria-label` is not used and must not return: four
 call sites passing `label="Measured in"` as an accessible name is the bug #72 removed, and a
 hand-typed replacement can be unique and still wrong. Omitting `figure` is a type error rather than
@@ -187,13 +188,13 @@ a silently generic name.
 
 The component **renders its own visible `<span class="controls-label" id={labelId ?? `${figure}-units`}>`**
 as a fragment, so the label and the id the group references cannot drift apart; it lands in the
-caller's existing `.controls` flex row. A caller must not render a label span of its own — three did,
+caller's existing `.controls` flex row. A caller must not render a label span of its own. Three did,
 each with an id nothing pointed at, and `BudgetChart` rendered none at all. `label` is the visible
 text and the second half of the name, never a name on its own: "Measured in" is what five of these
 legitimately say.
 
 Islands whose `View` union does not fit `Unit` (`RevenueChart`'s three-way `nominal | gdp | share`,
-`NetInterest`, `PayrollBill`) keep their own `ToggleGroup.Root` and share only the helper —
+`NetInterest`, `PayrollBill`) keep their own `ToggleGroup.Root` and share only the helper, as in
 `aria-labelledby={labelledByFigure(FIGURE, 'revenue-units')}`. The same applies to the basis toggles
 (`LawExplorer`, `StateGiveGet`), which keep their own visible text and label ids.
 
@@ -213,7 +214,7 @@ re-implement a second breakpoint.
 The Radix `Select` wrapper for filter controls, the multi-option analogue of `UnitToggle`'s
 two/three-option `ToggleGroup`. Props: `{ id, label, value, options: {value,label}[], onChange }`.
 The visible `<span class="controls-label" id={id}>` is wired to the trigger via `aria-labelledby`,
-not a `<label>` element — Radix's trigger renders a `<button>`, not a form control, so a `<label>`
+not a `<label>` element, because Radix's trigger renders a `<button>` rather than a form control, so a `<label>`
 would target nothing. `position="popper"` keeps the listbox beside the trigger rather than over it.
 Fully keyboard operable: Tab to the trigger, Enter/Space/Down to open, arrows to move, Enter to
 choose. Introduced for `LawExplorer.tsx`'s three filters (vote character, signing president,
@@ -232,17 +233,17 @@ follows the same skeleton:
 2. A `useMemo` deriving the per-row values for the active unit.
 3. `<Chart interactive ariaLabel={...}>` wrapping axes, drawn series, and one focusable element per
    datum (`tabIndex={0}`, `role="img"`, `onFocus`/`onBlur`/`onMouseEnter`/`onMouseLeave` all setting
-   the same focus state) — never `role="button"`, because focusing a datum reveals a value, it does
+   the same focus state), and never `role="button"`, because focusing a datum reveals a value and does
    not activate anything.
 4. A `<p aria-live="polite" className="readout">` (or an `.inspector` panel for a richer, multi-line
    readout) built from the **same formatting function** the `aria-label` uses, so hover, keyboard
-   focus and touch can never announce different text — since #73 all three arrive through the same
+   focus and touch can never announce different text. Since #73 all three arrive through the same
    `onFocus`. Its idle text is `<ChartHint noun="…" />`, never a hand-written sentence.
 5. A `<TableView>` mirroring the chart's active unit and columns.
 
 **Every island server-renders its whole `<svg>`.** The skeleton above must produce its chart in the
 build output, not on mount: with scripting off a reader still gets the SVG, both axis labels, the
-tick text, the figcaption apparatus and the table. Two things are therefore forbidden — mounting an
+tick text, the figcaption apparatus and the table. Two things are therefore forbidden. The first is mounting an
 island `client:only` (which emits an empty `<astro-island>` and no chart at all), and gating any
 part of the render on having measured the client, which is why `useChartSize` returns the `WIDE`
 preset *before* measurement rather than `null`. `client:visible` and `client:load` both server-render
@@ -264,9 +265,9 @@ Two new primitives for the by-state section (issue #14), neither a variant of an
 ### The tile-grid cartogram (`src/components/charts/stateGrid.ts`, `StateGiveGet.tsx`)
 
 Not a geographic choropleth: this repo carries `d3-scale`/`d3-shape` but no projection library
-(`topojson-client` + `us-atlas`), and a real map's geographic area is not population anyway — it
-would make Wyoming shout and Rhode Island vanish. `stateGrid.ts` exports `TILES` (a `{row, col}`
-per postal code, 51 entries — the 50 states plus DC, no territory), `GRID_COLS`/`GRID_ROWS` (11×8),
+(`topojson-client` and `us-atlas`), and a real map's geographic area is not population anyway,
+because it would make Wyoming dominate the frame and Rhode Island vanish. `stateGrid.ts` exports `TILES` (a `{row, col}`
+per postal code, 51 entries, the 50 states plus DC and no territory), `GRID_COLS` and `GRID_ROWS` (11×8),
 and `divergingFill(v, bound)`, a pure amber↔stone↔teal interpolation with **no party-colour token
 referenced anywhere in the module**. `Chart.tsx` is deliberately not reused here: it paints an x/y
 plot area and margin frame for a cartesian chart, which a tile grid has no use for. The SVG uses a
@@ -274,7 +275,7 @@ fixed `viewBox="0 0 440 320"` (not `useChartSize`) because a tile grid has no me
 relayout the way an axis chart does; `preserveAspectRatio="xMidYMid meet"` plus `width="100%"` makes
 it container-responsive without one.
 
-Each tile is `role="img"` with its own `aria-label` (never `role="button"` — focusing a tile reveals
+Each tile is `role="img"` with its own `aria-label`, and never `role="button"`, because focusing a tile reveals
 a value, it does not activate anything), and the outer `<svg>` is `role="group"` per the same rule
 `Chart.tsx` documents: a subtree with focusable children must not be `role="img"`.
 
@@ -286,7 +287,7 @@ above), but a reader meets a collapsed summary, not a table. A table that must b
 can be read is not an acceptable *primary* non-visual equivalent for a figure whose only other
 presentation is a map. The by-state
 section instead renders a **plain, always-visible** `<table className="sortable-table">`, with
-`<th scope="col">` sort buttons (`.sort-button`) toggling `aria-sort` and click-to-resort — reusing
+`<th scope="col">` sort buttons (`.sort-button`) toggling `aria-sort` and click-to-resort, reusing
 `.tableview-scroll` for the horizontal-scroll wrapper, since that concern is identical. `TableView`
 itself is still reused as-is for the tax-mix figure (`StateTaxMix.tsx`), which needs no sort and
 whose collapsed-by-default behaviour is acceptable there because it is a supplementary detail
@@ -296,38 +297,39 @@ table, not the chart's only non-visual path.
 row header rather than by a reduced column set (#63).** The reason is the one directly above,
 applied one layer down: this table is the cartogram's *primary* non-visual equivalent, chosen over
 `TableView` precisely because a reader must not have to open anything to reach it. Dropping columns
-below a breakpoint reintroduces exactly that — data behind a gesture — and a screen-reader user on a
+below a breakpoint reintroduces that, putting data behind a gesture, and a screen-reader user on a
 390px phone would lose them from the accessibility tree as well. So the strategy is **scroll, with
 the name kept on screen**, in three declarations in `global.css`:
 
 - `.sortable-table th[scope='row']` and `.sortable-table thead th:first-child` are `position:
-  sticky; left: 0` with `background: var(--ground)` — the page background token, because the cells
+  sticky; left: 0` with `background: var(--ground)`, the page background token, because the cells
   that scroll underneath sit on the page background, and because a sticky cell without an opaque
   background of its own is the same as no sticky cell. `z-index: 1` is on both and no stacking
   context is introduced on `.tableview-scroll`.
 - `.sortable-table caption` is `position: sticky; left: 0; width: 100cqi`. A `<caption>`'s box is
-  the *table's* width, so `max-width: 100%` would resolve against the overflowing table — the bug
-  itself — and `100vw` would overshoot the wrapper by the page's own margins. `100cqi` is the
+  the *table's* width, so `max-width: 100%` would resolve against the overflowing table, which is
+  the bug itself, and `100vw` would overshoot the wrapper by the page's own margins. `100cqi` is the
   wrapper's own inline size, which is why `.tableview-scroll` carries `container-type: inline-size`.
   That declaration is site-wide and inert for the tables that do not query it.
 - Inside `@media (max-width: 30rem)`, `.sortable-table thead th` and `.sortable-table
   th[scope='row']` drop to `white-space: normal`. Header labels and jurisdiction names are words and
   may wrap; the data cells keep `nowrap`, because a broken number is a misread number. This is a
-  reduction of the distance to scroll, not a substitute for the pinned column — the two ship
-  together.
+  reduction of the distance to scroll rather than a substitute for the pinned column, and the two
+  ship together.
 
 Everything in that list is scoped to `.sortable-table`, which is §11's alone, except
 `container-type` on the shared wrapper. Nothing here is scripted, so it holds with JavaScript off.
 The measured before/after at 390×844 is in `contracts/accessibility.md` § "Government §11's
-by-state table at 390px (#63)". The **at-rest affordance** that a wide table scrolls at all — fade,
-shadow, persistent scrollbar or text hint, on `.tableview-scroll` and `.law-table-scroll` alike — is
-**#76**, deliberately not part of the above; keyboard operability of those wrappers is **#71**.
+by-state table at 390px (#63)". The **at-rest affordance** that a wide table scrolls at all is
+**#76**, deliberately not part of the above, and it covers a fade, a shadow, a persistent scrollbar
+or a text hint, on `.tableview-scroll` and `.law-table-scroll` alike. Keyboard operability of those
+wrappers is **#71**.
 
 `StatesTaxMix`'s `not_levied` vs `null`-alone distinction (`docs/contracts/interfaces/state-data.md`)
-renders as `"none levied"` vs `"no data"` — the same two words a reader needs to tell "this state
-doesn't have this tax" from "we don't have this figure" apart, and the page's closing `<p
-class="prose">` states the `"none levied"` convention in body copy so it does not depend on a
-reader opening the (collapsed-by-default) table to learn it.
+renders as `"none levied"` against `"no data"`, which are the two words a reader needs to tell
+"this state does not levy this tax" from "this figure is not published". The page's closing `<p
+class="prose">` states the `"none levied"` convention in body copy, so it does not depend on a
+reader opening the collapsed-by-default table to learn it.
 
 ## `YearRange` (`src/components/islands/YearRange.tsx`)
 
@@ -336,7 +338,7 @@ The shared brushable year-range timeline used by the Households route (`MedianIn
 site's charts do not otherwise carry a zoom/brush interaction.
 
 Props: `min`, `max`, `value: [number, number]`, `onChange`, `label` (the slider's accessible name,
-e.g. `"Years shown"`), `id` (namespaces the `aria-labelledby` wiring — more than one instance can
+e.g. `"Years shown"`), `id` (namespaces the `aria-labelledby` wiring, because more than one instance can
 live on a single page).
 
 - `minStepsBetweenThumbs={4}`: a range narrower than five years is not a readable chart, so Radix
@@ -344,11 +346,11 @@ live on a single page).
 - Each thumb carries its own `aria-label` (`"First year shown"` / `"Last year shown"`) and an
   explicit `aria-valuetext={String(year)}`, so the value announces as a year rather than a grouped
   number (`aria-valuetext` overrides the default `aria-valuenow` announcement).
-- A sibling `<p aria-live="polite" className="readout">` reads `Showing {lo} to {hi}.` — built from
+- A sibling `<p aria-live="polite" className="readout">` reads `Showing {lo} to {hi}.`, built from
   the same `value` prop the caller's charts filter by (`clampToRange` in `charts/series.ts`), so the
   announcement can never disagree with what is drawn.
 - **Mount-gated**: `useState` + `useEffect(() => setReady(true), [])`, `if (!ready) return null`.
-  Without JS the control is absent from the HTML entirely — never present-and-dead — and the charts
+  Without JS the control is absent from the HTML entirely, and never present but dead, and the charts
   it would otherwise drive render complete at their default full range.
 - The domain's own endpoints are also printed as plain text beneath the track, so the slider's full
   range is legible without touching it.
@@ -372,19 +374,19 @@ currently-selected `[lo, hi]`.
 `_meta.notes[0]` forbids drawing the two as one continuous line. `estimates.tsx` is the shared
 vocabulary for that split, used by every Economy-route chart that touches `economy.json`:
 
-- `PROJECTED_DASH` (`'6 4'`) and `PROJECTED_OPACITY` (`0.55`) — the dash pattern and opacity every
+- `PROJECTED_DASH` (`'6 4'`) and `PROJECTED_OPACITY` (`0.55`) are the dash pattern and opacity every
   projected branch uses, so a reader learns the convention once.
-- `splitAtBoundary(rows, lastActualFy)` — splits a row array into `{ actual, projected }` at the
+- `splitAtBoundary(rows, lastActualFy)` splits a row array into `{ actual, projected }` at the
   boundary, **throwing** if a row is flagged `actual` past it. The boundary row is repeated as the
   first point of `projected` so the dashed branch starts where the solid one ends; they remain two
   separate `<path>` elements with different stroke styles.
-- `<BoundaryRule frame x label>` — a vertical rule at the boundary plus its own `.annotation` text,
+- `<BoundaryRule frame x label>` draws a vertical rule at the boundary plus its own `.annotation` text,
   so the split is legible without relying on the dash pattern alone.
 
 Two-panel convention (`WhoWorks.tsx`): when two series share a unit but not a base (percent of the
 labour force versus percent of the population 16 and over), they get two stacked `<Chart>`
 elements with the same `width`/`margin`/`x` scale rather than one chart with two y-axes. Only the
-panel with an interaction affordance carries focusable `.datum` elements — a second panel with no
+panel with an interaction affordance carries focusable `.datum` elements, because a second panel with no
 hoverable content needs no focusable one, so hover/focus parity still holds exactly.
 
 ## Derived series and `ZeroLine` (`PricesAndRates.tsx`, issue #13)
@@ -392,7 +394,7 @@ hoverable content needs no focusable one, so hover/focus parity still holds exac
 A series published as an index level (`cpi`, `core_pce`) is never charted or labelled as a rate.
 Where a chart needs a rate of change, it is derived once (a single `yoy()` helper computing
 `100 * (cur - prev) / prev` over the same dataset the chart already reads) and the transform is
-named in the `Figure`'s `yUnit`, `note`, axis title and table headers — never left implicit. The
+named in the `Figure`'s `yUnit`, `note`, axis title and table headers, and never left implicit. The
 derived series still carries the source row's `actual` flag, so `splitAtBoundary` applies to it
 exactly as it does to a raw field.
 
@@ -402,14 +404,15 @@ whose domain admits negative values draws `<ZeroLine frame={fr} y={yScale(0)} />
 zero is legible by position, not only by colour or by reading the axis tick labels.
 
 `niceExtent` pads a value range outward by a fixed fraction of its span, then anchors the low end
-at exactly `0` for any series with no negative observation — whether the pad left that low end
+at exactly `0` for any series with no negative observation, whether the pad left that low end
 above zero or pushed it below. A series that does contain a negative value keeps its padded
 negative low end untouched, and a panel whose domain therefore admits negatives still draws its
 `<ZeroLine>`. The sign test reads the raw values rather than `extent()`'s output, because `extent()`
 widens a degenerate range by `±1` and a single non-negative datum would otherwise look signed.
 
 The practical consequence is that a zero-anchored series whose minimum sits very close to zero
-while its maximum is far away — the fed funds/3-month bill/10-year note panel, minimum `0.028`
-(FY2015) against a maximum of `16.945` (FY1981) — now gets a floor of exactly `0` from
+while its maximum is far away now gets a floor of exactly `0` from the pad. The fed funds,
+3-month bill and 10-year note panel is the case, at a minimum of `0.028` (FY2015) against a maximum
+of `16.945` (FY1981), and the floor comes from
 `niceExtent` itself. Call sites pass the returned domain straight to `linear()`; none of them
 re-pins the low end by hand.

@@ -1,12 +1,12 @@
 # Interface: `src/data/revenue_sources.json` and `src/data/oecd.json`
 
 The consumer contract for the two datasets behind GOV-10 (`RevenueChart.tsx`, `OecdChart.tsx`).
-Read this before charting either — the two are easy to conflate and BRIEF.md rule 3 depends on
+Read this before charting either, because the two are easy to conflate and BRIEF.md rule 3 depends on
 never doing so.
 
 ## `revenue` (`src/data/revenue_sources.json`, typed `Dataset<RevenueYear[]>`)
 
-One row per fiscal year, FY1962–FY2025, 64 rows, contiguous, **zero null fields**
+One row per fiscal year, FY1962-FY2025, 64 rows, contiguous, **zero null fields**
 (`test_revenue_series_is_contiguous_and_has_no_null_fields`).
 
 ### Unit families
@@ -40,10 +40,10 @@ than shipping a stack that silently stops summing to its total.
 
 ### The `share` view is normalised; `gdp` and `nominal` are not
 
-`s_*` sums to 100 **by construction** — it is a share-of-total series, so a stack built from it
+`s_*` sums to 100 **by construction**, because it is a share-of-total series, so a stack built from it
 always tops out at 100. `g_tot` does **not** behave the same way: its real range across the series
 is 14.53 (the FY2020 trough era) to 20.02 (FY2000), nowhere near 100. A GDP-share stack must use a
-y-domain derived from the data (`niceExtent([0, max g_tot])`), never a fixed `[0, 100]` — doing so
+y-domain derived from the data (`niceExtent([0, max g_tot])`), never a fixed `[0, 100]`, because doing so
 would visually claim the GDP-share stack sums to the same thing the share-of-revenue stack does,
 which is false. `nominal` is likewise unnormalised, domain derived from `n_tot`.
 
@@ -51,7 +51,7 @@ which is false. `nominal` is likewise unnormalised, domain derived from `n_tot`.
 
 `n_mi` and `g_mi` are positive in every one of the 64 years (min `n_mi` $0.8B, min `g_mi` 0.144% of
 GDP). A consumer must draw this band, name it in every readout/`aria-label`, and give it its own
-table column in all three views — never drop it silently for being small
+table column in all three views. Never drop it silently for being small
 (`test_miscellaneous_revenue_is_never_zero`).
 
 ### Customs duties
@@ -69,7 +69,7 @@ Single-object payload (not an array): `year`, `us_pct_gdp`, `oecd_average_pct_gd
 
 `countries` has 11 rows (10 named countries plus one `is_average`-flagged row) against
 `of_countries: 38`. Any chart built from `countries` is showing a selection of the full OECD
-membership and **must say so** — `test_oecd_average_is_flagged_and_the_country_list_is_a_selection`
+membership and **must say so**. `test_oecd_average_is_flagged_and_the_country_list_is_a_selection`
 and `pipeline/lib/validate.py`'s `check_snapshots` both assert `len(countries) < of_countries`.
 
 ### `is_us` / `is_average` flags
@@ -77,7 +77,7 @@ and `pipeline/lib/validate.py`'s `check_snapshots` both assert `len(countries) <
 Exactly one row carries `is_us: true` (`United States`, `v` equal to `us_pct_gdp`) and exactly one
 carries `is_average: true` (`OECD average`, `v` equal to `oecd_average_pct_gdp`). Both are absent
 (never `false`) on every other row. `OecdChart` **removes the average row from the country rows
-entirely** and draws it as a labelled vertical reference line instead — that is how "marked as an
+entirely** and draws it as a labelled vertical reference line instead, which is how "marked as an
 average, not a country" is satisfied structurally rather than by a legend note. The US row is
 marked by three channels (fill weight, dot size, bold label with inline value), never by hue alone.
 
@@ -87,12 +87,12 @@ marked by three channels (fill weight, dot size, bold label with inline value), 
 `oecd.json`'s `us_pct_gdp` (25.6%) counts **federal, state and local government together**. Both
 datasets' `_meta.notes` state this explicitly
 (`test_oecd_and_federal_revenue_are_marked_as_different_scopes`), and the government route states
-it a third time, in body copy — never only in a `Figure` `note`, never in a tooltip
+it a third time, in body copy. Never only in a `Figure` `note`, and never in a tooltip
 (`src/pages/government/index.astro`, the paragraph containing "federal, state and local").
 
 ## Two dating exceptions
 
-`oecd.json` is 2024 preliminary data — the latest OECD year, breaking the FY1995/FY2025 convention
+`oecd.json` is 2024 preliminary data, the latest OECD year, breaking the FY1995/FY2025 convention
 used elsewhere on this route. The IRS tax-year-2023 shares-by-income-group figures (`sections.md`
 §10's "Who pays the income tax" paragraph) are a second, unrelated dating exception; that content
 belongs to the households route (issues #9/#11) and is not rendered by this section at all.
@@ -115,7 +115,7 @@ gutter than either preset's `left` provides. It still reads its `narrow` flag an
   (integer) plus the three families `n_` / `g_` / `s_` × `ii`, `pr`, `ci`, `ex`, `cu`, `eg`, `mi`,
   `tot`.
 - The `s_*` share family is bounded `0 … 100`, as is `g_*` (percent of GDP). `n_*` is
-  `minimum: 0`. Nothing here is nullable — a missing component is a build failure, never a hole.
+  `minimum: 0`. Nothing here is nullable, because a missing component is a build failure rather than a hole.
 - `_meta` requires `source` (`minLength: 12`), `title`, `provenance` and `coverage`
   (`start`, `end`).
 

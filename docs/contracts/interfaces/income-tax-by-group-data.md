@@ -1,8 +1,8 @@
 # Interface: `src/data/income_tax_by_group.json`
 
 The consumer contract for `incomeGroups` (`src/data/index.ts`, typed as `Dataset<IncomeGroups>` in
-`src/data/types.ts`). Read this before charting anything from `incomeGroups.data` — the shape
-looks like a row array at a glance and is not one, and three cells are absent by design.
+`src/data/types.ts`). Read this before charting anything from `incomeGroups.data`, because the
+shape looks like a row array at a glance and is not one, and three cells are absent by design.
 
 The companion series, `revenue_sources.json` (`g_pr` / `s_pr`, the payroll line §6 uses), has its
 own contract owned by #22 at `docs/contracts/interfaces/revenue-data.md`; this document does not
@@ -11,7 +11,7 @@ restate it.
 ## Shape
 
 `Dataset<IncomeGroups>`: `{ _meta: Meta, data: IncomeGroups }`. Unlike `budget` or `debt`, `data`
-is **not** an array of per-year rows — it is one object for one tax year, carrying three
+is **not** an array of per-year rows. It is one object for one tax year, carrying three
 differently-shaped fields:
 
 ```ts
@@ -23,11 +23,11 @@ interface IncomeGroups {
 }
 ```
 
-`tax_year` is currently `2023` — the latest IRS Statistics of Income year, not the FY1995/FY2025
-convention the Government route uses. A consumer stating a year in prose must say "tax year 2023",
-not imply it is a fiscal year.
+`tax_year` is currently `2023`, the latest IRS Statistics of Income year, which is not the
+FY1995/FY2025 convention the Government route uses. A consumer stating a year in prose must say
+"tax year 2023", and must not imply it is a fiscal year.
 
-## `groups: IncomeTaxGroup[]` — nested, not a partition
+## `groups: IncomeTaxGroup[]`, nested rather than a partition
 
 ```ts
 interface IncomeTaxGroup {
@@ -39,8 +39,8 @@ interface IncomeTaxGroup {
 ```
 
 Six groups, in data order: `Top 1%`, `Top 5%`, `Top 10%`, `Top 25%`, `Top 50%`, `Bottom 50%`. The
-first five are **nested** — Top 1% is the wealthiest slice inside Top 5%, which is inside Top 10%,
-and so on. They are not five disjoint slices of one hundred percent, and `Bottom 50%` is a
+first five are **nested**, because Top 1% is the wealthiest slice inside Top 5%, which is inside
+Top 10%, and so on. They are not five disjoint slices of one hundred percent, and `Bottom 50%` is a
 separate half not contained in any of them.
 
 **Traps**
@@ -49,18 +49,18 @@ separate half not contained in any of them.
   because each wider group's share includes every narrower group's tax paid. A stacked bar or a
   pie built from these six values silently double- and triple-counts. `pipeline/lib/validate.py`
   asserts each narrower group's `tax_share_pct` is `<=` the next-wider group's, as a monotone
-  ladder check — this is a **necessary** consequence of nesting, not sufficient proof a consumer
-  used the values correctly.
+  ladder check. Monotonicity is a **necessary** consequence of nesting rather than sufficient
+  proof a consumer used the values correctly.
 - **`income_share_pct` is absent, not zero, for `Top 5%`, `Top 25%` and `Bottom 50%`.** The IRS
   table this is drawn from does not publish an AGI share at those cutpoints. A chart that renders
-  the absent cell as `0` asserts a fact the source does not support. Render "no data" — never a
-  zero-height bar, never an empty half of a paired bar that implies zero.
-- **`avg_rate_pct` is present only for `Top 1%` (26.3) and `Bottom 50%` (3.7)** — absent for the
-  other four groups. Same rule: absent, never zero.
+  the absent cell as `0` asserts a fact the source does not support. Render "no data", and never a
+  zero-height bar or an empty half of a paired bar that implies zero.
+- **`avg_rate_pct` is present only for `Top 1%` (26.3) and `Bottom 50%` (3.7)**, and is absent for
+  the other four groups. The same rule applies, so render absent rather than zero.
 - `pipeline/tests/test_pipeline.py::test_unpublished_group_cells_are_absent_not_zero` and
   `::test_percentile_groups_are_nested_not_a_partition` guard both traps above.
 
-## `top1_tax_share_history: Top1IncomeSharePoint[]` — five scattered years
+## `top1_tax_share_history: Top1IncomeSharePoint[]`, five scattered years
 
 ```ts
 interface Top1IncomeSharePoint {
@@ -69,21 +69,21 @@ interface Top1IncomeSharePoint {
 }
 ```
 
-Five published years — 2001, 2019, 2021, 2022, 2023 — **not an annual series**. The 2001-to-2019
-gap is 18 years. A consumer must draw these as discrete points on a true linear year axis (so the
+Five published years, 2001, 2019, 2021, 2022 and 2023, and **not an annual series**. The
+2001-to-2019 gap is 18 years. A consumer must draw these as discrete points on a true linear year axis (so the
 gap is visible as a gap) and must not import a line generator or interpolate between them: a line
 would assert 17 years of data that were never published.
 `pipeline/lib/validate.py` asserts the maximum year-to-year gap exceeds 1, specifically so this
 series is revisited if it ever becomes annual.
 
-## `cbo_top1_income_share: Top1IncomeSharePoint[]` — exactly two points
+## `cbo_top1_income_share: Top1IncomeSharePoint[]`, exactly two points
 
-Same `Top1IncomeSharePoint` shape, exactly two observations: 1979 (9) and 2022 (18) — the top 1%
-share of income before transfers and taxes. This is drawn once, on the Households route's §2 (the
-spread), not redrawn here; §5 cites both numbers in body copy with a link to `#the-spread` rather
-than duplicating the chart.
+Same `Top1IncomeSharePoint` shape, with exactly two observations, 1979 (9) and 2022 (18), giving
+the top 1% share of income before transfers and taxes. The pair is drawn once, on the Households
+route's §2 (the spread), and is not redrawn here. §5 cites both numbers in body copy with a link to
+`#the-spread` rather than duplicating the chart.
 
-## `_meta.notes` — four caveats, all consumer obligations
+## `_meta.notes`, four caveats, all consumer obligations
 
 1. **Individual income tax only.** Excludes payroll tax, which is the larger bill for most
    households outside the top decile. Any chart or paragraph built from this dataset must say so.
@@ -96,8 +96,8 @@ than duplicating the chart.
    alone, without the income-share column beside it, misleads about who "pays the most" versus who
    "earns the most."
 
-`refresh.mode` is `"curated"` (`monthly/curated_snapshots.py`) — this source publishes as a
-document, not a machine-readable feed, so it is hand-maintained rather than re-fetched.
+`refresh.mode` is `"curated"` (`monthly/curated_snapshots.py`), because this source publishes as a
+document rather than a machine-readable feed, so it is hand-maintained rather than re-fetched.
 
 ## `_meta.source`
 
