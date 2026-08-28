@@ -3,9 +3,10 @@
 You are building a static, interactive data site for GitHub Pages. Everything you
 need is in this folder. Read this file completely before writing code.
 
-The material already exists as a ten-slide social carousel. This is not a port of
-that. The carousel had to make its argument in a fixed order with no interaction;
-a site can let a reader test the argument themselves. Build for that.
+The material already exists as a ten-slide social carousel. The site is not a
+port of that carousel. The carousel had to make its argument in a fixed order
+with no interaction, and a site can let a reader test the argument themselves.
+Build for that.
 
 ---
 
@@ -15,13 +16,13 @@ US federal debt passed $40 trillion in August 2026, and it doubled in ten years.
 The site explains where that came from using only primary data: thirty-one years
 of federal budget figures, every major deficit-moving law since 1995 with its
 cost and its vote, who holds the debt, where revenue comes from, and how US taxes
-compare internationally. The through-line is that the popular story — one party
-did this — does not survive contact with the data. Split control covers 19 of 31
-years, sixteen of the twenty-three biggest laws passed with votes from both
-parties, and net interest, which nobody votes on, is 39% of all deficits.
+compare internationally. The recurring finding is that the popular story, in
+which one party did this, does not hold against the data. Split control covers 19
+of 31 years, 16 of the 23 biggest laws passed with votes from both parties, and
+net interest, which no one votes on, is 39% of all deficits.
 
-The site's job is to let a reader check that for themselves, not to be persuaded
-of it.
+The site's job is to let a reader check that for themselves. Persuading the
+reader is not the job.
 
 ---
 
@@ -38,11 +39,11 @@ of it.
 - **No CSS framework.** Plain CSS with custom properties, one stylesheet. The
   design tokens below are the whole system.
 - **Deploy via GitHub Actions** to Pages. Set `base` in `vite.config.ts` to the
-  repo name (`/repo-name/`) or the build will 404 on assets — this is the single
+  repo name (`/repo-name/`) or the build will 404 on assets, which is the single
   most common failure for Vite on Pages.
 - Data files ship as static JSON in `public/data/` and are fetched at runtime, or
-  imported directly if you prefer a single bundle. Either is fine; importing is
-  simpler and the total payload is under 40 KB.
+  imported directly for a single bundle. Either works, importing is simpler, and
+  the total payload is under 40 KB.
 
 ---
 
@@ -71,8 +72,8 @@ Match the existing carousel exactly. These are not suggestions.
 
 Type: **Bricolage Grotesque** 800 for display, **IBM Plex Sans** for body,
 **IBM Plex Mono** for all numbers, axis labels, kickers and captions. Load from
-Google Fonts. Numbers are always mono — this is the strongest single cue that
-ties the site to the deck.
+Google Fonts. Numbers are always mono, which is the strongest single cue tying
+the site to the deck.
 
 Kickers are small caps at 0.9375rem, letter-spacing 0.09em (`src/styles/global.css:60-66`).
 Body copy is sentence case. No em dashes; `docs/contracts/prose.md` names the replacement.
@@ -88,20 +89,20 @@ claim the data does not make.
 Eleven sections, scroll-driven, each anchored so it can be linked. A persistent
 thin nav rail on desktop, collapsing to a top bar on mobile.
 
-1. **The $40 trillion** — hero. The debt series, with the ten-year doubling.
-2. **Who holds it** — public vs intragovernmental, domestic vs foreign.
-3. **How old is the debt** — the 30-year ceiling against the six-year average.
-4. **The whole budget** — outlays stacked, revenue line, deficit below zero.
-5. **The structural gap** — revenue vs outlays as a share of GDP.
-6. **What Congress votes on** — mandatory vs discretionary vs interest.
-7. **Net interest** — the fastest-growing line.
-8. **The laws** — every major law, its cost, its vote, its enactment date.
-9. **Who passed it, who signed it** — the same $16.75T sorted two ways.
-10. **Where the money comes from** — revenue by source, brackets, OECD.
-11. **What this cannot tell you** — the caveats, in full, not a footnote.
+1. **The $40 trillion.** The hero. The debt series, with the ten-year doubling.
+2. **Who holds it.** Public against intragovernmental, domestic against foreign.
+3. **How old is the debt.** The 30-year ceiling against the six-year average.
+4. **The whole budget.** Outlays stacked, revenue line, deficit below zero.
+5. **The structural gap.** Revenue against outlays as a share of GDP.
+6. **What Congress votes on.** Mandatory against discretionary against interest.
+7. **Net interest.** The fastest-growing line.
+8. **The laws.** Every major law, its cost, its vote, its enactment date.
+9. **Who passed it, who signed it.** The same $16.75T sorted two ways.
+10. **Where the money comes from.** Revenue by source, brackets, OECD.
+11. **What this cannot tell you.** The caveats, in full, and not a footnote.
 
-Section 11 is not optional and does not get collapsed behind a disclosure. It is
-load-bearing.
+Section 11 is not optional and does not get collapsed behind a disclosure. The
+site's credibility rests on it.
 
 ---
 
@@ -116,22 +117,23 @@ than making everything hoverable.
 - **Unit toggle** on every dollar chart: nominal, real (FY2025 dollars), percent
   of GDP. The data files carry all three (`n_`, `r_`, `g_` prefixes). This is the
   single most valuable interaction on the site, because the choice of unit is the
-  main way this subject gets distorted and letting people flip is the honest
-  answer.
+  main way this subject gets distorted, and letting a reader flip between units is
+  the honest answer.
 - **Law explorer** (section 8): a sortable, filterable table of all 23 laws.
   Filter by vote character, by signing president, by control at enactment. Sort
   by cost, date, or margin. Clicking a law highlights its enactment date on the
-  deficit chart above. This is the thing a static carousel could never do.
+  deficit chart above. A static carousel could never do that.
 - **Year inspection**: hovering or focusing any year in the budget chart shows a
   panel with that year's full breakdown, the control configuration, and any laws
   enacted.
 - **Attribution toggle** (section 9): switch between "by the coalition that
   passed it" and "by the president who signed it." Both total $16.75T, which is
-  the point.
+  the finding.
 
 **Explicitly do not build:** a "build your own budget" simulator, a debt clock, a
-personal tax calculator, or anything with a countdown. They are all engagement
-bait and they would undercut the site's credibility.
+personal tax calculator, or anything with a countdown. Each is built for
+engagement rather than for reading, and each would undercut the site's
+credibility.
 
 ---
 
@@ -145,13 +147,14 @@ Every chart must be usable without sight and without a mouse.
 - Every data point that can be hovered must also be focusable with Tab and give
   the same information.
 - Every chart has a corresponding data table, reachable via a "View as table"
-  toggle. Not a hidden table for screen readers only; a real one anyone can open.
+  toggle. It is a real table anyone can open, and never a hidden table for screen
+  readers alone.
 - Colour never carries meaning alone. Party is also encoded in the strip labels;
   deficit versus surplus is also encoded by sign and position.
 - Respect `prefers-reduced-motion`. If you add scroll-triggered reveals, they
   must degrade to instant.
 - Target contrast: body text at 4.5:1 minimum against `--ground`. `--ink-soft` on
-  `--ground` passes; check anything lighter.
+  `--ground` passes, and anything lighter needs checking.
 
 ---
 
@@ -181,7 +184,7 @@ so they cannot be violated by accident.
    (`src/data/party_splits.json`), cross-checked against House Clerk roll call
    699 for PL 115-97. Democratic votes are shown on the caucus basis by default
    and a chart must state which basis it uses. A null chamber means no roll call
-   exists — almost always a voice vote — and is never rendered as unanimity.
+   exists, almost always a voice vote, and is never rendered as unanimity.
    Section 8 must say so plainly and section 12 repeats it. `legacy_comp` and
    `vote_character` are the retired classification; never derive a vote figure
    from them.
