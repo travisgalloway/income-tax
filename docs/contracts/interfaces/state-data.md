@@ -1,7 +1,7 @@
 # Interface: `src/data/states_balance.json` and `src/data/states_tax_mix.json`
 
-The consumer contract for issue #14 (Government §11, "By state, and which states give more than
-they get"). Both outputs are **objects rather than bare arrays**, because `lib/report.py`'s `_dig` walks dotted
+The consumer contract for issue #14 (Government §11, "Federal tax collected and award
+spending, by state"). Both outputs are **objects rather than bare arrays**, because `lib/report.py`'s `_dig` walks dotted
 paths and `_rows` requires a `y` key these rows do not have, so a chart reads `data.jurisdictions`,
 never `data` itself as a list.
 

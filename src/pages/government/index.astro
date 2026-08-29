@@ -49,13 +49,14 @@ const sourcesHref = join('/sources')
   </p>
   <section id="forty-trillion">
     <p class="kicker"><span class="section-no">Section 1</span></p>
-    <h2>Ten years, twice the debt</h2>
+    <h2>Gross federal debt, FY2016 to FY2026</h2>
     <p class="standfirst">
       Gross federal debt over ten <Term id="fiscal-year">fiscal years</Term>, in{' '}
       <Term id="nominal">nominal</Term> dollars and as a share of the economy, on a toggle.
       Measured
       against <Term id="gross-domestic-product">GDP</Term> the same decade
-      moved it from 105% to 124%. Look at whether the two units tell the same story.
+      moved it from 105% to 124%. Whether the two units tell the same story is what the section
+      settles.
     </p>
     <p class="finding">
       Debt doubled in ten fiscal years. It went from $19.57T at the close of FY2016 to $40T at
@@ -86,7 +87,7 @@ const sourcesHref = join('/sources')
 
   <section id="who-holds-it">
     <p class="kicker"><span class="section-no">Section 2</span></p>
-    <h2>Most of it is owed to us</h2>
+    <h2>Composition of the debt by holder</h2>
     <p class="standfirst">
       About 80% is <Term id="debt-held-by-the-public">held by the public</Term>: investors,
       pension funds, banks, the Federal Reserve and foreign governments. The other 20% the government owes itself, mostly the Social
@@ -103,7 +104,7 @@ const sourcesHref = join('/sources')
       fig={fig('debt-holders')}
       xUnit="Share of gross debt, and share of publicly held debt"
       yUnit="holder category"
-      note="Foreign holders are about 30% of publicly held debt. Redo it: 30% of the $32.14 trillion held by the public is about $9.6 trillion. Against $39.88 trillion of gross debt that is 24%. A 32% figure is the share of publicly held debt carrying the gross label. The two denominators are not interchangeable. Country holdings are the Treasury International Capital release for November 2025, a series revised monthly."
+      note="Foreign holders are about 30% of publicly held debt. Redone against gross, 30% of the $32.14 trillion held by the public is about $9.6 trillion. Against $39.88 trillion of gross debt that is 24%. A 32% figure is the share of publicly held debt carrying the gross label. The two denominators are not interchangeable. Country holdings are the Treasury International Capital release for November 2025, a series revised monthly."
     >
       <DebtHolders client:visible d={debtHolders.data} />
     </Figure>
@@ -125,7 +126,7 @@ const sourcesHref = join('/sources')
 
   <section id="how-old">
     <p class="kicker"><span class="section-no">Section 3</span></p>
-    <h2>The debt is refinanced every few years, not every few decades</h2>
+    <h2>Maturity structure of marketable debt</h2>
     <p class="standfirst">
       The longest security the Treasury sells is the 30-year bond, so nothing outstanding
       today was issued before 1996. But the average is nowhere near thirty years. It is
@@ -157,7 +158,7 @@ const sourcesHref = join('/sources')
 
   <section id="whole-budget">
     <p class="kicker"><span class="section-no">Section 4</span></p>
-    <h2>The deficit is the part of the budget revenue did not cover</h2>
+    <h2>Outlays, revenue and the deficit</h2>
     <p class="standfirst">
       Above the line, <Term id="outlays">outlays</Term> stacked by category with revenue drawn
       across. Below it, the
@@ -190,7 +191,7 @@ const sourcesHref = join('/sources')
 
   <section id="structural-gap">
     <p class="kicker"><span class="section-no">Section 5</span></p>
-    <h2>Revenue barely moves. Spending does.</h2>
+    <h2>Revenue and outlays as shares of GDP</h2>
     <p class="standfirst">
       Two totals on one axis, revenue against outlays, with the spending categories of{' '}
       <a href="#whole-budget">Section 4</a> taken away. What is left to read is which of the two
@@ -219,7 +220,7 @@ const sourcesHref = join('/sources')
 
   <section id="what-congress-votes-on">
     <p class="kicker"><span class="section-no">Section 6</span></p>
-    <h2>The part they vote on is the part that shrank</h2>
+    <h2>Mandatory, discretionary and net interest</h2>
     <p class="standfirst">
       <Term id="discretionary-spending">Discretionary spending</Term> is the only category set
       by an annual appropriation. It is
@@ -255,7 +256,7 @@ const sourcesHref = join('/sources')
 
   <section id="net-interest">
     <p class="kicker"><span class="section-no">Section 7</span></p>
-    <h2>Nobody appropriates the interest</h2>
+    <h2>Net interest and its appropriation status</h2>
     <p class="standfirst">
       Net interest is the compounding cost of every prior year's borrowing. It passed $1
       trillion in FY2025 and now exceeds defence spending.
@@ -289,7 +290,7 @@ const sourcesHref = join('/sources')
 
   <section id="the-laws">
     <p class="kicker"><span class="section-no">Section 8</span></p>
-    <h2>The bill arrives long after the vote</h2>
+    <h2>Major deficit-moving laws since 1995</h2>
     <p class="standfirst">
       Twenty-three major deficit-moving laws since 1995. Each carries what it was scored to
       cost, who voted for it, and when it was signed.
@@ -335,7 +336,7 @@ const sourcesHref = join('/sources')
 
   <section id="passed-signed">
     <p class="kicker"><span class="section-no">Section 9</span></p>
-    <h2>The same $16.75 trillion, two ways</h2>
+    <h2>Legislative cost by coalition and by signing president</h2>
     <p class="standfirst">
       Every major law scored since 1995, sorted two ways. The left column groups the laws by the
       coalition that voted for them. The right groups them by the president who signed them. Look
@@ -365,7 +366,7 @@ const sourcesHref = join('/sources')
     <p class="prose">
       These are net figures, increases less reductions. Gross increases alone come to $20.73
       trillion. On that basis Obama reads $6.22T rather than $3.98T, because he also signed $2.24
-      trillion of scored deficit reduction. If you show both, label both.
+      trillion of scored deficit reduction. A figure that shows both bases labels both.
     </p>
     <p class="prose">
       A president signs what Congress sends. Colouring by control credits or blames one party for
@@ -376,7 +377,7 @@ const sourcesHref = join('/sources')
 
   <section id="where-money-comes-from">
     <p class="kicker"><span class="section-no">Section 10</span></p>
-    <h2>The mix changed. The total did not.</h2>
+    <h2>Federal revenue by source</h2>
     <p class="standfirst">
       Federal revenue was 17.9% of GDP in FY1995 and 17.2% in FY2025. Thirty years apart,
       essentially the same take. What moved is who pays it and through which tax.
@@ -437,7 +438,7 @@ const sourcesHref = join('/sources')
 
   <section id="by-state">
     <p class="kicker"><span class="section-no">Section 11</span></p>
-    <h2>By state, and which states give more than they get</h2>
+    <h2>Federal tax collected and award spending, by state</h2>
     <p class="standfirst">
       Every state pays federal tax and every state receives federal spending. Comparing the two
       by state is not the balance-of-payments question it sounds like. What follows is narrower
@@ -454,7 +455,7 @@ const sourcesHref = join('/sources')
       fig={fig('state-give-get')}
       xUnit="State or territory"
       yUnit="federal gross tax collections against federal award spending, per person or in total"
-      note="Give is gross IRS collections by filer address; get is USASpending award spending by place of performance. This is narrower than a balance of payments on both sides. Read the paragraphs below before comparing states."
+      note="Give is gross IRS collections by filer address; get is USASpending award spending by place of performance. This is narrower than a balance of payments on both sides. The paragraphs below bound a comparison between states."
     >
       <StateGiveGet client:visible data={statesBalance.data} />
     </Figure>
@@ -482,8 +483,8 @@ const sourcesHref = join('/sources')
       <strong>Neither side is complete.</strong> Award spending excludes most direct benefit
       payments, so the "get" side is smaller than what a state actually receives. Gross
       collections include penalties and interest. They exclude excise taxes collected by Customs
-      and the Alcohol and Tobacco Tax and Trade Bureau. Read the ordering rather than the
-      arithmetic.
+      and the Alcohol and Tobacco Tax and Trade Bureau. The ordering carries the reading here,
+      and the arithmetic does not.
     </p>
 
     <Figure
@@ -514,10 +515,10 @@ const sourcesHref = join('/sources')
 
   <section id="limits">
     <p class="kicker"><span class="section-no">Section 12</span></p>
-    <h2>Six things this data cannot tell you</h2>
+    <h2>Six limits on what this data settles</h2>
     <p class="standfirst">
-      The charts above rest on these limits. Read them before arguing with anyone about those
-      charts.
+      The charts above rest on these limits. Each one bounds a claim the preceding sections
+      make.
     </p>
 
     <ol class="limits">
@@ -568,9 +569,9 @@ const sourcesHref = join('/sources')
         <p class="prose">
           Nominal dollars make everything recent look unprecedented, because prices roughly
           doubled over this span. Share of GDP scales to the economy carrying the burden. Every
-          dollar chart on this site can be flipped between them, and readers should. <a
-          href="#forty-trillion">The debt series in section 1</a> is the plainest case. Flip it,
-          and the same decade reads as a doubling in nominal dollars and as 105% of GDP to
+          dollar chart on this site can be flipped between them. <a
+          href="#forty-trillion">The debt series in section 1</a> is the plainest case. Flipped,
+          the same decade reads as a doubling in nominal dollars and as 105% of GDP to
           124%.
         </p>
       </li>
