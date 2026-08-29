@@ -574,7 +574,7 @@ unit map, and it is anchored against digits so `39` cannot match inside `139`. T
 anchoring against itself before it trusts it, so a later widening of the tolerance fails loudly.
 
 `test_the_criterion_five_audit_covers_every_section` is method rule 5. The audit table's
-`(route, section id)` set **equals** the set built from `dist/`, 29 today.
+`(route, section id)` set **equals** the set built from `dist/`, 31 today.
 
 **What they cannot see, and the three checks that were measured and rejected.** Neither test reads a
 sentence. Which section carries a registered figure is invisible to the first, because the registry's
@@ -609,7 +609,7 @@ counts below. Those are the counts #61 measured against a clean `dist/` before i
 | `test_every_in_prose_cross_reference_resolves_and_is_base_aware` | Every `/`- or `#`-rooted href inside a prose element begins with the served base path, names a route `dist/` actually built, and lands on an `id` that exists on that built page | **12 in-prose cross-references, 12 resolving, 0 not base-aware.** The issue's central premise, that three cross-route links skip the base, was **already discharged** by #43/#70, which fixed exactly those three, and by #49, which moved `join()` out of `BaseLayout.astro` so the site has one implementation of the base join |
 | `test_every_joint_of_the_route_ladder_is_written` | Each content route, in `routeSections` order, carries an **in-prose** link to the route after it | **1 of 2 joints written.** `/economy` §6 handed off to `/households`, and `/households` carried **zero** links to `/government` in any sentence a reader reads |
 | `test_the_last_routes_ending_points_back_into_the_argument` | The closing `.prose` of the terminal section of the terminal route links something other than `/sources`, `/glossary` and `/contents` | **0 such links.** The site's last paragraph was a Sources line and nothing else |
-| `test_the_criterion_six_audit_covers_every_section` | Method rule 5: the audit table's `(route, section id)` set **equals** the set built from `dist/`, 29 today | 29 sections: 4 on `/`, 6 on `/economy`, 7 on `/households`, 12 on `/government` |
+| `test_the_criterion_six_audit_covers_every_section` | Method rule 5: the audit table's `(route, section id)` set **equals** the set built from `dist/`, 31 today | 29 sections: 4 on `/`, 6 on `/economy`, 7 on `/households`, 12 on `/government` |
 
 The first three exist because a check that already passes is what a copy pass needs. #61 added six
 new cross-references, taking the page-wide total from 12 to 18, and without those checks the next
@@ -727,10 +727,12 @@ Checklist item 8.
 
 | Route | Section id | The question it answers | Criterion 1 |
 |---|---|---|---|
-| / | what-this-is | What is this site for, and what does it refuse to do? | Pass |
-| / | where-to-start | Which route should a reader open first, and in what order do the three fit together? | Pass |
-| / | how-to-read-a-figure | What are the parts of a figure here, and how does a reader check one against its source? | Pass |
-| / | where-the-numbers-come-from | Where does the data come from, and what happens when it stops reconciling? | Pass |
+| / | purpose-and-scope | What does this site present, and what falls outside its scope? | Pass |
+| / | data-and-coverage | What span does each route cover, and which destinations exist? | Pass |
+| / | reading-a-figure | What are the parts of a figure here, and in what order do they appear? | Pass |
+| / | provenance-and-method | Who publishes these numbers, and on what dating basis? | Pass |
+| / | impartiality-and-its-limits | What holds the site's impartiality in place, and where does it stop? | Pass |
+| / | suggested-reading-order | In what order do the three routes fit together? | Pass |
 | /economy | one-picture | How much more does the economy produce than it did in 1950? | Pass |
 | /economy | growth-shadow | Did what a household got keep up with what an hour of work produces? | Pass |
 | /economy | who-works | How many people are working, and who does the unemployment rate leave out? | Pass |
@@ -895,10 +897,12 @@ coverage is, and reading a row against the page it judges is Checklist items 5 a
 
 | Route | Section id | What a reader checks its prose against | What in it is the site's reading, and where it says so | Criterion 5 |
 |---|---|---|---|---|
-| / | what-this-is | The three routes themselves. Every claim in the recurring-finding paragraph is made on a route with the evidence beside it, and the paragraph says so | The reading that "the popular story does not hold against the data" is the site's, and the next sentence hands each of its three parts to the route that carries the evidence rather than asserting them here | Pass |
-| / | where-to-start | The six destinations it lists, each linked and each described in one line | "The three routes are meant to be read in order" is an editorial recommendation, and the sentence gives its reason (the economy sets the denominators the other two are measured against) rather than asserting an order | Pass |
-| / | how-to-read-a-figure | Any figure on the site: the apparatus described here is on all of them, in this order, and a reader can open one and check | That a single-unit chart distorts is the site's reading. The page marks it by stating the arithmetic first, so the same series reads three ways and "all three of those are true at once" | Pass |
-| / | where-the-numbers-come-from | The build itself. Four named places where a missing source stops it, plus `/sources` and `/glossary` | None. Every sentence is a statement about what the build refuses to do, and the paragraph says outright that this is not a statement of intent | Pass |
+| / | purpose-and-scope | The three routes themselves. Every subject named here is presented on a route with the evidence beside it | None. The section states scope and what falls outside it, both facts about the site rather than readings of the data | Pass |
+| / | data-and-coverage | Each route's own first section, which states its span, and the six cards, each of them linked | None. The spans are read off the datasets' coverage blocks and the cards off `siteRoutes` | Pass |
+| / | reading-a-figure | Any figure on the site: the apparatus described here is on all of them, in this order, and a reader can open one and check | That a single-unit view distorts is the site's reading. The section marks it by stating the arithmetic first, "the same series reads three ways" | Pass |
+| / | provenance-and-method | `/sources`, which the closing sentence links, and every figure's own Source line | None. Every claim here names who published a number and when, and each is checkable on `/sources` | Pass |
+| / | impartiality-and-its-limits | Government §9, whose two attributions total the same figure, and each route's own limits section | That four practices hold impartiality in place is the site's claim. The paragraph names all four, so a reader can test each one | Pass |
+| / | suggested-reading-order | The three routes in the order given. The economy route's own denominators are what the claim rests on | That the economy sets the denominators is the site's reading, and it is given as the reason for the order rather than asserted | Pass |
 | /economy | one-picture | `one-picture` and its table; $2.383T, $23.718T and 895% are registered in `prose_figures.yaml` | None. The closing prose is about the log axis and the fiscal-year convention, both claims about the drawing | Pass |
 | /economy | growth-shadow | `growth-shadow`, its note, and the full-span table beneath it | None, and the section says so in its own sentence: "This chart shows that the two series diverged. It does not show why, and nothing here identifies a cause" | Pass |
 | /economy | who-works | `who-works`, two panels with two denominators, and its note | That the noncyclical rate is CBO's estimate rather than an observation is marked in its own sentence, which also says CBO revises it | Pass |
@@ -941,10 +945,12 @@ page it judges is Checklist item 14.
 
 | Route | Section id | Where it hands the reader next, or why it ends here | Criterion 6 |
 |---|---|---|---|
-| / | what-this-is | Ends here, and correctly. It states the site's refusal and the evidence standard behind it; naming destinations is the next section's whole job, and `#where-to-start` sits directly below it | Pass |
-| / | where-to-start | To all six destinations, as the card list under the prose. The links are `<h3><a>` inside `ol.cards`, so they carry no prose class and none of the `# 11.` checks counts them: this section's hand-off is its structure, not a sentence | Pass |
-| / | how-to-read-a-figure | Ends here, and correctly. The section is an apparatus lesson, and its destination is every figure on the site rather than any one section | Pass |
-| / | where-the-numbers-come-from | To `/sources` and `/glossary`, both named and linked in the closing prose. The front door ends on the apparatus deliberately, because §2 above it has already handed the reader to the argument | Pass |
+| / | purpose-and-scope | Ends here, and correctly. It states the scope and what falls outside it, and naming the destinations is the next section's job | Pass |
+| / | data-and-coverage | To all six destinations, as the card list under the prose. The links are `<h3><a>` inside `ol.cards`, so they carry no prose class and stay outside the in-prose cross-reference check | Pass |
+| / | reading-a-figure | Ends here, and correctly. The section is an apparatus lesson, and its destination is every figure on the site rather than any one section | Pass |
+| / | provenance-and-method | To `/sources`, named and linked in the closing sentence, where the register the section describes actually lives | Pass |
+| / | impartiality-and-its-limits | Ends here, and correctly. It closes on the design brief's own sentence, which is the claim the section exists to state | Pass |
+| / | suggested-reading-order | To `/economy`, linked in the opening sentence. This is the front door's first forward hand-off, and the reason the order is given at all | Pass |
 | /economy | one-picture | Ends here. The closing prose is the fiscal-year convention and the log axis, construction caveats bounding the chart above. It names the government route as the holder of the same denominator without linking it, which is a boundary rather than a hand-off | Pass |
 | /economy | growth-shadow | Ends here, and correctly. The closing sentence is the route's refusal of causation, "It does not show why, and nothing here identifies a cause", which is a boundary and not a stop | Pass |
 | /economy | who-works | Ends here. A fiscal-year averaging caveat and two axis decisions, bounding the two panels above | Pass |
@@ -1077,7 +1083,7 @@ reader.
     by method rule 4 rather than proxied. **NOT EXECUTED.** Human required. Criterion 4 and Criterion 7.
 
 14. **Read each route end to end again, this time stopping at every boundary**, and ask two
-    questions. At each of the 29 section boundaries, does the closing sentence hand the reader on, or
+    questions. At each of the 31 section boundaries, does the closing sentence hand the reader on, or
     does it merely stop? At the two route boundaries, `/economy` to `/households` and
     `/households` to `/government`: does the sentence carrying the link name what the next route
     actually delivers? The second question is the one that matters most and the one nothing can be

@@ -75,44 +75,36 @@ const cards = [
   <h1>Income &amp; Tax</h1>
   <p class="standfirst">the American economy and government in numbers</p>
 
-  <section id="what-this-is">
+  <section id="purpose-and-scope">
     <p class="kicker"><span class="section-no">Section 1</span></p>
-    <h2>What this site is, and what it refuses to do</h2>
+    <h2>Purpose and scope</h2>
     <p class="prose">
-      This site accounts for where the federal balance sheet came from, told only from primary
-      data. The data is decades of federal budget figures. The set covers every major
-      deficit-moving law, with its cost and its recorded vote. The same sources name who holds the
-      debt and where the revenue comes from. They also compare American taxes with those of other
-      rich countries.
+      This site presents an account of United States federal finance, drawn only from primary
+      data. Four subjects carry it. The first is the federal debt and who holds it. The second is
+      the whole budget and where the revenue comes from. The third is the major laws that moved
+      the deficit, each with its recorded vote. The fourth is the economy those figures are
+      measured in, and what a household earns and pays inside it.
     </p>
     <p class="prose">
-      The recurring finding concerns the popular story, the one in which one party did this. That
-      story does not hold against the data. Divided control covers most of the period. Most of the
-      largest deficit-moving laws passed with votes from both parties. And a large share of the
-      accumulated deficits is net interest, a line nobody votes on at all. Each of those claims is
-      made on a route, with the evidence and the source beside it. None of it is quoted here.
+      The scope is federal. State and local finance appears only where a federal figure would
+      otherwise mislead. The two are labelled apart wherever they meet. Nothing here forecasts,
+      and nothing here recommends. Where the data cannot answer a question, the route says so
+      rather than estimating.
     </p>
-    <p class="prose">
-      That is the refusal. Every figure here names its source in full and states the units on both
-      of its axes. The numbers behind the picture are in the page, for anyone who wants to check
-      the drawing against them. Where the data cannot answer a question, the route says so instead
-      of estimating.
-    </p>
-    <blockquote class="brief-quote">
-      <p>
-        The site's job is to let a reader check that for themselves. Persuading the reader is not
-        the job.
-      </p>
-    </blockquote>
-    <p class="brief-attrib">The site's design brief</p>
   </section>
 
-  <section id="where-to-start">
+  <section id="data-and-coverage">
     <p class="kicker"><span class="section-no">Section 2</span></p>
-    <h2>Where to start</h2>
+    <h2>Data and coverage</h2>
     <p class="prose">
-      Six destinations, in two kinds. The three routes present the analysis. The three reference
-      pages hold the sources, the contents and the definitions.
+      The three routes run over different spans, because their sources do. The economy route runs
+      fiscal 1950 to fiscal 2036, with everything after fiscal 2025 a CBO baseline projection. The
+      households route reaches back to 1913 for the bracket ladder and 1984 for household income.
+      The government route runs FY1995 to FY2025, and its budget series reaches back to FY1962.
+    </p>
+    <p class="prose">
+      Six destinations follow, in two kinds. The three routes present the analysis. The three
+      reference pages hold the sources, the contents and the definitions.
     </p>
     <ol class="cards">
       {cards.map((c) => (
@@ -123,36 +115,20 @@ const cards = [
         </li>
       ))}
     </ol>
-    <p class="prose">
-      The three routes are meant to be read in order. The economy sets the denominators the other
-      two are measured against. Households is where the tax code meets a person. The three
-      reference pages are for looking something up, at any point. None of them assumes you have
-      read anything else.
-    </p>
   </section>
 
-  <section id="how-to-read-a-figure">
+  <section id="reading-a-figure">
     <p class="kicker"><span class="section-no">Section 3</span></p>
-    <h2>How to read a figure</h2>
+    <h2>Reading a figure</h2>
     <p class="prose">
-      Every figure on this site is wrapped in the same apparatus, in the same order, on every
-      route. The apparatus is worth a minute up front, because it is what makes a figure checkable
-      rather than merely convincing.
+      Every figure carries the same apparatus, in the same order, on every route. A section opens
+      with its number, a heading, a standfirst and then a finding. The finding is one sentence,
+      ruled off above and below. The finding states the single claim the figure supports, and it
+      comes before the picture on purpose. Read it, look at the figure, and see whether the two
+      agree.
     </p>
-
-    <h3>The ladder above the chart</h3>
     <p class="prose">
-      Each section opens the same way, with a section number, a heading, a standfirst and then a
-      finding. The standfirst says what the section is about. The finding is one sentence, ruled
-      off above and below, stating the single claim the chart is there to support. The finding
-      comes before the picture on purpose. Read it, then look at the chart, and check whether the
-      picture says what the sentence says. If the two disagree, the sentence is wrong, and that is
-      worth knowing.
-    </p>
-
-    <h3>The caption beneath it</h3>
-    <p class="prose">
-      Under the chart sit up to three lines, always in this order.
+      Beneath the figure sit up to three lines, always in this order.
     </p>
     <dl class="apparatus">
       <dt><span class="lead">Units.</span></dt>
@@ -166,63 +142,81 @@ const cards = [
       <dd>The agency, the dataset and its vintage, as the dataset itself states them.</dd>
     </dl>
     <p class="prose">
-      Units come first because a number without its unit is not checkable. The choice of unit is
-      also where this subject is most often distorted. The source line is rendered verbatim and is
-      never summarised down to the name of an agency. A figure whose source is missing fails the
-      build. So does a figure whose axes do not both name a unit.
-    </p>
-
-    <h3>View as table</h3>
-    <p class="prose">
-      Beneath each chart is a closed disclosure holding the same numbers the chart draws. The
-      disclosure holds a real table in the served HTML, present whether or not scripting is
-      enabled. It is not a screen-reader-only copy. Anyone can open it, read the values, and check
-      the drawing against them.
-    </p>
-
-    <h3>The unit toggle</h3>
-    <p class="prose">
-      Where a series can honestly be shown in more than one unit, the figure carries a toggle. The
-      three settings are Nominal, Real FY2025 and % of GDP. The same series tells three different
-      stories in the three. A line that climbs steeply in nominal dollars can be close to flat once
-      inflation is taken out. Set against the size of the economy, the same line can be falling.
-      All three of those are true at once. Choosing one silently is the commonest way this subject
-      gets distorted. The choice therefore stays yours, and the caption always states which one is
-      showing.
+      Units come first, because a number without its unit cannot be checked. Beneath the caption
+      sits a closed disclosure holding the numbers the figure draws. The disclosure holds a real
+      table in the served HTML, present whether or not scripting runs. Where a series can honestly
+      be shown in more than one unit, the figure carries a toggle. The three settings are nominal,
+      real FY2025, and percent of GDP. The same series reads three ways, and all three are true at
+      once. The caption always states which one is showing.
     </p>
   </section>
 
-  <section id="where-the-numbers-come-from">
+  <section id="provenance-and-method">
     <p class="kicker"><span class="section-no">Section 4</span></p>
-    <h2>Where the numbers come from</h2>
+    <h2>Provenance and method</h2>
     <p class="prose">
-      Every figure on this site traces to a named source with a vintage. Four separate build steps
-      enforce that. Each one fails if a source is missing.
+      Every number here is published by an agency of record. The Congressional Budget Office
+      supplies the budget and economic series. The US Treasury supplies the debt, its maturity and
+      its holders. The Internal Revenue Service supplies the income tax shares and the bracket
+      ladder. The Census Bureau, through FRED, supplies household income and the Gini index. The
+      OECD supplies the cross-country comparison, and USASpending the award spending by state.
+      Voteview supplies the roll calls, cross-checked against the House Clerk record.
     </p>
-    <ol class="prose">
-      <li>
-        A dataset with no source is never published. The step that writes the site's data files
-        refuses to write one that does not name its origin.
-      </li>
-      <li>
-        The same omission fails validation. A separate check re-reads every published file and
-        fails it if the source is missing. The same check fails a source shortened to name an
-        agency but no dataset.
-      </li>
-      <li>
-        The site refuses to load an unsourced dataset. Every data file is asserted as the site
-        starts building. One missing its source throws before a single page is rendered.
-      </li>
-      <li>
-        A figure that omits its source, or either axis unit, cannot build. The figure component
-        itself throws, so a chart cannot reach a reader without its apparatus.
-      </li>
-    </ol>
     <p class="prose">
-      The register itself is on <a href={join('/sources')}>Sources</a>, where each entry carries
-      its vintage and any known discrepancy between official series. The vocabulary is on
-      <a href={join('/glossary')}>Glossary</a>, where every technical term the routes use is
-      defined once.
+      Each figure carries a vintage, which is the release its data came from rather than the years
+      it covers. Official statistics are revised, so the same fiscal year has several published
+      values over time. A figure without its vintage cannot be reconciled against the release it
+      was drawn from.
+    </p>
+    <p class="prose">
+      The basis is the federal fiscal year, October to September, named for the year it ends in.
+      Four series depart from it, and each says so where it appears. The IRS shares are tax year
+      2023. Household income is calendar 2024, the CBO distribution is calendar 2022, and the OECD
+      comparison is 2024 preliminary.
+    </p>
+    <p class="prose">
+      A figure that omits its source, or either axis unit, does not build. The full register is
+      on <a href={join('/sources')}>Sources</a>, where each entry carries its vintage and any
+      known discrepancy between official series.
+    </p>
+  </section>
+
+  <section id="impartiality-and-its-limits">
+    <p class="kicker"><span class="section-no">Section 5</span></p>
+    <h2>Impartiality and its limits</h2>
+    <p class="prose">
+      The site takes no position on what any of these figures should be. Four practices hold that
+      in place. Party votes are counted from the roll calls rather than classified from the
+      character of a vote. The two attributions of legislative cost, by coalition and by signing
+      president, total the same figure. Party colours appear only on partisan data. And no causal
+      claim is made that the data cannot settle.
+    </p>
+    <p class="prose">
+      Impartiality is not the same as completeness. Every route closes on its own limits, and the
+      government route names six of them. A recorded vote is not a cause, and a fiscal year is not
+      a presidency. A cost estimate at enactment is not an outcome.
+    </p>
+    <blockquote class="brief-quote">
+      <p>
+        The site's job is to let a reader check that for themselves. Persuading the reader is not
+        the job.
+      </p>
+    </blockquote>
+    <p class="brief-attrib">The site's design brief</p>
+  </section>
+
+  <section id="suggested-reading-order">
+    <p class="kicker"><span class="section-no">Section 6</span></p>
+    <h2>Suggested reading order</h2>
+    <p class="prose">
+      The three routes are written to be read in order. The{' '}
+      <a href={`${join('/economy')}/`}>economy</a> comes first, because it sets the denominators
+      the other two are measured against. Households follows, where the tax code meets a person.
+      Government comes last, and is the other side of that bill.
+    </p>
+    <p class="prose">
+      The three reference pages assume no reading order at all. Each serves a look-up at any
+      point: a source, a section, or a definition.
     </p>
   </section>
 </BaseLayout>

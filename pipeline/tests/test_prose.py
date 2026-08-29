@@ -1691,7 +1691,7 @@ def test_the_criterion_six_audit_covers_every_section():
     hands the reader next, and would let a deleted section leave a stale judgement behind.
 
     What is asserted is **coverage**, never the wording. "Ends here, and correctly" is a legal
-    answer in column 3 and is the answer for a good many of the twenty-nine, a construction
+    answer in column 3 and is the answer for a good many of the thirty-one, a construction
     caveat bounding the chart above closes its section, and manufacturing a link out of it is the
     failure the refused link quota would have produced. The refusal and its numbers are recorded
     in Criterion 6 in the contract.
