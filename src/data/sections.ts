@@ -10,7 +10,7 @@
  *  `/sources` is deliberately absent: it passes no `sections` prop, carries one section, and is
  *  documented as such in docs/contracts/accessibility.md.
  *
- *  `/` is absent for a different reason. Its four sections live in `introSections` below, not as
+ *  `/` is absent for a different reason. Its six sections live in `introSections` below, not as
  *  an entry in this map, and since #49 they are lifted out of the page's own frontmatter so
  *  `/contents` reads the same array the front door renders. They stay out of `routeSections`
  *  because this map's keys are the domain of `ContentRoute` below, the routes a glossary term's
@@ -68,15 +68,17 @@ export const routeSections = {
 /** The routes a glossary term's `first_used.route` may name. */
 export type ContentRoute = keyof typeof routeSections
 
-/** The four sections of `/`. Moved here verbatim from `src/pages/index.astro` by #49, for the
+/** The six sections of `/`. Moved here verbatim from `src/pages/index.astro` by #49, for the
  *  reason the header gives: the front door renders these, and `/contents` lists them, and a
  *  hand-copied second list is exactly the drift this module exists to make impossible. See the
  *  header for why they are not an entry in `routeSections`. */
 export const introSections: RouteSection[] = [
-  { id: 'what-this-is', label: 'What this site is' },
-  { id: 'where-to-start', label: 'Where to start' },
-  { id: 'how-to-read-a-figure', label: 'How to read a figure' },
-  { id: 'where-the-numbers-come-from', label: 'Where the numbers come from' },
+  { id: 'purpose-and-scope', label: 'Purpose and scope' },
+  { id: 'data-and-coverage', label: 'Data and coverage' },
+  { id: 'reading-a-figure', label: 'Reading a figure' },
+  { id: 'provenance-and-method', label: 'Provenance and method' },
+  { id: 'impartiality-and-its-limits', label: 'Impartiality and its limits' },
+  { id: 'suggested-reading-order', label: 'Suggested reading order' },
 ]
 
 /** The base-path join, moved verbatim out of `BaseLayout.astro` by #49 so there is exactly one
