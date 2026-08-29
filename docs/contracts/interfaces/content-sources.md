@@ -1,7 +1,7 @@
 # Interface: the reference document (`SOURCES.md` → `/sources`) and §12 (`id="limits"`)
 
 The prose/reference boundary. Read this before touching either the `reference` content
-collection or the "What this cannot tell you" section, because both carry rules that are easy to
+collection or the limits section on `/government`, because both carry rules that are easy to
 regress silently, because a regression here looks identical to a working page until someone
 diffs the HTML.
 
@@ -170,7 +170,7 @@ omission.** The page renders `SOURCES.md` in full, as it always has; the tier is
 not appear on `/sources` by side effect. It appears because someone wrote its block, and rule B
 fails the build until they do. #39's two additions, `irs_soi_table_5` and `census_stc`, needed no
 work here for exactly that reason: both were already registered and already passing rule B
-(`SOURCES.md`, the State give-and-get section). The alternative, deriving the page from `_meta`,
+(`SOURCES.md`, the state tax and award spending section). The alternative, deriving the page from `_meta`,
 would mean parsing `SOURCES.md` out of, or replacing it with generated prose, and both break the
 never-parse-out invariant above.
 
@@ -233,7 +233,7 @@ than a replacement for it, so nothing about "the register's own string is the on
 weakens. `/glossary`'s "zero external hyperlinks" boundary is therefore lifted, deliberately and
 by the issue that #50 named as the one that would lift it.
 
-## §12, "What this cannot tell you" (`id="limits"`, `src/pages/government/index.astro`)
+## §12, "Six limits on what this data settles" (`id="limits"`, `src/pages/government/index.astro`)
 
 Structural rules, required by `BRIEF.md`'s "section 11 is not optional and does not get
 collapsed behind a disclosure":

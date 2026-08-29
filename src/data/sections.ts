@@ -46,7 +46,7 @@ export const routeSections = {
     { id: 'a-century-of-brackets', label: 'A century of brackets' },
     { id: 'statutory-vs-effective', label: 'Statutory is not effective' },
     { id: 'who-pays', label: 'Who pays the income tax' },
-    { id: 'the-bill-you-do-not-see', label: 'The bill you do not see' },
+    { id: 'the-bill-you-do-not-see', label: 'Payroll tax' },
     { id: 'limits', label: 'Limits' },
   ],
   '/government': [
@@ -61,7 +61,7 @@ export const routeSections = {
     { id: 'passed-signed', label: 'Who passed it, who signed it' },
     { id: 'where-money-comes-from', label: 'Where the money comes from' },
     { id: 'by-state', label: 'By state' },
-    { id: 'limits', label: 'What this cannot tell you' },
+    { id: 'limits', label: 'Limits' },
   ],
 } satisfies Record<string, RouteSection[]>
 

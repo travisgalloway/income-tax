@@ -281,6 +281,9 @@ The consequences are recorded here, and the change is deferred to that follow-on
 
 ### Ruling 4: the heading register
 
+**Superseded by Ruling 5 on 2026-08-29.** The text below stays as the record, in the way
+the quoted fail examples under **Conventions** stay. Ruling 5 states what governs now.
+
 Set by #60, because Criterion 5 asked what a heading and a standfirst are allowed to assert and the
 contract had no answer. The obvious answer, a list of forbidden words, would have been the wrong one.
 
@@ -306,6 +309,43 @@ describes a reading of a heading against a chart. No token in the heading carrie
 half already exists. `test_no_section_heading_names_the_charts_construction` catches a heading naming
 the apparatus, and its own docstring says it cannot catch a heading naming the variables. Checklist
 item 8 holds the rest, and this ruling is what that item now reads a heading against.
+
+### Ruling 5: the heading names the subject
+
+Set on 2026-08-29, superseding Ruling 4. The front door was rewritten as a report preface, and the
+three routes did not match it. The register across the site is now the analytical report's, and a
+heading is a subject rather than a claim.
+
+**The ruling.** *A heading names the section's subject. The standfirst poses the question and says
+what is set against what. The finding states the claim, in one sentence a reader can falsify against
+the figure. No heading, standfirst or prose element addresses the reader in the second person or
+speaks in the first.*
+
+Ruling 4 held the opposite on both halves. It blessed the pointed heading, on the ground that a flat
+heading fails to say what the section found, and it recorded that the site's second person was not a
+fault. The reply is that the finding already says what the section found, in a ruled-off sentence a
+reader can check against the figure. A heading repeating that claim states it twice, and states it
+where no figure sits beside it. The claim moves to the one element built to carry it.
+
+Ruling 4's third worked row, `/government` §12's standfirst "Read them before arguing with anyone
+about the charts above", was judged in register by that ruling and is out under this one. It now
+reads "Each one bounds a claim the preceding sections make".
+
+**Every `id` is unchanged.** All 25 route headings moved and no anchor did, so `#how-old`,
+`#the-spread`, `#net-interest`, `#by-state` and the rest resolve exactly as before. Ruling 4 set
+that precedent when it rewrote `/government` §3's heading and held its anchor, and this ruling
+follows it at scale.
+
+**Two rail labels moved with their headings.** `routeSections` labels the rail and `/contents`,
+and two carried the second person: `/households`'s `the-bill-you-do-not-see` and `/government`'s
+`limits`. They now read "Payroll tax" and "Limits". The rail is 13rem wide, so the other labels stay
+shorter than their headings rather than tracking them.
+
+**The mechanical half is unchanged, and it is the same check.**
+`test_no_section_heading_names_the_charts_construction` bans `CONSTRUCTION_WORDS` in an `<h2>`, and
+every new heading clears it. Nothing else in the suite reads a heading, which is why this ruling
+costs a contract edit rather than a test edit. Whether a heading names its subject accurately stays
+Checklist item 8.
 
 ## Drift and quoted material
 
@@ -345,11 +385,17 @@ the numbering is for.
 ### Criterion 1 — the question comes first
 
 **Asks:** does the section state the question it answers before its first figure appears?
-**Pass:** the kicker, heading and standfirst together name a question a reader could have asked, and
-the chart then answers it. `src/pages/households/index.astro:225-230` poses it and
+**Pass:** the kicker and heading name the section's subject, the standfirst poses the question a
+reader could have asked, and the chart then answers it.
+`src/pages/households/index.astro:225-230` poses it and
 `src/pages/households/index.astro:244-250` answers it after the chart. **Fail:** the standfirst
 summarises the chart the reader has not seen yet, so the figure arrives as evidence for a claim
 rather than as an answer to a question. **Cited by #52.**
+
+**Which element carries which job, set by Ruling 5.** The heading names the subject. The standfirst
+poses the question and says what is set against what. The finding states the claim, in one sentence
+a reader can falsify against the figure. Before Ruling 5 the heading carried the claim and the
+standfirst carried the question, and the three-way division replaced that.
 
 **The mechanical half.** The checker measures four positional and textual facts over the four report
 routes' built pages. **Enforced by** `pipeline/tests/test_prose.py:453`, `:472`, `:491` and `:515`:
@@ -363,10 +409,15 @@ questions **because it carries a `<figure>`**, which discharges the three Limits
 `/` intro's four. There is no baseline either. #52 found four violations and fixed all four, which
 is the choice the rule below says to make at that count.
 
-**What the checks cannot see.** They cannot see a heading that names the section's *variables*
-instead of its question. "Prices and rates" and "Labor and capital" told the reader what was
-plotted, neither said what was found, and both passed every word list anyone would write. #52
-rewrote them by reading, to `src/pages/economy/index.astro:166` and
+**What the checks cannot see.** They cannot see whether a heading names the section's subject
+accurately, or whether the standfirst beneath it poses the question the figure answers. Both are
+readings, and no word list reaches either.
+
+**One reversal is recorded here rather than deleted.** #52 read "Prices and rates" and "Labor and
+capital" as defects, on the ground that a heading naming what was plotted does not say what was
+found, and rewrote both. Ruling 5 moves the claim to the finding, so a heading naming the subject is
+now the rule rather than the fault, and those two headings are the shape every route now uses. The
+sites #52 rewrote are `src/pages/economy/index.astro:166` and
 `src/pages/economy/index.astro:227`.
 
 The checks also cannot see a standfirst that restates its finding **in words** rather than in

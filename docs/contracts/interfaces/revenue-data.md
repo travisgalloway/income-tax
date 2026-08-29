@@ -94,7 +94,7 @@ it a third time, in body copy. Never only in a `Figure` `note`, and never in a t
 
 `oecd.json` is 2024 preliminary data, the latest OECD year, breaking the FY1995/FY2025 convention
 used elsewhere on this route. The IRS tax-year-2023 shares-by-income-group figures (`sections.md`
-§10's "Who pays the income tax" paragraph) are a second, unrelated dating exception; that content
+§10's income-tax-by-group paragraph) are a second, unrelated dating exception; that content
 belongs to the households route (issues #9/#11) and is not rendered by this section at all.
 Nothing is outstanding here, and the content is out of scope.
 
