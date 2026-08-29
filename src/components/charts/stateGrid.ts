@@ -2,7 +2,7 @@
  *
  *  A geographic choropleth needs a projection library (`topojson-client` +
  *  `us-atlas`), which this repo does not carry, and geographic area is not
- *  population anyway — it would make Wyoming shout and Rhode Island vanish,
+ *  population anyway, it would make Wyoming shout and Rhode Island vanish,
  *  the exact "absolute favours large states" distortion §11 asks readers to
  *  be able to reverse. This is a plain 11x8 grid of equal squares instead:
  *  one per jurisdiction, at its familiar relative position, drawn with plain

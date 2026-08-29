@@ -13,10 +13,10 @@ const OPTIONS: { value: Unit; label: string }[] = [
   { value: 'gdp', label: '% of GDP' },
 ]
 
-/** `units` narrows the group to a subset — a series with no real-dollar
+/** `units` narrows the group to a subset, a series with no real-dollar
  *  denominator (§1's debt) offers nominal and GDP only. Order always comes from
  *  `OPTIONS`, never from the caller, so a narrowed group keeps the same
- *  relative order as the full set — filtering can still shift a remaining
+ *  relative order as the full set, filtering can still shift a remaining
  *  option's position when an earlier one drops out. The generic keeps a
  *  narrowed caller's `onChange` typed to its own union rather than widening
  *  it back to `Unit`. */
@@ -30,14 +30,14 @@ export function UnitToggle<U extends Unit = Unit>({
 }: {
   value: U
   onChange: (u: U) => void
-  /** The caller's manifest key from `src/data/figures.ts` — `'net-interest'`,
+  /** The caller's manifest key from `src/data/figures.ts`, `'net-interest'`,
    *  not a name. See `figureLabel.ts` for why the name is derived from this
    *  rather than typed. Required: four call sites passing the same
    *  `label="Measured in"` is the bug #72 exists to remove, so omitting the
    *  figure is a type error rather than a silently generic name. */
   figure: string
   /** The visible text beside the toggle, and the second half of its accessible
-   *  name. Not a name source on its own — "Measured in" is what three of these
+   *  name. Not a name source on its own, "Measured in" is what three of these
    *  legitimately say. */
   label?: string
   labelId?: string

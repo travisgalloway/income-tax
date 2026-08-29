@@ -66,7 +66,7 @@ export function GrowthAndShadow({ economyRows, incomeRows }: { economyRows: Econ
   const prodAtBase = prodByYear.get(BASE) as number
   const mhiAtBase = mhiByYear.get(BASE) as number
 
-  // Full FY1950-FY2025 span for the table, with null where a series doesn't
+  // Full FY1950-FY2025 span for the table, with null where a series does not
   // reach: the shared window is stated, not silently truncated away.
   const allYears = economyRows.filter((r) => r.actual).map((r) => r.y)
   const fullRows: Row[] = allYears.map((y) => {

@@ -6,7 +6,7 @@
  *  (2) the surplus band gets a hatch pattern where the deficit fill is flat,
  *  (3) an on-chart text label names the surplus years, (4) --positive vs
  *  --mand reinforces it last. Surplus membership is derived once from
- *  `n_de > 0` -- never from the displayed series -- so the band is the same
+ *  `n_de > 0`, never from the displayed series, so the band is the same
  *  four years in every unit view.
  */
 import { useMemo, useState } from 'react'
@@ -23,7 +23,7 @@ import type { BudgetYear } from '../../data/types'
 import { ChartHint } from '../charts/ChartHint'
 
 /** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
- *  this key rather than typed — see `figureLabel.ts` (#72). */
+ *  this key rather than typed, see `figureLabel.ts` (#72). */
 const FIGURE = 'structural-gap'
 
 const START = 1995
@@ -45,7 +45,7 @@ function outlaysOf(r: BudgetYear, unit: Unit): number {
   }
 }
 
-/** The Alt text block from sections.md section 5, restated per unit view --
+/** The Alt text block from sections.md section 5, restated per unit view,
  *  it describes the GDP-share shape, so the dollar views need their own
  *  wording rather than reusing "percent of GDP" text. */
 function shapeLabel(unit: Unit): string {
@@ -64,8 +64,8 @@ export function StructuralGap({ rows }: { rows: BudgetYear[] }) {
 
   const span = useMemo(() => rows.filter((r) => r.y >= START && r.y <= END), [rows])
 
-  // Surplus membership never depends on the displayed unit -- always the sign
-  // of the nominal deficit -- so the shaded band is identical across all
+  // Surplus membership never depends on the displayed unit, always the sign
+  // of the nominal deficit, so the shaded band is identical across all
   // three unit views, rather than working by coincidence in one of them.
   const surplusYears = useMemo(
     () => new Set(span.filter((r) => r.n_de > 0).map((r) => r.y)),

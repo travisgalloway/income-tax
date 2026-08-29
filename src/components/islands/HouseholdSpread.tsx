@@ -4,7 +4,7 @@
  *  (1947-2024, a continuous line) and the CBO top 1% income share (1979 and
  *  2022, exactly two published points). They are two separate `<Chart>`s
  *  (each its own `role="group"` SVG with its own finding sentence), not one
- *  combined SVG, so each announces independently to assistive tech — but they
+ *  combined SVG, so each announces independently to assistive tech, but they
  *  share one x scale, one `YearRange`, and one readout, so they read as one
  *  figure.
  */
@@ -58,7 +58,7 @@ export function HouseholdSpread({ rows, top1 }: { rows: IncomeYear[]; top1: Top1
   const x = linear(range, [0, iw])
   const xTicks = x.ticks(narrow ? 4 : 8).filter((t) => Number.isInteger(t))
 
-  // Read from _meta.gini_basis ("families"), never hardcoded -- but capitalised
+  // Read from _meta.gini_basis ("families"), never hardcoded, but capitalised
   // for use as the subject of a label, so a chart title reads "Families Gini
   // index" rather than the doubled "Family families Gini index" that pasting
   // the raw lowercase noun after the fixed word "Family" would produce.
@@ -76,7 +76,7 @@ export function HouseholdSpread({ rows, top1 }: { rows: IncomeYear[]; top1: Top1
 
   // Panel B: the CBO top 1% share. The axis domain comes from the FULL
   // two-point series, not the currently-visible subset, so the axis never
-  // collapses to [0, 1] when the range excludes both points — that collapse
+  // collapses to [0, 1] when the range excludes both points, that collapse
   // is exactly the "empty axis that could read as zero" this section must
   // avoid.
   const yTop1 = linear(niceExtent(top1.map((p) => p.v)), [top1Ih, 0])
@@ -145,7 +145,7 @@ export function HouseholdSpread({ rows, top1 }: { rows: IncomeYear[]; top1: Top1
         )}
       </Chart>
 
-      {/* Panel B: CBO top 1% share. Exactly two published points -- no line
+      {/* Panel B: CBO top 1% share. Exactly two published points, no line
           generator, no connector. A future revision that adds a third point
           still draws correctly; it never implies more than were published. */}
       <Chart ariaLabel={top1Label} interactive width={W} height={top1Height} margin={f}>

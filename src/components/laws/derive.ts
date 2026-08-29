@@ -61,7 +61,7 @@ export function demVote(v: ChamberVote, basis: Basis) {
 
 /** `R yea-nay · D yea-nay`, plus an `I` line on the party-membership basis
  *  when independents cast any vote (the caucus basis folds them into `D`).
- *  `null` for a null chamber — NEVER a string; callers decide how "no roll
+ *  `null` for a null chamber, NEVER a string; callers decide how "no roll
  *  call" reads (never `0-0`, never blank, never "unanimous"). */
 export function chamberLine(v: ChamberVote | null, basis: Basis): string | null {
   if (v == null) return null
@@ -75,7 +75,7 @@ export function chamberLine(v: ChamberVote | null, basis: Basis): string | null 
 
 /** The narrowest passage margin across chambers that HAVE a roll call: the
  *  min, over non-null chambers, of `yea - nay`. This is the COUNTED margin
- *  used for sorting (D6) — the derived `character` field is never a sort
+ *  used for sorting (D6), the derived `character` field is never a sort
  *  key. CARES therefore sorts on its Senate margin (96) rather than dropping
  *  out for want of a House roll call. */
 export function margin(s: PartySplit): number | null {
@@ -125,7 +125,7 @@ export function totalsOf(rows: Row[]): Totals {
 }
 
 /** Ascending/descending comparator with nulls sorted LAST in both directions
- *  (E2) — a documented, stable rule, not `?? 0`, which would silently rank a
+ *  (E2), a documented, stable rule, not `?? 0`, which would silently rank a
  *  missing score as if it were zero. */
 export function compareNullsLast(a: number | null, b: number | null, dir: 'asc' | 'desc'): number {
   if (a == null && b == null) return 0

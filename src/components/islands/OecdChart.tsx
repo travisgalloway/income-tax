@@ -3,7 +3,7 @@
  *  BRIEF.md rule 3: this counts federal, state AND local. It is not comparable
  *  to the CBO 17.2%-of-GDP federal-only figure charted in RevenueChart. That
  *  scope difference is stated in body copy (the criterion), and again here in
- *  the Figure `note` — never only in the note, and never in a tooltip.
+ *  the Figure `note`, never only in the note, and never in a tooltip.
  *
  *  No party colour, no diverging good/bad scale: this is one ink hue at two
  *  weights. Nothing here says a higher or lower number is good.

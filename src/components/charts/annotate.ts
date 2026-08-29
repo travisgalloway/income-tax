@@ -3,14 +3,14 @@
  *  Chart.tsx renders with a `viewBox` and no `overflow: visible`, so a label
  *  drawn past the SVG edge is CLIPPED, not spilled: cut mid-glyph, with no
  *  ellipsis and no scrollbar. That is not a layout blemish. Households Fig 4's
- *  `2022: top 1% 31.5%` was rendering as `2022: top 19` — a complete-looking
+ *  `2022: top 1% 31.5%` was rendering as `2022: top 19`, a complete-looking
  *  label carrying a number that is not the number, on a site whose whole claim
  *  is that every figure traces to a source.
  *
  *  So the contract here is stronger than "keep it visible": no placement may be
  *  capable of emitting a partial number that reads as a whole one. A label that
  *  cannot fit is ABSENT (`placeAnnotation` returns `null`), never truncated. The
- *  finding stays reachable regardless — every figure carries a TableView and a
+ *  finding stays reachable regardless, every figure carries a TableView and a
  *  finding-stating `aria-label`, both enforced by the pytest suite.
  *
  *  Pure by construction: no `getBBox`, no `getComputedTextLength`, no `window`,
@@ -56,7 +56,7 @@ export function estimateTextWidth(label: string, fontPx: number = ANNOTATION_FON
  *  Chart.tsx wraps children in `<g transform="translate(margin.left,
  *  margin.top)">`, so local x = 0 is the left edge of the PLOT, and the SVG's
  *  own left edge is at `-margin.left`. Clipping cares about the SVG edges, not
- *  the plot rect — an annotation is free to sit over the margin, it is only
+ *  the plot rect, an annotation is free to sit over the margin, it is only
  *  forbidden to leave the viewBox. */
 export function visibleSpan(frame: Frame, pad = 2): [number, number] {
   return [-frame.margin.left + pad, frame.innerWidth + frame.margin.right - pad]
@@ -73,7 +73,7 @@ const OPPOSITE: Record<Anchor, Anchor> = { start: 'end', end: 'start', middle: '
 /** A shift lands the box exactly on the span edge, and `x + (lo - x)` is not
  *  bit-identical to `lo` in binary floating point. Without this tolerance a
  *  just-shifted placement re-reads as still overrunning, and placing it a
- *  second time flips it — i.e. the helper would not be idempotent, and a chart
+ *  second time flips it, i.e. the helper would not be idempotent, and a chart
  *  that re-renders (Households' year-range slider, E3) could oscillate. */
 const EPS = 1e-9
 
@@ -84,7 +84,7 @@ const EPS = 1e-9
  * then render nothing. Returns the ORIGINAL `{x, anchor}` unchanged whenever
  * the label already fits, so no currently-correct annotation moves.
  *
- * Order matters — flip before shift. A right-edge label re-anchored to `end` at
+ * Order matters, flip before shift. A right-edge label re-anchored to `end` at
  * the same reference point stays attached to the thing it names; one slid
  * leftward along the axis can drift over the series it is labelling. `middle`
  * has no opposite, so it shifts, and by the minimum amount the edge forces.
@@ -117,7 +117,7 @@ export function placeAnnotation(opts: {
   const w = opts.width ?? estimateTextWidth(label, fontPx)
   const [lo, hi] = visibleSpan(frame, pad)
 
-  // Wider than everything there is. Absent beats truncated — see the header.
+  // Wider than everything there is. Absent beats truncated, see the header.
   if (w > hi - lo) return null
 
   /** Where the label's reference sits once `gap` is applied for anchor `a`. */

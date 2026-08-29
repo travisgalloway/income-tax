@@ -5,7 +5,7 @@
  *  why they are worth pinning: they are the JOIN between two files that never
  *  import each other's output. `Figure.astro` writes the id; nine islands write
  *  the reference. If the two spellings drift, every affected control silently
- *  loses its name — `aria-labelledby` pointing at a missing id resolves to
+ *  loses its name, `aria-labelledby` pointing at a missing id resolves to
  *  nothing, no error is raised anywhere, and the page still renders. The static
  *  guards in `pipeline/tests/test_accessibility.py` catch that in `dist/`; these
  *  catch it one layer earlier, without a build.
@@ -58,7 +58,7 @@ test('an omitted label id falls back to the conventional `${key}-units`', () => 
 test('the two tokens are separated by exactly one space, as an id list must be', () => {
   // `aria-labelledby` is a space-separated ID reference list. A missing or
   // doubled separator makes the whole list resolve to one non-existent id, and
-  // the control is left with no accessible name at all — silently.
+  // the control is left with no accessible name at all, silently.
   const tokens = labelledByFigure('revenue', 'revenue-units').split(' ')
   assert.equal(tokens.length, 2)
   assert.ok(tokens.every((t) => t.length > 0))

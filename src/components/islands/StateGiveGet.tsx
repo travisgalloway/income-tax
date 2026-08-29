@@ -4,7 +4,7 @@
  *  "Give" is IRS gross tax collections classified by filer address. "Get" is
  *  USASpending award spending classified by place of performance. Both are
  *  FY-matched by construction (see pipeline/monthly/states.py), but this is
- *  NOT a balance of payments on either side — the three trap paragraphs that
+ *  NOT a balance of payments on either side, the three trap paragraphs that
  *  say so live in the page body (src/pages/government/index.astro), never
  *  here or in a tooltip.
  *
@@ -24,7 +24,7 @@ import { labelledByFigure } from './figureLabel'
 import { ChartHint } from '../charts/ChartHint'
 
 /** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
- *  this key rather than typed — see `figureLabel.ts` (#72). */
+ *  this key rather than typed, see `figureLabel.ts` (#72). */
 const FIGURE = 'state-give-get'
 
 type Basis = 'per_capita' | 'absolute'
@@ -79,7 +79,7 @@ function describe(j: StateJurisdiction, basis: Basis): string {
  *  currently renders it, and the missing-figure case is spelled out in full by
  *  `describe()` in the tile's own aria-label and in the live readout.
  *  `test_the_state_legend_names_every_glyph_it_ships` is the tripwire if a
- *  `?` ever ships — the legend gaining an entry is then a decision, not an
+ *  `?` ever ships, the legend gaining an entry is then a decision, not an
  *  oversight. U+2212 MINUS SIGN, U+00B7 MIDDLE DOT, U+002B PLUS SIGN. */
 const MARK = { gives: '−', even: '·', gets: '+', missing: '?' } as const
 
@@ -226,7 +226,7 @@ export function StateGiveGet({ data }: { data: StatesBalance }) {
       {/* Each swatch+glyph+label is ONE box, not three loose siblings (#74).
        *
        *  WHY IT MATTERS. This legend is the only thing in the figure that says
-       *  what the colour ramp means, and — since the glyphs were added here —
+       *  what the colour ramp means, and, since the glyphs were added here,
        *  the only thing that says what the `+`/`−`/`·` on each tile mean; no
        *  prose on the route explains them. Read left to right, a swatch that
        *  has wrapped away from its own label sits beside the NEXT label and
@@ -236,7 +236,7 @@ export function StateGiveGet({ data }: { data: StatesBalance }) {
        *  Note that `test_no_island_encodes_a_category_only_in_colour` does NOT
        *  cover this island: it matches `fill=`/`stroke=` against a literal
        *  `var(--token)` and this island paints via `divergingFill(...)`, so the
-       *  pattern never fires here. The guards are the new ones —
+       *  pattern never fires here. The guards are the new ones,
        *  `tests/browser/legend.test.ts` for the geometry and
        *  `test_the_state_legend_names_every_glyph_it_ships` for the glyphs. */}
       <div className="state-legend">

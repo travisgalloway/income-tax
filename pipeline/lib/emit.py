@@ -40,7 +40,7 @@ def expand_title(output: str, title: str, coverage: dict[str, Any] | None) -> st
     while coverage said 1962 (#41). Titles that carry no placeholder pass
     through untouched, so `source` and the thirteen other outputs are
     unaffected. A placeholder with nothing to fill it from RAISES rather than
-    writing a literal `{start}` into a published file -- unknown is unknown,
+    writing a literal `{start}` into a published file, unknown is unknown,
     the same posture write() takes on a missing _meta.source.
     """
     if "{" not in title:

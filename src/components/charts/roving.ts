@@ -11,7 +11,7 @@
  *  A figure contributes AT MOST ONE TAB STOP PER CHART `<svg>`, however many
  *  marks it draws. Exactly one mark carries `tabindex="0"`; every other carries
  *  `tabindex="-1"`. Left/Up, Right/Down, Home and End move focus between them
- *  inside the group, in DOM order — which is data order, not screen geometry —
+ *  inside the group, in DOM order, which is data order, not screen geometry,
  *  and WITHOUT WRAPPING. Tab enters at the active mark and leaves the chart
  *  entirely. No mark is removed from the keyboard; the journey through them is
  *  just no longer the Tab key's job.
@@ -20,7 +20,7 @@
  *  `client:visible`, which server-renders the markup and defers only hydration,
  *  so `dist/government/index.html` shipped all 369 marks focusable before a line
  *  of JavaScript ran. A bypass installed at hydration would leave the
- *  scripting-off tab order at ~500 stops while the hydrated one is ~160 — the
+ *  scripting-off tab order at ~500 stops while the hydrated one is ~160, the
  *  reader with a slow connection, or with JavaScript off, gets none of the fix.
  *  A `useEffect` that rewrites `tabindex` in the DOM has a second problem on top
  *  of that: React owns the prop, and every hover fires `setFocus`, so the next
@@ -30,7 +30,7 @@
  *  IS DERIVED FROM IT DURING RENDER. On the server `active` is 0, so the first
  *  mark is the stop; hydration finds the same value and there is no mismatch.
  *
- *  The cost is that a mark cannot write `tabIndex={0}` for itself any more — it
+ *  The cost is that a mark cannot write `tabIndex={0}` for itself any more, it
  *  spreads `{...mark()}` instead, in render order. `test_no_island_hardcodes_a_
  *  focusable_chart_mark` (P3) makes that unwritable from here on, and
  *  `test_each_chart_svg_offers_exactly_one_tab_stop` (P2) asserts the result
@@ -43,7 +43,7 @@
  *  A tap or a drag anywhere in the `<svg>` focuses the nearest visible mark, and
  *  the readout the keyboard already drives reports it. At 390px a mark is
  *  3.317px wide and there are 389 of them across 350px of plot, so there is no
- *  geometry that makes a mark tappable — 0.9px per datum. THE PLOT BECOMES THE
+ *  geometry that makes a mark tappable, 0.9px per datum. THE PLOT BECOMES THE
  *  HIT TARGET and `nearest.ts` decides which datum a point meant.
  *
  *  A tap is a drag of length zero, so it is one code path. The drag half is not
@@ -51,7 +51,7 @@
  *  years, so without it a reader could obtain *a* value but never *the* value
  *  they wanted.
  *
- *  FOUR THINGS HERE ARE LOAD-BEARING, AND EACH HAS A REASON:
+ *  FOUR THINGS HERE ARE REQUIRED, AND EACH HAS A REASON:
  *
  *  1. ACTIVATION IS `.focus({ preventScroll: true })`, NOTHING ELSE. Not a
  *     callback, not a second setter. `onFocusCapture` below then sets `active`,
@@ -62,14 +62,14 @@
  *     without it the browser scrolls the mark into view under the moving finger.
  *
  *  2. MOUSE BAILS OUT IMMEDIATELY. `e.pointerType === 'mouse'` returns before
- *     anything happens, so desktop click and hover behaviour is untouched — a
+ *     anything happens, so desktop click and hover behaviour is untouched, a
  *     mouse press on a point of the plot carrying no mark still leaves focus on
  *     `<body>`, as it did before this path existed (B3a). Marks under the
  *     cursor still take focus natively; that was true before #73 and is not
  *     this hook's doing either way.
  *
- *  3. `moved.current` IS STILL SET ONLY BY THE KEY HANDLER, so `data-roving` —
- *     the keyboard-only focus-ring flag — is deliberately NOT set by touch. A
+ *  3. `moved.current` IS STILL SET ONLY BY THE KEY HANDLER, so `data-roving`,
+ *     the keyboard-only focus-ring flag, is deliberately NOT set by touch. A
  *     finger does not want a keyboard focus ring.
  *
  *  4. THE RECTS ARE SNAPSHOT ONCE PER GESTURE, not once per move. 389
@@ -83,7 +83,7 @@
  *  First, `mouseenter`/`mouseleave`: for a tap landing in a gap the sequence is
  *  `pointerdown` -> our `focus(N)` -> `mouseleave(previous mark)` -> the
  *  island's `setFocus(null)`, so the readout the tap just set is wiped one event
- *  later. `preventDefault()` on `pointerdown` does NOT suppress those — spiked
+ *  later. `preventDefault()` on `pointerdown` does NOT suppress those, spiked
  *  and disproved, do not re-try it. The fix is one CSS rule in `global.css`:
  *  under `@media (hover: none)`, `.chart [data-mark]` gets
  *  `pointer-events: none`, so no emulated boundary event ever reaches a mark.
@@ -125,18 +125,18 @@ export interface RovingGroupProps {
   onFocusCapture: FocusEventHandler<SVGSVGElement>
   /** The touch readout (#73). All four are needed: `down` answers the tap,
    *  `move` makes it a scrub, `up` ends it, and `cancel` is what Chromium sends
-   *  when a vertical drag turns into a page scroll — without it the gesture
+   *  when a vertical drag turns into a page scroll, without it the gesture
    *  would stay live and every later move would re-resolve against a stale
    *  snapshot taken before the page scrolled. */
   onPointerDown: PointerEventHandler<SVGSVGElement>
   onPointerMove: PointerEventHandler<SVGSVGElement>
   onPointerUp: PointerEventHandler<SVGSVGElement>
   onPointerCancel: PointerEventHandler<SVGSVGElement>
-  /** Not a second activation path — a repair, and the only one. See
+  /** Not a second activation path, a repair, and the only one. See
    *  `onMouseDown` below for the measured sequence it defuses. */
   onMouseDown: MouseEventHandler<SVGSVGElement>
   /** Present only while focus arrived by arrow/Home/End, so the CSS fallback
-   *  ring can be keyed on it without ringing a mouse click — or a finger. */
+   *  ring can be keyed on it without ringing a mouse click, or a finger. */
   'data-roving'?: ''
 }
 
@@ -151,7 +151,7 @@ export function useRovingMarks(): Roving {
   const ref = useRef<SVGSVGElement | null>(null)
   const [active, setActive] = useState(0)
   // True from the moment a key asks for a move until the resulting focus event
-  // has been seen. Read once, then cleared — it is a hand-off, not a mode.
+  // has been seen. Read once, then cleared, it is a hand-off, not a mode.
   const moved = useRef(false)
   const [keyed, setKeyed] = useState(false)
 
@@ -205,8 +205,8 @@ export function useRovingMarks(): Roving {
     [marks],
   )
 
-  // Focus that arrived by any route — a click, a Shift-Tab back in, or this
-  // hook's own effect — resets the roving state to whatever the reader is
+  // Focus that arrived by any route, a click, a Shift-Tab back in, or this
+  // hook's own effect, resets the roving state to whatever the reader is
   // actually on, so the two can never disagree.
   const onFocusCapture = useCallback<FocusEventHandler<SVGSVGElement>>(
     (e) => {
@@ -234,8 +234,8 @@ export function useRovingMarks(): Roving {
    *  resolves to where the finger IS, not to where it was when the frame was
    *  scheduled. */
   /** The pointer type of the most recent `pointerdown` on this group. Starts at
-   *  `'mouse'` so that a `mousedown` with no pointer event before it — which
-   *  should not happen, but costs nothing to be safe about — behaves like
+   *  `'mouse'` so that a `mousedown` with no pointer event before it, which
+   *  should not happen, but costs nothing to be safe about, behaves like
    *  desktop and is left alone. */
   const lastPointerType = useRef('mouse')
 
@@ -250,8 +250,8 @@ export function useRovingMarks(): Roving {
     // silently focusing mark 0 would report an invisible datum.
     if (i < 0 || i === g.at) return
     g.at = i
-    // The ONE activation. Everything else — the roving index, the readout, the
-    // live region — follows from this call through `onFocusCapture`.
+    // The ONE activation. Everything else, the roving index, the readout, the
+    // live region, follows from this call through `onFocusCapture`.
     g.nodes[i]?.focus({ preventScroll: true })
   }, [])
 
@@ -339,7 +339,7 @@ export function useRovingMarks(): Roving {
    *  most confusing outcome available.
    *
    *  `preventDefault()` on `mousedown` suppresses exactly the focus action and
-   *  nothing else — `click` still fires, so nothing inside a chart that listens
+   *  nothing else, `click` still fires, so nothing inside a chart that listens
    *  for one is affected. It runs only when the preceding `pointerdown` was not
    *  a mouse, so a real desktop press is untouched, which is what makes this a
    *  repair of our own activation rather than a change to desktop behaviour. */
@@ -353,7 +353,7 @@ export function useRovingMarks(): Roving {
   useEffect(() => () => cancelFrame(), [cancelFrame])
 
   // NO DEPENDENCY ARRAY, deliberately: this runs after every render because the
-  // mark count changes at runtime — `LawExplorer`'s three filters and
+  // mark count changes at runtime, `LawExplorer`'s three filters and
   // `YearRange`'s two thumbs both add and remove marks. An `active` left past
   // the end leaves the group with ZERO `tabindex="0"` marks: the chart drops out
   // of the tab order altogether and its data becomes unreachable. That is why

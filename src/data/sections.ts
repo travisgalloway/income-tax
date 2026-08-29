@@ -3,7 +3,7 @@
  *  These arrays used to be a `const sections` in each route page's frontmatter, where nothing
  *  outside the page could read them. `/glossary`'s `first_used` check needs to assert that a
  *  term's declared anchor still exists on the route it names, and a hand-copied second list
- *  would drift silently the first time a section is renamed — which is the exact failure
+ *  would drift silently the first time a section is renamed, which is the exact failure
  *  `first_used` exists to catch. So the rendered nav and the build-time check read the same
  *  array: they cannot disagree.
  *
@@ -13,13 +13,13 @@
  *  `/` is absent for a different reason. Its four sections live in `introSections` below, not as
  *  an entry in this map, and since #49 they are lifted out of the page's own frontmatter so
  *  `/contents` reads the same array the front door renders. They stay out of `routeSections`
- *  because this map's keys are the domain of `ContentRoute` below — the routes a glossary term's
- *  `first_used.route` may name — and a term whose first prose use is the front door is a category
+ *  because this map's keys are the domain of `ContentRoute` below, the routes a glossary term's
+ *  `first_used.route` may name, and a term whose first prose use is the front door is a category
  *  error; the front door names no term. Widening `ContentRoute` would also make the failure mode
  *  obscure: a term declaring `first_used.route: '/'` would type-check here and then `KeyError`
  *  inside `test_every_first_used_route_carries_its_term_marker`, which resolves the route through
  *  its own `_PAGE_FOR_ROUTE` dict of the three content routes. A glossary term whose first prose
- *  use is on `/` or `/sources` is a build failure, which is correct — none is.
+ *  use is on `/` or `/sources` is a build failure, which is correct, none is.
  *
  *  Consumers: the three route pages (each passes its own slice to BaseLayout),
  *  src/pages/glossary.astro, src/pages/index.astro, src/data/figures.ts (which checks every
@@ -83,7 +83,7 @@ export const introSections: RouteSection[] = [
  *  implementation of it. Every internal href on the site is built from this: the site is served
  *  from `/income-tax/`, and an href that skips the base resolves to a 404 in production while
  *  working fine in `astro dev`, which is how #70 reached production. A page full of derived links
- *  — `/contents` — is precisely where a third private copy of this expression would be worst. */
+ * , `/contents`, is precisely where a third private copy of this expression would be worst. */
 const base = import.meta.env.BASE_URL
 export const join = (p: string) =>
   `${base.replace(/\/$/, '')}/${p.replace(/^\//, '')}`.replace(/\/$/, '') || '/'

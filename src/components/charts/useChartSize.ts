@@ -29,8 +29,8 @@ const NARROW: ChartSize = { width: 360, height: 316, margin: { top: 22, right: 1
  * axis rule to breathe in, not a label reservoir.
  *
  * Note that these two presets are NOT symmetric in what the test suite can see:
- * this hook returns WIDE before measurement, so the server render — and every
- * assertion `pipeline/tests/test_accessibility.py` makes against `dist/` — only
+ * this hook returns WIDE before measurement, so the server render, and every
+ * assertion `pipeline/tests/test_accessibility.py` makes against `dist/`, only
  * ever observes 720. The 360 geometry is reachable only from the browser and
  * from `annotate.test.ts` over the pure helper.
  */

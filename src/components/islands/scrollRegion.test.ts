@@ -5,7 +5,7 @@
  *  `scrollTargetFor` is the whole scroll decision: which keys are ours, how far
  *  each one moves, and where the ends are. It is separated from the hook
  *  precisely so it can be asserted without a DOM, an engine, or a running
- *  server — the browser lane (`tests/browser/scroll.test.ts`) then proves the
+ *  server, the browser lane (`tests/browser/scroll.test.ts`) then proves the
  *  wiring, and this file proves the arithmetic.
  *
  *  The one property worth stating twice: a box that does not overflow returns
@@ -61,7 +61,7 @@ test('End lands exactly on the maximum, and Home exactly on zero', () => {
 
 test('it clamps at both ends and never wraps', () => {
   // Past the right edge: the last column stays put, it does not reappear on
-  // the left. Same rule `roving.ts` states for marks — a series, not a ring.
+  // the left. Same rule `roving.ts` states for marks, a series, not a ring.
   assert.equal(scrollTargetFor('ArrowRight', at(MAX)), MAX)
   assert.equal(scrollTargetFor('ArrowRight', at(MAX - 5)), MAX)
   assert.equal(scrollTargetFor('PageDown', at(MAX)), MAX)

@@ -1,13 +1,13 @@
 # Interface: `src/data/budget.json`
 
 The consumer contract for `budget` (`src/data/index.ts`, typed as `Dataset<BudgetYear[]>` in
-`src/data/types.ts`). Read this before charting anything from `budget.data` — two of its fields
+`src/data/types.ts`). Read this before charting anything from `budget.data`, because two of its fields
 have a sign or nullability convention that silently breaks a stack or a strip if assumed away.
 
 ## Shape
 
 `Dataset<BudgetYear[]>`: `{ _meta: Meta, data: BudgetYear[] }`. One row per fiscal year,
-FY1962–FY2025 (`_meta.coverage.start` / `.end`), 64 rows total.
+FY1962-FY2025 (`_meta.coverage.start` / `.end`), 64 rows total.
 
 ## Unit families
 
@@ -20,19 +20,19 @@ Every dollar/GDP field is carried three times, by prefix:
 | `g_` | Percent of GDP |
 
 `charts/format.ts`'s `UNIT_PREFIX` maps the `Unit` type (`'nominal' \| 'real' \| 'gdp'`) to these
-three. Switching units must only change which prefix a component reads — it must never change
+three. Switching units must only change which prefix a component reads, and must never change
 which rows are shown or drop a year, because all three families cover the same 64 rows (verified
 by `test_every_unit_family_covers_the_full_span`).
 
 ## The gross/net trap (`ma` / `or`)
 
-- `ma` — mandatory outlays, **gross**.
-- `or` — offsetting receipts, always **negative**.
+- `ma` is mandatory outlays, **gross**.
+- `or` is offsetting receipts, always **negative**.
 - The identity that holds in every row and every unit family (tolerance 0.002 nominal, 0.004 real,
   0.02 GDP): `ma + or + di + ni = ot`.
 
 **A consumer that charts `ma` alone charts the wrong, gross figure and the stack will not sum to
-`ot`.** The net mandatory figure — the one that belongs in a stacked-outlays chart — is `ma + or`.
+`ot`.** The net mandatory figure, the one that belongs in a stacked-outlays chart, is `ma + or`.
 Net mandatory is positive in every year (min $0.028T in FY1962, min 4.49% of GDP), so the stack
 never inverts once the fields are combined correctly.
 
@@ -40,7 +40,7 @@ Proved by `test_outlay_components_sum_to_total_in_every_unit_family` and
 `test_net_mandatory_is_positive_in_every_year` in `pipeline/tests/test_pipeline.py`.
 
 **Prose-quoting rule.** `sections.md` §6 quotes mandatory-spending growth, and that figure must be
-on the **net** basis, named as such in the sentence — every other number in §6 (the 9.8%→13.7% GDP
+on the **net** basis, named as such in the sentence. Every other number in §6 (the 9.8%→13.7% GDP
 share, the chart's three lines) is already net, and quoting the gross figure instead would
 contradict them. The pipeline's prose resolver (`pipeline/lib/report.py`) exposes this basis as two
 derived fields not stored on the row itself: `g_ma_net` (`g_ma + g_or`) and `r_ma_net`
@@ -51,7 +51,7 @@ derived fields not stored on the row itself: `g_ma_net` (`g_ma + g_or`) and `r_m
 `de = re - ot`. Negative is a deficit, positive is a surplus. Surplus years in the current series:
 FY1969, FY1998, FY1999, FY2000, FY2001 (`test_surplus_years_are_positive_deficit_values`). A
 consumer rendering the deficit/surplus band must read sign and vertical position as the primary
-cue — colour is a secondary reinforcement only (`BRIEF.md` rule: colour never carries meaning
+cue, and colour is a secondary reinforcement only (`BRIEF.md` rule: colour never carries meaning
 alone).
 
 ## Party control (`ctl`)
@@ -69,30 +69,31 @@ interface Control {
 }
 ```
 
-**`ctl` is `null` for every row outside FY1995–FY2025** (`_meta.coverage.control_start` /
+**`ctl` is `null` for every row outside FY1995-FY2025** (`_meta.coverage.control_start` /
 `.control_end`; exactly 31 non-null rows, `test_party_control_is_null_outside_fy1995_2025`). This is
-not "unknown" or "not yet curated" in a way that should render as a blank or greyed cell — a
+not "unknown" or "not yet curated" in a way that should render as a blank or greyed cell. A
 consumer must render **no strip at all** for those years: no rect, no background, no outline. A
-blank grey cell would visually assert "control exists but we don't know it," which is a different
+blank grey cell would visually assert "control exists but is not recorded," which is a different
 and false claim.
 
 ## Laws (`L`)
 
 `L: Law[]`, empty in 47 of the 64 rows. No row before FY1997 has any entries. A consumer must
 render an explicit "no major law enacted this fiscal year" (or table `no data`) rather than an
-empty string or `0` — this dataset follows the site-wide rule that absence is never rendered as
+empty string or `0`, because this dataset follows the site-wide rule that absence is never rendered as
 zero.
 
-**The composition field a law row emits is `legacy_comp`, the retired PLR/PLD/XP classification —
-never read it.** The counted per-party split is `rollcall` (and `src/data/party_splits.json`, joined
-on `public_law`); `legacy_comp` and `vote_character` survive only as the superseded classification.
+**The composition field a law row emits is `legacy_comp`, the retired PLR/PLD/XP classification,
+and it is never read.** The counted per-party split is `rollcall`, together with
+`src/data/party_splits.json` joined on `public_law`. `legacy_comp` and `vote_character` survive only
+as the superseded classification.
 `_meta.fields.L` must name only keys the pipeline actually emits: a description naming a key that no
 longer exists (`comp`) is a dangling reference, and it is fixed in `pipeline/curated/notes.yaml`,
 never by hand-editing the output.
 
 ## `_meta`
 
-- `_meta.source` — render **verbatim** wherever this dataset backs a `Figure` (`BRIEF.md` rule 1).
+- `_meta.source` renders **verbatim** wherever this dataset backs a `Figure` (`BRIEF.md` rule 1).
   Do not summarise it; put any scope/method caveat (e.g. "mandatory is net of offsetting receipts")
   in `Figure`'s `note` prop instead.
 - `_meta.notes[1]` states the **counted** position: per-party final-passage splits for all 23 laws
@@ -111,25 +112,26 @@ never by hand-editing the output.
 ## Schema
 
 `pipeline/schemas/budget.schema.json`, enforced on **every** build by `check_schema` in
-`pipeline/lib/validate.py` — an output with no schema is a build failure, not a skip (#37).
+`pipeline/lib/validate.py`. An output with no schema is a build failure rather than a skip (#37).
 
 A consumer may rely on:
 
 - `data` is an array of at least 60 rows. Every row carries all 24 keys: `y` (integer), `L`, `ctl`,
   and the three unit families `n_` / `r_` / `g_` × `ma`, `or`, `di`, `ni`, `re`, `de`, `ot`, each a
-  `number`. There are no per-row optional keys — `ctl` is present on every row and **null** outside
-  FY1995–FY2025, and `L` is present on every row as a possibly-empty array.
+  `number`. There are no per-row optional keys, because `ctl` is present on every row and **null** outside
+  FY1995-FY2025, and `L` is present on every row as a possibly-empty array.
 - `n_or` / `r_or` / `g_or` are `maximum: 0`. Offsetting receipts are negative by construction; a
   positive value fails the build (`check_budget` asserts the same rule numerically).
 - `ctl`, when non-null, requires `p`, `pp`, `h`, `s`, `ctl`, `t`; the party fields are `D`/`R` and
   `ctl` is `D`/`R`/`M`.
 - Each `L[]` entry requires `name`, `public_law`, `date`, `score_t`, `vote_character`, `president`,
   `president_party`, `control_at_enactment`, `control_year`, `legacy_comp`, `rollcall`. `score_t` is
-  `["number", "null"]` and never exactly `0` — an unscored law is `null`, not zero.
+  `["number", "null"]` and never exactly `0`, because an unscored law is `null` rather than zero.
   `verified_house` / `verified_senate` / `verified_source` are genuinely optional (one law carries
   them).
 - `_meta` requires `source` (`minLength: 12`, the `BRIEF.md` rule-1 anti-summarisation floor),
   `title`, `provenance` (`generator`, `git_sha`, `generated_at`) and `coverage`.
 
-The schema pins **shape and range only**. Cross-field reconciliation — components summing to
-totals, the FY2003 series low, the surplus band — stays in `validate.py`'s `check_budget`.
+The schema pins **shape and range only**. Cross-field reconciliation stays in `validate.py`'s
+`check_budget`, covering components summing to totals, the FY2003 series low, and the surplus
+band.

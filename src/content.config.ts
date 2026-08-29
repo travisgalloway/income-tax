@@ -9,7 +9,7 @@ export const collections = {
   reference: defineCollection({ loader: glob({ pattern: 'SOURCES.md', base: '.' }) }),
 
   /** The glossary. One file per term; the **filename is the anchor**, so retitling a term is free
-   *  and moving an anchor is a deliberate `git mv` — see docs/contracts/interfaces/glossary.md.
+   *  and moving an anchor is a deliberate `git mv`, see docs/contracts/interfaces/glossary.md.
    *
    *  Every rule below is Zod, which means a violation is a build failure rather than a render.
    *  `long` is a frontmatter field, not the Markdown body: nothing calls `render()` on these
@@ -29,11 +29,11 @@ export const collections = {
       long: z.string().min(80),
       /** A reference into `pipeline/curated/sources.yaml`'s `registry:`, never prose (#50).
        *  `z.enum` over the register's keys is what makes an unresolvable key a schema failure
-       *  naming the term, the key and the valid set — so the raw key has no code path to the
+       *  naming the term, the key and the valid set, so the raw key has no code path to the
        *  page. `.min(1)` covers an empty list; a missing `source` is Zod's own required-field
        *  failure. The `.transform` keeps this the ONLY module that touches the register, so
        *  `glossary.astro` stays register-unaware and no island can pull `node:fs` into a
-       *  bundle. `text` is the register's `registered_as` verbatim, joined by "; " — the one
+       *  bundle. `text` is the register's `registered_as` verbatim, joined by "; ", the one
        *  prose copy of a source stays in `SOURCES.md`. `links` carries the same citations
        *  followable, with each source's tier (#57): an addition beside `text`, never a
        *  replacement for it, so the verbatim line is still the line. */
@@ -56,7 +56,7 @@ export const collections = {
             'pipeline/curated/sources.yaml registry keys.',
         })
         .transform((keys) => ({ keys, text: sourceLine(keys), links: sourceLinks(keys) })),
-      /** The short forms a reader meets **in place of** `term` — an acronym (`CBO`), an
+      /** The short forms a reader meets **in place of** `term`, an acronym (`CBO`), an
        *  initialism written with a suffix (`CPI-U`), a clipped noun (`intragovernmental`).
        *  Never a synonym and never a related word: this list is what makes "defined at first
        *  use" mechanical, because `pipeline/tests/test_prose.py`'s Criterion 4 checker searches
@@ -66,7 +66,7 @@ export const collections = {
        *
        *  It is also the acronym half of `REGISTERED_INITIALISMS`. Every all-caps surface form in
        *  this collection is derived out of the glossary rather than named again in the test, and
-       *  the test asserts the derived half and the hand-named half are disjoint — so an acronym
+       *  the test asserts the derived half and the hand-named half are disjoint, so an acronym
        *  that gains an entry has to leave the hand-named list in the same commit (#59).
        *
        *  Default `[]`: a term a reader only ever meets spelled out declares nothing. */

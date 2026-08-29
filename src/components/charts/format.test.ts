@@ -1,5 +1,5 @@
 /** Unit tests for the shared number formatters, run by `npm run test:unit`
- *  (`node --test`, which strips the types natively — Node >= 22.18 / >= 23.6).
+ *  (`node --test`, which strips the types natively, Node >= 22.18 / >= 23.6).
  *
  *  Two rules are under test (#35), and both exist so that `DebtChart` could stop
  *  carrying private copies of them without any rendered number changing:
@@ -60,7 +60,7 @@ test('trillionsLong spells out where trillions abbreviates', () => {
   // Same magnitude, different surface: one is read aloud, the other is not.
   assert.equal(trillions(19.57, 1), '$19.6T')
   assert.equal(trillionsLong(19.57, 1), '$19.6 trillion')
-  // `value()` is not a substitute — three digits and a bare "T".
+  // `value()` is not a substitute, three digits and a bare "T".
   assert.equal(value(40.0491, 'nominal'), '$40.049T')
 })
 

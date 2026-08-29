@@ -1,6 +1,6 @@
 /** Every numbered figure on the site, declared once, in the order its route renders them.
  *
- *  Why this file exists (#49). A figure's number used to be a pure CSS counter — `counter-reset`
+ *  Why this file exists (#49). A figure's number used to be a pure CSS counter, `counter-reset`
  *  on `main`, `counter-increment` on `.figure`, `content: 'Figure ' counter(figure)` on
  *  `.figure-head::before`. That number lived only in the rendered layout: it was absent from the
  *  DOM, from `dist/`, and from anything another page could read, so an index of the site's figures
@@ -8,7 +8,7 @@
  *  and `Figure.astro` renders it as real text.
  *
  *  This is deliberately **not** a second list beside the pages. The call sites themselves consume
- *  it — each `<Figure fig={fig('key')}>` takes its title, source and vintage from here — so
+ *  it, each `<Figure fig={fig('key')}>` takes its title, source and vintage from here, so
  *  `/contents` and the route it indexes read the same entry. A manifest only the index read would
  *  be a hand-maintained copy that drifts the first time a figure is added, silently, which is the
  *  exact failure `src/data/sections.ts` exists to prevent for section anchors.
@@ -51,13 +51,13 @@ import {
 export interface FigureDecl {
   /** Stable handle the call site names this figure by. Unique within its route. */
   key: string
-  /** The `id` of the section this figure renders inside — an id in `routeSections[route]`. */
+  /** The `id` of the section this figure renders inside, an id in `routeSections[route]`. */
   section: string
   /** Short italic title beside the figure number. */
   title: string
   /** `_meta.source`, VERBATIM. Never summarised to "CBO data". */
   source: string
-  /** The published OUTPUTS this figure draws from — `pipeline/curated/sources.yaml` `outputs:`
+  /** The published OUTPUTS this figure draws from, `pipeline/curated/sources.yaml` `outputs:`
    *  keys, not register keys. The register turns them into the source keys the output's own
    *  `_meta.source` names, so the links under a caption cannot become a second hand-kept list
    *  beside the sentence they are supposed to be links FOR. `build()` proves the two agree. */
@@ -73,7 +73,7 @@ export interface FigureEntry extends FigureDecl {
   /** Source and vintage composed into the one line both the figure and the index render. */
   sourceLine: string
   /** The same citations, followable (#57). Rendered BENEATH the verbatim line, never instead of
-   *  it. `/contents` deliberately does not render these — it is an index, and each entry already
+   *  it. `/contents` deliberately does not render these, it is an index, and each entry already
    *  links to the figure itself (#49 owns that page). */
   sources: SourceLink[]
 }
@@ -307,7 +307,7 @@ const declared = {
  *  The fifth is #57's, and it is rule A at figure granularity. `cites` names the outputs a figure
  *  draws from, and the links under its caption are resolved from those outputs' register entries.
  *  A hand-declared key list beside a hand-composed sentence is exactly the drift
- *  `content-sources.md` forbids — the links would go on pointing at CBO after the caption moved to
+ *  `content-sources.md` forbids, the links would go on pointing at CBO after the caption moved to
  *  Treasury, and nothing would say so. So every register key a figure's `cites` resolves to must
  *  be NAMED, in one of its registered `cited_as` forms, in that figure's own source string. */
 function build(): Record<ContentRoute, FigureEntry[]> {

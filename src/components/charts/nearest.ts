@@ -1,7 +1,7 @@
 /** Nearest-mark resolution for the touch readout. Issue #73.
  *
  *  WHY THIS EXISTS AT ALL. At 390px a chart draws 389 marks across 350px of
- *  plot — 0.9px per datum, against a 3.317px mark. No per-mark geometry change
+ *  plot, 0.9px per datum, against a 3.317px mark. No per-mark geometry change
  *  reaches 24px, let alone 44px, so on a device that cannot hover the marks stop
  *  being hit targets and the plot becomes ONE 350x237px target with the nearest
  *  mark resolved from the pointer's position (`roving.ts`).
@@ -14,18 +14,18 @@
  *  Ties resolve to the LOWER index, which is data order.
  *
  *  TWO DIMENSIONS, NOT ONE. The naive resolver compares x only, and it passes
- *  every band-chart case — full-height bands degenerate to nearest-in-x on their
+ *  every band-chart case, full-height bands degenerate to nearest-in-x on their
  *  own. It is wrong on every cartogram and every treemap, where a point below a
  *  tile must pick that tile and not the leftmost one in the row. `nearest.test.ts`
  *  carries that case (U1-e) because the wrong implementation is the tempting one.
  *
  *  ZERO-AREA BOXES ARE SKIPPED. `/government` renders 7 `[data-mark]` elements
- *  with no rendered box, and they are two different things — re-measured, because
+ *  with no rendered box, and they are two different things, re-measured, because
  *  the plan for #73 attributed all seven to one island and was wrong:
  *
  *    5  `AttributionSplit`'s by-president panel, which Radix keeps mounted
  *       (`forceMount`) and hides with `display: none` while the other tab is
- *       selected. NOT focusable — a `display: none` subtree never is — and its
+ *       selected. NOT focusable, a `display: none` subtree never is, and its
  *       whole `<svg>` measures 0x0, so nothing here is reachable by any route.
  *       Correct as it stands; skipped only because the rule is geometric.
  *    2  `StateTaxMix`'s "none levied" categories, in a LIVE and visible chart.

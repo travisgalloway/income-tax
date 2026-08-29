@@ -166,7 +166,7 @@ section[id]:first-of-type { border-top: 0; padding-top: 1.5rem; }
  * time. `[aria-current='true']` explicitly, never a bare `[aria-current]`,
  * which would also catch the route links above: those are `page`, and they mark
  * with ink *plus an underline*. This is ink alone, whole row including the
- * numeral — a different mark, in a different list. Colour only, so a mark
+ * numeral, a different mark, in a different list. Colour only, so a mark
  * change reflows nothing in a 13rem rail. `:has()` is progressive: without it
  * the numeral stays soft and the link still lifts. */
 .rail .toc a[aria-current='true'] { color: var(--ink); }
@@ -176,7 +176,7 @@ section[id]:first-of-type { border-top: 0; padding-top: 1.5rem; }
  * Below 62rem the rail is replaced by a bar fixed to the top of the viewport:
  * site title, current route name, and a native <details> disclosure holding
  * all five route links and the page's full contents list. Deliberately without
- * a transition or an animation anywhere — that is how prefers-reduced-motion is
+ * a transition or an animation anywhere, that is how prefers-reduced-motion is
  * satisfied here, vacuously and greppably.
  */
 
@@ -186,7 +186,7 @@ section[id]:first-of-type { border-top: 0; padding-top: 1.5rem; }
   .shell { grid-template-columns: minmax(0, 1fr); gap: 0; }
   /* The rail leaves the accessibility tree entirely below 62rem, so exactly two
    * <nav> landmarks are exposed at any viewport even though four are in the DOM.
-   * Its two-column `.toc` treatment went with it — the panel carries that list
+   * Its two-column `.toc` treatment went with it, the panel carries that list
    * now. */
   .rail { display: none; }
   .page { padding: var(--navbar-h) 1.25rem 4rem; }
@@ -283,7 +283,7 @@ section[id]:first-of-type { border-top: 0; padding-top: 1.5rem; }
 
   /* The bar is fixed, so an anchor landing at scroll offset 0 would sit under
    * it. `#main` needs this too: the skip link targets it. And `/glossary`'s
-   * anchors are its `<dt>` elements, not its sections — a link straight to
+   * anchors are its `<dt>` elements, not its sections, a link straight to
    * `#net-interest` would otherwise land the term under the bar. */
   section[id] { scroll-margin-top: calc(var(--navbar-h) + 0.75rem); }
   #main { scroll-margin-top: calc(var(--navbar-h) + 0.75rem); }
@@ -312,7 +312,7 @@ section[id]:first-of-type { border-top: 0; padding-top: 1.5rem; }
   align-items: baseline;
 }
 /* The figure number, as real text rather than as generated content (#49). It used to be a CSS
-   counter on this pseudo-element, which meant the number existed only in the rendered layout —
+   counter on this pseudo-element, which meant the number existed only in the rendered layout,
    absent from the DOM, from `dist/`, and from anything /contents could read. Same typography,
    now in the served bytes. */
 .figure-no {
@@ -350,7 +350,7 @@ figcaption .lead,
 /* The Follow line (#57): the caption's citations as links, each naming what kind
    of source it is. Set quieter than the verbatim Source line above it, because
    the sentence is the claim and these are the way out of it. `anywhere` for the
-   same reason `/sources` needs it -- a registered source name runs long and this
+   same reason `/sources` needs it, a registered source name runs long and this
    line sits under a chart that already owns the width. */
 .figure-sources,
 .term-follow {
@@ -431,7 +431,7 @@ figcaption .lead,
 
 /* ---- Target size for controls (#65) -------------------------------------
  * Every control in this design is styled as text with a hairline rule under
- * it and `padding: 0`, so its hit area is exactly its line box — 15px to 24px
+ * it and `padding: 0`, so its hit area is exactly its line box, 15px to 24px
  * tall, under the 24px floor of WCAG 2.2 SC 2.5.8. The repair is one
  * technique everywhere: a transparent `::before` overlay of `--target-min`,
  * absolutely positioned and centred on the control.
@@ -452,8 +452,8 @@ figcaption .lead,
  *   - `z-index`. A positioned element with `z-index: auto` creates no
  *     stacking context, which is why `.select-content`'s `z-index: 20` still
  *     paints over the trigger's overlay.
- *   - a negative inset. Seven of the eight are `left: 0; right: 0` — exactly
- *     the host's own width — so today's clearances between neighbours are
+ *   - a negative inset. Seven of the eight are `left: 0; right: 0`, exactly
+ *     the host's own width, so today's clearances between neighbours are
  *     preserved exactly.
  *
  * Guarded by the seven `*target*` checks in
@@ -601,10 +601,10 @@ figcaption .lead,
 /* ---- The chart hint, and the touch readout it names (#73) ----------------
  *
  * Every chart used to say `Focus or hover a year to read its value.` on every
- * device — 24 occurrences in the served bytes — naming two interactions a
+ * device, 24 occurrences in the served bytes, naming two interactions a
  * phone does not have. `ChartHint` now ships all three sentences and this
  * switch picks one. HIDDEN BY DEFAULT, then exactly one shown: a device that
- * matches neither query (and there is one — see the <noscript> block in
+ * matches neither query (and there is one, see the <noscript> block in
  * BaseLayout.astro, which is the third case) shows nothing rather than all
  * three stacked. Source order matters and the noscript block overrides both. */
 .hint-nojs,
@@ -628,7 +628,7 @@ figcaption .lead,
    * `setFocus(null)`: the readout the tap just set is wiped one event later.
    * `preventDefault()` on `pointerdown` does not suppress it (spiked and
    * disproved). Making the marks inert to the pointer is what stops the
-   * emulated event reaching one — and on a device that cannot hover, a hover
+   * emulated event reaching one, and on a device that cannot hover, a hover
    * state was a lie anyway. Keyboard and programmatic focus are unaffected by
    * `pointer-events`, so #69's roving group is untouched. Scoped to marks: the
    * <foreignObject> controls inside some charts keep their events. */
@@ -636,7 +636,7 @@ figcaption .lead,
 
   /* `pan-y`, NOT `none`. Two measurements decided this. Without any
    * `touch-action`, Chromium swallows a horizontal gesture whole and the svg
-   * receives nothing at all — so the scrub genuinely depends on this line.
+   * receives nothing at all, so the scrub genuinely depends on this line.
    * With `none`, the reader could no longer scroll the page past a chart, and
    * a 26,000px route is mostly chart. `pan-y` keeps the vertical scroll native
    * and gives the horizontal scrub to us. */
@@ -669,7 +669,7 @@ figcaption .lead,
   max-width: 100%;
   position: relative;
 }
-/* #65. Two pixels short of the floor, so padding is tempting — but it would
+/* #65. Two pixels short of the floor, so padding is tempting, but it would
  * still move the hairline off the label. */
 .select-trigger::before {
   content: '';
@@ -682,7 +682,7 @@ figcaption .lead,
 }
 /* Radix portals the selected item's text into a bare <span> inside the
  * trigger, so it can only be reached positionally. It is a flex item, whose
- * automatic minimum size is its content — the label wraps rather than
+ * automatic minimum size is its content, the label wraps rather than
  * widening the trigger past the row. */
 .select-trigger > span:first-child { min-width: 0; overflow-wrap: break-word; }
 .select-trigger:hover { border-bottom-color: var(--ink); }
@@ -817,8 +817,8 @@ figcaption .lead,
   text-align: left;
   position: relative;
 }
-/* #65. Padding here widens a `border-collapse` `<th>` — which is exactly the
- * by-state table's 745px problem (#71/#76) — and adds ~9px to every row of a
+/* #65. Padding here widens a `border-collapse` `<th>`, which is exactly the
+ * by-state table's 745px problem (#71/#76), and adds ~9px to every row of a
  * 100-row table. The overlay adds neither. Long statute names already wrap to
  * ~105px cells; those are untouched by construction, and only the short ones
  * gain a hit area. This one `::before` selector covers `.sort-button` in both
@@ -913,10 +913,10 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 /* WebKit does not paint `outline` on SVG shapes, so the ring is drawn twice:
  * `outline` for engines that honour it, `stroke` for those that do not.
  *
- * `vector-effect` is load-bearing, not cosmetic. `stroke-width` resolves in
+ * `vector-effect` changes what renders rather than how it looks. `stroke-width` resolves in
  * USER units and every chart <svg> is scaled to its container, so a bare
  * `stroke-width: 2` rendered 1.944 CSS px at 390px (CTM scale 0.9722) and
- * 2.044 at 1440px — under the minimum, in the one engine where this stroke IS
+ * 2.044 at 1440px, under the minimum, in the one engine where this stroke IS
  * the ring. `non-scaling-stroke` makes it resolve in CSS px whatever the
  * transform, so both engines paint the same 2px. */
 .datum:focus-visible {
@@ -928,13 +928,13 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 }
 
 /* Roving marks (#69). Arrow keys move focus with `.focus()`, and an engine's
- * `:focus-visible` heuristic is entitled to decline PROGRAMMATIC focus — which
+ * `:focus-visible` heuristic is entitled to decline PROGRAMMATIC focus, which
  * would leave the reader arrowing through a chart with nothing painted. So the
  * ring is also keyed on `data-roving`, which the hook sets on the group only
  * while the last move came from a key. NOT on bare `:focus`: that would ring a
  * mouse click, which is the thing `:focus-visible` exists to avoid. */
 /* This rule is `:focus`, not `:focus-visible`, so it cannot inherit its width
- * from the base rule and must declare its own — which is why the width is a
+ * from the base rule and must declare its own, which is why the width is a
  * token rather than a literal. `vector-effect` for the same reason as `.datum`
  * above: the stroke is the whole ring in WebKit and it must not scale. */
 [data-roving] [data-mark]:focus {
@@ -989,7 +989,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
  * way that separates the swatch from its own label (#74). The column gap is
  * wider than the item's internal gap so the grouping reads as three units.
  *
- * `align-items: baseline` on the item, not `center`, is load-bearing: when a
+ * `align-items: baseline` on the item, rather than `center`, is required: when a
  * long label runs to two lines, `center` floats the swatch BETWEEN them, which
  * is both the wrong reading order and geometrically unassertable. `baseline`
  * puts it on the first line, where it belongs.
@@ -1071,7 +1071,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   padding-bottom: 0.5rem;
   /* A `<caption>`'s box is the table's width, so at 745px the caption's first
    * line ran 375px past a 390px phone before it wrapped (#63). `cqi` is the
-   * scroll container's own inline size — 350px there — so the text wraps
+   * scroll container's own inline size, 350px there, so the text wraps
    * where the reader can see it, and `sticky` keeps it there while the
    * numbers scroll under it. */
   position: sticky;
@@ -1155,7 +1155,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   position: relative;
 }
 /* #65. A flex item in `.controls` under `align-items: baseline`, with the
- * hairline as its affordance — the same two reasons as `.unit-toggle-item`. */
+ * hairline as its affordance, the same two reasons as `.unit-toggle-item`. */
 .tax-mix-select::before {
   content: '';
   position: absolute;
@@ -1173,7 +1173,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   max-height: 20rem;
   overflow-y: auto;
   /* CSS computes `overflow-x` to `auto` whenever `overflow-y` is not
-   * `visible`, so this listbox was already a two-axis scroll box — declaring
+   * `visible`, so this listbox was already a two-axis scroll box, declaring
    * the intent is what keeps it a one-axis one (#62). Nothing can be clipped
    * by it: the clamp below stops the content exceeding the box. */
   overflow-x: hidden;
@@ -1274,7 +1274,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 
 /* ---- Limits (§12) -------------------------------------------------------
  * A numbered list of caveats, set as running text rather than as a list of
- * bullets: BRIEF.md makes this section load-bearing, and bullets read as an
+ * bullets: BRIEF.md makes this section required, and bullets read as an
  * appendix. The marker is the only ornament, and nothing here is collapsible.
  */
 
@@ -1298,8 +1298,8 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 .reference-doc { max-width: var(--measure-wide); }
 .reference-doc table { border-collapse: collapse; font-variant-numeric: var(--num-table); }
 /* #79. `/sources` overflowed a 390px viewport by 130px: three `<code>` spans
-   carrying unbreakable identifiers -- an API path, a Census filename template, a
-   FRED series -- measured 459 to 500px against a 390px client width, and the
+   carrying unbreakable identifiers, an API path, a Census filename template, a
+   FRED series, measured 459 to 500px against a 390px client width, and the
    whole page scrolled sideways because of them.
 
    Contained at the `<code>` element, never at the page, and never by truncation:
@@ -1354,7 +1354,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
  * uses, so an entry here reads as the thing it points at.
  *
  * The one constraint that is not aesthetic: every derived string on this page
- * is long — a source line runs to a full sentence with a vintage on it — and
+ * is long, a source line runs to a full sentence with a vintage on it, and
  * `/sources` already overflows a 390px viewport on unbreakable text (#79).
  * Hence `overflow-wrap: anywhere` on the source line, and no `nowrap` anywhere
  * except the short figure number.
@@ -1469,7 +1469,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   border: 1.5px solid var(--ink);
   cursor: pointer;
   /* #65, E7. Radix positions `Slider.Thumb` with inline styles; if it ever
-   * sets `position` itself this is overridden, harmlessly — an absolutely
+   * sets `position` itself this is overridden, harmlessly, an absolutely
    * positioned thumb is equally a containing block. What this declaration
    * prevents is the thumb staying `static`, which would anchor the overlay
    * below to `.year-range-track` and swallow every tap on the whole track. */
@@ -1477,7 +1477,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 }
 /* #65. The only overlay that grows on both axes, because the dot is the one
  * control failing on width as well. The element stays 15x15 and paints 15x15
- * — resizing it would change the box Radix positions the thumb by, shifting
+ *, resizing it would change the box Radix positions the thumb by, shifting
  * it against the track and changing the track's usable extent. */
 .year-range-thumb::before {
   content: '';
@@ -1525,15 +1525,15 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
  *    popover. That is WCAG 1.4.13 *hoverable*, met by the DOM shape rather
  *    than by a timer. Do not portal it, and do not position it against the
  *    viewport.
- * 2. `left: 0; right: 0` sizes it to its positioned ancestor — `p`, `li`,
+ * 2. `left: 0; right: 0` sizes it to its positioned ancestor, `p`, `li`,
  *    `h2` or `.standfirst` containing `.term`, per the `:has(.term)` rule
- *    below — whose `max-width` is the measure. It is therefore exactly as
+ *    below, whose `max-width` is the measure. It is therefore exactly as
  *    wide as the prose it interrupts and cannot overflow any viewport the
- *    prose fits — no collision detection and no width clamp, which is what
+ *    prose fits, no collision detection and no width clamp, which is what
  *    keeps the Radix Select clipping of #62 out of reach here. All four
  *    container types are listed below because the glossary contract
  *    (docs/contracts/interfaces/glossary.md, "In-prose markers") allows a
- *    marker in any of them — a marker landing in a container missing from
+ *    marker in any of them, a marker landing in a container missing from
  *    this rule would position against a higher, unpositioned ancestor.
  *
  * Deliberately without a transition or an animation anywhere: that is how
@@ -1587,7 +1587,7 @@ p:has(.term), li:has(.term), h2:has(.term), .standfirst:has(.term) { position: r
  * The five destinations, set as a numbered list of headed entries rather than
  * as boxes: this is a statistical publication, and its list of routes should
  * read like a contents page, not like a dashboard of tiles. Same hairline,
- * same small caps, same counter as `.limits` — no new ornament is introduced
+ * same small caps, same counter as `.limits`, no new ornament is introduced
  * for the one page a reader meets first.
  */
 

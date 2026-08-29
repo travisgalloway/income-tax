@@ -16,7 +16,7 @@ const base = import.meta.env.BASE_URL
 
 /* One list of destinations, one base-path join, both in src/data/sections.ts. The rail below and
  * the narrow-viewport navbar above it map this same array, so a route added there appears in
- * both — and /contents derives its whole outline from it rather than from a copy of its own. */
+ * both, and /contents derives its whole outline from it rather than from a copy of its own. */
 const routes = siteRoutes.map((r) => ({ href: join(r.path), label: r.label }))
 
 const current = Astro.url.pathname.replace(/\/$/, '')
@@ -36,9 +36,9 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
         /* useChartSize returns the WIDE preset (720x396) before the first
          * client measurement, so with scripting off the wide viewBox is never
          * swapped for the narrow one and chart text is scaled down with the
-         * plot — an 11px axis label lands around 5.4px at a 390px viewport.
+         * plot, an 11px axis label lands around 5.4px at a 390px viewport.
          * Sized in viewBox units to land back near 10-11px rendered. This
-         * mitigates legibility; it does not fix the underlying geometry — see
+         * mitigates legibility; it does not fix the underlying geometry, see
          * docs/contracts/accessibility.md, "Known limitation". */
         @media (max-width: 34.9rem) {
           .axis-label { font-size: 20px; }
@@ -47,7 +47,7 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
         }
 
         /* #73: with scripting off there is no tap-to-read and no hover
-         * readout — the marks never hydrate, so neither gesture the other two
+         * readout, the marks never hydrate, so neither gesture the other two
          * hint sentences name does anything. The table is the only route to a
          * number that genuinely works here (TableView is a native <details>),
          * and the hint must say so. Reuses the mechanism already in <head> for
@@ -141,7 +141,7 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
       /* Progressive enhancement over the native <details> disclosure above: the
        * panel opens, closes and exposes every link with zero scripting, and
        * only Escape-to-close, focus-return and the two dismissals below need
-       * this. `is:inline` because the bar is layout chrome, not an island — it
+       * this. `is:inline` because the bar is layout chrome, not an island, it
        * must work on first paint, with no bundle and no hydration. */
       ;(function navbarEnhancement() {
         var d = document.getElementById('navbar-disclosure')
@@ -176,7 +176,7 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
       })()
 
       /* Marks the section containing the viewport midpoint with
-       * `aria-current='true'` — single-quoted throughout this comment on
+       * `aria-current='true'`, single-quoted throughout this comment on
        * purpose, because the built page must carry zero double-quoted literal
        * of that attribute and a comment is served verbatim. Both contents
        * lists at once: the rail's anchors and the panel's carry the same
@@ -186,7 +186,7 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
        * Nothing is marked with scripting off, and that is correct: marking
        * section 1 server-side would be wrong for every reader who is not at the
        * top. Neither list is a live region, so changing this attribute on an
-       * unfocused link announces nothing while scrolling — see
+       * unfocused link announces nothing while scrolling, see
        * docs/contracts/accessibility.md. No scripted scrolling exists here at
        * all, which is how prefers-reduced-motion is satisfied: vacuously, and
        * greppably, the same way the bar above satisfies it. */
@@ -247,7 +247,7 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
          * and whether a zero-area intersection reports `isIntersecting` at
          * threshold 0 differs between engines. Sections tile contiguously
          * inside <main>, so the band is inside exactly one of them everywhere
-         * between the first section's top and the last section's bottom — band
+         * between the first section's top and the last section's bottom, band
          * containment is the midpoint rule. Where two straddle the ~4px window
          * at a boundary, `pick()` takes the earlier in document order, in both
          * scroll directions, so the mark cannot oscillate. */
@@ -269,7 +269,7 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
 
       /* In-prose glossary markers (#47). One IIFE shared by every marked term
        * on the page, for the same reason as the two above: layout chrome, not
-       * an island — no bundle, no hydration, correct on first paint. An
+       * an island, no bundle, no hydration, correct on first paint. An
        * `is:inline` block inside Term.astro would emit this once per marked
        * term, and a component <script> would add a module the page then has to
        * fetch, for ~25 instances of it.
@@ -282,7 +282,7 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
        * Two invariants the rest of this reads as given. The popover is a DOM
        * descendant of its wrapper, so a pointer travelling from the trigger
        * onto the popover never leaves the wrapper and never fires
-       * `pointerleave` — WCAG 1.4.13 hoverable is the DOM shape, and the
+       * `pointerleave`, WCAG 1.4.13 hoverable is the DOM shape, and the
        * 150ms close delay is redundancy. And nothing here closes on a timer:
        * only Escape, a Tab out of the wrapper, a click outside, or another
        * term opening. That is 1.4.13 persistent.
@@ -325,9 +325,9 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
           var trigger = triggerOf(t)
           var pop = popOf(t)
           /* The only number script supplies. `offsetParent` is whichever
-           * ancestor CSS makes a positioning context — `p`, `li`, `h2` or
+           * ancestor CSS makes a positioning context, `p`, `li`, `h2` or
            * `.standfirst` containing `.term`, per the `:has(.term)` rule in
-           * global.css — and offsetHeight spans both line boxes when the
+           * global.css, and offsetHeight spans both line boxes when the
            * trigger wraps, so the popover lands below the whole trigger
            * rather than through it. Recomputed on every open, so a resize
            * between opens needs no listener. */
@@ -378,7 +378,7 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
            * was inside the popover about to be hidden, so nothing here moves
            * the reader. */
           t.addEventListener('keydown', function (e) {
-            /* An <a> synthesizes a click on Enter but not on Space — Space's
+            /* An <a> synthesizes a click on Enter but not on Space, Space's
              * default on a link is to scroll the page. The a11y contract
              * ("Enter / Space | opens; does not navigate") promises both, so
              * Space is intercepted here the same way Enter already arrives

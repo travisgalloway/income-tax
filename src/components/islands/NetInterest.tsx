@@ -1,11 +1,11 @@
 /** Section 7: net interest, nobody appropriates it.
  *
- *  Percent-of-GDP is DELIBERATELY not offered here -- section 6 already
+ *  Percent-of-GDP is DELIBERATELY not offered here, section 6 already
  *  carries net interest as a share of GDP, and a third view of the same
  *  series would duplicate that section rather than add to it. Just a
  *  nominal / real FY2025 toggle.
  *
- *  FY2015 is the "trough" and FY2003 is the "series low" -- SOURCES.md and
+ *  FY2015 is the "trough" and FY2003 is the "series low", SOURCES.md and
  *  validate.py fix that vocabulary, and it is never "low" for FY2015 here, in
  *  annotation, aria-label, live-region readout or table.
  *
@@ -28,7 +28,7 @@ import { labelledByFigure } from './figureLabel'
 import { ChartHint } from '../charts/ChartHint'
 
 /** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
- *  this key rather than typed — see `figureLabel.ts` (#72). */
+ *  this key rather than typed, see `figureLabel.ts` (#72). */
 const FIGURE = 'net-interest'
 
 const START = 1995
@@ -50,7 +50,7 @@ function netInterestOf(r: BudgetYear, view: View): number {
 
 /** `format.ts`'s `tick` renders zero as "$0B". A bare "$0" reads better on
  *  this axis; this is a local, additive wrapper, not a change to the shared
- *  helper -- #2, #3 and #4 also depend on `tick` unmodified. */
+ *  helper, #2, #3 and #4 also depend on `tick` unmodified. */
 function axisTick(v: number): string {
   if (v === 0) return '$0'
   return `$${(v * 1000).toFixed(0)}B`
@@ -62,7 +62,7 @@ function noteFor(y: number): string | null {
   return null
 }
 
-/** The sections.md section 7 Alt text block, restated per view -- it
+/** The sections.md section 7 Alt text block, restated per view, it
  *  describes the nominal shape only, so the real-dollar view needs its own
  *  wording (DebtChart.tsx:65-68 is the precedent for a view-dependent
  *  aria-label on this chart layer). */
@@ -99,7 +99,7 @@ export function NetInterest({ rows }: { rows: BudgetYear[] }) {
   const domain = niceExtent(span.map((r) => netInterestOf(r, view)))
   const y = linear(domain, [ih, 0])
 
-  // Ticks every $200B, zero-anchored, up to the padded domain top -- never
+  // Ticks every $200B, zero-anchored, up to the padded domain top, never
   // the shared `tick()` step, which is unitless about spacing.
   const yTicks = useMemo(() => {
     const top = domain[1]

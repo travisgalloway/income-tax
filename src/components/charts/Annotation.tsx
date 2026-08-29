@@ -4,7 +4,7 @@
  *  place where the clamp in `annotate.ts` is applied and a single place to
  *  audit. That is deliberate: `placeAnnotation` can return `null` for a label
  *  too wide to fit, and a call site that forgot to honour `null` would draw the
- *  very truncated number #64 is about. Here it cannot be forgotten — `null`
+ *  very truncated number #64 is about. Here it cannot be forgotten, `null`
  *  renders nothing.
  *
  *  Consequence for reviewers and for the pytest audit: `className="annotation"`
@@ -30,8 +30,8 @@ const FONT_PX_BY_CLASS: Record<string, number> = {
   'dotplot-average-label': SMALL_LABEL_FONT_PX,
   'maturity-marker-label': SMALL_LABEL_FONT_PX,
   // #66. DebtHolders' two bar rows route their segment labels through here, so
-  // `Foreign $9.64T (30% of publicly held debt, 24% of gross debt)` — which
-  // shipped cut at `…of publicly held d` — can no longer be emitted partial.
+  // `Foreign $9.64T (30% of publicly held debt, 24% of gross debt)`, which
+  // shipped cut at `…of publicly held d`, can no longer be emitted partial.
   'holders-label': DATA_LABEL_FONT_PX,
 }
 
@@ -50,7 +50,7 @@ export interface AnnotationProps {
   y?: number
   dy?: string
   /** The label text. A string, not children, because its width is what the
-   *  clamp is computed from — JSX children cannot be measured. */
+   *  clamp is computed from, JSX children cannot be measured. */
   label: string
   /** Further lines, rendered as `<tspan>`s sharing one placement. The width
    *  used is the WIDEST line, never the concatenation of them. */
@@ -59,7 +59,7 @@ export interface AnnotationProps {
   className?: string
   /** The italic end-of-line series name variant (global.css `.series-label`).
    *  A flag rather than a class string, so the class itself is written in this
-   *  file and nowhere else — which is the invariant
+   *  file and nowhere else, which is the invariant
    *  `test_every_annotation_is_placed_through_the_clamp` greps for. */
   seriesLabel?: boolean
   fill?: string

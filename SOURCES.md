@@ -51,8 +51,8 @@ and floating-rate notes, plus a small Federal Financing Bank balance, which the
 maturity chart does not draw. The pinned statement
 month is recorded in `debt_maturity._meta.provenance.vintage` and moving it is an
 editorial act, not a refresh. Until #56 these figures were curated constants
-credited to the Peterson Foundation, and the total among them read $28.0T —
-which is bills plus notes plus bonds, not the marketable total.
+credited to the Peterson Foundation, and the total among them read $28.0T, which
+is bills plus notes plus bonds rather than the marketable total.
 
 **US Treasury, Treasury International Capital** — primary
 Major Foreign Holders of Treasury Securities, November 2025 release.
@@ -72,7 +72,7 @@ Shares of AGI and of income tax paid by percentile group.
 
 **Tax Foundation income-tax-rates dataset** — compilation
 [github.com/TaxFoundation/data](https://github.com/TaxFoundation/data) → `income-tax-rates/income-tax-rates.csv`
-The statutory bracket ladder by filing status, 1913–2019. It is a **compilation**
+The statutory bracket ladder by filing status, 1913-2019. It is a **compilation**
 of IRS SOI Historical Table 23 and the IRS Revenue Procedures, not an independent
 source: every number in it is a federal one, reorganised into per-bracket rows.
 The CSV ends at 2019.
@@ -81,7 +81,7 @@ It is used instead of the IRS files themselves for a reason worth stating plainl
 because it is the one place this site reads a compiler rather than the original.
 **The IRS does not publish the bracket ladder in machine-readable form at bracket
 granularity.** Table 23 (below) is the closest thing, and it carries only two rates
-per year — the lowest bracket and the highest — with no per-bracket rows and no
+per year, the lowest bracket and the highest, with no per-bracket rows and no
 filing-status dimension. Probed directly in August 2026: `histab23.xls` is there and
 current, `histab23.xlsx` is a 404, there is no Table 24, and nothing else in the SOI
 historical-tables release carries the full schedules. So the Tax Foundation CSV is
@@ -92,17 +92,17 @@ byte counts, is in `docs/contracts/interfaces/bracket-history-data.md`.
 **IRS SOI Historical Table 23** — primary, and the **IRS Revenue Procedures** — primary
 [irs.gov/pub/irs-soi/histab23.xls](https://www.irs.gov/pub/irs-soi/histab23.xls) — "U.S. Individual Income Tax: Personal
 Exemptions and Lowest and Highest Bracket Tax Rates, and Tax Base for Regular Tax,
-Tax Years 1913–2018". Table 23 is where the published top marginal rate comes from,
+Tax Years 1913-2018". Table 23 is where the published top marginal rate comes from,
 and since August 2026 it is checked rather than merely cited: its highest-bracket
 column is transcribed, with the file's SHA-256, into
 `pipeline/curated/top_rates_soi_anchor.yaml`, and the build fails if any year of the
-top-rate series disagrees with it. All 106 overlapping years, 1913–2018, agree to
+top-rate series disagrees with it. All 106 overlapping years, 1913-2018, agree to
 the digit. Table 23 stops at 2018 and is a legacy `.xls`; it is the envelope of the
 bracket ladder, never the ladder itself.
 
 Revenue Procedures 2018-57 through 2024-40, published in the Internal Revenue
 Bulletin ([irs.gov/irb](https://www.irs.gov/irb)), and PL 115-97 behind them, carry the
-2019–2025 schedules and the 37% top rate for those years — past where Table 23
+2019-2025 schedules and the 37% top rate for those years, past where Table 23
 reaches. They are hand-transcribed into `pipeline/curated/brackets_modern.yaml`
 because no machine-readable feed publishes them; 2019 is transcribed too but used
 only as a regression check against the fetched CSV, which stays authoritative for
@@ -126,8 +126,8 @@ a different series and would move every real threshold.
 
 **Census Bureau, via FRED** — official republication
 [MEHOINUSA672N](https://fred.stlouisfed.org/series/MEHOINUSA672N) real median household
-income in 2024 dollars, 1984–2024.
-[GINIALLRF](https://fred.stlouisfed.org/series/GINIALLRF) family Gini index, 1947–2024.
+income in 2024 dollars, 1984-2024.
+[GINIALLRF](https://fred.stlouisfed.org/series/GINIALLRF) family Gini index, 1947-2024.
 
 **CBO, The Distribution of Household Income, 2022** — primary (published January 2026)
 [cbo.gov/topics/income-distribution](https://www.cbo.gov/topics/income-distribution)
@@ -193,7 +193,7 @@ comparable.**
 **Net interest low point.** FY2015 at $223B is a recent trough, not the series
 low. The actual low is FY2003 at $153B. **Say "trough," not "low."**
 
-**Deficit total.** Cumulative FY1995–FY2025 deficits are $24.15T, but debt held
+**Deficit total.** Cumulative FY1995-FY2025 deficits are $24.15T, but debt held
 by the public rose $26.74T over the same period. The gap is borrowing to finance
 federal credit programs and other means of financing, which do not appear in the
 deficit. **If both numbers appear, explain the gap.**
@@ -205,7 +205,7 @@ deficit. **If both numbers appear, explain the gap.**
 This was the dataset's weakest point and is no longer. Each of the 23 laws
 carries per-party yea and nay counts taken from Voteview roll-call records by
 `pipeline/oneshot/party_splits.py`. PL 115-97 reproduces the published House
-Clerk record on the caucus basis: House R 224–12, D 0–189; Senate R 51–0, D 0–48.
+Clerk record on the caucus basis: House R 224-12, D 0-189; Senate R 51-0, D 0-48.
 
 **Voteview roll-call records** — scholarly republication
 [voteview.com/data](https://voteview.com/data). `HSall_members.csv` joined to the
@@ -219,7 +219,7 @@ roll call, and the independent record the Voteview join is regressed against.
 secondary interpretation of them, and it is not a candidate for replacement**
 (#56): the join it feeds is regressed against the independently published House
 Clerk record for PL 115-97 at `pipeline/oneshot/party_splits.py`, which fails the
-build if it drifts. Its `rollnumber` index is its own — `698` for the TCJA's
+build if it drifts. Its `rollnumber` index is its own, at `698` for the TCJA's
 final House passage, against the Clerk's session-scoped `RC699` for the same
 vote on 20 December 2017. **The two numbers are not an inconsistency and must not
 be reconciled**; `roll698.xml` at `clerk.house.gov` is H RES 66, a different
@@ -229,7 +229,7 @@ Four limits remain, and section 11 states all four. The final-passage roll call
 for each law was curated by hand, because a bill carries many roll calls and
 selecting one by date returns the wrong vote. The House passed the CARES Act by
 voice on 27 March 2020, so no roll call exists and one chamber of one law has no
-split; **render that as missing data, never as unanimity and never as 0–0.** A
+split; **render that as missing data, never as unanimity and never as 0-0.** A
 vote is called cross-party when at least 10% of the yes votes came from the
 minority party in at least one chamber, which is a judgement and is stated so it
 can be disagreed with. `r`, `d` and `i` are party membership; `d_caucus` adds the
@@ -284,7 +284,7 @@ fetch-and-validate gate exists to prevent, so it is cited in body copy and never
 derived from the discovered IRS fiscal year, never the other way independently), so give and get
 compare the same twelve months by construction. The Census tax-mix vintage is discovered
 separately and is not guaranteed to land on the same fiscal year as give and get in every future
-run — read `_meta.provenance.vintage` on the actual published output rather than assuming.
+run. Read `_meta.provenance.vintage` on the actual published output rather than assuming.
 
 ---
 

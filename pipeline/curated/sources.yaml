@@ -2,7 +2,7 @@ _comment: |
   Curated. NEVER machine-written.
 
   Every source CITED in a published output's _meta.source, mapped to the entry that
-  REGISTERS it in SOURCES.md -- the document /sources renders in full. check_sources
+  REGISTERS it in SOURCES.md, the document /sources renders in full. check_sources
   in pipeline/lib/validate.py reconciles the two on every build (#39).
 
   Why a curated file rather than a scrape: SOURCES.md uses **bold** for ordinary
@@ -16,7 +16,7 @@ _comment: |
     registered_as        a string that must appear in SOURCES.md
     cited_as             a string, or several, that may appear in an _meta.source.
                          Several because two outputs legitimately name one source
-                         differently -- debt.json writes the Treasury series out in
+                         differently. debt.json writes the Treasury series out in
                          full, debt_holders.json uses the short form.
     cited_in_prose_only  named in body copy, ingested by nothing. Exempt from the
                          "every entry is cited by some output" rule and from shape
@@ -27,7 +27,7 @@ _comment: |
     url                  the canonical page a READER can open, so every source line
                          on the site is followable. Required unless url_exempt (rule G).
     url_exempt           a WRITTEN REASON no single URL is truthful, never a bare
-                         bool -- an exemption with no reason is how a check turns
+                         bool. An exemption with no reason is how a check turns
                          back into a skip.
     justification        required where tier is `secondary` (rule H).
     compiled_from        required where tier is `compilation` (rule H): the register
@@ -53,7 +53,7 @@ _comment: |
                              exists so the next one cannot be added silently.
 
   A tier describes what a source IS. It is never a licence to swap which source a
-  figure uses -- that is an editorial act, and it is not this file's to make.
+  figure uses. That is an editorial act, and it is not this file's to make.
 
   outputs
     cites                the register keys that output's _meta.source names
@@ -81,7 +81,7 @@ not_a_source:
   - name: "Al Jazeera"
     reason: >-
       Until #54, debt_holders._meta.notes sourced the China holdings figure to
-      "TIC via Al Jazeera" -- an outlet's paraphrase standing in for the agency's
+      "TIC via Al Jazeera", an outlet's paraphrase standing in for the agency's
       own release, and one that had already drifted from it ($889B for the UK
       matches no TIC month in 2025). The figures now come from
       ticdata.treasury.gov directly. A news report of an agency's data is not the
@@ -90,7 +90,7 @@ not_a_source:
     reason: >-
       Until #56, debt_maturity._meta.source credited the instrument shares to the
       Peterson Foundation while naming the Monthly Statement of the Public Debt
-      first in the same string -- a compiler of Treasury's release standing in for
+      first in the same string, a compiler of Treasury's release standing in for
       the release. The composition is now fetched from mspd_table_1 directly, and
       the figure the curated constants carried had already drifted:
       marketable_total_t read $28.0T, which is bills + notes + bonds, not the
@@ -180,7 +180,7 @@ registry:
     # NOT primary, and the distinction is the one #56 was filed over. The average
     # maturity of marketable debt is computed and published by Treasury's Office of Debt
     # Management; the JEC update restates it. The committee is an official body, so this
-    # is an official republication rather than a compilation -- but it is not the origin
+    # is an official republication rather than a compilation, and it is not the origin
     # of the number, and labelling it primary would repeat the Peterson shape in a
     # quieter place. WHICH source debt_maturity cites is out of #57's scope; naming what
     # kind of source it is, is not.
@@ -296,8 +296,9 @@ registry:
   voteview:
     registered_as: "Voteview roll-call records"
     cited_as: "Voteview"
-    # The load-bearing term (#57). Voteview is not official -- it is not the House
-    # Clerk -- and it is not secondary: it republishes the primary roll-call record and
+    # The term that settles the vocabulary (#57). Voteview is not official, because it
+    # is not the House Clerk, and it is not secondary, because it republishes the
+    # primary roll-call record and
     # the join it feeds is regressed against the Clerk's independently published record
     # for PL 115-97, which fails the build if it drifts. A vocabulary whose only word
     # for it was "secondary" would be the wrong vocabulary, so the vocabulary widened.

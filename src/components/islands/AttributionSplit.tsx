@@ -3,13 +3,13 @@
  *  A diverging horizontal bar per bucket, zero on a shared vertical baseline.
  *  Gross increases run right of zero, reductions run left of zero, and a
  *  filled diamond marks the net value. Sign and position carry the net-vs-
- *  gross and surplus-vs-reduction facts; colour is never the only carrier —
+ *  gross and surplus-vs-reduction facts; colour is never the only carrier,
  *  see partyColor below for why the president view is deliberately NOT
  *  coloured by party.
  *
  *  Both Tabs.Content panels are forceMount'd and rendered unconditionally, so
  *  the inactive one exists in the DOM (Radix hides it with the native `hidden`
- *  attribute) rather than being mounted on first switch — hydration cannot
+ *  attribute) rather than being mounted on first switch, hydration cannot
  *  reflow the page, and a reader with JavaScript disabled still gets one full,
  *  server-rendered figure (the default coalition view) with nothing to grow
  *  into later.

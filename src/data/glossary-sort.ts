@@ -8,7 +8,7 @@
  *
  *  Lifted out of `src/pages/glossary.astro` by #49 because `/contents` lists the same 23 terms and
  *  must list them in the same order. A page module cannot be imported, so the alternative was a
- *  second copy of the expression — and two copies of an ordering rule is how the index and the
+ *  second copy of the expression, and two copies of an ordering rule is how the index and the
  *  page it indexes come to disagree. */
 export const sortKey = (term: string) =>
   term

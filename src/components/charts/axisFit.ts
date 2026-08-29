@@ -1,14 +1,14 @@
 /** Axis text fit. Issue #66.
  *
  *  `annotate.ts` owns the four DIRECT-LABEL classes (#64). This file owns the
- *  other half of the same defect: axis text — left-gutter tick labels, bottom
- *  tick labels, and the rotated axis title — which #64 deliberately scoped out
+ *  other half of the same defect: axis text, left-gutter tick labels, bottom
+ *  tick labels, and the rotated axis title, which #64 deliberately scoped out
  *  and which is where the 390px sweep's remaining overruns live.
  *
  *  The failure is the same one, and it is a correctness failure rather than a
  *  layout one: `Chart.tsx` renders with a `viewBox` and no `overflow: visible`,
  *  so a tick label wider than its gutter is CUT MID-GLYPH. `$30,000,000` at
- *  `x={-8}` against a 60-unit gutter shipped as `0,000,000` — a complete-looking
+ *  `x={-8}` against a 60-unit gutter shipped as `0,000,000`, a complete-looking
  *  number that is not the number.
  *
  *  Three geometries, three different remedies, and the difference matters:
@@ -16,7 +16,7 @@
  *  - **Bottom ticks** are clamped, by `placeTickLabel`. Shift-only, never flip:
  *    an axis tick re-anchored `end` jumps a whole label-width away from its own
  *    gridline, which turns a layout defect into a misreading. The shift is the
- *    minimum the edge forces — at most ~8 units at the 360 preset — so the
+ *    minimum the edge forces, at most ~8 units at the 360 preset, so the
  *    label stays visually attached to its tick.
  *
  *  - **Left ticks are NOT clamped.** A left tick pushed inward lands *in the
@@ -53,7 +53,7 @@ export const TICK_OFFSET = 8
  * `AxisLeft` draws each tick at `x = -offset`, `end`-anchored, so the label
  * grows leftward and the SVG's own left edge is at `-margin.left`. What is left
  * over is `margin.left - offset - pad`: 64 units at the 720 preset, 42 at 360.
- * At 11px and `ADVANCE_EM = 0.62` that is 9.3 and 6.1 characters respectively —
+ * At 11px and `ADVANCE_EM = 0.62` that is 9.3 and 6.1 characters respectively,
  * which is the whole reason `dollars()` cannot be an axis formatter.
  */
 export function leftGutterRoom(frame: Frame, offset: number = TICK_OFFSET, pad = 2): number {
@@ -70,7 +70,7 @@ export function leftGutterFits(
   return estimateTextWidth(label, fontPx) <= leftGutterRoom(frame, offset)
 }
 
-/** Whether EVERY label fits — the all-or-none test a categorical axis needs.
+/** Whether EVERY label fits, the all-or-none test a categorical axis needs.
  *
  *  A per-label decision would put some categories in the gutter and others
  *  inside the plot on the same axis, which reads as a rendering fault rather
@@ -85,7 +85,7 @@ export function everyLeftGutterLabelFits(
 }
 
 /**
- * A bottom-axis tick label, shifted — never flipped — to stay inside the SVG.
+ * A bottom-axis tick label, shifted, never flipped, to stay inside the SVG.
  *
  * Returns `null` only when the label is wider than the entire visible span, in
  * which case the caller must render nothing: absent beats a partial number.
@@ -102,7 +102,7 @@ export function placeTickLabel(
 }
 
 /** The horizontal room a label anchored `anchor` at `x` has before it leaves
- *  the SVG, in user units — the width budget a variant ladder must fit. */
+ *  the SVG, in user units, the width budget a variant ladder must fit. */
 export function spanRoomAt(x: number, frame: Frame, anchor: Anchor = 'middle', pad = 2): number {
   const [lo, hi] = visibleSpan(frame, pad)
   if (anchor === 'start') return Math.max(0, hi - x)
@@ -131,7 +131,7 @@ export function firstThatFits(
 }
 
 /**
- * Pairs of adjacent tick labels whose painted boxes overlap — the density check.
+ * Pairs of adjacent tick labels whose painted boxes overlap, the density check.
  *
  * Reported rather than fixed: thinning a tick set is the caller's decision
  * (`scale.ticks(n)` takes the count), and silently dropping a tick here would
@@ -166,7 +166,7 @@ export function tickLabelOverlaps(
  * Vertical room for `AxisLeft`'s rotated title, in user units (E7).
  *
  * `rotate(-90)` puts the title's ADVANCE on the y axis, so what bounds it is
- * the SVG's height, not its width — and a guard that walks x is blind to it.
+ * the SVG's height, not its width, and a guard that walks x is blind to it.
  * Measured against the whole viewBox rather than `innerHeight`, because a title
  * is free to sit over the top and bottom margins; it is only forbidden to leave
  * the SVG.
@@ -189,8 +189,8 @@ export function rotatedTitleFits(
  * The local y for `AxisLeft`'s rotated title, shifted so its whole box lies
  * inside the SVG.
  *
- * "Local" is the plot's coordinate system — `Chart.tsx` wraps children in
- * `translate(margin.left, margin.top)` — so global y is `margin.top + local`.
+ * "Local" is the plot's coordinate system, `Chart.tsx` wraps children in
+ * `translate(margin.left, margin.top)`, so global y is `margin.top + local`.
  * The plot's vertical centre is the natural home, and it is returned unchanged
  * whenever the title fits there. It often does not on a short panel, because
  * the two margins are asymmetric (50 below, 22 above at the 360 preset), so the

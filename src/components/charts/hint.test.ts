@@ -13,7 +13,7 @@
  *
  *  U2-c is the anti-blindness one. Every sweep below iterates `HINT_MODES`
  *  rather than a literal list of its own, which is what stops a typo in one
- *  place from quietly shrinking the sweep — so the arity and the set equality
+ *  place from quietly shrinking the sweep, so the arity and the set equality
  *  are asserted explicitly, and a mode that stops being covered fails loudly
  *  instead of being covered zero times in silence.
  */

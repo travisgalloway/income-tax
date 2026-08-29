@@ -1,9 +1,9 @@
-/** The touch half of the browser lane — issue #73. Run by
+/** The touch half of the browser lane, issue #73. Run by
  *  `npm run test:browser` alongside `smoke`, `keyboard`, `driven` and `scroll`.
  *
  *  WHAT IS UNDER TEST. On a device that cannot hover, a chart's marks stop being
- *  hit targets — at 390px they are 3.317px wide and there are 389 of them across
- *  350px of plot — and the PLOT becomes one target: a tap or a drag anywhere in
+ *  hit targets, at 390px they are 3.317px wide and there are 389 of them across
+ *  350px of plot, and the PLOT becomes one target: a tap or a drag anywhere in
  *  the `<svg>` focuses the geometrically nearest visible mark, and the readout
  *  the keyboard already drives reports it. The hint text follows the modality:
  *  `Focus or hover a year to read its value.` named two interactions a phone
@@ -11,7 +11,7 @@
  *
  *  WHY A `hasTouch` CONTEXT AND NOT `isMobile`. `hasTouch: true` alone yields
  *  `(pointer: coarse)`, `(hover: none)`, `(any-pointer: coarse)` and
- *  `maxTouchPoints = 1` — measured. `isMobile` additionally forces a mobile user
+ *  `maxTouchPoints = 1`, measured. `isMobile` additionally forces a mobile user
  *  agent and a viewport-meta override, neither of which this contract is about,
  *  and both of which would make this file measure a different page than
  *  `keyboard.test.ts` measures at the same width.
@@ -20,14 +20,14 @@
  *  #71's lane hung for fifteen minutes on an unbounded `waitForFunction` and had
  *  to be killed by hand (follow-up #123 owns the general fix). Every `test()`
  *  here carries an explicit timeout and every wait in it is a bounded
- *  `waitForFunction` or a fixed settle delay — there is no unbounded wait in
+ *  `waitForFunction` or a fixed settle delay, there is no unbounded wait in
  *  this file.
  *
  *  THE ORACLE FOR "NEAREST", AND WHY IT IS NOT THE IMPLEMENTATION. B1b taps the
  *  CENTRE of a mark, so the point is inside at least one mark and the correct
  *  answer is forced by a rule far simpler than the resolver: THE LOWEST-INDEX
  *  VISIBLE MARK WHOSE RECT CONTAINS THE POINT. Four comparisons and a tie rule,
- *  no distances — an independent statement of the answer rather than a second
+ *  no distances, an independent statement of the answer rather than a second
  *  copy of `nearestBox`. It has to be stated that way because the site's marks
  *  OVERLAP: `MedianIncome`'s dots are 15.5px wide on a 7.2px stride, so a dot's
  *  own centre sits inside its left neighbour too, and "tapping mark N focuses
@@ -37,7 +37,7 @@
  *  EVERY SWEEP COUNTS THROUGH A RECORDED INTEGER. `TAPPABLE_CHARTS` and
  *  `HINT_CARRIERS` below are measured facts, asserted as equalities before
  *  anything is measured over them. That is what stops a mistyped selector from
- *  sweeping an empty set and reporting green — the failure shape #72 found twice
+ *  sweeping an empty set and reporting green, the failure shape #72 found twice
  *  and the one this lane is least able to notice on its own.
  */
 import { test, before, after } from 'node:test'
@@ -51,7 +51,7 @@ const WIDE = VIEWPORTS[1]
 /** The routes that carry charts, in the order they are swept. */
 const CHART_PATHS = ['/economy', '/households', '/government'] as const
 
-/** How many chart `<svg>`s on each route are TAPPABLE — rendered with a non-zero
+/** How many chart `<svg>`s on each route are TAPPABLE, rendered with a non-zero
  *  box and carrying at least one visible mark. Measured at 390x844, hydrated.
  *
  *  Not the same as the svg count in `harness.ts`: `/economy` draws two svgs for
@@ -65,7 +65,7 @@ const TAPPABLE_CHARTS: Record<string, number> = {
   '/government': 13,
 }
 
-/** How many elements on each route carry the three-span hint — `p.readout` for
+/** How many elements on each route carry the three-span hint, `p.readout` for
  *  every figure but `BudgetChart`, whose readout is a `dl.inspector`.
  *
  *  One `p.readout` per route deliberately carries NO hint: `AttributionSplit`'s
@@ -83,8 +83,8 @@ const HINT_CARRIERS: Record<string, number> = {
  *  `StatutoryVsEffective` plots 44 years of the top statutory rate and tables
  *  only the CBO anchor years, so a tap on 1990, 2001 or 2011 reads out a value
  *  that is genuinely in the chart and genuinely absent from the table below it.
- *  That is a `TableView` completeness question, not #73's — parked in
- *  `docs/parked-findings.md` — and it is named here as an exception rather than
+ *  That is a `TableView` completeness question, not #73's. It is named
+ *  here as an exception rather than
  *  softening B1c's table half into "where present", which would pass over any
  *  number of charts losing their tables. */
 const TABLE_INCOMPLETE = new Set(['/households#4'])
@@ -151,7 +151,7 @@ async function tappableCharts(page: Page): Promise<{ svg: number; marks: number[
  *
  *  Written out inside each `page.evaluate` rather than shared, because a
  *  browser-context function cannot close over a Node-context one and the two
- *  alternatives — stringifying it, or an init script — both cost more than the
+ *  alternatives, stringifying it, or an init script, both cost more than the
  *  three lines they save. */
 async function readoutText(page: Page, svgIndex: number): Promise<string> {
   return page.evaluate((k) => {
@@ -203,7 +203,7 @@ after(async () => {
 })
 
 // ---------------------------------------------------------------------------
-// B1 — a reader can obtain the value of any datum, by tapping (DoD 1, DoD 3)
+// B1, a reader can obtain the value of any datum, by tapping (DoD 1, DoD 3)
 // ---------------------------------------------------------------------------
 
 for (const path of CHART_PATHS) {
@@ -247,7 +247,7 @@ for (const path of CHART_PATHS) {
 
       for (const { svg, marks } of charts) {
         // Five marks spread across the whole index range, deduplicated: first,
-        // quartiles, last. Not five in a row — a resolver stuck near one end
+        // quartiles, last. Not five in a row, a resolver stuck near one end
         // has to be visible, and that is what "any datum" means.
         const sampled = [...new Set(
           [0, 0.25, 0.5, 0.75, 1].map((f) => marks[Math.round(f * (marks.length - 1))] as number),
@@ -355,7 +355,7 @@ for (const path of CHART_PATHS) {
 }
 
 // ---------------------------------------------------------------------------
-// B2 — the hint names the gestures the device reading it actually has (DoD 2)
+// B2, the hint names the gestures the device reading it actually has (DoD 2)
 // ---------------------------------------------------------------------------
 
 /** Every hint carrier's VISIBLE text. `innerText`, not `textContent`: all three
@@ -416,7 +416,7 @@ for (const path of CHART_PATHS) {
 }
 
 // ---------------------------------------------------------------------------
-// B3 — desktop hover and Tab focus unchanged (DoD 4, behavioural half)
+// B3, desktop hover and Tab focus unchanged (DoD 4, behavioural half)
 // ---------------------------------------------------------------------------
 
 test('B3a: on desktop a mouse press inside a chart still selects no datum', { timeout: TEST_TIMEOUT }, async () => {
@@ -536,7 +536,7 @@ test('B3b: marks are inert to the pointer on touch and live on desktop', { timeo
 })
 
 // ---------------------------------------------------------------------------
-// B4 — a phone reader can still scroll past a chart (DoD 6)
+// B4, a phone reader can still scroll past a chart (DoD 6)
 // ---------------------------------------------------------------------------
 
 test('B4: a vertical swipe that starts on a chart still scrolls the page', { timeout: TEST_TIMEOUT }, async () => {

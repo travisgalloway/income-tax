@@ -1,21 +1,21 @@
 """The mechanical half of the prose contract. Issue #51.
 
 `docs/contracts/prose.md` has three parts: conventions, a rubric, and a checklist of what only a
-human reader can judge. This file enforces the part that is mechanically checkable — punctuation and
-emphasis — and nothing else. The rest of the contract says plainly that it is human-judged, and this
+human reader can judge. This file enforces the part that is mechanically checkable, punctuation and
+emphasis, and nothing else. The rest of the contract says plainly that it is human-judged, and this
 suite does not pretend otherwise.
 
 **It reads `dist/`, not `src/`.** That is the whole design. A grep over the page sources counts
-`---` frontmatter comments and developer-facing `throw` strings as prose (all three ` -- ` in
+`---` frontmatter comments and developer-facing `throw` strings as prose (all three `, ` in
 `src/pages/contents.astro`, all five in `src/pages/glossary.astro`, most of the island hits), none
-of which a reader ever meets — and it misses the strings the islands assemble at runtime, which a
+of which a reader ever meets, and it misses the strings the islands assemble at runtime, which a
 reader does meet. `src/components/islands/StatutoryVsEffective.tsx:97` is the proof in both
-directions: it renders ` -- ` **into a chart `aria-label`**, so it is a punctuation violation inside
+directions: it renders `, ` **into a chart `aria-label`**, so it is a punctuation violation inside
 an accessible name, invisible to a source scan and bound by `docs/contracts/accessibility.md` as
 well as by this one.
 
 **It is an allow-list, never a deny-list.** A prose string is the text of an element carrying one of
-four named classes, or one of three named kinds of accessible name. Nothing else is visited — not
+four named classes, or one of three named kinds of accessible name. Nothing else is visited, not
 `<span class="unit">—</span>`, which means "this column has no unit" and would otherwise trip every
 table; not the `Source.` span at `src/components/Figure.astro:61`, which renders `fig.sourceLine`
 verbatim and is quoted material no prose rule may edit. Neither needs an exemption, because neither
@@ -24,7 +24,7 @@ the second.
 
 **The baselines are exact and they are asserted with `==`.** Today's violations are enumerated in
 `KNOWN_DASH_DEBT` and `KNOWN_SHOUT_DEBT`, each mapped to the issue that owns its removal. `==` and
-not `<=` is the load-bearing choice: `<=` would let a check pass because it is not looking, and it
+not `<=` is the choice that matters: `<=` would let a check pass because it is not looking, and it
 would let a fix leave a stale exemption behind forever. With `==`, adding a violation fails on the
 new fingerprint and *fixing* one fails on the missing entry, so the baseline can only shrink
 deliberately, in the same commit as the fix. #58 has taken its own share of both to zero; what is
@@ -32,7 +32,7 @@ left is #102's four island-generated accessible names and #103's five curated-da
 surfaces no prose edit to a page source can reach.
 
 Standard library only, and the HTML tree comes from `test_accessibility`'s parser rather than a
-third copy of one — the idiom `pipeline/tests/test_contents_index.py` established. The one import
+third copy of one, the idiom `pipeline/tests/test_contents_index.py` established. The one import
 past the standard library is deliberate and is the same rule stated again: section 10 reads
 `pipeline/curated/prose_figures.yaml` through `lib.curated._load`, the loader `pipeline/lib/report.py`
 uses to build the drift report, so the population this suite asserts against and the population the
@@ -79,7 +79,7 @@ if not PAGES:
 PROSE_CLASSES = ("prose", "standfirst", "finding", "figure-caveat")
 
 #: `Term.astro`'s popover body. Reader-visible, but it is a glossary entry under
-#: `src/content/glossary/`, not this page's prose — a different editing surface with a different
+#: `src/content/glossary/`, not this page's prose, a different editing surface with a different
 #: owner (#59). Descending into it would put a glossary sentence into a page's fingerprint and hand
 #: #58 a fix it does not own.
 EXCLUDED_DESCENDANT_CLASS = "term-pop"
@@ -88,21 +88,21 @@ EXCLUDED_DESCENDANT_CLASS = "term-pop"
 SKIP_TAGS = {"script", "style"}
 
 #: An all-caps run of two or more letters, as a whole word. The lookarounds matter: they keep
-#: `USASpending` and `HSall_members.csv` out — a CamelCase word is not a shout — while keeping
+#: `USASpending` and `HSall_members.csv` out, a CamelCase word is not a shout, while keeping
 #: `GDP.`, `GDP's` and `PL 115-97` in.
 CAPS_RUN = re.compile(r"(?<![A-Za-z])[A-Z]{2,}(?![A-Za-z])")
 
 #: Runs of digits, with their separators, collapse to `#` in a fingerprint.
 DIGIT_RUN = re.compile(r"\d[\d.,]*")
 
-#: The banned constructions. ` -- ` is not an em dash and is not a substitute for one: it renders as
+#: The banned constructions. `, ` is not an em dash and is not a substitute for one: it renders as
 #: two literal hyphens. Ruling 1 retires it outright rather than blessing it as an ASCII stand-in.
 BANNED_DASHES = ("—", " -- ")
 
 #: **Half** of the acronyms and initialisms this site is entitled to write in capitals: the ones
 #: with **no glossary entry**, each because the site does not define it. The other half is derived
-#: from `src/content/glossary/`'s `abbr` field, and `REGISTERED_INITIALISMS` — the set
-#: `test_no_prose_string_shouts` actually asks — is assembled from the two under the section 9
+#: from `src/content/glossary/`'s `abbr` field, and `REGISTERED_INITIALISMS`, the set
+#: `test_no_prose_string_shouts` actually asks, is assembled from the two under the section 9
 #: banner below, where the test asserting they are disjoint also lives.
 #:
 #: The split is #59's, and the contract named it as #59's to make: while the glossary held 23
@@ -152,7 +152,7 @@ def _is_prose_accessible_name(n: Node) -> bool:
 
     A `figure.figure`'s name and an `svg.chart`'s name are the finding, deliberately the same
     sentence per `docs/contracts/accessibility.md`. A `role="img"` element *inside* a chart is a
-    per-datum readout — `BudgetChart.tsx`'s 31 per-fiscal-year labels are these — assembled at
+    per-datum readout, `BudgetChart.tsx`'s 31 per-fiscal-year labels are these, assembled at
     runtime and read aloud verbatim, which Ruling 1 scoping decision 3 rules in.
 
     Deliberately excluded: `nav`, `role="radiogroup"`, `role="tablist"` and `role="list"` names.
@@ -206,18 +206,18 @@ def prose_strings() -> list[tuple[str, str, str]]:
 KNOWN_DASH_DEBT: dict[str, str] = {
     # --- #58's block is gone. It opened at 26 fingerprints over 33 rendered occurrences on the day
     #     #51 landed; #53 retired three by rewriting the sentences under Criterion 2; #58 retired
-    #     the remaining 23 (24 em dashes and 6 ` -- ` across five built pages) by applying Ruling
+    #     the remaining 23 (24 em dashes and 6 `, ` across five built pages) by applying Ruling
     #     1's replacement table. Nothing was exempted and no assertion was weakened: the block was
     #     deleted entry by entry, in the same commits as the edits, which is the only way the `==`
     #     below lets a baseline shrink.
     # --- #102, island-generated accessible names. Two `.tsx` templates, outside #58's remit
     #     because #58 edits `src/pages/**` prose only.
-    #     `src/components/islands/BudgetChart.tsx:84` — 31 per-fiscal-year `aria-label`s on the
+    #     `src/components/islands/BudgetChart.tsx:84`, 31 per-fiscal-year `aria-label`s on the
     #     budget bars, collapsing to the three shapes its number formatter produces:
     'government/index.html|aria-label:rect|FY# Outlays $#T (mandatory $#B, discretionary $#B, net inter': "#102",
     'government/index.html|aria-label:rect|FY# Outlays $#T (mandatory $#T, discretionary $#B, net inter': "#102",
     'government/index.html|aria-label:rect|FY# Outlays $#T (mandatory $#T, discretionary $#T, net inter': "#102",
-    #     `src/components/islands/StatutoryVsEffective.tsx:97` — ` -- ` twice inside a chart's
+    #     `src/components/islands/StatutoryVsEffective.tsx:97`, `, ` twice inside a chart's
     #     accessible name, which `docs/contracts/accessibility.md` also governs:
     'households/index.html|aria-label:svg|The top statutory income tax rate ran from #% in # to #% in ': "#102",
 }
@@ -226,13 +226,13 @@ KNOWN_DASH_DEBT: dict[str, str] = {
 #: curated-data shouts: they reach the page through generated JSON, so retiring them means
 #: regenerating data and re-running validation, which is a pipeline change and not a prose edit.
 KNOWN_SHOUT_DEBT: dict[str, str] = {
-    # --- #58's block is gone. The three shouts Ruling 2 assigned to it — "the bracket COUNT",
-    #     "Surtaxes ARE folded" and the figure note's "it INCLUDES PAYROLL TAX" — took a
-    #     `<strong>` on the load-bearing noun phrase and two recasts. The note took a recast
+    # --- #58's block is gone. The three shouts Ruling 2 assigned to it, "the bracket COUNT",
+    #     "Surtaxes ARE folded" and the figure note's "it INCLUDES PAYROLL TAX", took a
+    #     `<strong>` on the emphasised noun phrase and two recasts. The note took a recast
     #     because a `note=` prop is a plain attribute rendered as text and cannot carry markup.
     # --- #103, curated pipeline data. `src/data/party_splits.json:22`'s "AT LEAST ONE" and
     #     `pipeline/curated/laws.yaml:287`'s "VOICE VOTE" reach the page through generated JSON,
-    #     so retiring them means regenerating data and re-running validation — a pipeline change,
+    #     so retiring them means regenerating data and re-running validation, a pipeline change,
     #     not a prose edit. Exempted by name, never by a weakened assertion.
     "government/index.html|prose:AT|A vote is 'cross-party' when at least #% of the yes votes ca": "#103",
     "government/index.html|prose:LEAST|A vote is 'cross-party' when at least #% of the yes votes ca": "#103",
@@ -364,7 +364,7 @@ def test_prose_contract_cites_lines_that_resolve():
 # 5. The rubric the six C-issues cite
 # ---------------------------------------------------------------------------
 
-#: A rubric heading is `### Criterion N — <name>`, and the em dash is part of the match. Without it
+#: A rubric heading is `### Criterion N, <name>`, and the em dash is part of the match. Without it
 #: this also collects `### Criterion 1 audit`, the per-section table #52 added below the rubric, and
 #: the consecutive-numbering assertion then fails on a second 1 that is not a criterion at all.
 CRITERION_RE = re.compile(r"^### Criterion (\d+) —", re.MULTILINE)
@@ -384,7 +384,7 @@ def test_prose_contract_has_a_numbered_rubric():
 
 
 # ---------------------------------------------------------------------------
-# 6. Criterion 1 — the question comes first
+# 6. Criterion 1, the question comes first
 # ---------------------------------------------------------------------------
 
 #: The four report routes. Named, never globbed. `/contents`, `/glossary` and `/sources` also carry
@@ -409,11 +409,11 @@ CONSTRUCTION_WORDS = frozenset(
 )
 
 #: `<section …>…</section>`, non-greedy. A regex is honest here only because no `<section>` nests
-#: inside another on the four report pages — every one is a direct child of `<main>`. If that ever
+#: inside another on the four report pages, every one is a direct child of `<main>`. If that ever
 #: changes, this silently mis-splits, which is why `sections()` asserts the id set it finds against
 #: the parsed tree rather than trusting the regex alone.
 #: The opening tag's attributes are captured as a blob rather than anchoring `id` in place, because
-#: `id` is not guaranteed to be the first attribute — `<section class="…" id="…">` is valid markup
+#: `id` is not guaranteed to be the first attribute, `<section class="…" id="…">` is valid markup
 #: today even though no current page writes it that way.
 SECTION_RE = re.compile(r'<section\b([^>]*)>(.*?)</section>', re.DOTALL)
 
@@ -425,8 +425,8 @@ def sections() -> list[tuple[str, str, str, Node]]:
     """Every report section, as `(page, section_id, body_html, node)`.
 
     Two views of the same section on purpose. The raw `body_html` answers the positional questions
-    — does a standfirst appear *before* the first `<figure`, does a `.prose` appear *after* the
-    last `</figure>` — which a tree walk answers only by re-deriving document order. The parsed
+   , does a standfirst appear *before* the first `<figure`, does a `.prose` appear *after* the
+    last `</figure>`, which a tree walk answers only by re-deriving document order. The parsed
     `node` answers the textual ones, through the same `_deep_text` the rest of this file uses.
     """
     out: list[tuple[str, str, str, Node]] = []
@@ -469,7 +469,7 @@ def _numbers(node: Node, cls: str) -> set[str]:
 def test_every_section_with_a_figure_states_its_question_first():
     """Dimension A: a `.standfirst` precedes the section's first `<figure`.
 
-    Scope is structural. A section with no `<figure>` is not exempted, it is simply not asked —
+    Scope is structural. A section with no `<figure>` is not exempted, it is simply not asked,
     the three Limits sections and the `/` intro's four sections fall out with no list to maintain.
     """
     offenders = [
@@ -532,7 +532,7 @@ def test_no_section_heading_names_the_charts_construction():
     """Dimension D: no `<h2>` names the drawing instead of the subject.
 
     **This test sees half of what Criterion 1 asks.** It catches a heading that names the apparatus
-    — an axis, a panel, a scale. It cannot catch a heading that names the *variables*: "Prices and
+   , an axis, a panel, a scale. It cannot catch a heading that names the *variables*: "Prices and
     rates" and "Labor and capital" are headings that tell the reader what was plotted rather than
     what was found, and both pass this test on every word list anyone would write. That failure
     mode is human-judged, it is Checklist item 8 in docs/contracts/prose.md, and no word list is
@@ -564,13 +564,13 @@ def _route_of(page: str) -> str:
 def _audit_table(heading: str) -> str:
     """The text under `### <heading>`, ending at the next heading of **any** level.
 
-    The boundary is the load-bearing part. While `### Criterion 1 audit` was the only audit table
+    The boundary is the part that matters. While `### Criterion 1 audit` was the only audit table
     in the contract, slicing to the next `"\\n## "` was equivalent to slicing to the next heading.
     With `### Criterion 2 audit` sitting beside it, that slice swallows both tables and each
     coverage test below then measures the *union* of the two row sets against its own subject.
     Today that union happens to equal the section set, so the mis-parse would pass rather than
-    fail, which is the worse of the two outcomes. Ending at the next heading of any level --
-    `\\n# ` through `\\n###### `, whichever comes first -- keeps each table to itself even if the
+    fail, which is the worse of the two outcomes. Ending at the next heading of any level,
+    `\\n# ` through `\\n###### `, whichever comes first, keeps each table to itself even if the
     contract later grows a `####` subsection between two audit tables.
     """
     text = PROSE_DOC.read_text()
@@ -609,7 +609,7 @@ def test_the_criterion_one_audit_covers_every_section():
 
 
 # ---------------------------------------------------------------------------
-# 7. Criterion 2 — the standfirst sets up, the finding claims
+# 7. Criterion 2, the standfirst sets up, the finding claims
 # ---------------------------------------------------------------------------
 
 #: A four-digit calendar year. The one number a standfirst and its finding may both name: the
@@ -620,7 +620,7 @@ YEAR = re.compile(r"^(?:19|20)\d{2}$")
 
 #: The cap on a finding, in characters, whitespace collapsed. `docs/contracts/prose.md` left the
 #: number open and #53 fixes it here. The longest finding that survives #53 is 193 characters, so
-#: the cap carries 27 characters of headroom — the property `PREEMPTION_CEILING`'s comment above
+#: the cap carries 27 characters of headroom, the property `PREEMPTION_CEILING`'s comment above
 #: argues a threshold needs, and the reason `households#a-century-of-brackets` was rewritten at 216
 #: rather than left four characters under the line.
 FINDING_CHARS_MAX = 220
@@ -738,7 +738,7 @@ def test_every_finding_sits_where_the_stylesheet_expects_it():
 
     `src/styles/global.css:82` selects `.standfirst + .finding`, so a finding that is not its
     standfirst's next sibling silently loses 1.4rem of top margin. That is the cheap half. The
-    load-bearing half is that a section's finding, its `<Figure ariaLabel>` and its row in the
+    binding half is that a section's finding, its `<Figure ariaLabel>` and its row in the
     Criterion 2 audit table are one-to-one: a second finding has no label to be and no row to sit
     in, which is why the answer to a multi-claim finding is the closing `.prose` and never a second
     `.finding`.
@@ -799,7 +799,7 @@ def test_the_criterion_two_audit_covers_every_finding():
 
 
 # ---------------------------------------------------------------------------
-# 8. Criterion 3 — sentence length and word spacing
+# 8. Criterion 3, sentence length and word spacing
 # ---------------------------------------------------------------------------
 
 #: The cap on a prose sentence, in **words**, whitespace collapsed. Measured over all 443 sentences
@@ -818,7 +818,7 @@ def test_the_criterion_two_audit_covers_every_finding():
 SENTENCE_WORDS_MAX = 45
 
 #: A sentence boundary: terminal punctuation, an optional closing quote or bracket, whitespace, and
-#: a capital, digit or `$` opening the next sentence. Deliberately conservative — an **over**-split
+#: a capital, digit or `$` opening the next sentence. Deliberately conservative, an **over**-split
 #: hides a violation by halving a long sentence, while an under-split merely shows a human a longer
 #: string than there really is, so the safe direction is to split less.
 #:
@@ -827,10 +827,10 @@ SENTENCE_WORDS_MAX = 45
 #: capital at a word boundary, so `GDP.` is unaffected: there is no word boundary before the `P`.
 #:
 #: The closing quote/bracket is matched via a second, fixed-width lookbehind branch rather than
-#: consumed as an ordinary (optional) character — Python's `re` forbids variable-width lookbehind,
+#: consumed as an ordinary (optional) character, Python's `re` forbids variable-width lookbehind,
 #: so the two cases (bare terminal punctuation, and terminal punctuation plus a closer) are spelled
 #: out separately. Consuming the closer outright would drop it from the split delimiter and, with
-#: it, from the returned sentence string — `sentences()` callers, including this file's offender
+#: it, from the returned sentence string, `sentences()` callers, including this file's offender
 #: excerpts, would then show `He said "hi.` instead of `He said "hi."`.
 SENTENCE_SPLIT = re.compile(
     r'(?:(?<=[.!?])(?<!\b[A-Z]\.)|(?<=[.!?]["’”)]))\s+(?=[A-Z0-9$])'
@@ -864,7 +864,7 @@ def test_no_prose_sentence_runs_past_the_cap():
 
     **Cannot see:** whether a sentence is *hard*. It cannot tell a 46-word sentence a reader glides
     through from a 30-word one they have to restart, because length is a proxy and clause count is
-    the judgement. No clause-counter and no proxy word list is added here to fake it — a word list
+    the judgement. No clause-counter and no proxy word list is added here to fake it, a word list
     invented to make a human reading look mechanical reports green, which is worse than no check
     (rule 4). Reading for clause load is Checklist item 10.
 
@@ -932,7 +932,7 @@ def test_no_prose_string_fuses_two_words_at_a_component_boundary():
     source is not the subject; the served bytes are.**
 
     Scope is derived from the DOM and carries no list: every `.term` inside every prose element is
-    asked, and punctuation that legitimately abuts a term — an opening bracket or quote — is
+    asked, and punctuation that legitimately abuts a term, an opening bracket or quote, is
     allowed by construction rather than by exemption.
 
     **Cannot see the expression-boundary variant.** The same collapse fuses a text run with a
@@ -997,7 +997,7 @@ def test_the_criterion_three_audit_covers_every_page():
 
 
 # ---------------------------------------------------------------------------
-# 9. Criterion 4 — terms are defined
+# 9. Criterion 4, terms are defined
 # ---------------------------------------------------------------------------
 
 #: The prose a `<Term>` marker can physically go in. Three classes, not `PROSE_CLASSES`' four, and
@@ -1005,8 +1005,8 @@ def test_the_criterion_three_audit_covers_every_page():
 #: from `Figure.astro`'s `note?: string` prop (`src/components/Figure.astro:38`), a plain string
 #: that cannot carry a component at all. An `aria-label` is an attribute and cannot either, which
 #: is why the accessible-name scopes are absent too. So the four terms whose only occurrence on a
-#: route is inside a figure note — `offsetting receipts`, `incidence`, `gdp-deflator` and
-#: `/households`' `fiscal-year` before #59 marked it elsewhere — need no exemption entry here.
+#: route is inside a figure note, `offsetting receipts`, `incidence`, `gdp-deflator` and
+#: `/households`' `fiscal-year` before #59 marked it elsewhere, need no exemption entry here.
 #: They are outside the population because the markup makes them so. Rule 2.
 MARKABLE_PROSE_CLASSES = ("prose", "standfirst", "finding")
 
@@ -1082,8 +1082,8 @@ def content_routes() -> list[str]:
 def markable_stream(route: str) -> tuple[str, list[tuple[int, int, str]]]:
     """A route's markable prose as one document-order string, with every `.term` span located.
 
-    Returns `(text, [(start, end, slug)])`. Elements are visited in document order — the parser's
-    `iter_descendants` is a pre-order walk — and joined with a newline, so an offset comparison in
+    Returns `(text, [(start, end, slug)])`. Elements are visited in document order, the parser's
+    `iter_descendants` is a pre-order walk, and joined with a newline, so an offset comparison in
     this string is a "which does the reader meet first" comparison. A markable element nested
     inside another is visited once, at the outer element, so a page cannot double-count its own
     prose and shift every offset after it.
@@ -1124,14 +1124,14 @@ def test_every_marked_term_sits_at_its_first_use():
 
     This is the assertion `docs/contracts/interfaces/glossary.md` said out loud it did not have:
     "whether a marker sits on the genuinely *first* occurrence is a reading check". Seven live
-    violations were measured — three of them standfirsts, two findings — and all seven were fixed.
+    violations were measured, three of them standfirsts, two findings, and all seven were fixed.
     **Asserts zero: no baseline and no exemption set**, which is `docs/contracts/prose.md` rule 3's
     fix-all road at that count, the one #52 took at four rather than the one #51 took at 26. A
     baseline here would make the assertion unfalsifiable in the only direction that matters.
 
     Two fixes are legal, and the failure message says both, because two different defects land
     here. **Move the marker** when the earlier occurrence is the same term. **Reword the earlier
-    sentence** when it is not — `/government` §2 said "the intragovernmental piece is real money
+    sentence** when it is not, `/government` §2 said "the intragovernmental piece is real money
     owed to future retirees", where "real" is the everyday adjective and marking it would point the
     reader at the economic term, which is the opposite of defining it.
 
@@ -1175,15 +1175,15 @@ def test_every_content_route_marks_every_glossary_term_it_uses():
     """First use is **per route**, so a term used on three routes is marked on three routes.
 
     A reader arriving directly at `/households` has not read `/economy`, which is why `first_used`
-    is the site-wide first use and not the marking list. The population is `content_routes()` —
-    the three keys of `src/data/sections.ts`'s `routeSections` — so `/`, `/sources` and `/glossary`
+    is the site-wide first use and not the marking list. The population is `content_routes()`,
+    the three keys of `src/data/sections.ts`'s `routeSections`, so `/`, `/sources` and `/glossary`
     are out of scope **structurally**: they are not keys of that map, and `first_used.route`'s
     `z.enum` makes a term claiming one of them a build failure. No exclusion list is written here
     for them.
 
     The exceptions are not a second list either. They are `UNMARKED_AT_FIRST_USE` in
     `test_accessibility.py`, already `==`-reconciled by
-    `test_every_first_used_route_carries_its_term_marker`, imported rather than copied — a copy
+    `test_every_first_used_route_carries_its_term_marker`, imported rather than copied, a copy
     would be the rot that `docs/contracts/prose.md` rule 2 is about. A term is excused on a route
     only when that route is its declared `first_used` route, so an unmarked use on a *different*
     route still fails here.
@@ -1236,9 +1236,9 @@ REGISTERED_INITIALISMS = _INITIALISMS_WITH_NO_ENTRY | _glossary_initialisms()
 def test_registered_initialisms_do_not_duplicate_the_glossary():
     """The hand-named half and the derived half are **disjoint**, and the union is what is used.
 
-    Disjointness is what makes the derivation load-bearing rather than decorative. Without it an
+    Disjointness is what makes the derivation bite rather than decorate. Without it an
     acronym could gain a glossary entry while its hand-written spelling stayed behind, and the two
-    would drift the first time the entry was renamed or deleted — the rot
+    would drift the first time the entry was renamed or deleted, the rot
     `docs/contracts/prose.md` rule 2 exists to prevent, in the one place where a stale entry reads
     as a passing check.
 
@@ -1270,7 +1270,7 @@ def test_the_criterion_four_audit_covers_every_prose_acronym():
     """The audit table's `(route, acronym)` row set **equals** what `dist/` carries.
 
     Equality, in the idiom of the Criterion 1, 2 and 3 audits. An acronym in prose is either
-    expanded for the reader — which since #59 means a glossary entry and a marker — or it is
+    expanded for the reader, which since #59 means a glossary entry and a marker, or it is
     deliberately left as it stands, and which of the two it is cannot be derived from anything:
     `CARES` is a statute's published short name and expanding it would be editing quoted material,
     while `CBO` is a term. So the judgement is written down per route, and this test only asserts
@@ -1300,17 +1300,17 @@ def test_the_criterion_four_audit_covers_every_prose_acronym():
 
 
 # ---------------------------------------------------------------------------
-# 10. Criterion 5 — prose that lets the reader check
+# 10. Criterion 5, prose that lets the reader check
 # ---------------------------------------------------------------------------
 
 #: Scale factors tried when matching a registry `quoted` value against the served prose.
 #:
-#: The registry stores most money figures in trillions — `0.232` is written "$232 billion" and
-#: `1.203` is written "$1.20 trillion" — and stores percentages as their own unit. Rather than
+#: The registry stores most money figures in trillions, `0.232` is written "$232 billion" and
+#: `1.203` is written "$1.20 trillion", and stores percentages as their own unit. Rather than
 #: keep a hand-written map of "this entry is in trillions, that one in percent", which is exactly
 #: the rotting list method rule 2 forbids, the match is arithmetic: try the value at each of these
 #: scales, formatted at 0 to 3 decimal places, with and without thousands separators. Tolerant by
-#: construction, and tolerant in the safe direction — this check exists to catch a figure that has
+#: construction, and tolerant in the safe direction, this check exists to catch a figure that has
 #: vanished from the prose entirely, not to police how it is rounded.
 _REGISTRY_SCALES = (1, 100, 0.01, 1000, 0.001)
 
@@ -1370,10 +1370,10 @@ def test_every_registered_prose_figure_still_appears_in_the_prose():
     figures quoted in prose, each mapped to the generated field it came from, recomputed on every
     run and reported as an editorial event when they drift. Nothing checked that the *prose* still
     carried them. Reword around a figure carelessly and the figure leaves the page, after which the
-    drift report goes on reconciling a number no reader ever meets — green, forever, on a check
+    drift report goes on reconciling a number no reader ever meets, green, forever, on a check
     that is no longer looking at anything.
 
-    **Measured at 118 of 118 present, 0 missing, so it asserts zero with no baseline** — method
+    **Measured at 118 of 118 present, 0 missing, so it asserts zero with no baseline**, method
     rule 3's fix-all road at a count of zero. A baseline here would make the assertion
     unfalsifiable in the only direction that matters.
 
@@ -1428,7 +1428,7 @@ def test_the_criterion_five_audit_covers_every_section():
     deleted section leave a stale judgement behind.
 
     What is asserted is **coverage**. The three judgement columns are a reviewer's reading and are
-    exactly the part no machine can check — which is the point of recording them here, where they
+    exactly the part no machine can check, which is the point of recording them here, where they
     can be re-read, rather than in a PR body, which nothing can re-read and nothing can fail on.
 
     *Cannot see:* whether a row is **right**. A section can declare "none" in the interpretation
@@ -1453,10 +1453,10 @@ def test_the_criterion_five_audit_covers_every_section():
 
 
 # ---------------------------------------------------------------------------
-# 11. Criterion 6 — sections and routes hand off
+# 11. Criterion 6, sections and routes hand off
 # ---------------------------------------------------------------------------
 
-#: `Term.astro`'s wrapper. Both anchors it renders -- `a.term-trigger` and `a.term-more` -- are
+#: `Term.astro`'s wrapper. Both anchors it renders, `a.term-trigger` and `a.term-more`, are
 #: glossary markers, not cross-references: they point every reader of a marked word at the same
 #: entry, and counting them would make every section look as though it hands off. The exclusion is
 #: **structural**, taken from the markup the component emits, not from a list of hrefs to ignore;
@@ -1469,7 +1469,7 @@ GLOSSARY_MARKER_CLASS = "term"
 APPARATUS_ROUTES = frozenset({"/sources", "/glossary", "/contents"})
 
 #: A bundled asset URL. Astro writes these from `base` itself, so they carry the served prefix and
-#: no page author can get one wrong -- which is what makes them the right place to read the base
+#: no page author can get one wrong, which is what makes them the right place to read the base
 #: from. Hard-coding `/income-tax/` here would make this suite fail the day the site moved, and
 #: reading `astro.config.mjs` would assert the source against itself rather than against the bytes.
 ASSET_URL_RE = re.compile(r'(?:href|src)="(/[^"]*_astro/[^"]*)"')
@@ -1549,9 +1549,9 @@ def test_every_in_prose_cross_reference_resolves_and_is_base_aware():
 
     Two failures in one test because they are the same sentence read twice: a link a reader
     follows either arrives or does not. A bare `#anchor` must be an `id` on the page it sits on. A
-    rooted href must begin with the base -- this is the check that would have caught #70, where
+    rooted href must begin with the base, this is the check that would have caught #70, where
     three cross-route links were written without it, worked in `astro dev` and 404ed in production
-    -- and its route must be a route `dist/` actually built, and its fragment, if it has one, must
+   , and its route must be a route `dist/` actually built, and its fragment, if it has one, must
     be an `id` on that built page.
 
     **Measured at the count this issue opened on: 12 in-prose cross-references, 12 resolving, 0
@@ -1601,8 +1601,8 @@ def test_every_in_prose_cross_reference_resolves_and_is_base_aware():
 def test_every_joint_of_the_route_ladder_is_written():
     """Each content route carries an in-prose link to the one after it.
 
-    The ladder is derived, in order, from `routeSections`' keys through `content_routes()` -- the
-    same array the rail renders and `/contents` enumerates -- so a fourth route inserted between
+    The ladder is derived, in order, from `routeSections`' keys through `content_routes()`, the
+    same array the rail renders and `/contents` enumerates, so a fourth route inserted between
     two of these is checked on both of its new joints without this test being edited.
 
     **Prose-scoping is the whole check.** The rail and the navbar link `/government` from every
@@ -1637,8 +1637,8 @@ def test_the_last_routes_ending_points_back_into_the_argument():
     The terminal route is the last of the ladder `content_routes()` derives, its terminal section
     is the last `<section id>` on that built page, and its closing prose is the last `.prose`
     inside it. That paragraph is the last thing a reader who has read the site in order meets.
-    **Measured on the day this issue opened: its only href was `/sources`** -- the apparatus, not
-    the argument -- so the site ended by pointing out of itself. Asserted as zero with no
+    **Measured on the day this issue opened: its only href was `/sources`**, the apparatus, not
+    the argument, so the site ended by pointing out of itself. Asserted as zero with no
     baseline.
 
     `/sources`, `/glossary` and `/contents` are excluded as destinations by name here, and that is
@@ -1691,7 +1691,7 @@ def test_the_criterion_six_audit_covers_every_section():
     hands the reader next, and would let a deleted section leave a stale judgement behind.
 
     What is asserted is **coverage**, never the wording. "Ends here, and correctly" is a legal
-    answer in column 3 and is the answer for a good many of the twenty-nine -- a construction
+    answer in column 3 and is the answer for a good many of the twenty-nine, a construction
     caveat bounding the chart above closes its section, and manufacturing a link out of it is the
     failure the refused link quota would have produced. The refusal and its numbers are recorded
     in Criterion 6 in the contract.

@@ -2,13 +2,13 @@
  *
  *  One shared horizontal axis (years to maturity, 0 to the longest instrument
  *  issued) carries three instrument bands, each drawn only across the years
- *  it actually spans — the 10-20 year stretch is a visible gap, not a
+ *  it actually spans, the 10-20 year stretch is a visible gap, not a
  *  zero-height band, because nothing outstanding covers it.
  *
  *  The finding is the DISTANCE between two markers (average maturity, about
  *  six years; longest instrument, thirty years), never a time series.
  *  sections.md §3: "Do not build this as a time series." The maturity
- *  time-series field is never referenced here — see
+ *  time-series field is never referenced here, see
  *  docs/contracts/interfaces/curated-snapshots.md.
  */
 import { useMemo, useState } from 'react'

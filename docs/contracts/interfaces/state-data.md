@@ -1,7 +1,7 @@
 # Interface: `src/data/states_balance.json` and `src/data/states_tax_mix.json`
 
 The consumer contract for issue #14 (Government §11, "By state, and which states give more than
-they get"). Both outputs are **objects, not bare arrays** — `lib/report.py`'s `_dig` walks dotted
+they get"). Both outputs are **objects rather than bare arrays**, because `lib/report.py`'s `_dig` walks dotted
 paths and `_rows` requires a `y` key these rows do not have, so a chart reads `data.jurisdictions`,
 never `data` itself as a list.
 
@@ -18,7 +18,7 @@ Both fetched sources are discovered, never hardcoded, the same way `lib/sources.
   `FY{year}-STC-Detailed-Table-Transposed.xlsx` actually fetches.
 
 **Consequence a reader of this contract must know**: at the time this pipeline was built, both
-discoveries independently resolved to **FY2025** — not the FY2024 Census vintage the original
+discoveries independently resolved to **FY2025**, and not the FY2024 Census vintage the original
 planning probe observed. Discovery is mandatory precisely so that a newly published vintage is
 picked up automatically; do not assume any specific year without reading `_meta.provenance.vintage`
 on the actual output. `states_balance.fy_give` and `.fy_get` are always equal by construction
@@ -39,16 +39,16 @@ on the actual output. `states_balance.fy_give` and `.fy_get` are always equal by
 
 ### give / get, and what neither side is
 
-- **`give_b`** — IRS SOI Data Book Table 5, gross federal tax collections, classified by the
+- **`give_b`** is IRS SOI Data Book Table 5, gross federal tax collections, classified by the
   filer's address (a corporation's tax is booked to its principal office; withholding is booked to
   the employer's location). $ billions.
-- **`get_b`** — USASpending `spending_by_geography`, award spending classified by **place of
+- **`get_b`** is USASpending `spending_by_geography`, award spending classified by **place of
   performance**, not the recipient's residence. $ billions.
 - **This is not a balance of payments.** The Rockefeller Institute publishes the actual
   balance-of-payments study; its series ends FY2022 and is cited in `SOURCES.md`, never ingested (no
   machine-readable feed exists). Give and get here are both narrower than their balance-of-payments
   equivalents and are not opposite sides of one ledger. Any consumer rendering these figures must
-  say so in body copy — never in a tooltip or chart furniture (`Figure`'s `note` prop, or a `<p
+  say so in body copy, and never in a tooltip or chart furniture (`Figure`'s `note` prop, or a `<p
   class="prose">`, are the only sanctioned places).
   **Ruled 2026-08-26 (#56): the Rockefeller sentence is KEPT, as an attributed limitation.** It
   names what a reader might expect §11 to be and states why this is not that, so deleting it would
@@ -59,9 +59,9 @@ on the actual output. `states_balance.fy_give` and `.fy_get` are always equal by
   from reading a cited-but-uningested source as an unused one. A future edit that ingests the
   study supersedes this ruling; one that merely tidies the sentence away does not.
 
-### `is_state` vs `in_grid` — read this before filtering
+### `is_state` and `in_grid`: read this before filtering
 
-These are **not the same set** and the distinction is load-bearing:
+These are **not the same set**, and three things depend on the distinction:
 
 | Flag | True for | False for |
 |---|---|---|
@@ -69,19 +69,19 @@ These are **not the same set** and the distinction is load-bearing:
 | `in_grid` | The 50 states plus DC (51) | The 5 territories only |
 
 `is_state` is false for DC **deliberately**, because `color_domain` is computed only over
-`is_state` rows and DC — an extreme outlier by construction as the seat of federal employment —
-is excluded from it so it does not compress the scale for all 50 states (`test_states_dc_is_flagged_and_excluded_from_the_colour_domain`
+`is_state` rows, and DC is excluded from it, because DC is an extreme outlier by construction as
+the seat of federal employment and would compress the scale for all 50 states (`test_states_dc_is_flagged_and_excluded_from_the_colour_domain`
 in `pipeline/tests/test_pipeline.py`). DC is still `in_grid: true`: it is drawn on the tile
 cartogram and listed in the sortable table, just never used to compute the colour bounds. A
 consumer that filters jurisdictions for the tile grid must use `in_grid`; a consumer computing or
 re-deriving a colour scale must use `is_state`.
 
-### Null semantics — absence is never zero
+### Null semantics: absence is never zero
 
 Every derived field (`give_pc`, `get_pc`, `balance_b`, `balance_pc`, `ratio`) is `null` when either
 side is missing, never `0`. The five territories (`PR`, `GU`, `VI`, `MP`, `AS`) have `give_b: null`
-— IRS Table 5 carries no state-level breakdown for them — while `get_b` is populated, an asymmetry
-that must render as `no data` on the give side, not as `$0`. `ratio` (`get_b / give_b`) is `null`
+because IRS Table 5 carries no state-level breakdown for them, while `get_b` is populated. That
+asymmetry must render as `no data` on the give side rather than as `$0`. `ratio` (`get_b / give_b`) is `null`
 whenever `give_b` is `0` or missing, never `Infinity` or a divide-by-zero.
 
 ### `color_domain`
@@ -109,15 +109,15 @@ the bounds; a consumer must state this in the legend, not only in code.
 `shares[k]` is percent of that jurisdiction's own `total_b`, not of the US total. `other` is
 derived (`total_b` minus the four named categories), not a Census item code of its own.
 
-### `not_levied` vs a missing figure — the two must never collapse
+### `not_levied` and a missing figure: the two must never collapse
 
-A Census cell of `"X"` means the state **does not levy** that tax at all — Alaska has no general
-sales tax and no individual income tax, which is a fact, not a gap. This is recorded as
+A Census cell of `"X"` means the state **does not levy** that tax at all. Alaska has no general
+sales tax and no individual income tax, which is a fact rather than a gap. This is recorded as
 `shares[k] = null` **and** `k` appended to that jurisdiction's `not_levied` array. A consumer must
 render this as `"none levied"`, distinct from `"no data"`, which is reserved for a `null` share
 whose category is absent from `not_levied` (only reachable if a future vintage's `T00` total itself
-fails to parse — see `partial`, below). Rendering both the same way — as a blank, a dash, or `$0` —
-is exactly the fabrication this pipeline's gate exists to prevent.
+fails to parse. See `partial`, below. Rendering both the same way, as a blank, a dash or `$0`, is
+the fabrication this pipeline's gate exists to prevent.
 
 `partial: true` (optional, omitted when false) flags a jurisdiction whose total (`T00`) itself could
 not be read; every share is `null` in that case and none is in `not_levied`, because "not levied"
@@ -135,8 +135,8 @@ column, and whether it does is a property of the specific vintage fetched.
 schemas in what was an empty `pipeline/schemas/` directory. Since #37 the coverage is **universal
 and mandatory**: `lib/validate.py`'s `check_schema` validates every output `build.py` emits, and an
 output with no `schemas/<name>.schema.json` is a recorded build failure naming the output and the
-expected path — never a skip. `test_every_published_output_has_a_schema` holds the population
+expected path, and never a skip. `test_every_published_output_has_a_schema` holds the population
 whole, and `test_every_schema_rejects_a_realistic_corruption` proves both of these two schemas
 bite: a jurisdiction's `ratio` written as `0` and a `shares` value over `100` are each rejected.
 
-These two schemas are unchanged by #37 — they are the reference form the other twelve follow.
+These two schemas are unchanged by #37, and they are the reference form the other 12 follow.

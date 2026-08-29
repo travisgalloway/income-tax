@@ -1,7 +1,7 @@
 /** The one build-time read of `pipeline/curated/sources.yaml`'s `registry:` block.
  *
  *  A glossary term's `source` is a list of register KEYS, never prose. The rendered line is
- *  produced here, from the register, so there is exactly one prose copy of every source — the
+ *  produced here, from the register, so there is exactly one prose copy of every source, the
  *  one in `SOURCES.md` that `check_sources` rule B pins the register to. A vintage bump in
  *  `SOURCES.md` therefore moves the glossary in the same build with no glossary edit, which is
  *  why `content-sources.md` §"No second copy of `SOURCES.md`" is SATISFIED here rather than
@@ -18,11 +18,11 @@ import { fileURLToPath } from 'node:url'
 import { parse } from 'yaml'
 
 /** Two candidates, and it must be two. `import.meta.url` is correct while this module sits in
- *  `src/` — the config load, `astro check`, `vitest`. It is WRONG once Rollup has bundled the
+ *  `src/`, the config load, `astro check`, `vitest`. It is WRONG once Rollup has bundled the
  *  module into `dist/.prerender/chunks/`, where the same relative walk lands on
  *  `dist/pipeline/curated/sources.yaml`, which does not exist; that is where `npm run build`
  *  first failed when `figures.ts` began importing this file (#57). `process.cwd()` is the
- *  project root in every lane that runs a build. Try both, and name both if neither is there —
+ *  project root in every lane that runs a build. Try both, and name both if neither is there,
  *  a register that cannot be read is unknown, never clean. */
 const REGISTER_CANDIDATES = [
   fileURLToPath(new URL('../../pipeline/curated/sources.yaml', import.meta.url)),
@@ -55,7 +55,7 @@ interface RegistryEntry {
 }
 
 /** One rendered citation: the register's own prose, what kind of source it is, and where the
- *  reader goes next. `href` is `null` for an entry with a written `url_exempt` reason — a source
+ *  reader goes next. `href` is `null` for an entry with a written `url_exempt` reason, a source
  *  with no single truthful URL renders as text, never as a link to somewhere approximate. */
 export interface SourceLink {
   key: string
@@ -80,13 +80,13 @@ function loadRegister(): RegisterDoc {
   const doc = parse(readFileSync(REGISTER_PATH, 'utf8')) as RegisterDoc
   const registry = doc?.registry
   if (!registry || Object.keys(registry).length === 0) {
-    // An unreadable register is unknown, never clean — the #37 rule, applied on the TS side.
+    // An unreadable register is unknown, never clean, the #37 rule, applied on the TS side.
     throw new Error(
       `pipeline/curated/sources.yaml has no registry: entries (looked in ${REGISTER_PATH}). ` +
         `Every glossary term cites a register key; refusing to build against an empty register.`,
     )
   }
-  // A malformed entry must fail the build, not render a blank source line — a silently empty
+  // A malformed entry must fail the build, not render a blank source line, a silently empty
   // citation is worse than a missing one, because it looks green. Since #57 that covers the tier
   // and the URL too: an untiered entry would render a source the reader cannot place, and an
   // entry with neither `url` nor a written `url_exempt` reason would render an unfollowable line,
@@ -128,12 +128,12 @@ const register = loadRegister()
 const registry = register.registry as Record<string, RegistryEntry>
 
 /** Every key a glossary term may cite. The Zod schema turns this into a `z.enum`, which is what
- *  makes an unresolvable key a schema failure naming the term, the key and the valid set — the
+ *  makes an unresolvable key a schema failure naming the term, the key and the valid set, the
  *  raw key has no code path to the page. */
 export const REGISTER_KEYS: readonly string[] = Object.keys(registry).sort()
 
 /** The rendered source line: each key's `registered_as`, VERBATIM, joined by "; ". Never a
- *  summary — summarisation is not expressible here, because nothing but the register's own
+ *  summary, summarisation is not expressible here, because nothing but the register's own
  *  string is ever printed. */
 export function sourceLine(keys: readonly string[]): string {
   return keys.map((key) => entryFor(key).registered_as).join('; ')
@@ -156,7 +156,7 @@ function entryFor(key: string): RegistryEntry {
  *  This is an ADDITION to the rendered line, never a replacement for it: every call site prints
  *  the verbatim prose first and these beneath, so "nothing but the register's own string is ever
  *  printed" still holds of the line itself. `href` is `null` where the entry carries a written
- *  `url_exempt` reason — a source with no single truthful URL is rendered as text rather than
+ *  `url_exempt` reason, a source with no single truthful URL is rendered as text rather than
  *  linked to somewhere approximate. */
 export function sourceLinks(keys: readonly string[]): SourceLink[] {
   return keys.map((key) => {
@@ -170,7 +170,7 @@ export function sourceLinks(keys: readonly string[]): SourceLink[] {
   })
 }
 
-/** The forms one register entry may be NAMED BY inside an `_meta.source` — the register's
+/** The forms one register entry may be NAMED BY inside an `_meta.source`, the register's
  *  `cited_as`, one string or several. `check_sources` rule A asserts one of them appears in the
  *  output's source line; `figures.ts` asserts the same thing one level down, per figure, so a
  *  figure's declared `cites` cannot drift from the sentence it is captioning. */
@@ -181,7 +181,7 @@ export function citationFormsOf(key: string): string[] {
 }
 
 /** The register keys one published output's `_meta.source` names, from the register's `outputs:`
- *  block — the same list `check_sources` rules A and D reconcile against that string. A figure
+ *  block, the same list `check_sources` rules A and D reconcile against that string. A figure
  *  declares the OUTPUTS it draws from and resolves its citations through here, so a figure's
  *  links cannot be a second, hand-kept copy of what its source line already says. */
 export function citesOf(output: string): string[] {

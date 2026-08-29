@@ -56,17 +56,16 @@ const fig = figuresOf('/economy')
 
     <p class="prose">
       The vertical axis is a base-10 log scale. Equal distances up the axis are equal percentage
-      changes, not equal dollar amounts, so a constant growth rate draws as a straight line. On a
-      linear axis the last twenty years would tower over the first fifty and every earlier
-      deviation would flatten into the baseline. Here the 2008 to 2009 recession and the fiscal
-      2020 dip read as bends in a line whose slope is otherwise close to constant.
+      changes rather than equal dollar amounts. A constant growth rate therefore draws as a
+      straight line. On a linear axis the last 20 years would tower over the first 50. Every
+      earlier deviation would flatten into the baseline. Here the 2008 to 2009 recession and the
+      fiscal 2020 dip read as bends in an otherwise near-constant slope.
     </p>
     <p class="prose">
       Fiscal years, not calendar years. FY2025 ran October 2024 to
-      September 2025. The <Term id="congressional-budget-office">CBO</Term> file runs to FY2036,
-      and everything after FY2025 is a baseline
-      projection, drawn as a dashed line beyond the marked boundary.
-      <Term id="nominal">Nominal</Term> GDP in FY1995 was $7.56 trillion, the same
+      September 2025. The <Term id="congressional-budget-office">CBO</Term> file runs to FY2036.
+      Everything after FY2025 is a baseline projection, drawn as a dashed line beyond the marked
+      boundary. <Term id="nominal">Nominal</Term> GDP in FY1995 was $7.56 trillion, the same
       denominator the government route divides by.
     </p>
   </section>
@@ -80,16 +79,16 @@ const fig = figuresOf('/economy')
       1984 = 100.
     </p>
     <p class="finding">
-      Output per hour reached 216.5 by 2024 while real median household income reached 138.6,
-      the two lines separating over the period.
+      Output per hour reached 216.5 by 2024. Real median household income reached 138.6, and the
+      two lines separate over the period.
     </p>
 
     <Figure
-      ariaLabel="Output per hour reached 216.5 by 2024 while real median household income reached 138.6, the two lines separating over the period."
+      ariaLabel="Output per hour reached 216.5 by 2024. Real median household income reached 138.6, and the two lines separate over the period."
       fig={fig('growth-shadow')}
       xUnit="Year (fiscal for output per hour, calendar for median household income)"
       yUnit="index, 1984 = 100"
-      note="Two sources on two calendars. Output per hour is CBO, fiscal years; real median household income is Census via FRED, calendar years in 2024 dollars. The two use different price indexes and different units of observation, so the vertical gap between the indexed lines is not itself a measurable quantity."
+      note="Two sources on two calendars. Output per hour is CBO, fiscal years; real median household income is Census via FRED, calendar years in 2024 dollars. The two use different price indexes and different units of observation. The vertical gap between the indexed lines is therefore not a measurable quantity."
     >
       <GrowthAndShadow client:visible economyRows={economy.data} incomeRows={income.data} />
     </Figure>
@@ -99,14 +98,14 @@ const fig = figuresOf('/economy')
       anything. Output per hour is real nonfarm business output divided by hours worked, published
       by CBO on a fiscal year basis. Real median household income is a Census Bureau household
       survey median, published on a calendar year basis in 2024 dollars. They come from different
-      sources, are deflated by different price indexes, and count different units of observation:
-      one is per hour worked, the other is per household.
+      sources and are deflated by different price indexes. They also count different units of
+      observation, one per hour worked and the other per household.
     </p>
     <p class="prose">
       The shared window is 1984 to 2024. Median household income does not start until 1984 and
-      does not yet run past 2024, so the chart is drawn over that window rather than over the full
-      1950 to 2025 span of the output per hour series. The table below carries the full span, with
-      no data marked where the Census series does not reach.
+      does not yet run past 2024. The chart is therefore drawn over that window. It does not run
+      the full 1950 to 2025 span of the output per hour series. The table below carries the full
+      span, with no data marked where the Census series does not reach.
     </p>
     <p class="prose">
       This chart shows that the two series diverged. It does not show why, and nothing here
@@ -131,7 +130,7 @@ const fig = figuresOf('/economy')
       fig={fig('who-works')}
       xUnit="Fiscal year"
       yUnit="percent of the labour force (unemployment and the noncyclical rate) and percent of the civilian population 16 and over (participation)"
-      note="Fiscal year averages. FY2020 averages 7.3% over October 2019 to September 2020; the monthly peak of spring 2020 is not in this file and is not shown. The noncyclical rate is a CBO estimate, not an observation. The series continues to FY2036 as a CBO baseline projection, drawn as a separate dashed line beyond the marked FY2025 boundary."
+      note="Fiscal year averages. FY2020 averages 7.3% over October 2019 to September 2020. The monthly peak of spring 2020 is not in this file and is not shown. The noncyclical rate is a CBO estimate, not an observation. The series continues to FY2036 as a CBO baseline projection. Projected years draw as a separate dashed line beyond the marked FY2025 boundary."
     >
       <WhoWorks
         client:visible
@@ -142,24 +141,24 @@ const fig = figuresOf('/economy')
 
     <p class="prose">
       The unemployment rate counts people without work who are looking for it, as a percent of
-      the labour force. The noncyclical rate is CBO's estimate of the rate that would prevail if
-      demand were neither short of nor in excess of the economy's capacity. It is an estimate
+      the labour force. The noncyclical rate is CBO's estimate of the rate that would prevail at
+      the economy's capacity. It is an estimate
       rather than an observation, CBO revises it, and it moves slowly. The two lines share the
       upper panel because they measure the same thing.
     </p>
     <p class="prose">
-      Participation is in a separate panel because it is a percent of a different base: the
-      civilian population aged 16 and over, not the labour force. Putting it on the same axis as
-      unemployment would put two different denominators on one scale.
+      Participation sits in a separate panel because its base is different. It is a percent of the
+      civilian population aged 16 and over, and not of the labour force. Putting it on the same
+      axis as unemployment would put two denominators on one scale.
     </p>
     <p class="prose">
       These are fiscal year averages. FY2020 ran October 2019 to September 2020 and averages
-      7.3%, so the monthly spike of spring 2020 sits inside that average rather than appearing as
-      a point. The highest fiscal year in the series is FY1983, at 10.1%. The unemployment panel
-      is linear and starts at zero, so nothing is compressed and nothing is clipped. The
-      participation panel does not start at zero: it runs over the range the series occupies,
-      which its axis states, because a zero-based axis would squeeze a move of about eight points
-      into a band too small to read.
+      7.3%. The monthly spike of spring 2020 therefore sits inside that average rather than
+      appearing as a point. The highest fiscal year in the series is FY1983, at 10.1%. The
+      unemployment panel is linear and starts at zero, so nothing is compressed and nothing is
+      clipped. The participation panel does not start at zero. It runs over the range the series
+      occupies, which its axis states. A zero-based axis would squeeze a move of about eight
+      points into a band too small to read.
     </p>
   </section>
 
@@ -168,22 +167,22 @@ const fig = figuresOf('/economy')
     <h2>Inflation and rates spiked together, then spent a decade near zero</h2>
     <p class="standfirst">
       Inflation and the cost of borrowing share a section because neither reads correctly on
-      its own. Whether a given fed funds rate is high or low is a question about what prices
-      were doing at the time. The two panels below plot the price series above the rate series
-      over the same fiscal years, so a reader can ask that of any year in the run.
+      its own. Whether a fed funds rate is high or low depends on what prices were doing at the
+      time. The two panels below plot the price series above the rate series over the same fiscal
+      years. A reader can then ask that of any year in the run.
     </p>
     <p class="finding">
-      The fed funds rate peaked at 16.9% in fiscal 1981, one fiscal year
+      The fed funds rate peaked at 16.9% in fiscal 1981. That was one fiscal year
       after <Term id="consumer-price-index">CPI-U</Term> inflation
       peaked at 13.6% in fiscal 1980.
     </p>
 
     <Figure
-      ariaLabel="The fed funds rate peaked at 16.9% in fiscal 1981, one fiscal year after CPI-U inflation peaked at 13.6% in fiscal 1980."
+      ariaLabel="The fed funds rate peaked at 16.9% in fiscal 1981. That was one fiscal year after CPI-U inflation peaked at 13.6% in fiscal 1980."
       fig={fig('prices-rates')}
       xUnit="Fiscal year"
       yUnit="percent change in the price index from the previous fiscal year (CPI-U and core PCE) and percent per year (the fed funds rate, the 3-month bill and the 10-year note)"
-      note="CPI-U and core PCE are published as index levels. The inflation panel plots the year-over-year percent change in each index, not the index itself. CPI-U inflation is derivable from fiscal 1951 and core PCE inflation from fiscal 1961, one year after each index itself starts, because the first index year has no prior year to compare against. The fed funds rate starts fiscal 1955, the 3-month bill fiscal 1950, and the 10-year note fiscal 1954. The series continue to FY2036 as a CBO baseline projection, drawn as a separate dashed branch past the marked FY2025 boundary."
+      note="CPI-U and core PCE are published as index levels. The inflation panel plots the year-over-year percent change in each index, not the index itself. CPI-U inflation is derivable from fiscal 1951 and core PCE from fiscal 1961, one year after each index starts. The first index year has no prior year to compare against. The fed funds rate starts fiscal 1955, the 3-month bill fiscal 1950, and the 10-year note fiscal 1954. The series continue to FY2036 as a CBO baseline projection. Projected years draw as a separate dashed branch past the marked FY2025 boundary."
     >
       <PricesAndRates
         client:visible
@@ -196,33 +195,35 @@ const fig = figuresOf('/economy')
       CPI-U and <Term id="pce-price-index">core PCE</Term> are published by CBO as index levels,
       not rates. Both panels above
       derive the year-over-year percent change from the index instead. CPI-U inflation is
-      derivable from fiscal 1951, one year after the CPI-U index itself starts (fiscal 1950),
-      because the first index year has no prior year to compare against. Core PCE inflation is
-      derivable from fiscal 1961, for the same reason, since the core PCE index itself starts
-      fiscal 1960. CPI-U inflation was negative in fiscal 1955 and again in fiscal 2009, when it
-      fell to -0.3%, rose to 7.9% in fiscal 2022, and was 2.7% in fiscal 2025. Core PCE inflation
+      derivable from fiscal 1951, one year after the CPI-U index itself starts in fiscal 1950.
+      The first index year has no prior year to compare against. Core PCE inflation is derivable
+      from fiscal 1961, for the same reason. The core PCE index itself starts fiscal 1960. CPI-U inflation was negative in fiscal 1955 and again in fiscal 2009, when it fell to
+      -0.3%. It rose to 7.9% in fiscal 2022 and was 2.7% in fiscal 2025. Core PCE inflation
       peaked at 9.2% in fiscal 1981, was 5.3% in fiscal 2022, and 2.8% in fiscal 2025.
     </p>
     <p class="prose">
-      The rates panel holds the fed funds rate (from fiscal 1955), the 3-month bill (from fiscal
-      1950) and the 10-year note (from fiscal 1954) on one zero-anchored axis, because all three
-      are positive throughout. The fed funds rate peaked at 16.9% in fiscal 1981 and fell to
-      0.08% in fiscal 2021, before rising to 4.4% in fiscal 2025. The 3-month bill fell to 0.03%
-      in fiscal 2015 and was 4.2% in fiscal 2025. The 10-year note peaked at 13.9% in fiscal
-      1982, fell to 1.1% in fiscal 2020, and was 4.3% in fiscal 2025. Each near-zero value sits
-      on the same axis as the fiscal 1981 peak, not compressed onto a separate scale, and each
-      series draws a gap, never a zero, before its own documented start year.
+      The rates panel holds three series on one zero-anchored axis, because all three are
+      positive throughout. Two are the fed funds rate from fiscal 1955 and the 3-month bill from
+      fiscal 1950. The third is the 10-year note from fiscal 1954. The fed funds rate peaked at 16.9% in
+      fiscal 1981 and fell to 0.08% in fiscal 2021. It rose again to 4.4% in fiscal 2025. The
+      3-month bill fell to 0.03% in fiscal 2015 and was 4.2% in fiscal 2025. The 10-year note
+      peaked at 13.9% in fiscal 1982 and fell to 1.1% in fiscal 2020. It was 4.3% in fiscal
+      2025. Each
+      near-zero value sits on the same axis as the fiscal 1981 peak, not compressed onto a
+      separate scale. Each series draws a gap, never a zero, before its own documented start
+      year.
     </p>
     <p class="prose">
-      Read the two panels against each other and the same shape appears in both: prices and
+      Read the two panels against each other and the same shape appears in both. Prices and
       rates fell to near zero between 2009 and 2021 before rising again. Nothing here identifies
-      a cause, and the panels are stacked for the narrower reason that a rate is only readable
-      next to what prices were doing at the time.
+      a cause. The panels are stacked for a narrower reason. A rate is only readable next to what
+      prices were doing at the time.
     </p>
     <p class="prose">
-      Rates are the mechanism that reprices the debt. The government route shows what that
-      costs, in <a href={`${join('/government')}/#net-interest`}>net interest</a>, and how fast it feeds
-      through, in <a href={`${join('/government')}/#how-old`}>how old the debt is</a>.
+      Rates are the mechanism that reprices the debt. The government route shows what that costs,
+      in <a href={`${join('/government')}/#net-interest`}>net interest</a>. It also shows how fast
+      the repricing feeds through, in <a href={`${join('/government')}/#how-old`}>how old the debt
+      is</a>.
     </p>
   </section>
 
@@ -230,23 +231,23 @@ const fig = figuresOf('/economy')
     <p class="kicker"><span class="section-no">Section 5</span></p>
     <h2>The wage share fell while the profit share rose</h2>
     <p class="standfirst">
-      Wages and salaries and corporate profits are both drawn here as shares of GDP, not of
-      national income, so they sum to nothing and are comparable only to themselves over time.
-      The question the two lines settle is which way each share has moved since fiscal 1950,
-      and whether the two moves are the same size.
+      Wages and salaries and corporate profits are both drawn here as shares of GDP rather than
+      of national income. They sum to nothing and are comparable only to themselves over time.
+      The two lines settle which way each share has moved since fiscal 1950. They also settle
+      whether the two moves are the same size.
     </p>
     <p class="finding">
       Wages and salaries fell from a fiscal 1970 peak of 51.5% of GDP to a fiscal 2024 low of
-      42.2%, while corporate profits rose from a fiscal 1982 low of 7.0% of GDP to a fiscal 2025
-      peak of 13.1%.
+      42.2%. Corporate profits rose from a fiscal 1982 low of 7.0% of GDP to a fiscal 2025 peak
+      of 13.1%.
     </p>
 
     <Figure
-      ariaLabel="Wages and salaries fell from a fiscal 1970 peak of 51.5% of GDP to a fiscal 2024 low of 42.2%, while corporate profits rose from a fiscal 1982 low of 7.0% of GDP to a fiscal 2025 peak of 13.1%, both shares of GDP rather than of national income."
+      ariaLabel="Wages and salaries fell from a fiscal 1970 peak of 51.5% of GDP to a fiscal 2024 low of 42.2%. Corporate profits rose from a fiscal 1982 low of 7.0% of GDP to a fiscal 2025 peak of 13.1%, both shares of GDP rather than of national income."
       fig={fig('labor-capital')}
       xUnit="Fiscal year"
       yUnit="percent of GDP"
-      note="Wages and salaries and corporate profits here are shares of GDP, not of national income, so they do not sum to 100 with anything. They are comparable to each other over time, not to a factor-share decomposition. The fiscal 2020 moves in both series follow a fall in the nominal GDP denominator, not a change in who was paid what. The series continue to FY2036 as a CBO baseline projection, drawn as a separate dashed branch past the marked FY2025 boundary."
+      note="Wages and salaries and corporate profits here are shares of GDP rather than of national income. They do not sum to 100 with anything. They are comparable to each other over time, and not to a factor-share decomposition. The fiscal 2020 moves in both series follow a fall in the nominal GDP denominator. Neither follows a change in who was paid what. The series continue to FY2036 as a CBO baseline projection. Projected years draw as a separate dashed branch past the marked FY2025 boundary."
     >
       <LaborAndCapital
         client:visible
@@ -256,21 +257,21 @@ const fig = figuresOf('/economy')
     </Figure>
 
     <p class="prose">
-      Wages and salaries and corporate profits here are shares of GDP, not of national income,
-      so they do not sum to 100 with anything. They are comparable to each other over time, but
-      this is not a factor-share decomposition of national income. Wages and salaries were 49.1%
-      of GDP in fiscal 1950, peaked at 51.5% in fiscal 1970, and fell to a low of 42.2% in fiscal
-      2024 before ending the series at 42.4% in fiscal 2025. Corporate profits were 11.2% of GDP
-      in fiscal 1950, fell to a low of 7.0% in fiscal 1982, and rose to a fiscal 2025 peak of
-      13.1%.
+      Wages and salaries and corporate profits here are shares of GDP rather than of national
+      income. They do not sum to 100 with anything. They are comparable to each other over time,
+      and this is not a factor-share decomposition of national income. Wages and salaries
+      were 49.1% of GDP in fiscal 1950 and peaked at 51.5% in fiscal 1970. They fell to a low of
+      42.2% in fiscal 2024 before ending the series at 42.4% in fiscal 2025. Corporate profits
+      were 11.2% of GDP in fiscal 1950 and fell to a low of 7.0% in fiscal 1982. They rose to a
+      fiscal 2025 peak of 13.1%.
     </p>
     <p class="prose">
-      The fiscal 2020 moves in both series are pandemic denominator artefacts, not a trend.
-      Wages and salaries were 43.3% of GDP in fiscal 2019 and rose to 44.0% in fiscal 2020, even
-      though nothing about bargaining power moved that fast. Nominal GDP fell in fiscal 2020, and
-      a share's numerator can rise relative to a shrinking denominator without any of it being
-      newly earned. Corporate profits fell to 11.3% of GDP in fiscal 2020 before rising to 12.7%
-      in fiscal 2021, the same denominator move working in the other direction.
+      The fiscal 2020 moves in both series are pandemic denominator artefacts rather than a
+      trend. Wages and salaries were 43.3% of GDP in fiscal 2019 and rose to 44.0% in fiscal
+      2020. Nothing about bargaining power moved that fast. Nominal GDP fell in fiscal 2020.
+      A share's numerator can rise against a shrinking denominator without any of it being newly
+      earned. Corporate profits fell to 11.3% of GDP in fiscal 2020 and rose to 12.7% in fiscal
+      2021. That is the same denominator move in the other direction.
     </p>
   </section>
 
@@ -278,22 +279,22 @@ const fig = figuresOf('/economy')
     <p class="kicker"><span class="section-no">Section 6</span></p>
     <h2>Limits</h2>
     <p class="standfirst">
-      This route runs fiscal 1950 to fiscal 2036 and answers what happened to output, prices,
-      rates and the wage/profit split at the level of the whole economy. It does not answer who
+      This route runs fiscal 1950 to fiscal 2036. It answers what happened to output, prices,
+      rates and the wage and profit split across the whole economy. It does not answer who
       received any of it.
     </p>
 
     <p class="prose">
       <strong>Fiscal-year basis.</strong> Every series on this route is a fiscal year, not a
       calendar year. Fiscal 2025 ran October 2024 to September 2025. A monthly peak or trough
-      inside a fiscal year does not appear here as a point; only the fiscal-year average or
+      inside a fiscal year does not appear here as a point. Only the fiscal-year average or
       year-end value does.
     </p>
     <p class="prose">
       <strong>The projection boundary.</strong> This route's data covers fiscal 1950 to fiscal
-      2036. CBO publishes actuals and a baseline projection in one series running to FY2036;
-      everything after fiscal 2025 is that baseline projection, not an observation, drawn as a
-      separate dashed branch past a labelled boundary rule on every chart.
+      2036. CBO publishes actuals and a baseline projection in one series running to FY2036.
+      Everything after fiscal 2025 is that baseline projection rather than an observation. It is
+      drawn as a separate dashed branch past a labelled boundary rule on every chart.
     </p>
     <p class="prose">
       <strong>National aggregates say nothing about distribution.</strong> Every series on this
@@ -303,14 +304,14 @@ const fig = figuresOf('/economy')
     </p>
     <p class="prose">
       <strong>The wage/profit comparison is not a factor-share decomposition.</strong> Section
-      5's wages-and-salaries and corporate-profits series are each measured against GDP as their
-      denominator, not against national income, so they do not sum to 100 with anything and are
-      not a complete accounting of who gets paid out of what the economy produces.
+      5's wages-and-salaries and corporate-profits series are each measured against GDP rather
+      than against national income. They do not sum to 100 with anything. They are not a complete
+      accounting of who gets paid out of what the economy produces.
     </p>
     <p class="prose">
-      The <a href={`${join('/households')}/`}>households route</a> picks up from here: what a household
-      actually earns, how far the spread between households runs, and what is actually paid in
-      tax once <Term id="payroll-tax">payroll tax</Term> is counted.
+      The <a href={`${join('/households')}/`}>households route</a> picks up from here. It covers
+      what a household actually earns and how far the spread between households runs. It also
+      covers what is paid in tax once <Term id="payroll-tax">payroll tax</Term> is counted.
     </p>
   </section>
 </BaseLayout>

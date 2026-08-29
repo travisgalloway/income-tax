@@ -1,13 +1,13 @@
-/** The legend half of the browser lane — issue #74. Run by
+/** The legend half of the browser lane, issue #74. Run by
  *  `npm run test:browser` alongside `smoke`, `keyboard`, `driven`, `scroll` and
  *  `touch`.
  *
  *  WHAT IS UNDER TEST. A legend key is a swatch and the words that say what it
- *  means. `.state-legend` used to be six loose siblings — swatch, label,
- *  swatch, label, swatch, label — under one `flex-wrap: wrap`, so the wrap fell
+ *  means. `.state-legend` used to be six loose siblings, swatch, label,
+ *  swatch, label, swatch, label, under one `flex-wrap: wrap`, so the wrap fell
  *  wherever the sixth box happened to land. Measured at `2b4efe1`: at 320px the
  *  "Even" swatch stranded at the end of row 1 (swatch 23532-23546, its text's
- *  first line 23556-23577 — no overlap at all), and at 390px and 414px the
+ *  first line 23556-23577, no overlap at all), and at 390px and 414px the
  *  third swatch stranded from "Gets more, up to $113,122 per person". Read left
  *  to right, a stranded swatch sits beside the NEXT label and inverts the
  *  direction the colour ramp encodes.
@@ -29,7 +29,7 @@
  *
  *  EVERY SWEEP COUNTS THROUGH A RECORDED INTEGER. The per-route and per-class
  *  totals below are measured facts, asserted as equalities BEFORE any geometry
- *  is read — the same rule `touch.test.ts` follows with `TAPPABLE_CHARTS` and
+ *  is read, the same rule `touch.test.ts` follows with `TAPPABLE_CHARTS` and
  *  `HINT_CARRIERS`. Without them a mistyped selector sweeps an empty set and
  *  reports green, which is the failure this lane is least able to notice on its
  *  own.
@@ -53,7 +53,7 @@ import {
   type ViewportSize,
 } from './harness.ts'
 
-/** #74's own three widths. `VIEWPORTS` is deliberately untouched — see the file
+/** #74's own three widths. `VIEWPORTS` is deliberately untouched, see the file
  *  header. 320px is the narrowest viewport the site is expected to meet; 390
  *  and 414 are the two the defect was reported and re-measured at. */
 const LEGEND_WIDTHS = [320, 390, 414] as const
@@ -62,7 +62,7 @@ const LEGEND_WIDTHS = [320, 390, 414] as const
 const CHART_PATHS = ['/economy', '/households', '/government'] as const
 
 /** How many legend markers each route carries. Measured at `2b4efe1`, hydrated,
- *  and identical at 320, 360, 390, 414, 768 and 1440 — the marker set does not
+ *  and identical at 320, 360, 390, 414, 768 and 1440, the marker set does not
  *  depend on width, only its layout does.
  *
  *  `/economy`'s zero is an ASSERTION, not a skip, in the same spirit as
@@ -98,15 +98,15 @@ const BY_LABEL: Record<string, Record<string, number>> = {
 }
 
 /** The currency string the cartogram legend ships, and the two values L3 drives
- *  it with. The number is data-driven — it is the largest per-person balance in
- *  the pipeline's output — so "it fits today" is not the same claim as "it
+ *  it with. The number is data-driven, it is the largest per-person balance in
+ *  the pipeline's output, so "it fits today" is not the same claim as "it
  *  fits", and L3 makes the difference a test rather than a hope.
  *
  *  TWO values, because they fail differently. `$1,113,122,999` is the realistic
  *  case: an order of magnitude longer, still full of spaces, so it wraps at
  *  word boundaries and the item's `min-width: 0` / `max-width: 100%` /
  *  `overflow-wrap: anywhere` never come into play. `UNBREAKABLE` is the case
- *  those three exist for — one token wider than the whole container at 320px.
+ *  those three exist for, one token wider than the whole container at 320px.
  *  Measured with them removed: `.state-legend` reports 290 against 280. With
  *  them: 280 against 280. Without this second value that CSS would be three
  *  lines of unproven defence. */

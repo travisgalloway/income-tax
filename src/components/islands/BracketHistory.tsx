@@ -1,6 +1,6 @@
 /** Section 3: a century of brackets.
  *
- *  One SVG, three stacked panels sharing a single x axis (1913-2025) --
+ *  One SVG, three stacked panels sharing a single x axis (1913-2025),
  *  bracket count, top-bracket threshold in constant dollars, and the top
  *  statutory rate against the raw schedule ladder. The issue asks for exactly
  *  these three things, and BRIEF.md's "pick the handful where interaction
@@ -149,7 +149,7 @@ export function BracketHistory({ rows }: { rows: BracketYear[] }) {
           {divergent.map((r) => (
             <circle key={r.y} cx={x(r.y)} cy={yRate(r.sched_top)} r={2.5} fill="none" stroke="var(--ink-soft)" strokeWidth={1} />
           ))}
-          {/* One direct label illustrating the divergence pattern -- the full
+          {/* One direct label illustrating the divergence pattern, the full
               set is documented in the table and the aria-live readout. */}
           {/* Placed explicitly rather than carried in by the ancestor's
               translate: an x-less <text> reads as x=0 to the clipping guard,

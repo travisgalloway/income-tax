@@ -202,7 +202,7 @@ def test_family_gini_reproduces_the_published_figures():
 
 
 def test_cbo_top1_share_is_two_published_points_not_a_series():
-    """9% in 1979, 18% in 2022 -- exactly these two points, nothing in between."""
+    """9% in 1979, 18% in 2022, exactly these two points, nothing in between."""
     data = load("income_tax_by_group")["data"]
     points = [(p["year"], p["v"]) for p in data["cbo_top1_income_share"]]
     assert points == [(1979, 9), (2022, 18)]
@@ -243,7 +243,7 @@ def test_section5_revenue_and_outlay_means_hold(budget):
 
 def test_section5_surplus_band_is_exactly_fy1998_2001(budget):
     """The surplus band section 5 shades must be the SET {1998..2001}, not
-    merely a count of four -- and it must not depend on which unit is shown,
+    merely a count of four, and it must not depend on which unit is shown,
     so this checks the sign of the nominal deficit only."""
     span = range(1995, 2026)
     surplus = sorted(y for y in span if budget[y]["n_de"] > 0)
@@ -308,7 +308,7 @@ def _prime_cache(cache_dir: Path, key: str, body: dict) -> Path:
     """Write a cache entry exactly as lib/fetch.py would, under `key`.
 
     The path actually written is derived from `lib_fetch.CACHE_DIR` (a module
-    global), not from `cache_dir` -- callers must monkeypatch `CACHE_DIR` to
+    global), not from `cache_dir`, callers must monkeypatch `CACHE_DIR` to
     `cache_dir` first. The assertion below keeps that requirement honest
     instead of letting a caller that forgot to monkeypatch write silently to
     the real cache directory.
@@ -325,7 +325,7 @@ def _prime_cache(cache_dir: Path, key: str, body: dict) -> Path:
 def test_warm_text_cache_is_served_without_a_request(tmp_path, monkeypatch):
     """The text cache shape is `{url, text, retrieved_at}`. A change to it
     would silently invalidate every warm entry on disk and turn a warm run
-    into a full refetch -- which looks like success."""
+    into a full refetch, which looks like success."""
     monkeypatch.setattr(lib_fetch, "CACHE_DIR", tmp_path)
     _prime_cache(tmp_path, UNROUTABLE, {
         "url": UNROUTABLE,
@@ -341,7 +341,7 @@ def test_warm_text_cache_is_served_without_a_request(tmp_path, monkeypatch):
 
 
 def test_binary_cache_round_trips_through_base64(tmp_path, monkeypatch):
-    """The binary cache shape is `{url, b64, retrieved_at}` -- a distinct key
+    """The binary cache shape is `{url, b64, retrieved_at}`, a distinct key
     from the text shape, and the bytes must come back byte-for-byte."""
     monkeypatch.setattr(lib_fetch, "CACHE_DIR", tmp_path)
     payload = b"PK\x03\x04\x00\x01\xff\xfe not utf-8"
@@ -382,8 +382,8 @@ def test_post_json_cache_key_includes_the_payload(tmp_path, monkeypatch):
 def test_a_binary_cache_entry_does_not_crash_a_text_fetch(tmp_path, monkeypatch):
     """The one intentional behaviour change in #40. Both cache shapes share
     `_cache_path`, so a URL cached as bytes and later fetched as text used to
-    raise KeyError out of `cached["text"]`. It must be a cache miss -- and
-    therefore SourceUnavailable here -- exactly as the reverse case already
+    raise KeyError out of `cached["text"]`. It must be a cache miss, and
+    therefore SourceUnavailable here, exactly as the reverse case already
     was."""
     monkeypatch.setattr(lib_fetch, "CACHE_DIR", tmp_path)
     _prime_cache(tmp_path, UNROUTABLE, {
@@ -968,9 +968,9 @@ def test_curated_snapshots_expose_their_as_of():
     Since #54, `debt_holders` is no longer in that set: its foreign holdings are
     fetched, so it carries `mode: "mixed"` and TWO dates, and `mixedVintage()`
     renders both. Since #56 `debt_maturity` is out of it too, for the same
-    reason and with the same shape -- its instrument composition comes from the
+    reason and with the same shape, its instrument composition comes from the
     pinned MSPD statement, its average maturity from the JEC update. The
-    distinction is load-bearing rather than cosmetic: `curatedVintage` THROWS at
+    distinction changes behaviour rather than appearance: `curatedVintage` THROWS at
     build time on a non-curated dataset and `mixedVintage` throws on anything
     that is not mixed, which is what makes "this output is honestly described"
     un-skippable.
@@ -1021,7 +1021,7 @@ def _enactment_fy(date: str) -> int:
 
 
 def test_tcja_verified_source_is_the_clerk_record_alone():
-    """#56. `verified_source` read "House Clerk RC699; Ballotpedia" -- the Clerk
+    """#56. `verified_source` read "House Clerk RC699; Ballotpedia", the Clerk
     record IS the record, and the second name added nothing a reader could
     trace. The counts beside it are the Voteview regression target and are
     asserted here so the string edit cannot drift into the numbers.
@@ -1112,7 +1112,7 @@ def test_the_laws_to_splits_join_has_exactly_one_implementation():
 
 def test_filter_totals_render_to_the_published_two_places(splits):
     """D5: the EXACT strings the UI prints, not a tolerance. Pins the
-    7.51/7.52 resolution — the true sum is 7.512, which the UI's toFixed(2)
+    7.51/7.52 resolution, the true sum is 7.512, which the UI's toFixed(2)
     renders as 7.51, and sections.md section 8 must agree."""
     laws = _laws()
     cost = {"cross-party": 0.0, "party-line": 0.0}
@@ -1257,7 +1257,7 @@ def _counted_coalition(law: dict, splits: dict[str, dict]) -> str:
 
 def test_attribution_both_breakdowns_reconcile_to_the_same_total(splits):
     """sections.md §9: both breakdowns net to $16.75T. Compared as exact
-    integer thousandths, not pytest.approx — this is the reconciliation
+    integer thousandths, not pytest.approx, this is the reconciliation
     invariant aggregate.ts throws on at import time."""
     by_coalition: dict[str, int] = {}
     by_president: dict[str, int] = {}
@@ -1774,7 +1774,7 @@ def test_every_schema_rejects_a_realistic_corruption(name):
         jsonschema.validate(broken, schema)
 
 
-# ---- #38: the 1985 bracket corruption, guarded at ingest and on the output --
+# ---- #38: the 1985 bracket corruption, guarded at ingest and on the output,
 
 def test_phantom_zero_row_guard_rejects_a_duplicate_in_any_other_year():
     """#38 criterion 4. `_drop_phantom_zero_row` is a NAMED check, not a silent
@@ -1785,7 +1785,7 @@ def test_phantom_zero_row_guard_rejects_a_duplicate_in_any_other_year():
 
     def phantom_shape() -> list[dict]:
         # The real 1985 single head: a 0% zero bracket up to $2,390, then 11%
-        # from $2,390 -- plus the corrupt duplicate 0% row with an open-ended
+        # from $2,390, plus the corrupt duplicate 0% row with an open-ended
         # top that contradicts the 50% row already present.
         return [
             {"r": 0.0, "lo": 0, "hi": 2390},
@@ -1820,7 +1820,7 @@ def test_phantom_zero_row_guard_rejects_a_duplicate_in_any_other_year():
 
 def test_check_bracket_history_rejects_a_duplicate_bracket_floor(monkeypatch, tmp_path):
     """#38 criterion 3. The published-output half of the guard. `check_schema`
-    cannot express "strictly increasing", so this is a validate.py invariant --
+    cannot express "strictly increasing", so this is a validate.py invariant,
     and it must BITE, in any year, not only 1985."""
     real = load("bracket_history")
 
@@ -1904,7 +1904,7 @@ def test_top_rates_match_the_soi_table_23_anchor():
 
 def test_the_soi_anchor_check_rejects_a_top_rate_that_drifts_from_it(monkeypatch):
     """#55 criterion 4. A guard that currently finds nothing must still be proved
-    to BITE -- otherwise "zero drift" is indistinguishable from "nothing was
+    to BITE, otherwise "zero drift" is indistinguishable from "nothing was
     compared". Drift one anchored year and require the failure to name it, and
     to carry both values so the reader can see which side moved.
     """
@@ -2028,7 +2028,7 @@ def test_check_sources_fails_when_a_cited_source_is_not_registered(monkeypatch, 
         # Two failures since #57, both about this one entry and both correct: rule B
         # (the registered name is gone from the document) and rule I (so is the
         # lead-in carrying its tier, which is composed from that same name). Every
-        # failure must still name THIS key -- the guard is that a mutation to one
+        # failure must still name THIS key, the guard is that a mutation to one
         # entry does not ripple into a report about the others.
         assert len(c.failures) == 2, f"{key}: expected rules B and I to fail, got {c.failures}"
         assert all(key in f for f in c.failures), c.failures
@@ -2037,8 +2037,8 @@ def test_check_sources_fails_when_a_cited_source_is_not_registered(monkeypatch, 
 
 def test_check_sources_fails_when_an_output_cites_an_unregistered_source(monkeypatch, tmp_path):
     """#39 criterion 7, the other direction: a source ADDED to an _meta.source and
-    never registered. Rule B alone cannot see this one — the register does not know
-    the new source exists — so the stored source_shape carries it instead, and the
+    never registered. Rule B alone cannot see this one, the register does not know
+    the new source exists, so the stored source_shape carries it instead, and the
     unaccounted free text is what fails."""
     for name in OUTPUTS:
         shutil.copy2(DATA / f"{name}.json", tmp_path / f"{name}.json")
@@ -2059,7 +2059,7 @@ def test_check_sources_tolerates_a_vintage_refresh(monkeypatch, tmp_path):
     """The loose-on-purpose proof (E3/E4). An ordinary CBO refresh moves the
     vintage on both sides and must NOT turn the build red. Without this, a future
     author tightens `_normalize_source` into an exact match and every upstream
-    republication becomes a failed build — at which point the check gets disabled,
+    republication becomes a failed build, at which point the check gets disabled,
     and a disabled check is a check that is not looking."""
     for name in OUTPUTS:
         shutil.copy2(DATA / f"{name}.json", tmp_path / f"{name}.json")
@@ -2082,7 +2082,7 @@ def test_normalize_source_strips_dates_but_keeps_identifying_numbers():
     date. An all-digit strip collapsed "Table 5" and "Table 23" onto the same
     text, at which point rule B would match a registered source against some
     OTHER table's line in SOURCES.md and rule D's shape would hold while the
-    cited document changed underneath it -- the silent pass #39 exists to close.
+    cited document changed underneath it, the silent pass #39 exists to close.
     """
     n = validate._normalize_source
 
@@ -2144,7 +2144,7 @@ def test_every_registered_source_states_a_tier_from_the_vocabulary():
 
 def test_every_registered_source_is_followable_or_carries_a_written_exemption():
     """#57 criterion 2. Every source line the reader meets has to reach a page. Where
-    no single URL is truthful the reason is WRITTEN -- never a bare bool, the idiom
+    no single URL is truthful the reason is WRITTEN, never a bare bool, the idiom
     TITLE_RANGE_EXEMPT already establishes: an exemption with no reason is how a
     check turns back into a skip."""
     registry = curated.source_register()["registry"]
@@ -2165,8 +2165,8 @@ def test_voteview_is_describable_without_calling_it_secondary():
     issue's own three terms. Voteview is an academic republication of the primary
     roll-call record: not official (it is not the House Clerk) and not secondary (the
     join it feeds is regressed against the Clerk's record for PL 115-97, which fails
-    the build if it drifts). The issue says it plainly -- "if the tier vocabulary can
-    only call it secondary, the vocabulary is wrong" -- so this asserts the tier AND
+    the build if it drifts). The issue says it plainly, "if the tier vocabulary can
+    only call it secondary, the vocabulary is wrong", so this asserts the tier AND
     that party_splits still cites the same source it always did."""
     registry = curated.source_register()["registry"]
     assert registry["voteview"]["tier"] == "scholarly republication"
@@ -2203,7 +2203,7 @@ def test_a_compilation_names_what_it_compiles():
 
 def test_sources_doc_states_the_same_tier_as_the_register():
     """#57 criterion 6, rule I against the real tree. The tier the reader sees on
-    /sources and the tier the register holds are one claim, not two -- and SOURCES.md
+    /sources and the tier the register holds are one claim, not two, and SOURCES.md
     is still never parsed OUT of: the composed lead-in is matched INTO it, exactly as
     rule B matches registered_as."""
     doc = (LEGACY / "SOURCES.md").read_text()
@@ -2218,7 +2218,7 @@ def test_sources_doc_states_the_same_tier_as_the_register():
 
 def test_the_cbo_table_9_citation_is_read_from_meta_not_typed():
     """#57 criterion 8. The Table 9 source line was hand-typed beside the figure it
-    labels -- byte-identical to cbo_effective_rates._meta.source and free to drift
+    labels, byte-identical to cbo_effective_rates._meta.source and free to drift
     from it the moment CBO republishes. It now reads the dataset. The literal is
     banned by grep because that is the only thing a test can see from here."""
     figures = (LEGACY / "src" / "data" / "figures.ts").read_text()
@@ -2242,7 +2242,7 @@ def test_the_cbo_table_9_citation_is_read_from_meta_not_typed():
 # were not looking; a rule that has never been observed to fail is one of them.
 
 def test_check_sources_fails_when_a_source_states_no_tier(monkeypatch):
-    """Rule F bites. The failure it exists for is not a typo -- it is the twenty-fifth
+    """Rule F bites. The failure it exists for is not a typo, it is the twenty-fifth
     source, added in a hurry, describing itself as nothing at all."""
     register = _tiered_register()
     del register["registry"]["oecd_revenue_statistics"]["tier"]
@@ -2312,7 +2312,7 @@ def test_check_sources_fails_when_the_doc_tier_disagrees_with_the_register(monke
 
 def test_check_sources_fails_when_a_source_has_no_url_and_no_written_reason(monkeypatch):
     """Rule G bites, in both of the shapes that matter: no URL at all, and a bare
-    `url_exempt: true`. The second is the dangerous one -- it looks like a decision
+    `url_exempt: true`. The second is the dangerous one, it looks like a decision
     and carries none, and an exemption with no reason is how a check turns back into
     a skip (TITLE_RANGE_EXEMPT, validate.py)."""
     # Taken once, before the first monkeypatch: _tiered_register() copies whatever
@@ -2337,8 +2337,8 @@ def test_check_sources_fails_when_a_source_has_no_url_and_no_written_reason(monk
 def test_check_sources_tolerates_a_vintage_refresh_of_a_tiered_lead_in(monkeypatch, tmp_path):
     """E10. Rule I's prose side is vintage-normalized like rule B's, so a CBO
     February-2026 -> February-2027 refresh that moves BOTH the register and the
-    document must stay green. The URL is deliberately not normalized -- a "2026-02"
-    in a filename identifies a document rather than dating it -- so this refreshes
+    document must stay green. The URL is deliberately not normalized, a "2026-02"
+    in a filename identifies a document rather than dating it, so this refreshes
     only the vintage in the lead-in."""
     register = _tiered_register()
     original = (LEGACY / "SOURCES.md").read_text()
@@ -2461,12 +2461,12 @@ def test_check_glossary_sources_fails_when_the_glossary_directory_is_empty(monke
 def test_check_sources_rule_c_accepts_a_glossary_only_citation(monkeypatch, tmp_path):
     """#50's widening of #39 rule C, proved in both directions. Rule C used to fail any
     register entry cited by no OUTPUT, so the first definitional-only source would have
-    landed as an orphan. It now spans outputs and glossary terms -- and the converse
+    landed as an orphan. It now spans outputs and glossary terms, and the converse
     still bites: delete the sole term that cites such a key and the entry is orphaned,
     which is the answer to "may deleting a term orphan its source"."""
     register = copy.deepcopy(curated.source_register())
     # Registered in SOURCES.md (it reuses irs_soi_table_23's registered_as, so rule B
-    # passes) but named by no output's cites -- a definitional-only source. It borrows a
+    # passes) but named by no output's cites, a definitional-only source. It borrows a
     # real registered string rather than inventing one, because rule B matches
     # registered_as INTO SOURCES.md and a made-up name would fail for that reason instead
     # of exercising rule C. It used to borrow "Tax Policy Center"; #55 removed that source
@@ -2527,8 +2527,8 @@ def test_check_meta_titles_is_clean_against_the_real_tree():
 
 def test_no_curated_title_types_a_literal_year():
     """#41 criterion 1, at the source rather than the output. A hand-typed range
-    in curated/notes.yaml does not follow the series when it is extended -- that
-    is the whole defect -- so the curated title carries a placeholder and
+    in curated/notes.yaml does not follow the series when it is extended, that
+    is the whole defect, so the curated title carries a placeholder and
     emit.expand_title fills it from coverage."""
     typed = {
         n: curated.meta_for(n)["title"]
@@ -2577,7 +2577,7 @@ def test_check_meta_titles_bites_on_the_defect_it_was_filed_for(monkeypatch):
 
 
 def test_check_meta_titles_fails_a_range_coverage_does_not_declare(monkeypatch, tmp_path):
-    """Rule B: the published file has drifted from the curated source -- an
+    """Rule B: the published file has drifted from the curated source, an
     out-of-tier output, or a hand-edit of src/data."""
     copy_dir = _data_copy(tmp_path)
     _retitle(copy_dir, "budget",
@@ -2610,7 +2610,7 @@ def test_check_meta_titles_fails_a_range_with_no_coverage_at_all(monkeypatch, tm
 def test_the_only_exemption_carries_a_written_reason_and_is_not_a_silent_skip(monkeypatch):
     """An exemption with no reason is how a check turns back into a skip. Both
     halves are asserted: the entry names why, and with the dict emptied the same
-    output goes red -- so the exemption is what is holding it, not an accident of
+    output goes red, so the exemption is what is holding it, not an accident of
     the regex failing to see the range."""
     reason = validate.TITLE_RANGE_EXEMPT["cbo_effective_rates"]
     assert "anchor years" in reason
@@ -2628,7 +2628,7 @@ def test_the_only_exemption_carries_a_written_reason_and_is_not_a_silent_skip(mo
 
 def test_open_ended_titles_assert_a_start_and_not_an_end(monkeypatch, tmp_path):
     """economy.coverage.end is 2036, a projection horizon, while its title says
-    "FY1950 onward". An open-ended title asserts its start year only -- and the
+    "FY1950 onward". An open-ended title asserts its start year only, and the
     start still has to be right."""
     assert "FY1950 onward" in load("economy")["_meta"]["title"]
 
@@ -2696,7 +2696,7 @@ def test_brief_file_list_paths_exist():
     `content/sections.md` that is `sections.md`, and nothing noticed for the
     length of the build. Existence-only on purpose: an exhaustiveness check
     would fight every new file in the repository and end up disabled, while this
-    fails on exactly the drift that produced the issue -- a listed path that
+    fails on exactly the drift that produced the issue, a listed path that
     stops being true."""
     missing = [e for e in _brief_file_list() if not (LEGACY / e.rstrip("/")).exists()]
     assert missing == [], f"BRIEF.md lists paths that do not exist: {missing}"
@@ -2704,8 +2704,8 @@ def test_brief_file_list_paths_exist():
 
 def test_brief_file_list_names_the_brief_itself_and_every_root_json():
     """The two specific claims the block got wrong. The first line named
-    README.md as "this brief" -- README.md exists, so an existence check alone
-    would have passed a line pointing at the wrong file -- and the eight curated
+    README.md as "this brief", README.md exists, so an existence check alone
+    would have passed a line pointing at the wrong file, and the eight curated
     inputs sat under a `data/` prefix that never existed."""
     entries = _brief_file_list()
     assert "BRIEF.md" in entries
@@ -2720,7 +2720,7 @@ def test_brief_file_list_names_the_brief_itself_and_every_root_json():
     assert not [e for e in entries if e.startswith(("data/", "content/"))]
 
 
-# ---- #54: foreign holdings come from Treasury TIC, not from a report of it --
+# ---- #54: foreign holdings come from Treasury TIC, not from a report of it,
 
 LIB = ROOT / "lib"
 
@@ -2728,7 +2728,7 @@ LIB = ROOT / "lib"
 # rows this pipeline reads. Real values, real layout: the month abbreviations
 # sit on the line ABOVE the `Country` header, `China, Mainland` is quoted
 # because its label carries a comma, and the second block repeats every country
-# label with a different year's numbers -- which is what makes "the parser
+# label with a different year's numbers, which is what makes "the parser
 # selected the pinned month's block" a real assertion rather than a tautology.
 MFH_FIXTURE = "\n".join(
     "\t".join(cells)
@@ -2786,7 +2786,7 @@ def test_tic_parser_selects_the_pinned_months_column():
 
 def test_tic_parser_rejects_a_missing_vintage():
     """The pin is honoured or the run fails. A month the file does not carry
-    must never fall back to a neighbouring column -- that is the failure mode
+    must never fall back to a neighbouring column, that is the failure mode
     that put a UK figure matching no TIC month on the page."""
     with pytest.raises(SourceUnavailable) as exc:
         _fixture_release("2026-03")
@@ -2823,7 +2823,7 @@ def test_tic_parser_refuses_a_cell_that_is_not_a_number():
 
 
 def test_tic_parser_refuses_a_body_it_could_not_parse_at_all():
-    """An empty parse is a failure, never 'no rows' -- lib/xlsx.py's contract,
+    """An empty parse is a failure, never 'no rows', lib/xlsx.py's contract,
     applied to a text table. A truncated body that lost every header row would
     otherwise read as a file with no months in it."""
     with pytest.raises(SourceUnavailable, match="no 'Country' header row"):
@@ -2877,7 +2877,7 @@ def test_foreign_holdings_come_from_tic():
 def test_the_two_denominators_reconcile():
     """The 32%-of-gross rebuttal, as arithmetic a reader can redo. 30% of the
     $32.14T held by the public is ~$9.6T, which is 24% of $39.88T gross. Both
-    numbers are curated, so nothing recomputes them -- which is exactly why the
+    numbers are curated, so nothing recomputes them, which is exactly why the
     relationship between them needs a check."""
     d = load("debt_holders")["data"]
     public = next(s for s in d["split"] if s["k"] == "public")["amount_t"]
@@ -3074,8 +3074,8 @@ def test_mspd_g2_bites_a_statement_nobody_pinned(tmp_path, monkeypatch):
 
 
 def test_mspd_g3_bites_the_subtotal_wearing_the_totals_label(tmp_path, monkeypatch):
-    """THE LOAD-BEARING ONE. Restore the figure the site actually published --
-    marketable_total_t = 28.0, which is bills + notes + bonds -- and the build
+    """THE ONE THAT BITES. Restore the figure the site actually published,
+    marketable_total_t = 28.0, which is bills + notes + bonds, and the build
     must fail. The check this replaced used a tolerance of `> 0.01`, which 28.0
     satisfied by a $0.05T rounding residue, so it passed for as long as the
     defect was live."""
@@ -3118,7 +3118,7 @@ def test_mspd_g5_bites_a_class_set_that_silently_narrowed(tmp_path, monkeypatch)
 
 def test_mspd_g6_bites_the_compiler_reappearing_in_an_emitted_file(tmp_path, monkeypatch):
     """Rule E. Rules A-D reconcile the SOURCE LINE against the register and are
-    blind to a publisher named anywhere else in the payload -- which is where
+    blind to a publisher named anywhere else in the payload, which is where
     the Peterson attribution would come back, since it is the note field that
     used to carry "for instrument shares"."""
     def mutate(doc):

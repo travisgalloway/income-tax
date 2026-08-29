@@ -7,14 +7,14 @@ import { join, siteRoutes, type ContentRoute } from '../data/sections'
 
 /* Static Astro, no island, no hydration directive and no chart: this page is a list of links, so
  * #36's server-render rule is satisfied vacuously and greppably. The directive's name is
- * deliberately not written in this file — the criterion that proves the rule greps for it, and a
+ * deliberately not written in this file, the criterion that proves the rule greps for it, and a
  * mention in a comment would read as a use. */
 
 /* Nothing on this page is written here. Routes and their labels come from `siteRoutes`; section
  * ids and labels from the same arrays each route renders its own contents list from; figure
  * numbers, titles and sources from the manifest the figures themselves render from; terms from
  * the glossary collection. A section renamed, a figure added or a term defined changes this page
- * in the same build, with no edit to this file — which is the whole of what it is for. */
+ * in the same build, with no edit to this file, which is the whole of what it is for. */
 
 const entries = await getCollection('glossary')
 
@@ -84,10 +84,10 @@ const sectionCount = blocks.reduce((n, b) => n + b.sections.length, 0)
   <p class="kicker">Reference</p>
   <h1>Contents</h1>
   <p class="standfirst">
-    The whole of the site on one page: {sectionCount} sections across {blocks.length} destinations,{' '}
-    {figureCount} numbered figures with their sources, and {terms.length} defined terms. Nothing
-    here is a list somebody keeps up to date. Every line is read from the same declaration the
-    page it points at renders from.
+    The whole of the site on one page. It holds {sectionCount} sections across{' '}
+    {blocks.length} destinations, {figureCount} numbered figures with their sources, and{' '}
+    {terms.length} defined terms. Nothing here is a list somebody keeps up to date. Every line is
+    read from the same declaration the page it points at renders from.
   </p>
 
   {blocks.map((block) => (

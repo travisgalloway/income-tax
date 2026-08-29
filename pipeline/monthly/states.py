@@ -4,7 +4,7 @@ plus the Census state tax mix.
 issue #14. This is narrower than a balance of payments on both sides: give is
 gross federal COLLECTIONS classified by filer address, get is federal AWARD
 SPENDING classified by place of performance. Neither is complete, and the two
-are never described as opposite sides of one ledger — see SOURCES.md and the
+are never described as opposite sides of one ledger, see SOURCES.md and the
 trap paragraphs in src/pages/government/index.astro.
 
 Three fetches, three independent vintages, one join:

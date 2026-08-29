@@ -2,7 +2,7 @@
 
 TIC publishes the country-level holdings table as a tab-separated text file, one
 twelve-month block per year, most recent year first. That makes it a PRIMARY
-source the pipeline can read directly -- which matters, because the figures it
+source the pipeline can read directly, which matters, because the figures it
 supplies reached the site through a news outlet's paraphrase of the same release
 until #54, and the paraphrase had already drifted from the release ($889B for
 the UK matches no TIC month in 2025).
@@ -16,7 +16,7 @@ Two rules this module exists to enforce:
    and fails if the file does not carry it.
 2. Nothing is skipped silently. A missing month, a missing country row, a
    missing Grand Total or a cell that is not a number all raise
-   SourceUnavailable -- `fetch.py`'s rule 1 posture, applied to the parser. An
+   SourceUnavailable, `fetch.py`'s rule 1 posture, applied to the parser. An
    empty parse is a failure, never "no rows".
 
 Deliberately narrow: it returns three countries and the grand total and nothing
@@ -146,7 +146,7 @@ def read_release(text: str, vintage: str, *, retrieved_at: str, url: str = MFH_U
     """Select one month's column from an already-fetched MFH table.
 
     Split from `major_foreign_holders` so the parser is exercised by unit tests
-    without a network call or a builder -- the shape `lib/xlsx.py` establishes.
+    without a network call or a builder, the shape `lib/xlsx.py` establishes.
     """
     if not VINTAGE_RE.match(vintage):
         raise ValueError(f"tic: vintage must be YYYY-MM, got {vintage!r}")
@@ -187,7 +187,7 @@ def read_release(text: str, vintage: str, *, retrieved_at: str, url: str = MFH_U
 def major_foreign_holders(vintage: str, *, use_cache: bool = True) -> TicRelease:
     """Fetch the MFH table and return the pinned month's column, or raise.
 
-    Goes through `lib.fetch.fetch` -- the one HTTP core (#40). No second client,
+    Goes through `lib.fetch.fetch`, the one HTTP core (#40). No second client,
     no retry loop, no fallback to a stale mirror.
     """
     resp = fetch(MFH_URL, source=SOURCE, min_bytes=MIN_BYTES, use_cache=use_cache)

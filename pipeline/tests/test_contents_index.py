@@ -1,7 +1,7 @@
 """`/contents` derives its whole outline, and the derivation is checked against the pages. Issue #49.
 
 The index route lists every route, every section, every numbered figure and every glossary term.
-Its contract is that **nothing on it is hand-listed** — see
+Its contract is that **nothing on it is hand-listed**, see
 `docs/contracts/interfaces/contents.md`. That contract has an obvious cheap proof and a real one,
 and this file deliberately does not take the cheap one.
 
@@ -13,8 +13,8 @@ the pages renders an index that looks right and is wrong.
 So tests 2, 3, 4 and 5 read **both sides out of `dist/`**. The route's own built HTML supplies the
 sections it really renders, in the order it really renders them, and the figure numbers it really
 shows; `/contents` is asserted against that. A figure declared in the wrong section, or two
-figures inside one section rendered in the opposite order to their declaration — the one case the
-manifest's own throws cannot catch — goes red here.
+figures inside one section rendered in the opposite order to their declaration, the one case the
+manifest's own throws cannot catch, goes red here.
 
 Figure numbers are readable from `dist/` at all only since #49. They were a CSS counter
 (`content: 'Figure ' counter(figure)`), absent from the served bytes; the counter is retired and
@@ -113,7 +113,7 @@ def _rail_hrefs(root: Node) -> list[str]:
 
 
 def _rendered_section_ids(page: Path) -> list[str]:
-    """`main section[id]` on a built page, in document order — what the route really renders."""
+    """`main section[id]` on a built page, in document order, what the route really renders."""
     root = parse_html(page)
     main = next((n for n in root.iter_descendants() if n.tag == "main"), None)
     assert main is not None, f"{page}: no <main>"
@@ -333,7 +333,7 @@ def test_contents_lists_every_glossary_term(contents):
 def test_contents_links_are_base_path_joined(contents):
     """Every href is base-prefixed or a fragment.
 
-    An unbased href works in `astro dev` and 404s in production — how #70 shipped. A page whose
+    An unbased href works in `astro dev` and 404s in production, how #70 shipped. A page whose
     every link is derived is where a second join idiom would do the most damage, so there is one,
     in `src/data/sections.ts`.
     """

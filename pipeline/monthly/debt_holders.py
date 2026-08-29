@@ -9,7 +9,7 @@ from Debt to the Penny and stay curated, because they are assembled from a
 different release with a different as-of date.
 
 That mixture is stated rather than papered over. `_meta.refresh.mode` is
-`"mixed"`, not `"curated"`, and `data` carries TWO dates -- `as_of` for Debt to
+`"mixed"`, not `"curated"`, and `data` carries TWO dates, `as_of` for Debt to
 the Penny and `tic_as_of` for the TIC release month. Presenting one date for
 both is exactly the failure the issue's edge cases name, so the front end
 renders both (`mixedVintage` in src/data/index.ts).
@@ -30,7 +30,7 @@ GEN = "monthly/debt_holders.py"
 OUTPUTS = ["debt_holders"]
 
 # The countries this site publishes, in the order the prose names them. The
-# order is load-bearing: curated/prose_figures.yaml pins Japan/UK/China to
+# order is depended on: curated/prose_figures.yaml pins Japan/UK/China to
 # data.top_foreign.{0,1,2}.amount_t.
 PUBLISHED = ("Japan", "United Kingdom", "China")
 
