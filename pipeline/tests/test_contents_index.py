@@ -57,6 +57,21 @@ def contents() -> Node:
     return parse_html(CONTENTS)
 
 
+@pytest.fixture(scope="module")
+def contents_main(contents: Node) -> Node:
+    """The page's `<main>`, which is what the link guards below are about.
+
+    Those two guards ask questions about the CONTENTS PAGE's own links, and used
+    to ask them of the whole document. That was the same thing until the site
+    bar gained a deliberate external link to the source repository. It is not
+    the same thing now, and both guards failed on a link they were never about.
+    """
+    for n in contents.iter_descendants():
+        if n.tag == "main":
+            return n
+    raise AssertionError("/contents renders no <main>")
+
+
 def _classed(root: Node, cls: str) -> list[Node]:
     """Every descendant carrying `cls`, in document order."""
     return [n for n in root.iter_descendants() if cls in n.classes()]
@@ -104,12 +119,32 @@ def _block_route_href(block: Node) -> str:
     raise AssertionError(f"contents block {block.get('id')!r} has no <h2><a href>")
 
 
-def _rail_hrefs(root: Node) -> list[str]:
-    """The rail's route links, in order."""
-    for ol in root.iter_descendants():
-        if ol.tag == "ol" and "route-links" in ol.classes():
-            return [a.get("href") or "" for a in ol.iter_descendants() if a.tag == "a"]
-    raise AssertionError("no <ol class='route-links'> on the page")
+def _route_link_hrefs(root: Node) -> list[str]:
+    """The site bar's route links, in order.
+
+    Read from `nav.navbar-routes-wide`, which replaced the left rail's
+    `<ol class="route-links">`. The rail is now a right-hand contents aside and
+    carries section anchors only, so the site's route list lives in the bar and
+    nowhere else.
+    """
+    for nav in root.iter_descendants():
+        if nav.tag == "nav" and "navbar-routes-wide" in nav.classes():
+            return [a.get("href") or "" for a in nav.iter_descendants() if a.tag == "a"]
+    raise AssertionError("no <nav class='navbar-routes-wide'> on the page")
+
+
+def _site_title_href(root: Node) -> str:
+    """The wordmark's destination, `a.navbar-title`.
+
+    The front door is the one destination the bar does not name in its route list. It is reached
+    from the wordmark instead, so the bar names each page once. Read from the built page rather
+    than written as `/income-tax`, so this stays the pairing of two rendered things that the rest
+    of this module is.
+    """
+    for a in root.iter_descendants():
+        if a.tag == "a" and "navbar-title" in a.classes():
+            return a.get("href") or ""
+    raise AssertionError("no <a class='navbar-title'> on the page")
 
 
 def _rendered_section_ids(page: Path) -> list[str]:
@@ -165,22 +200,39 @@ def _index_figures(block: Node) -> list[tuple[str, str, str]]:
 # ---------------------------------------------------------------------------
 
 
-def test_contents_lists_every_route_the_rail_names(contents):
-    """Exactly the rail's destinations, minus the index you are standing on.
+def test_contents_lists_every_route_the_site_bar_names(contents):
+    """Exactly the site bar's destinations, minus the index you are standing on.
 
     `/contents` does not list itself: an index inside the index has a self-referential section
-    list. The rail still names it, which is how a reader gets here.
+    list. The bar still names it, which is how a reader gets here.
+
+    Renamed from `test_contents_lists_every_route_the_rail_names`. The pairing is the same claim
+    against the same `siteRoutes` array; what moved is where the routes are rendered. The left
+    rail carried them until the redesign replaced it with a sticky site bar and a right-hand
+    contents aside.
+
+    THE FRONT DOOR IS THE ONE DESTINATION THE ROUTE LIST DOES NOT NAME. The bar reaches it from
+    the wordmark, so `siteRoutes` omits it and `/contents` prepends `introRoute` instead. This
+    used to compare the blocks against the route list alone, which would now demand that the index
+    omit a page the site serves. An index that omits a page is wrong, so the expectation carries
+    the wordmark's own href at the head of the list and both sides are still read from `dist/`.
     """
-    rail = _rail_hrefs(contents)
+    routes = _route_link_hrefs(contents)
+    front_door = _site_title_href(contents)
     listed = [_block_route_href(b) for b in _route_blocks(contents)]
-    expected = [h for h in rail if h.rstrip("/") != f"{BASE}/contents"]
+    expected = [front_door] + [h for h in routes if h.rstrip("/") != f"{BASE}/contents"]
 
     assert listed == expected, (
-        f"/contents lists {listed} but the rail names {rail}. The page derives its blocks from "
-        "`siteRoutes`; if these disagree, something on the page is hand-listed."
+        f"/contents lists {listed} but the site bar names {routes} plus the front door at "
+        f"{front_door}. The page derives its blocks from `introRoute` and `siteRoutes`; if these "
+        "disagree, something on the page is hand-listed."
     )
-    assert f"{BASE}/contents" in [h.rstrip("/") for h in rail], (
-        "/contents is not in the rail — the page exists but nothing navigates to it."
+    assert f"{BASE}/contents" in [h.rstrip("/") for h in routes], (
+        "/contents is not in the site bar. The page exists but nothing navigates to it."
+    )
+    assert front_door not in routes, (
+        f"the bar's route list names {front_door}, which the wordmark already links. The front "
+        "door is supposed to be reachable from one place in the bar, not two."
     )
 
 
@@ -330,14 +382,17 @@ def test_contents_lists_every_glossary_term(contents):
 # ---------------------------------------------------------------------------
 
 
-def test_contents_links_are_base_path_joined(contents):
-    """Every href is base-prefixed or a fragment.
+def test_contents_links_are_base_path_joined(contents_main):
+    """Every href in the page's own content is base-prefixed or a fragment.
 
     An unbased href works in `astro dev` and 404s in production, how #70 shipped. A page whose
     every link is derived is where a second join idiom would do the most damage, so there is one,
     in `src/data/sections.ts`.
+
+    Scoped to `<main>`. The site bar carries one deliberate absolute link, to the
+    source repository, and it is chrome rather than an index entry.
     """
-    for a in contents.iter_descendants():
+    for a in contents_main.iter_descendants():
         if a.tag != "a":
             continue
         href = a.get("href") or ""
@@ -365,11 +420,16 @@ def test_contents_carries_no_term_marker(contents):
     )
 
 
-def test_contents_has_no_external_hyperlink(contents):
-    """Sources render as plain text, as they do inside the figure apparatus itself."""
+def test_contents_has_no_external_hyperlink(contents_main):
+    """Sources render as plain text, as they do inside the figure apparatus itself.
+
+    Scoped to `<main>`, because the site bar links to the source repository on
+    every page. That link is navigation chrome, and this guard is about how the
+    index renders a source.
+    """
     external = [
         a.get("href")
-        for a in contents.iter_descendants()
+        for a in contents_main.iter_descendants()
         if a.tag == "a" and (a.get("href") or "").startswith("http")
     ]
     assert not external, f"/contents carries external hyperlinks: {external}"

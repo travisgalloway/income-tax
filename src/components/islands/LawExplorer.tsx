@@ -11,13 +11,18 @@
  *  threshold text and the footnotes are present with JavaScript disabled;
  *  only filtering, sorting, selection and the basis toggle are inert. */
 import { useMemo, useState } from 'react'
-import { area as d3area, line as d3line, curveMonotoneX } from 'd3-shape'
+import { Area, AreaChart } from 'recharts'
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
-import { Chart } from '../charts/Chart'
 import { Annotation } from '../charts/Annotation'
-import { AxisBottom, AxisLeft, ZeroLine } from '../charts/Axis'
-import { linear, niceExtent } from '../charts/scales'
-import { useChartSize } from '../charts/useChartSize'
+import { ZeroLine } from '../charts/Axis'
+import {
+  PlotGrid,
+  PlotOverlay,
+  PlotXAxis,
+  PlotYAxis,
+  SURFACE_DEFAULTS,
+  useFrame,
+} from '../charts/RechartsFrame'
 import { TableView } from './TableView'
 import { useScrollableRegion } from './scrollRegion'
 import { Select, type SelectOption } from './Select'
@@ -44,6 +49,13 @@ const FIGURE = 'law-explorer'
 
 const FY_START = 1995
 const FY_END = 2025
+
+/** The chart spans the curated window whatever the data holds, so the domain is
+ *  declared rather than derived. Module scope, because rule 1 in
+ *  `../charts/RechartsFrame.tsx` compares an axis prop by reference. */
+const FY_DOMAIN: [number, number] = [FY_START, FY_END]
+const X_FORMAT = (t: number) => `FY${t}`
+const Y_FORMAT = (v: number) => `${v.toFixed(0)}%`
 
 type SortKey = 'date' | 'cost' | 'margin'
 type SortDir = 'asc' | 'desc'
@@ -194,21 +206,29 @@ export function LawExplorer({
   const shownYears = useMemo(() => years.filter((y) => y.y >= FY_START && y.y <= FY_END), [years])
   const yearByFy = useMemo(() => new Map(shownYears.map((r) => [r.y, r])), [shownYears])
 
-  const [boxRef, size] = useChartSize()
-  const { width: W, height: H, margin: sizeMargin } = size
-  const iw = W - sizeMargin.left - sizeMargin.right
-  const ih = H - sizeMargin.top - sizeMargin.bottom
-  const narrow = W < 500
-
-  const x = linear([FY_START, FY_END], [0, iw])
-  const y = linear(niceExtent(shownYears.map((r) => r.g_de)), [ih, 0])
+  const deficits = useMemo(() => shownYears.map((r) => r.g_de), [shownYears])
+  const {
+    boxRef,
+    size,
+    f,
+    narrow,
+    yDomain,
+    x,
+    y,
+    xTicks,
+    yTicks,
+    chartMargin,
+    chartStyle,
+    surfaceRef,
+    wrapperProps,
+    mark,
+  } = useFrame({
+    rows: shownYears,
+    xOf: (r) => r.y,
+    yValues: deficits,
+    xDomain: FY_DOMAIN,
+  })
   const yZero = y(0)
-
-  const linePath = d3line<BudgetYear>().x((r) => x(r.y)).y((r) => y(r.g_de)).curve(curveMonotoneX)
-  const fillPath = d3area<BudgetYear>().x((r) => x(r.y)).y0(yZero).y1((r) => y(r.g_de)).curve(curveMonotoneX)
-
-  const xTicks = x.ticks(narrow ? 4 : 8).filter((t) => Number.isInteger(t))
-  const yTicks = y.ticks(narrow ? 4 : 6)
 
   const readoutText = activeRow
     ? lawReadout(activeRow, basis)
@@ -248,15 +268,54 @@ export function LawExplorer({
         through most of this period.
       </p>
 
-      <Chart ariaLabel={chartAriaLabel} interactive width={W} height={H} margin={sizeMargin}>
-        {(f, mark) => (
-          <>
-            <AxisLeft frame={f} ticks={yTicks} format={(v) => `${v.toFixed(0)}%`} label="Percent of GDP" scale={y} />
-            <AxisBottom frame={f} ticks={xTicks} format={(t) => `FY${t}`} label="Fiscal year" scale={x} />
-            <ZeroLine frame={f} y={yZero} />
+      <div {...wrapperProps}>
+        <AreaChart
+          ref={surfaceRef}
+          data={shownYears}
+          width={size.width}
+          height={size.height}
+          margin={chartMargin}
+          {...SURFACE_DEFAULTS}
+          aria-label={chartAriaLabel}
+          style={chartStyle}
+        >
+          <PlotGrid />
+          <PlotXAxis
+            domain={FY_DOMAIN}
+            ticks={xTicks}
+            gutter={size.margin.bottom}
+            unit="Fiscal year"
+            format={X_FORMAT}
+          />
+          <PlotYAxis
+            domain={yDomain}
+            ticks={yTicks}
+            gutter={size.margin.left}
+            unit="Percent of GDP"
+            format={Y_FORMAT}
+          />
 
-            <path d={fillPath(shownYears) ?? ''} fill="var(--ink)" opacity={0.1} />
-            <path d={linePath(shownYears) ?? ''} fill="none" stroke="var(--ink)" strokeWidth={2} />
+          {/* The deficit runs below zero, so the fill is anchored at zero
+              rather than at the axis floor. */}
+          <Area
+            type="monotone"
+            dataKey="g_de"
+            baseValue={0}
+            stroke="var(--ink)"
+            strokeWidth={2}
+            fill="var(--ink)"
+            fillOpacity={0.1}
+            isAnimationActive={false}
+            activeDot={false}
+            dot={false}
+            connectNulls={false}
+          />
+
+          {/* The zero line, the 23 event markers and every focusable point sit
+              on the fill, so they go through the overlay: a plain child
+              renders under the area fill. */}
+          <PlotOverlay margin={f.margin}>
+            <ZeroLine frame={f} y={yZero} />
 
             {/* All 23 enactment dates, marked faintly. */}
             {rows
@@ -269,7 +328,7 @@ export function LawExplorer({
                     x1={px}
                     x2={px}
                     y1={0}
-                    y2={ih}
+                    y2={f.innerHeight}
                     stroke="var(--rule)"
                     strokeWidth={1}
                   />
@@ -282,7 +341,7 @@ export function LawExplorer({
                 const px = x(fyPosition(activeRow.law.date))
                 return (
                   <g>
-                    <line x1={px} x2={px} y1={0} y2={ih} stroke="var(--mix)" strokeWidth={1.5} />
+                    <line x1={px} x2={px} y1={0} y2={f.innerHeight} stroke="var(--mix)" strokeWidth={1.5} />
                     <circle cx={px} cy={2} r={3} fill="var(--mix)" />
                     {!narrow && (
                       <Annotation
@@ -331,9 +390,9 @@ export function LawExplorer({
                 )}
               </g>
             ))}
-          </>
-        )}
-      </Chart>
+          </PlotOverlay>
+        </AreaChart>
+      </div>
 
       <p aria-live="polite" className="readout">
         {readoutText}

@@ -396,14 +396,20 @@ def _figure_title(fig: Node) -> str:
     return fig.get("id") or "(untitled figure)"
 
 
-def test_every_figure_server_renders_its_chart_svg(page):
-    """Existence, not conformance. Issue #36.
+def test_every_figure_server_renders_its_apparatus(page):
+    """Existence, not conformance. Issue #36, rewritten for Recharts.
 
-    Every other chart test in this module iterates the SVGs it finds and
-    asserts about them, so a chart whose SVG vanished from the server render
-   , a mount switched to `client:only`, a `mounted` gate added to
-    `useChartSize`, would contribute zero assertions and leave the suite
-    green. This test is the one that goes red instead.
+    This test used to require an `svg.chart` in every figure. Recharts renders
+    no chart during a static render, so that requirement is gone and
+    `docs/contracts/interfaces/charts.md` records what replaced it.
+
+    What a figure must still serve is its apparatus and its data. Every other
+    chart test in this module iterates what it finds and asserts about it, so a
+    figure whose contents vanished from the server render, a mount switched to
+    `client:only`, would contribute zero assertions and leave the suite green.
+    This test is the one that goes red instead.
+
+    The table is the whole no-script path now, so it is what this asserts.
     """
     path, root = page
     for fig in nodes_of(root, "figure"):
@@ -411,15 +417,19 @@ def test_every_figure_server_renders_its_chart_svg(page):
             continue
         if (fig.get("id") or "") in FIGURES_WITHOUT_A_CHART:
             continue
-        charts = [
-            n for n in fig.iter_descendants()
-            if n.tag == "svg" and "chart" in n.classes()
-        ]
-        assert charts, (
-            f"{path}: the figure {_figure_title(fig)!r} contains no "
-            "svg.chart in the server-rendered HTML — with scripting off it "
-            "shows no chart at all. Islands must server-render their <svg>; "
-            "`client:only` and mount-gated sizing are forbidden."
+
+        captions = [n for n in fig.iter_descendants() if n.tag == "figcaption"]
+        assert captions, (
+            f"{path}: the figure {_figure_title(fig)!r} serves no <figcaption> "
+            "— its units, note and source are absent from the built HTML."
+        )
+
+        tables = [n for n in fig.iter_descendants() if n.tag == "table"]
+        assert tables, (
+            f"{path}: the figure {_figure_title(fig)!r} serves no <table> in "
+            "the server-rendered HTML. Since the chart itself renders only on "
+            "hydration, the table is the only route to this figure's numbers "
+            "without scripting, and `client:only` is forbidden for that reason."
         )
 
 
@@ -448,31 +458,41 @@ def test_government_section_1_renders_its_whole_apparatus_without_scripting(page
     )
     fig = figs[0]
 
-    charts = [
-        n for n in fig.iter_descendants()
-        if n.tag == "svg" and "chart" in n.classes()
-    ]
-    assert charts, f"{path}: section 1's figure server-renders no svg.chart"
-    svg = charts[0]
+    # The chart itself no longer server-renders; see the contract. What has to
+    # survive with scripting off is the table, which carries the same numbers
+    # the axes would have labelled, with their units in the column heads.
+    tables = [n for n in fig.iter_descendants() if n.tag == "table"]
+    assert tables, (
+        f"{path}: section 1's figure server-renders no <table>. The chart "
+        "renders only on hydration, so this table is the whole no-script path."
+    )
+    table = tables[0]
 
-    texts = [
-        d.text().strip() for d in svg.iter_descendants() if d.tag == "text"
+    heads = [
+        d.text().strip() for d in table.iter_descendants() if d.tag == "th"
     ]
-    for label in ("Fiscal year", "$ trillions"):
-        assert label in texts, (
-            f"{path}: section 1's SSR svg has no {label!r} axis label — "
-            f"its <text> nodes are {texts!r}"
+    for label in ("Fiscal year", "Gross debt"):
+        assert any(label in h for h in heads), (
+            f"{path}: section 1's table has no {label!r} column — "
+            f"its headers are {heads!r}"
         )
 
-    y_ticks = [t for t in texts if re.fullmatch(r"\$\d+T?", t)]
-    x_ticks = [t for t in texts if re.fullmatch(r"(19|20)\d{2}", t)]
-    assert len(y_ticks) >= 4, (
-        f"{path}: section 1's SSR svg carries {len(y_ticks)} dollar tick "
-        f"labels, expected at least 4: {texts!r}"
+    units = [
+        d.text().strip() for d in table.iter_descendants()
+        if "unit" in d.classes()
+    ]
+    assert any("trillion" in u for u in units), (
+        f"{path}: section 1's table names no dollar unit on any column, so a "
+        f"reader without the chart gets bare numbers: {units!r}"
     )
-    assert len(x_ticks) >= 4, (
-        f"{path}: section 1's SSR svg carries {len(x_ticks)} year tick "
-        f"labels, expected at least 4: {texts!r}"
+
+    body_rows = [
+        r for r in table.iter_descendants()
+        if r.tag == "tr" and any(c.tag == "td" for c in r.iter_descendants())
+    ]
+    assert len(body_rows) >= 20, (
+        f"{path}: section 1's table carries {len(body_rows)} data rows, "
+        "expected at least 20 — the series covers three decades"
     )
 
     captions = [d for d in fig.iter_descendants() if d.tag == "figcaption"]
@@ -592,17 +612,46 @@ def test_the_label_coverage_did_not_narrow():
     widening above kept every one of them under the aria-label assertion,
     rather than the roving change quietly reducing the corpus to one mark per
     figure. Re-baseline only alongside a figure that genuinely gained or lost
-    data points."""
-    counted = 0
+    data points.
+
+    **Re-baselined from 1114 to 56 when the site adopted Recharts.** The drop is
+    the documented consequence recorded in `docs/contracts/interfaces/charts.md`
+    and it is not a regression in this guard. Recharts draws nothing during a
+    static render, so the marks of all 25 Recharts figures reach the DOM only at
+    hydration and `dist/` no longer carries them. What is left is the two
+    figures that hand-roll their own `<svg>` and therefore still server-render:
+    Government §11's tile-grid cartogram at 51 tiles, one per state plus DC, and
+    its tax-mix bar at 5 categories.
+
+    The guard is worth keeping at this size for exactly one reason. Those 56
+    marks are the whole of what a reader without scripting can reach with a
+    keyboard, so an unlabelled one among them is unreachable by any other
+    route.
+
+    **The 1058 marks that left this corpus are a real loss of coverage, and no
+    other test has picked them up.** `test_focusable_data_points_are_labelled_
+    and_grouped` was the site's only assertion that every focusable mark carries
+    an `aria-label`, and after the Recharts adoption it reads 56 marks rather
+    than 1114. The browser lane under `tests/browser/` reads the hydrated page
+    and is where the check belongs now, and as of this re-baseline it asserts
+    nothing per mark. Recording that here rather than implying the coverage
+    moved.
+    """
+    per_route: dict[str, int] = {}
     for path in PAGES:
         root = parse_html(path)
+        counted = 0
         for svg in nodes_of(root, "svg"):
             counted += len(keyboard_reachable_points(svg))
-    assert counted == 1114, (
-        f"{counted} keyboard-reachable chart marks across dist/, expected 1114 "
-        "(369 on /government, 389 on /economy, 356 on /households). A large "
-        "drop means the roving change removed marks rather than re-tabbing "
-        "them; a rise means a new figure landed. Either way this is a "
+        if counted:
+            per_route[path.parent.name] = counted
+
+    assert per_route == {"government": 56}, (
+        f"keyboard-reachable chart marks across dist/ are {per_route}, expected "
+        "{'government': 56} (51 cartogram tiles and 5 tax-mix segments, the two figures "
+        "that hand-roll their own <svg>). A drop means a hand-rolled figure stopped "
+        "server-rendering its marks; a rise means a new one landed, or a Recharts figure "
+        "started serving marks the browser lane also checks. Either way this is a "
         "deliberate re-baseline, not a number to nudge."
     )
 
@@ -1108,15 +1157,31 @@ def test_the_choice_set_coverage_did_not_narrow():
     Asserted as equalities, per role, site-wide. Re-baseline only alongside a
     figure that genuinely gained or lost a choice-set control, never to make a
     number go green.
+
+    The site bar's theme control is a `radiogroup` too, and it is counted
+    separately rather than folded into the figure total. It is not bound to a
+    figure and G2 skips it on ancestry, it sits outside `.controls` and G3 skips
+    it on the same, and one per page is what the layout emits. Adding its seven
+    to the figure total would have hidden a figure toggle going missing behind a
+    page being added.
     """
     counts: dict[str, int] = {}
+    theme_controls = 0
     for path in PAGES:
         root = parse_html(path)
         for n in choice_sets(root):
+            if "theme-toggle" in n.classes():
+                theme_controls += 1
+                continue
             counts[n.get("role")] = counts.get(n.get("role"), 0) + 1
 
+    assert theme_controls == len(PAGES), (
+        f"{theme_controls} .theme-toggle [role={FIGURE_BOUND_ROLE}] across dist/, expected one "
+        f"per page and {len(PAGES)} pages are built. The control is in the shared layout, so "
+        "every page carries exactly one."
+    )
     assert counts.get(FIGURE_BOUND_ROLE) == 9, (
-        f"{counts.get(FIGURE_BOUND_ROLE)} [role={FIGURE_BOUND_ROLE}] across "
+        f"{counts.get(FIGURE_BOUND_ROLE)} figure-bound [role={FIGURE_BOUND_ROLE}] across "
         "dist/, expected 9 (8 on /government, 1 on /households). This is the "
         "role the done contract names, and a drop means the uniqueness "
         "assertion above went quiet rather than clean. Reading it through "
@@ -1260,14 +1325,39 @@ def test_every_chart_has_a_real_table_in_the_static_html(page):
 
 
 def test_live_regions_do_not_outnumber_charts(page):
+    """One live region per figure at most, and none outside a figure.
+
+    The denominator changed with Recharts. This counted `svg.chart` elements,
+    which is the right unit while the chart server-renders, and now returns zero
+    on `/economy` and `/households` and two on `/government`, so the old
+    comparison read 5 <= 0 on a page whose five readouts are each correct.
+
+    The figure is the replacement unit, and it is a closer one. A figure is what
+    owns a readout: the island renders the chart, the readout and the table
+    inside it, and the readout is served whether or not the chart is. Counting
+    per figure also catches what the site-wide comparison could not, one figure
+    carrying two live regions while another carries none.
+    """
     path, root = page
     live_regions = [n for n in root.iter_descendants() if n.get("aria-live")]
-    charts = [n for n in nodes_of(root, "svg") if "chart" in n.classes()]
-    assert len(live_regions) <= len(charts), (
-        f"{path}: {len(live_regions)} aria-live element(s) but only "
-        f"{len(charts)} chart(s) — a chart should carry at most one live "
-        "region, not one per data point"
+    figures = [n for n in root.iter_descendants() if n.tag == "figure" and "figure" in n.classes()]
+
+    orphans = [
+        n for n in live_regions
+        if not any(a.tag == "figure" and "figure" in a.classes() for a in n.ancestors())
+    ]
+    assert not orphans, (
+        f"{path}: {len(orphans)} aria-live element(s) sit outside every figure. A readout "
+        "belongs to the figure whose value it announces."
     )
+
+    for fig in figures:
+        inside = [n for n in fig.iter_descendants() if n.get("aria-live")]
+        assert len(inside) <= 1, (
+            f"{path}: figure {fig.get('id') or fig.get('aria-label', '')[:40]!r} carries "
+            f"{len(inside)} live regions. A figure announces through one, not one per data "
+            "point: two writers is how the readout and the focused value drift apart."
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -1314,17 +1404,30 @@ def test_focus_and_motion_rules_survive_the_build():
     )
 
 
-def test_noscript_narrow_chart_mitigation_is_present(page):
+def test_noscript_points_the_reader_at_the_table(page):
+    """Replaces `test_noscript_narrow_chart_mitigation_is_present`.
+
+    That test required a `<noscript>` block enlarging `.axis-label`, because a
+    chart used to server-render at the wide preset and its 11px text scaled
+    down with the plot at a narrow viewport. Recharts renders no chart without
+    scripting, so there is no axis text left to enlarge and the old rule
+    asserted a mitigation for a defect that can no longer occur.
+
+    What matters now is that the hint sentence points somewhere real. With
+    scripting off the hover and tap hints both describe gestures that do
+    nothing, and the table is the only route to a number, so `.hint-nojs` must
+    be the sentence shown.
+    """
     path, root = page
     for ns in nodes_of(root, "noscript"):
         for style in [n for n in ns.iter_descendants() if n.tag == "style"]:
             text = style.text()
-            if ".axis-label" in text and "font-size" in text:
+            if ".hint-nojs" in text and "display" in text:
                 return
     pytest.fail(
-        f"{path}: no <noscript> style block enlarges .axis-label at narrow "
-        "widths — with scripting off, useChartSize never leaves the wide "
-        "preset and chart text scales down with the plot"
+        f"{path}: no <noscript> style block shows .hint-nojs — with scripting "
+        "off the hover and tap hints name gestures that do nothing, and the "
+        "table is the only route to a number"
     )
 
 
@@ -1357,15 +1460,77 @@ def contrast_ratio(hex1: str, hex2: str) -> float:
 
 _TOKEN_HEX_RE = re.compile(r"--([\w-]+):\s*(#[0-9A-Fa-f]{6})")
 
+#: The selector that opens each palette block in `tokens.css`. The dark palette is declared twice,
+#: once per entry point: the media query supplies the operating-system default and the attribute
+#: selector carries an explicit choice from the theme control.
+_THEME_SELECTORS = {
+    "light": ":root {",
+    "dark": ":root[data-theme='dark']",
+    "dark-media": ":where(:root:not([data-theme='light']))",
+}
 
-def tokens_css_colors() -> dict[str, str]:
-    text = TOKENS_CSS.read_text()
-    return dict(_TOKEN_HEX_RE.findall(text))
+#: Every theme a token is scored in. `dark-media` is deliberately absent: it is asserted equal to
+#: `dark` by `test_the_two_dark_theme_blocks_declare_the_same_hexes` rather than tabulated twice.
+THEMES = ("light", "dark")
 
 
-_GROUND = "#DDE0DB"
-_PANEL = "#F3F4F0"
+def _brace_body(text: str, open_brace: int) -> str:
+    """The text between `text[open_brace]` and its matching close brace.
 
+    Brace-matched rather than regex-delimited, at any nesting depth. A regex that admits one level
+    of nesting reads a block correctly until somebody nests a second, and then matches nothing at
+    all, which is the silent-blindness shape this file exists to avoid.
+    """
+    depth = 0
+    for i in range(open_brace, len(text)):
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+            if depth == 0:
+                return text[open_brace + 1 : i]
+    raise AssertionError("a CSS block opened at index {open_brace} is never closed")
+
+
+def _css_block(text: str, selector: str) -> str:
+    """The body of the first rule `selector` opens."""
+    start = text.find(selector)
+    if start < 0:
+        raise AssertionError(
+            f"{TOKENS_CSS} declares no `{selector}` block; the token table has nothing to read"
+        )
+    return _brace_body(text, text.index("{", start))
+
+
+def tokens_css_colors(theme: str = "light") -> dict[str, str]:
+    """Every `--token: #hex` declared in one theme's block of `tokens.css`.
+
+    Reads one block rather than the whole file, and that is the change the dark theme forced.
+    While each token was declared once, a whole-file scan was the same thing. It is not any more.
+    A whole-file scan keeps the LAST declaration of each name, which is the dark value, and scoring
+    a dark hex against the light ground is arithmetic about a pairing that never paints. It scored
+    `--ink` at 1.00:1 against `--ground`, because the dark `--ink` *is* the light `--ground`.
+    """
+    return dict(_TOKEN_HEX_RE.findall(_css_block(TOKENS_CSS.read_text(), _THEME_SELECTORS[theme])))
+
+
+def surfaces(theme: str) -> tuple[str, str]:
+    """`(ground, panel)` for one theme, read from `tokens.css` rather than restated here."""
+    palette = tokens_css_colors(theme)
+    return palette["ground"], palette["panel"]
+
+
+_GROUND, _PANEL = surfaces("light")
+
+
+#: `## Token contrast` holds the light table and `### The dark theme's tokens` holds the dark one.
+#: Both tables have identical column shapes, so the rows are sliced by heading before they are
+#: parsed. Parsing the whole document would merge the two and score every token twice, once against
+#: the wrong palette's surfaces.
+_TABLE_HEADINGS = {
+    "light": ("## Token contrast", "### The dark theme's tokens"),
+    "dark": ("### The dark theme's tokens", "## Known limitation"),
+}
 
 _DOC_ROW_RE = re.compile(
     r"^\|\s*`--([\w-]+)`\s*\|\s*`(#[0-9A-Fa-f]{6})`\s*\|\s*([\d.]+)\s*\|\s*([\d.]+)\s*\|\s*(\w+)\s*\|\s*(.*?)\s*\|\s*$",
@@ -1383,16 +1548,23 @@ class ContrastRow:
     note: str
 
 
-def doc_contrast_rows() -> list[ContrastRow]:
+def doc_contrast_rows(theme: str = "light") -> list[ContrastRow]:
     if not ACCESSIBILITY_DOC.exists():
         pytest.fail(f"{ACCESSIBILITY_DOC} does not exist")
     text = ACCESSIBILITY_DOC.read_text()
+    opening, closing = _TABLE_HEADINGS[theme]
+    start = text.find(opening)
+    if start < 0:
+        pytest.fail(f"{ACCESSIBILITY_DOC}: no `{opening}` heading, so the {theme} table is unfindable")
+    end = text.find(closing, start + len(opening))
+    if end < 0:
+        pytest.fail(f"{ACCESSIBILITY_DOC}: no `{closing}` heading after `{opening}`")
     rows = [
         ContrastRow(token, hexval, float(vg), float(vp), role, note)
-        for token, hexval, vg, vp, role, note in _DOC_ROW_RE.findall(text)
+        for token, hexval, vg, vp, role, note in _DOC_ROW_RE.findall(text[start:end])
     ]
     if not rows:
-        pytest.fail(f"{ACCESSIBILITY_DOC}: found no contrast table rows to parse")
+        pytest.fail(f"{ACCESSIBILITY_DOC}: found no {theme} contrast table rows to parse")
     return rows
 
 
@@ -1403,53 +1575,87 @@ def series_tokens() -> list[str]:
         return []
 
 
-def test_token_contrast_table_matches_tokens_css():
-    css_tokens = tokens_css_colors()
-    doc_rows = {r.token: r for r in doc_contrast_rows()}
+@pytest.mark.parametrize("theme", THEMES)
+def test_token_contrast_table_matches_tokens_css(theme):
+    """Every token in one palette has a row, at that palette's hex and that palette's ratios.
+
+    Parameterised over the theme since the site grew a dark palette. It used to read the whole of
+    `tokens.css` against one pair of surfaces, which the second palette made wrong twice over: the
+    hexes it collected were the dark ones, and it scored them against the light ground.
+    """
+    ground, panel = surfaces(theme)
+    css_tokens = tokens_css_colors(theme)
+    doc_rows = {r.token: r for r in doc_contrast_rows(theme)}
     for name, hexval in css_tokens.items():
         row = doc_rows.get(name)
         assert row is not None, (
-            f"tokens.css defines --{name}: {hexval} with no row in "
+            f"tokens.css defines --{name}: {hexval} in the {theme} palette with no row in "
             f"{ACCESSIBILITY_DOC.relative_to(ROOT)}"
         )
         assert row.hexval.upper() == hexval.upper(), (
-            f"--{name}: doc states hex {row.hexval}, tokens.css says {hexval}"
+            f"--{name} ({theme}): doc states hex {row.hexval}, tokens.css says {hexval}"
         )
-        actual_vg = contrast_ratio(hexval, _GROUND)
-        actual_vp = contrast_ratio(hexval, _PANEL)
+        actual_vg = contrast_ratio(hexval, ground)
+        actual_vp = contrast_ratio(hexval, panel)
         assert abs(actual_vg - row.vs_ground) <= 0.01, (
-            f"--{name} vs --ground: doc says {row.vs_ground}, recomputed {actual_vg:.2f}"
+            f"--{name} ({theme}) vs --ground: doc says {row.vs_ground}, recomputed {actual_vg:.2f}"
         )
         assert abs(actual_vp - row.vs_panel) <= 0.01, (
-            f"--{name} vs --panel: doc says {row.vs_panel}, recomputed {actual_vp:.2f}"
+            f"--{name} ({theme}) vs --panel: doc says {row.vs_panel}, recomputed {actual_vp:.2f}"
         )
 
 
-def test_text_role_tokens_meet_4_5_to_1():
-    css_tokens = tokens_css_colors()
-    for row in doc_contrast_rows():
+def test_the_two_dark_theme_blocks_declare_the_same_hexes():
+    """The dark palette is written twice in `tokens.css`, and the copies must not drift.
+
+    `@media (prefers-color-scheme: dark)` supplies the operating-system default and
+    `:root[data-theme='dark']` carries the reader's explicit choice. A hex edited in one block
+    alone ships a palette that depends on how the reader arrived at dark, which no test above can
+    see: each block on its own is internally consistent.
+    """
+    attr = tokens_css_colors("dark")
+    media = dict(
+        _TOKEN_HEX_RE.findall(
+            _css_block(TOKENS_CSS.read_text(), _THEME_SELECTORS["dark-media"])
+        )
+    )
+    assert attr, "the `:root[data-theme='dark']` block declares no colour tokens"
+    assert media == attr, (
+        "the two dark-theme blocks in tokens.css disagree. Only in the media query: "
+        f"{sorted(set(media.items()) - set(attr.items()))}. Only in "
+        f"[data-theme='dark']: {sorted(set(attr.items()) - set(media.items()))}"
+    )
+
+
+@pytest.mark.parametrize("theme", THEMES)
+def test_text_role_tokens_meet_4_5_to_1(theme):
+    ground, panel = surfaces(theme)
+    css_tokens = tokens_css_colors(theme)
+    for row in doc_contrast_rows(theme):
         if row.role != "text":
             continue
         hexval = css_tokens.get(row.token, row.hexval)
-        assert contrast_ratio(hexval, _GROUND) >= 4.5, (
-            f"--{row.token} scores below 4.5:1 against --ground"
+        assert contrast_ratio(hexval, ground) >= 4.5, (
+            f"--{row.token} scores below 4.5:1 against --ground in the {theme} palette"
         )
-        assert contrast_ratio(hexval, _PANEL) >= 4.5, (
-            f"--{row.token} scores below 4.5:1 against --panel"
+        assert contrast_ratio(hexval, panel) >= 4.5, (
+            f"--{row.token} scores below 4.5:1 against --panel in the {theme} palette"
         )
 
 
-def test_series_tokens_below_3_to_1_are_documented_as_needing_redundant_encoding():
-    css_tokens = tokens_css_colors()
-    for row in doc_contrast_rows():
+@pytest.mark.parametrize("theme", THEMES)
+def test_series_tokens_below_3_to_1_are_documented_as_needing_redundant_encoding(theme):
+    ground, panel = surfaces(theme)
+    css_tokens = tokens_css_colors(theme)
+    for row in doc_contrast_rows(theme):
         if row.role != "series":
             continue
         hexval = css_tokens.get(row.token, row.hexval)
-        if contrast_ratio(hexval, _PANEL) < 3.0:
+        if contrast_ratio(hexval, panel) < 3.0:
             assert row.note.startswith("redundant-encoding:"), (
-                f"--{row.token} scores below 3:1 against --panel but its "
-                "contrast-table row carries no redundant-encoding: note "
-                "naming its non-colour carrier"
+                f"--{row.token} scores below 3:1 against --panel in the {theme} palette but "
+                "its contrast-table row carries no redundant-encoding: note naming its "
+                "non-colour carrier"
             )
 
 
@@ -1482,8 +1688,17 @@ def iter_css_rules(css_text: str):
 _COLOR_TOKEN_RE = re.compile(r"(?:color|fill)\s*:\s*var\(--([\w-]+)\)")
 
 
-def test_no_text_selector_paints_with_a_low_contrast_token():
-    css_tokens = tokens_css_colors()
+@pytest.mark.parametrize("theme", THEMES)
+def test_no_text_selector_paints_with_a_low_contrast_token(theme):
+    """Every named text selector clears 4.5:1 in both palettes.
+
+    `global.css` names a token, never a hex, so one selector list covers both themes and the
+    stylesheet needs no per-theme branch. What the second palette changes is the arithmetic: the
+    same `--ink-soft` resolves to `#57534B` on paper and `#A79E90` on the dark ground, so the
+    ratio has to be recomputed per theme rather than once.
+    """
+    ground, panel = surfaces(theme)
+    css_tokens = tokens_css_colors(theme)
     rules = list(iter_css_rules(GLOBAL_CSS.read_text()))
     for selector in _TEXT_SELECTORS:
         matches = [body for selectors, body in rules if selector in selectors]
@@ -1494,12 +1709,14 @@ def test_no_text_selector_paints_with_a_low_contrast_token():
                 continue
             token = m.group(1)
             hexval = css_tokens.get(token)
-            assert hexval is not None, f"{selector} references unknown token --{token}"
-            vg = contrast_ratio(hexval, _GROUND)
-            vp = contrast_ratio(hexval, _PANEL)
+            assert hexval is not None, (
+                f"{selector} references --{token}, which the {theme} palette does not declare"
+            )
+            vg = contrast_ratio(hexval, ground)
+            vp = contrast_ratio(hexval, panel)
             assert vg >= 4.5 and vp >= 4.5, (
-                f"{selector} paints text with --{token} ({hexval}), which "
-                f"scores {vg:.2f}:1 vs --ground and {vp:.2f}:1 vs --panel — "
+                f"{selector} paints text with --{token} ({hexval}) in the {theme} palette, "
+                f"which scores {vg:.2f}:1 vs --ground and {vp:.2f}:1 vs --panel, "
                 "below the 4.5:1 text threshold"
             )
 
@@ -1512,9 +1729,7 @@ def test_no_text_selector_paints_with_a_low_contrast_token():
 # two are in the accessibility tree at any viewport.
 # ---------------------------------------------------------------------------
 
-_NARROW_MEDIA_RE = re.compile(
-    r"@media\s*\(\s*max-width:\s*62rem\s*\)\s*\{((?:[^{}]|\{[^{}]*\})*)\}", re.DOTALL
-)
+_NARROW_MEDIA_HEAD_RE = re.compile(r"@media\s*\(\s*max-width:\s*62rem\s*\)\s*\{")
 
 
 def narrow_media_block() -> str:
@@ -1526,41 +1741,59 @@ def narrow_media_block() -> str:
     specifically. Raises rather than returning "" if the block moves or is
     renamed: a helper that finds nothing to check reads exactly like one whose
     checks passed.
+
+    The body is brace-matched rather than matched by one regex. The regex it
+    used admitted a single level of nesting, and the block now nests an
+    `@media (max-width: 34rem)` rule for `.navbar-where`, at which point the
+    pattern matched nothing at all and every check reading this helper failed
+    on the helper rather than on what it asserts.
     """
     text = _COMMENT_RE.sub("", GLOBAL_CSS.read_text())
-    matches = _NARROW_MEDIA_RE.findall(text)
-    if len(matches) != 1:
+    heads = list(_NARROW_MEDIA_HEAD_RE.finditer(text))
+    if len(heads) != 1:
         raise AssertionError(
             f"expected exactly one `@media (max-width: 62rem)` block in "
-            f"{GLOBAL_CSS}, found {len(matches)} — the narrow-viewport nav bar "
+            f"{GLOBAL_CSS}, found {len(heads)}. The narrow-viewport nav bar "
             "checks below have nothing to read"
         )
-    return matches[0]
+    return _brace_body(text, heads[0].end() - 1)
 
 
 _INLINE_SCRIPT_RE = re.compile(r"<script is:inline>(.*?)</script>", re.DOTALL)
 
 
-def layout_inline_script() -> str:
-    """The body of `BaseLayout.astro`'s single `<script is:inline>` block.
+#: `BaseLayout.astro` carries two `<script is:inline>` blocks, and both are read as one text.
+#: It carried one until the site grew a theme control. The second block is the pre-paint theme
+#: script, and it has to sit in `<head>` and run before first paint, because a deferred one would
+#: paint light and then repaint dark. The count is pinned rather than relaxed to "one or more":
+#: a third block is a new pre-paint cost and should fail here until somebody states why it exists.
+_INLINE_SCRIPT_COUNT = 2
 
-    Comments are kept, not stripped: the block's own prose is part of what the
+
+def layout_inline_script() -> str:
+    """Both `<script is:inline>` blocks in `BaseLayout.astro`, joined.
+
+    Comments are kept, not stripped: the blocks' own prose is part of what the
     checks below read, and #44's `aria-current='true'` comment is single-quoted
     on purpose so the built page carries no double-quoted literal of it.
 
-    Raises rather than returning `""` if the block moves, is renamed or is
-    split in two, same contract, and same reason, as `narrow_media_block()`
-    above: a helper that finds nothing to check reads exactly like one whose
-    checks passed.
+    Joining is what the callers want, not a convenience. Both of them assert an
+    ABSENCE over the layout's inline scripting, a scroll call and an `unload`
+    listener, and either would be missed by a helper that read one block and
+    ignored the other.
+
+    Raises rather than returning `""` if the count changes, same contract, and
+    same reason, as `narrow_media_block()` above: a helper that finds nothing to
+    check reads exactly like one whose checks passed.
     """
     matches = _INLINE_SCRIPT_RE.findall(BASE_LAYOUT.read_text())
-    if len(matches) != 1:
+    if len(matches) != _INLINE_SCRIPT_COUNT:
         raise AssertionError(
-            f"expected exactly one `<script is:inline>` block in {BASE_LAYOUT}, "
-            f"found {len(matches)} — the checks that read the layout script "
-            "have nothing to read"
+            f"expected exactly {_INLINE_SCRIPT_COUNT} `<script is:inline>` blocks in "
+            f"{BASE_LAYOUT}, found {len(matches)}. The checks that read the layout script "
+            "have nothing to read, or are now reading past what they were written for"
         )
-    return matches[0]
+    return "\n".join(matches)
 
 
 def _hrefs(root: Node, ol_class: str, exclude: str | None = None) -> set[str]:
@@ -1576,20 +1809,60 @@ def _hrefs(root: Node, ol_class: str, exclude: str | None = None) -> set[str]:
     return out
 
 
+def wide_route_hrefs(root: Node) -> set[str]:
+    """The site bar's wide route list, `nav.navbar-routes-wide > ol > li > a`.
+
+    Selected through the `<nav>` rather than through an `<ol>` class, because
+    that list is the one element in this pairing with no class of its own.
+    """
+    out: set[str] = set()
+    for nav in root.iter_descendants():
+        if nav.tag != "nav" or "navbar-routes-wide" not in nav.classes():
+            continue
+        for a in nav.iter_descendants():
+            if a.tag == "a" and a.get("href"):
+                out.add(a.get("href"))
+    return out
+
+
 def test_nav_bar_mirrors_every_route_and_section(page):
+    """The bar's two route lists agree, and its contents list mirrors the rail's.
+
+    The pairing changed with the layout. It used to be the left rail's route
+    links against the narrow-viewport bar's, because the rail carried the routes
+    at wide viewports and the bar existed only below 62rem. The left rail is
+    gone. The bar is now the site's navigation at every width and carries the
+    routes twice, once in `.navbar-routes-wide` for wide viewports and once in
+    `.navbar-routes` inside the disclosure for narrow ones, with exactly one of
+    the two in the accessibility tree at a time. Those two are what must agree.
+
+    The contents half is unchanged in what it asserts. The right-hand
+    `<aside class="rail">` carries `.toc` and the disclosure carries
+    `.navbar-toc`, and a reader must reach the same sections from either.
+    """
     path, root = page
-    rail_routes = _hrefs(root, "route-links")
+    wide_routes = wide_route_hrefs(root)
     bar_routes = _hrefs(root, "navbar-routes")
-    assert rail_routes, f"{path}: no .rail .route-links anchors found"
-    assert bar_routes == rail_routes, (
-        f"{path}: the nav bar's route list does not mirror the rail's — "
-        f"bar {sorted(bar_routes)} vs rail {sorted(rail_routes)}"
+    assert wide_routes, f"{path}: no nav.navbar-routes-wide anchors found"
+    assert bar_routes == wide_routes, (
+        f"{path}: the disclosure's route list does not mirror the wide bar's. "
+        f"Disclosure {sorted(bar_routes)} vs wide bar {sorted(wide_routes)}"
     )
     rail_toc = _hrefs(root, "toc", exclude="navbar-toc")
     bar_toc = _hrefs(root, "navbar-toc")
     assert bar_toc == rail_toc, (
-        f"{path}: the nav bar's contents list does not mirror the rail's — "
-        f"bar {sorted(bar_toc)} vs rail {sorted(rail_toc)}"
+        f"{path}: the nav bar's contents list does not mirror the rail's. "
+        f"Bar {sorted(bar_toc)} vs rail {sorted(rail_toc)}"
+    )
+    # An equality between two empty sets holds for a reason that has nothing to
+    # do with mirroring. `/sources` renders no rail and no contents list at all,
+    # and it is the only page that does.
+    has_rail = any(
+        n.tag == "aside" and "rail" in n.classes() for n in root.iter_descendants()
+    )
+    assert bool(rail_toc) == has_rail, (
+        f"{path}: the page {'renders' if has_rail else 'renders no'} <aside class='rail'> "
+        f"but its contents list holds {len(rail_toc)} anchor(s)"
     )
 
 
@@ -1641,18 +1914,28 @@ def test_nav_bar_panel_scrolls_internally():
 
 
 def test_sticky_nav_bar_offsets_its_anchor_targets():
-    block = narrow_media_block()
+    """Every in-page anchor target clears the bar, at every width.
+
+    This used to read the `@media (max-width: 62rem)` block, because the bar
+    existed only below 62rem and the left rail carried navigation above it. The
+    bar is now the site's navigation at every width, so the offset has to be
+    site-wide and reading the narrow block alone would miss a wide-viewport
+    regression entirely.
+
+    `.glossary dt[id]` joins the list for the same reason: `/glossary`'s anchors
+    are its `<dt>` elements, and every in-prose term marker links straight to
+    one.
+    """
     offset = {
         selector
-        for selectors, body in iter_css_rules(block)
+        for selectors, body in iter_css_rules(GLOBAL_CSS.read_text())
         if "scroll-margin-top" in body
         for selector in selectors
     }
-    for required in ("section[id]", "#main"):
+    for required in ("section[id]", "#main", ".glossary dt[id]"):
         assert required in offset, (
-            f"{required} has no `scroll-margin-top` inside "
-            "@media (max-width: 62rem), so the fixed bar covers the top of "
-            "whatever an anchor — or the skip link — lands on"
+            f"{required} has no `scroll-margin-top` in global.css, so the sticky bar covers "
+            "the top of whatever an anchor, or the skip link, lands on"
         )
 
 
@@ -1719,8 +2002,11 @@ def test_no_built_page_ships_a_section_level_aria_current(page):
 
     A build that dropped the route markers entirely would satisfy "no
     aria-current='true' anywhere" vacuously, so this also pins the route
-    markers at exactly two per page, the rail's and the panel's, the same
-    duplication that puts two in the DOM and one in the accessibility tree.
+    markers per page: two on a route, the wide bar's and the panel's, the same
+    duplication that puts two in the DOM and one in the accessibility tree, and
+    one on the front door, where the wordmark carries the mark instead. The
+    comment beside `expected` below says why the front door differs. A reader
+    who meets 1 there is looking at the intended count, not at a defect.
     """
     path, root = page
     marked = [
@@ -1735,9 +2021,22 @@ def test_no_built_page_ships_a_section_level_aria_current(page):
     routed = [
         n for n in root.iter_descendants() if n.get("aria-current") == "page"
     ]
-    assert len(routed) == 2, (
-        f"{path}: expected exactly 2 aria-current='page' elements (the rail's "
-        f"route list and the panel's), found {len(routed)}"
+    # Two on every route, being the wide bar's list and the disclosure panel's,
+    # the same duplication that puts two in the DOM and one in the
+    # accessibility tree.
+    #
+    # ONE on the front door, and that is correct rather than a short count. The
+    # introduction is not in `siteRoutes`, so neither route list names it. It is
+    # reached through the wordmark, and the wordmark is what carries the mark
+    # there. A reader on `/` still gets exactly one "current page" announcement.
+    expected = 1 if path.name == "index.html" and path.parent.name == "dist" else 2
+    where = (
+        "the wordmark" if expected == 1
+        else "the wide bar's route list and the disclosure panel's"
+    )
+    assert len(routed) == expected, (
+        f"{path}: expected exactly {expected} aria-current='page' element(s) "
+        f"({where}), found {len(routed)}"
     )
 
 
@@ -3032,6 +3331,23 @@ def _local_x(node: Node, svg: Node) -> float:
     return dx
 
 
+def _content_root(root: Node) -> Node:
+    """The page's `<main>`, or the document when a page has none.
+
+    Several guards below ask a question about the site's CONTENT and used to ask
+    it of the whole document. That was the same thing until the site bar gained
+    inlined icons and an external link to the source repository. It is not the
+    same thing now, and the difference is what made four guards fail at once.
+
+    Written here once rather than as a selector repeated at each call site,
+    because several copies of the same scoping is how they drift apart.
+    """
+    for n in root.iter_descendants():
+        if n.tag == "main":
+            return n
+    return root
+
+
 def _annotated_svgs(root: Node) -> list[tuple[Node, float]]:
     """Every `<svg>` carrying a numeric viewBox, with its width in user units.
 
@@ -3040,15 +3356,22 @@ def _annotated_svgs(root: Node) -> list[tuple[Node, float]]:
     A guard written the obvious way finds zero annotations and passes green on a
     broken tree, which is what `..._sees_the_whole_corpus` below exists to
     catch (E8).
+
+    SCOPED TO `<main>`, and that is not a detail. The site bar carries inlined
+    Radix icons for the theme control and the source link, and those are SVGs
+    with viewBoxes. Counting them would put page chrome inside a corpus count
+    whose whole job is to prove the CHART walk still sees every chart. The count
+    would then move whenever an icon was added, and the guard would be reporting
+    on the wrong thing.
     """
     out = []
-    for svg in root.iter_descendants():
-        if svg.tag != "svg":
+    for main in _content_root(root).iter_descendants():
+        if main.tag != "svg":
             continue
-        viewbox = (svg.get("viewbox") or "").split()
+        viewbox = (main.get("viewbox") or "").split()
         if len(viewbox) != 4:
             continue
-        out.append((svg, float(viewbox[2])))
+        out.append((main, float(viewbox[2])))
     return out
 
 
@@ -3103,13 +3426,29 @@ def test_no_chart_annotation_is_clipped_by_its_svg(page):
 
 
 def test_the_annotation_clipping_guard_sees_the_whole_corpus():
-    """The anti-blindness check.
+    """The anti-blindness check, and the record that the static corpus is empty.
 
     Both ways the guard above can go blind are silent and both cost a cycle
-    during this investigation: `viewBox` lowercased to `viewbox` by
+    during the original investigation: `viewBox` lowercased to `viewbox` by
     `html.parser`, and a `<text>` with no `x` attribute. Either one turns
     `test_no_chart_annotation_is_clipped_by_its_svg` into a test that walks zero
-    nodes and passes on a broken tree. So assert it saw the corpus.
+    nodes and passes on a broken tree.
+
+    **It walks zero nodes now, and this test says so rather than hiding it.** It
+    asserted 63 or more annotations across `dist/` until the site adopted
+    Recharts. Every annotation on the site is drawn by a Recharts figure, and
+    Recharts renders nothing during a static render, so `dist/` carries none.
+    `test_no_chart_annotation_is_clipped_by_its_svg` is therefore vacuous over
+    the served bytes, and the honest form of an anti-blindness check here is an
+    equality at zero: a returning annotation fails this and forces the walk to
+    be re-baselined against a real corpus.
+
+    Where the clamp is still checked. `test_every_annotation_is_placed_through_
+    the_clamp` reads `src/` and holds that every annotation class is emitted by
+    `Annotation.tsx` alone, which honours `placeAnnotation`'s `null`.
+    `src/components/charts/annotate.test.ts` exercises the placement arithmetic
+    directly. Neither reads a rendered page, so neither replaces the geometry
+    check the served bytes used to carry.
     """
     seen = 0
     parsed_svgs = 0
@@ -3122,27 +3461,56 @@ def test_the_annotation_clipping_guard_sees_the_whole_corpus():
         if nodes:
             per_route[path.parent.name] = len(nodes)
 
-    assert seen >= 63, (
-        f"the annotation walk found only {seen} nodes across dist/; it found 63 when #64 "
-        f"landed. Either annotations were dropped from the server render, or the walk has "
-        f"gone blind (viewBox/viewbox, or a <text> with no x). Per route: {per_route}"
+    assert seen == 0, (
+        f"the annotation walk found {seen} node(s) across dist/, and it has expected zero "
+        f"since the Recharts adoption. A figure is server-rendering annotations again, so "
+        f"re-baseline this count and restore the per-route assertions that went with it. "
+        f"Per route: {per_route}"
     )
-    assert parsed_svgs >= 20, (
-        f"only {parsed_svgs} SVGs yielded a numeric viewBox width — the attribute in dist/ "
-        f"is lowercase `viewbox`, and reading `viewBox` returns None for every one of them"
+    # The walk itself is still working, which is what an equality at zero cannot
+    # show on its own. Two SVGs on /government hand-roll their own markup and
+    # still server-render, and reading their width proves the `viewBox` /
+    # `viewbox` case handling is intact.
+    assert parsed_svgs == 2, (
+        f"{parsed_svgs} SVGs yielded a numeric viewBox width across dist/, expected 2 "
+        "(Government §11's cartogram and its tax-mix bar). At zero the attribute in dist/ "
+        "is lowercase `viewbox` and reading `viewBox` returns None for every one of them, "
+        "which is the failure this number exists to tell apart from an empty corpus."
     )
-    # Every one of the three chart routes must be represented. A walk that
-    # silently lost a whole route would still clear the total on the other two.
-    for route in ("economy", "households", "government"):
-        assert per_route.get(route), f"no annotations found on /{route}"
+
+
+def _chart_text_classes_in_src() -> set[str]:
+    """Every guarded `<text>` class this repository still writes, from `src/`.
+
+    Read as `className="…"` / `className='…'` occurrences rather than by parsing
+    JSX, because the question here is only whether a class name is still written
+    anywhere, not where it lands in a tree.
+    """
+    known = ANNOTATION_CLASSES | NON_ANNOTATION_TEXT_CLASSES
+    written: set[str] = set()
+    for path in sorted(SRC.rglob("*.ts")) + sorted(SRC.rglob("*.tsx")):
+        text = path.read_text()
+        for cls in known:
+            if re.search(rf"['\"`][\w\s-]*\b{re.escape(cls)}\b[\w\s-]*['\"`]", text):
+                written.add(cls)
+    return written
 
 
 def test_no_annotation_class_ships_outside_the_guarded_set():
-    """`==` audit over every `<text>` class in `dist/` (E10).
+    """`==` audit over every `<text>` class the site writes (E10).
 
     A new direct-label class must be sorted into one bucket or the other by
     hand. It cannot ship unnoticed into neither, which is how a clamp gets
     quietly bypassed a year from now.
+
+    **The stale half moved from `dist/` to `src/`.** Both halves read the served
+    bytes until the site adopted Recharts. The unknown half still does, and it
+    still bites: an unclassified class inside either hand-rolled SVG fails here.
+    The stale half cannot, because 17 of the 19 guarded classes are drawn by
+    Recharts figures and reach the DOM only at hydration, so a `dist/` reading
+    now reports every one of them as retired. Asking `src/` instead keeps the
+    property the assertion was written for, which is that the inventory names
+    nothing this repository has stopped writing.
     """
     seen: set[str] = set()
     for path in PAGES:
@@ -3160,10 +3528,10 @@ def test_no_annotation_class_ships_outside_the_guarded_set():
         f"annotate.ts, or to NON_ANNOTATION_TEXT_CLASSES if it is axis text or "
         f"belongs to #66's broader 390px sweep."
     )
-    stale = known - seen
+    stale = known - _chart_text_classes_in_src()
     assert not stale, (
-        f"class(es) listed here no longer ship: {sorted(stale)}. Remove them, so this "
-        f"audit keeps meaning what it says."
+        f"class(es) listed here are written nowhere under src/: {sorted(stale)}. Remove "
+        f"them, so this audit keeps meaning what it says."
     )
 
 
@@ -3726,6 +4094,22 @@ def test_the_text_clipping_guard_sees_every_text_class():
     still clears a total carried by the other two. So assert the corpus was
     actually seen, and assert the class inventory is CLOSED, not merely
     non-empty.
+
+    **Re-baselined from 713 nodes on three routes to 102 on one.** The Recharts
+    adoption took every axis label, axis title, direct label and legend label
+    out of the served bytes, because Recharts draws nothing during a static
+    render. What is left is Government §11's two hand-rolled SVGs, the tile-grid
+    cartogram and the tax-mix bar, at 51 `state-tile-code` and 51
+    `state-tile-mark` nodes. The four clipping guards above therefore run
+    against those two figures alone, and against nothing on `/economy` or
+    `/households`.
+
+    The rotated-family assertion went with it, from 20 or more to zero. Rotated
+    text on this site is `AxisLeft`'s title, and no axis title server-renders
+    any more, so `test_no_rotated_axis_title_is_clipped_by_its_svg` is vacuous
+    over `dist/`. It is asserted at zero here rather than dropped, so a
+    returning rotated node fails and forces the exclusion in
+    `chart_text_clipping_failures` to be re-justified.
     """
     seen = 0
     parsed_svgs = 0
@@ -3741,17 +4125,19 @@ def test_the_text_clipping_guard_sees_every_text_class():
         if nodes:
             per_route[path.parent.name] = len(nodes)
 
-    assert seen >= 700, (
-        f"the widened text walk found only {seen} nodes across dist/; it found 713 when #66 "
-        f"landed. Either chart text was dropped from the server render, or the walk has gone "
-        f"blind (viewBox/viewbox, or a <text> with no x). Per route: {per_route}"
+    assert per_route == {"government": 102}, (
+        f"the widened text walk found {per_route} across dist/, expected "
+        "{'government': 102} (51 state-tile-code and 51 state-tile-mark nodes in "
+        "Government §11's two hand-rolled SVGs). A drop means one of those two stopped "
+        "server-rendering its text, or the walk has gone blind (viewBox/viewbox, or a "
+        "<text> with no x). A rise means a figure is server-rendering chart text again, "
+        "and this is a deliberate re-baseline."
     )
-    assert parsed_svgs >= 29, (
-        f"only {parsed_svgs} SVGs yielded a numeric viewBox width — the attribute in dist/ is "
-        f"lowercase `viewbox`, and reading `viewBox` returns None for every one of them"
+    assert parsed_svgs == 2, (
+        f"{parsed_svgs} SVGs yielded a numeric viewBox width across dist/, expected 2. At "
+        f"zero the attribute in dist/ is lowercase `viewbox`, and reading `viewBox` returns "
+        f"None for every one of them"
     )
-    for route in ("economy", "households", "government"):
-        assert per_route.get(route), f"no chart text found on /{route}"
 
     # E10: the class inventory is an `==` audit, and it now covers the font
     # table too. A class in neither TEXT_FONT_PX nor INHERITS_FONT_SIZE would be
@@ -3768,17 +4154,22 @@ def test_the_text_clipping_guard_sees_every_text_class():
         f"Every class must state its size or be listed as inheriting one."
     )
 
-    # And the rotated family really is non-empty, so the exclusion in
-    # `chart_text_clipping_failures` is a redirection and not a silent drop.
+    # The rotated family is empty, so the exclusion in
+    # `chart_text_clipping_failures` currently redirects nothing and
+    # `test_no_rotated_axis_title_is_clipped_by_its_svg` asserts nothing over
+    # dist/. Pinned at zero rather than removed: rotated text is `AxisLeft`'s
+    # title, so a node reappearing here means an axis is server-rendering again
+    # and the vertical guard has a corpus to re-baseline against.
     rotated = sum(
         1
         for path in PAGES
         for node, svg, _w, _h in _chart_text_nodes(parse_html(path))
         if _is_rotated(node, svg)
     )
-    assert rotated >= 20, (
-        f"only {rotated} rotated <text> nodes were found; they are excluded from the "
-        f"horizontal walk, so if this reaches zero the vertical guard is asserting nothing"
+    assert rotated == 0, (
+        f"{rotated} rotated <text> node(s) were found; dist/ has carried none since the "
+        f"Recharts adoption, and the vertical clipping guard needs re-baselining against "
+        f"the corpus that came back"
     )
 
 

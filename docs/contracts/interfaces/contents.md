@@ -52,9 +52,11 @@ ICU locale of the build machine.
 
 One `<section id="contents-{slug}">` per entry in `siteRoutes`, **except `/contents` itself**,
 because listing the index inside the index would make its own section list self-referential. The
-rail still names it, which is how a reader gets here.
-`test_contents_lists_every_route_the_rail_names` pins the set as exactly
-`rail routes minus {/contents}`.
+site bar still names it, which is how a reader gets here.
+`test_contents_lists_every_route_the_site_bar_names` pins the set as exactly
+`site bar routes minus {/contents}`. That test read the left rail's `<ol class="route-links">`
+until the redesign replaced the rail with a sticky bar; the routes now live in
+`nav.navbar-routes-wide` and the right-hand rail carries section anchors only.
 
 Inside each block, an `<ol class="index-sections">` of that route's sections, each `<li
 class="index-section">` linking `{join(route)}#{id}`, with the figures declared in that section

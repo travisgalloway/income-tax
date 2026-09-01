@@ -9,8 +9,11 @@ body {
   background: var(--ground);
   color: var(--ink);
   font-family: var(--font-text);
-  font-size: 1.0625rem;
-  line-height: 1.62;
+  /* 18px against a 55rem measure runs near 100 characters. The size and the
+   * 1.7 leading were raised together when the measure was 70rem, and both are
+   * kept: at 100 characters the return sweep still needs the leading. */
+  font-size: var(--ts-0);
+  line-height: 1.7;
   font-variant-numeric: var(--num-prose);
   text-rendering: optimizeLegibility;
 }
@@ -20,39 +23,97 @@ body {
  * than by a contrasting display face. That is how a textbook is set.
  */
 
-h1, h2, h3 {
+/* One family throughout, differentiated by size, small caps and italic rather
+ * than by a contrasting display face. That is how a textbook is set.
+ *
+ * Space ABOVE a heading exceeds the space below it by a constant 3.3 to 1 at
+ * every level, so a heading binds to the text it introduces and detaches from
+ * the text it follows. The top space steps down the spacing scale as the level
+ * descends. h1 takes none, because the section boundary supplies it.
+ *
+ * Each level is bounded tighter than the level above it, and tighter than the
+ * 55rem body measure: 46rem, 40rem, 36rem, 36rem. A heading has no second line
+ * to establish a rhythm, so it needs the shorter line more than a paragraph
+ * does. The bounds are also what keep a heading's own rule, where one is drawn,
+ * shorter than the rules around it. */
+h1, h2, h3, h4 {
   font-family: var(--font-text);
   font-weight: 400;
   line-height: 1.16;
-  margin: 0 0 0.5em;
   text-wrap: balance;
 }
 
 h1 {
-  font-size: clamp(2.1rem, 4.6vw, 3.1rem);
+  font-size: var(--ts-5);
   letter-spacing: -0.008em;
-  margin-bottom: 0.3em;
+  max-width: 46rem;
+  margin: 0 0 var(--sp-3);
 }
 
 h2 {
-  font-size: clamp(1.45rem, 2.7vw, 2rem);
+  font-size: var(--ts-3);
   letter-spacing: -0.004em;
+  max-width: 40rem;
+  margin: var(--sp-6) 0 var(--sp-3);
 }
 
 h3 {
-  font-size: 1.0625rem;
+  font-size: var(--ts-2);
   font-style: italic;
+  max-width: 36rem;
+  margin: var(--sp-5) 0 var(--sp-2);
 }
+
+h4 {
+  font-size: var(--ts-1);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+  max-width: 36rem;
+  margin: var(--sp-4) 0 var(--sp-1);
+}
+
+/* An eyebrow belongs to the heading beneath it, so that heading gives up its
+ * own top space rather than pushing away from its own label. */
+.kicker + h1,
+.kicker + h2,
+.kicker + h3,
+.kicker + h4 { margin-top: 0; }
+
+/* ---- What italic means --------------------------------------------------
+ * Italic used to appear at 26.6px, 21px, 15px, 14px, 12px and 10.5px, on a
+ * heading, a deck, a label, a caption and two running sentences, so a reader
+ * had no way to learn what it signalled. Two clauses now, and nothing else on
+ * the site is italic:
+ *
+ * 1. ABOVE the body size, italic is the third heading level (h3) and the deck
+ *    that follows a heading (`.standfirst`). Size already says "heading", and
+ *    the italic says which of the two it is.
+ *
+ * 2. AT OR BELOW the body size, italic names something else on the page: a
+ *    figure's title, a table's caption, a panel's title, a line's series name,
+ *    a reference line's label, an index entry's figure title.
+ *
+ * It is never running text and it is never a value. That is what moved
+ * `.empty-state` and `.panel-empty` out of italic: both are sentences reporting
+ * that a control the reader set returned nothing, so both are set in the data
+ * face in `--ink-soft`, the site's voice for apparatus, and neither names a
+ * thing. Small caps is the other label channel and the two do not overlap:
+ * small caps marks a locator or a unit (`.kicker`, `.figure-no`, `.lead`,
+ * `.unit`), italic marks a title. */
 
 /* ---- Running text -------------------------------------------------------- */
 
-p { margin: 0 0 0.9em; max-width: var(--measure); text-wrap: pretty; }
+p { margin: 0 0 var(--sp-4); max-width: var(--measure); text-wrap: pretty; }
 
-/* Classic book setting: consecutive body paragraphs run on with an indent and
-   no blank line between them. Scoped to .prose so it cannot leak onto the
-   standfirst, the finding, or anything else that happens to be a <p>. */
-.prose { margin: 0; max-width: var(--measure); }
-.prose + .prose { text-indent: 1.35em; }
+/* Spaced paragraphs, replacing the run-on book setting.
+ *
+ * The old rule set consecutive `.prose` paragraphs with no blank line and a
+ * 1.35em first-line indent, which is how a printed book marks a paragraph. That
+ * indent was reversed when the measure widened and it has not come back: a
+ * blank line marks a paragraph at any width, and the indent only reads as one
+ * at a book's measure. */
+.prose { margin: 0 0 var(--sp-4); max-width: var(--measure); }
+.prose:last-child { margin-bottom: 0; }
 
 /* The eyebrow above each section heading. Small caps, not mono uppercase: a
    textbook signals hierarchy with case and letterspacing, not with a second
@@ -61,7 +122,7 @@ p { margin: 0 0 0.9em; max-width: var(--measure); text-wrap: pretty; }
   font-variant-caps: all-small-caps;
   font-variant-numeric: var(--num-table);
   letter-spacing: 0.09em;
-  font-size: 0.9375rem;
+  font-size: var(--ts-meta);
   color: var(--ink-soft);
   margin: 0 0 0.35rem;
 }
@@ -70,25 +131,32 @@ p { margin: 0 0 0.9em; max-width: var(--measure); text-wrap: pretty; }
 .section-no { font-variant-numeric: var(--num-table); }
 
 .standfirst {
-  font-size: 1.1875rem;
+  font-size: var(--ts-lede);
   line-height: 1.5;
   font-style: italic;
   color: var(--ink);
-  max-width: var(--measure);
-  margin-bottom: 1.1em;
+  max-width: var(--measure-lede);
+  margin-bottom: var(--sp-5);
 }
 .standfirst + .finding { margin-top: 1.4rem; }
 
-/* The finding, set as a textbook's boxed statement: rules above and below,
-   nothing else. */
+/* The finding: the section's claim, stated once, with its number in it.
+ *
+ * It used to be 16px roman at the body's own measure, boxed by two full-length
+ * rules in `--ink`. The two rules carried the whole distinction, and they were
+ * the heaviest pair on a page that draws a rule every few hundred pixels. The
+ * bottom rule is gone and the top one is a hairline. Four other channels now
+ * separate a finding from the prose around it, and none of them draws a line:
+ * the size matches the body rather than sitting under it, the leading is
+ * tighter at 1.45 against 1.7, the measure is 40rem against 55rem, and the
+ * figures are lining and tabular inside a sentence set in old-style. */
 .finding {
-  font-size: 1rem;
+  font-size: var(--ts-0);
   line-height: 1.45;
-  border-top: var(--rule-width) solid var(--ink);
-  border-bottom: var(--rule-width) solid var(--ink);
-  padding: 0.7rem 0;
+  border-top: var(--rule-hair) solid var(--rule);
+  padding: 0.7rem 0 0;
   margin: 0 0 1.6rem;
-  max-width: var(--measure);
+  max-width: var(--measure-lede);
   font-variant-numeric: var(--num-table);
 }
 
@@ -113,22 +181,72 @@ a { color: inherit; text-underline-offset: 0.16em; text-decoration-thickness: 0.
   white-space: nowrap;
 }
 
-.page { max-width: 74rem; margin: 0 auto; padding: 0 2rem 7rem; }
-.shell { display: grid; grid-template-columns: 13rem minmax(0, 1fr); gap: 3rem; }
-
-
-section[id] {
-  padding: 3.4rem 0;
-  border-top: var(--rule-hair) solid var(--rule);
+/* The page is a centred band holding a 70rem content column and a 13rem
+ * contents rail to its right. Both numbers are tokens, because the figure
+ * widths derive from the content column and a literal repeated in two files is
+ * how those two drift apart.
+ *
+ * 70rem, and not the old 54rem, because the left rail is gone: its 13rem plus
+ * the 3rem gap returned to the content, and the review asked for the rest.
+ */
+:root {
+  --content-w: 70rem;
+  --rail-w: 13rem;
+  --shell-gap: 3rem;
+  --page-pad: 2rem;
 }
-section[id]:first-of-type { border-top: 0; padding-top: 1.5rem; }
+
+.page {
+  max-width: calc(var(--content-w) + var(--shell-gap) + var(--rail-w) + var(--page-pad) * 2);
+  margin: 0 auto;
+  padding: 0 var(--page-pad) 7rem;
+}
+
+/* `minmax(0, ...)` on the content track so a wide table or a long unbroken
+ * identifier cannot push the grid past the page, which is the failure /sources
+ * already had once. The rail track is fixed, so the content takes every
+ * remaining pixel up to its cap. */
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, var(--content-w)) var(--rail-w);
+  gap: var(--shell-gap);
+  justify-content: center;
+  align-items: start;
+}
+
+/* Below the width where both columns fit, the rail leaves the accessibility
+ * tree and the content takes the whole band. The disclosure in the site bar
+ * carries the same list from here down, so nothing is lost. */
+@media (max-width: 76rem) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .rail { display: none; }
+}
+
+
+/* No rule on a section boundary. `--sp-section` states it, at 37px to 55px, and
+ * a rule in the same hairline and the same `--rule` as a figure's caption rule
+ * put the two at the same level: a reader met 11 section rules and 20 caption
+ * rules on `/government` and had nothing to tell them apart by. Space is the
+ * boundary; a rule is apparatus. */
+section[id] { padding: var(--sp-section) 0; }
+section[id]:first-of-type { padding-top: var(--sp-5); }
 
 /* ---- Contents rail ------------------------------------------------------
  * A table of contents, set as one. Numerals are tabular so the section numbers
  * form a true column.
  */
 
-.rail { position: sticky; top: 0; align-self: start; padding: 2.6rem 0; font-size: 0.875rem; }
+.rail {
+  position: sticky;
+  /* Clears the sticky site bar rather than the viewport top, which is what the
+   * old left rail cleared. */
+  top: calc(var(--navbar-h) + 1rem);
+  align-self: start;
+  max-height: calc(100dvh - var(--navbar-h) - 2rem);
+  overflow-y: auto;
+  padding: 2.6rem 0;
+  font-size: var(--ts-caption);
+}
 .rail ol { list-style: none; margin: 0; padding: 0; }
 
 .rail a {
@@ -140,24 +258,12 @@ section[id]:first-of-type { border-top: 0; padding-top: 1.5rem; }
 }
 .rail a:hover, .rail a:focus-visible { color: var(--ink); text-decoration: underline; }
 
-.rail .route-links {
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: var(--rule-hair) solid var(--rule);
-}
-.rail .route-links a {
-  font-variant-caps: all-small-caps;
-  letter-spacing: 0.08em;
-  font-size: 1rem;
-}
-.rail .route-links a[aria-current='page'] { color: var(--ink); text-decoration: underline; }
-
 .rail .toc-heading {
   font-variant-caps: all-small-caps;
   letter-spacing: 0.09em;
   color: var(--ink-soft);
   margin: 0 0 0.4rem;
-  font-size: 0.9375rem;
+  font-size: var(--ts-meta);
 }
 .rail .toc li { display: grid; grid-template-columns: 1.6rem 1fr; }
 .rail .toc .n { color: var(--ink-soft); font-variant-numeric: var(--num-table); padding-top: 0.22rem; }
@@ -180,40 +286,187 @@ section[id]:first-of-type { border-top: 0; padding-top: 1.5rem; }
  * satisfied here, vacuously and greppably.
  */
 
-.navbar { display: none; }              /* desktop: out of the accessibility tree */
+/* The bar is now the site's navigation at every width, so it is laid out here
+ * rather than inside the narrow-viewport block. `sticky`, not `fixed`: a fixed
+ * bar takes itself out of flow and every anchor target then has to subtract its
+ * height, which is what `scroll-margin-top` was compensating for. Sticky keeps
+ * the bar in flow, so the content starts beneath it without a padding rule and
+ * an anchor lands where it should.
+ *
+ * Deliberately without a transition or an animation anywhere. That is how
+ * prefers-reduced-motion is satisfied here, vacuously and greppably.
+ */
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  min-height: var(--navbar-h);
+  padding: 0 var(--page-pad);
+  background: var(--ground);
+  border-bottom: var(--rule-hair) solid var(--rule);
+}
+
+.navbar-title {
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+  font-size: var(--ts-chrome);
+  color: var(--ink);
+  text-decoration: none;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+
+/* The route list, at >= 62rem. `margin-right: auto` pushes the theme control to
+ * the far end, so the two groups read as navigation and setting rather than as
+ * one undifferentiated row. */
+.navbar-routes-wide {
+  margin-right: auto;
+  min-width: 0;
+}
+.navbar-routes-wide ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.navbar-routes-wide a {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+  font-size: var(--ts-chrome);
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+.navbar-routes-wide a:hover,
+.navbar-routes-wide a:focus-visible { color: var(--ink); text-decoration: underline; }
+.navbar-routes-wide a[aria-current='page'] { color: var(--ink); text-decoration: underline; }
+
+/* A Radix icon, inlined by `BaseLayout.astro`. 15px is the set's own grid, and
+ * `currentColor` on the path is what makes one rule below colour the glyph. */
+.navbar-icon {
+  display: block;
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+}
+
+/* The theme control. A hairline under the chosen option, the same control
+ * language as `.unit-toggle`, and the same transparent `::before` overlay.
+ *
+ * The three options used to read Light, Dark and System and now draw a sun, a
+ * moon and a half-filled disc. Each button keeps its word in a `.vh` span, so
+ * the accessible name did not change. `min-width: var(--target-min)` is what
+ * the words used to supply: a 15px glyph is under the 24px floor of WCAG 2.2
+ * SC 2.5.8 on its own, and the overlay spans the button rather than the glyph.
+ *
+ * The chosen option carries a rule beneath it as well as a darker ink, so the
+ * selected state survives a reader who cannot separate the two colours. */
+.theme-toggle { display: inline-flex; align-items: center; gap: 0.9rem; }
+.theme-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--target-min);
+  padding: 0.1rem 0;
+  background: transparent;
+  border: 0;
+  border-bottom: var(--rule-width) solid transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  position: relative;
+}
+.theme-option::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: var(--target-min);
+  transform: translateY(-50%);
+}
+.theme-option:hover { color: var(--ink); }
+.theme-option[aria-checked='true'] {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+/* The link to the repository, next to the theme control because both describe
+ * the site rather than the page. Sized to the 24px floor at every width; the
+ * narrow-viewport `.navbar a` rule below raises the height to 44px. */
+.navbar-source {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+.navbar-source:hover, .navbar-source:focus-visible { color: var(--ink); }
+
+/* The disclosure is the narrow-viewport form of the route list. Hidden above
+ * 62rem, where `.navbar-routes-wide` carries the same links, so exactly one of
+ * the two is ever in the accessibility tree. */
+.navbar-disclosure { display: none; }
 
 @media (max-width: 62rem) {
-  .shell { grid-template-columns: minmax(0, 1fr); gap: 0; }
-  /* The rail leaves the accessibility tree entirely below 62rem, so exactly two
-   * <nav> landmarks are exposed at any viewport even though four are in the DOM.
-   * Its two-column `.toc` treatment went with it, the panel carries that list
-   * now. */
-  .rail { display: none; }
-  .page { padding: var(--navbar-h) 1.25rem 4rem; }
+  .navbar-routes-wide { display: none; }
+  .navbar-disclosure { display: block; margin-left: auto; min-width: 0; flex: 0 0 auto; }
+  .page { padding: 0 1.25rem 4rem; }
 
-  .navbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    position: fixed;
-    inset: 0 0 auto 0;
-    z-index: 20;
-    height: var(--navbar-h);
-    padding: 0 1.25rem;
-    background: var(--ground);
-    border-bottom: var(--rule-hair) solid var(--rule);
-  }
+  /* The bar takes the page's own gutter here, not `--page-pad`. At 2rem a side
+   * the four items below measured 416px against a 390px viewport and the page
+   * scrolled sideways, which `smoke.test.ts` check 1 reports on every route. */
+  .navbar { padding: 0 1.25rem; gap: 0.6rem; }
+  /* 0.25rem, where the three words took 0.5rem. The icons brought a 24px floor
+   * with them, so the row buys its width back from the gaps. Measured at 320px,
+   * the bar's five items and its padding come to 315.1px, and no width from
+   * 320px to 1440px scrolls the page sideways. */
+  .theme-toggle { flex: 0 0 auto; gap: 0.25rem; }
 
   .navbar-title {
     font-variant-caps: all-small-caps;
     letter-spacing: 0.08em;
-    font-size: 1rem;
+    font-size: var(--ts-chrome);
     color: var(--ink);
     white-space: nowrap;
+    /* Shrinkable, so no combination of font metrics can push the row past the
+     * viewport. The wordmark clips before the page scrolls. */
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .navbar-disclosure { min-width: 0; }
+  /* The route name inside the trigger. Between 34rem and 62rem it fits beside
+   * the wordmark and the theme control; it is measured at 90 to 105px, and the
+   * row has no room for it below that. Hidden the accessible way rather than
+   * with `display: none`, so the trigger keeps naming where the reader is. */
+  .navbar-where {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  @media (max-width: 34rem) {
+    .navbar-where {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
 
   .navbar-panel {
     position: absolute;
@@ -245,15 +498,15 @@ section[id]:first-of-type { border-top: 0; padding-top: 1.5rem; }
     list-style: none;
     font-variant-caps: all-small-caps;
     letter-spacing: 0.08em;
-    font-size: 1rem;
+    font-size: var(--ts-chrome);
   }
   .navbar-trigger::-webkit-details-marker { display: none; }
 
   .navbar-chevron {
     width: 0.45rem;
     height: 0.45rem;
-    border-right: 1.5px solid var(--ink);
-    border-bottom: 1.5px solid var(--ink);
+    border-right: var(--rule-width) solid var(--ink);
+    border-bottom: var(--rule-width) solid var(--ink);
     transform: translateY(-0.14rem) rotate(45deg);
   }
   .navbar-disclosure[open] .navbar-chevron { transform: translateY(0.1rem) rotate(-135deg); }
@@ -263,7 +516,7 @@ section[id]:first-of-type { border-top: 0; padding-top: 1.5rem; }
     padding-bottom: 0.5rem;
     border-bottom: var(--rule-hair) solid var(--rule);
   }
-  .navbar-routes a { font-variant-caps: all-small-caps; letter-spacing: 0.08em; font-size: 1rem; }
+  .navbar-routes a { font-variant-caps: all-small-caps; letter-spacing: 0.08em; font-size: var(--ts-chrome); }
   .navbar-routes a[aria-current='page'] { text-decoration: underline; }
 
   .navbar-toc-heading {
@@ -271,7 +524,7 @@ section[id]:first-of-type { border-top: 0; padding-top: 1.5rem; }
     letter-spacing: 0.09em;
     color: var(--ink-soft);
     margin: 0 0 0.2rem;
-    font-size: 0.9375rem;
+    font-size: var(--ts-meta);
   }
   .navbar-toc li { display: grid; grid-template-columns: 1.6rem 1fr; align-items: center; }
   .navbar-toc .n { color: var(--ink-soft); font-variant-numeric: var(--num-table); }
@@ -281,14 +534,22 @@ section[id]:first-of-type { border-top: 0; padding-top: 1.5rem; }
   .navbar-toc a[aria-current='true'] { color: var(--ink); }
   .navbar-toc li:has(a[aria-current='true']) .n { color: var(--ink); }
 
-  /* The bar is fixed, so an anchor landing at scroll offset 0 would sit under
-   * it. `#main` needs this too: the skip link targets it. And `/glossary`'s
-   * anchors are its `<dt>` elements, not its sections, a link straight to
-   * `#net-interest` would otherwise land the term under the bar. */
-  section[id] { scroll-margin-top: calc(var(--navbar-h) + 0.75rem); }
-  #main { scroll-margin-top: calc(var(--navbar-h) + 0.75rem); }
-  .glossary dt[id] { scroll-margin-top: calc(var(--navbar-h) + 0.75rem); }
 }
+
+/* An anchor landing at the top of the viewport would sit under the bar. Sticky
+ * rather than fixed does not change that: the bar still occupies the top of the
+ * viewport once the page has scrolled at all.
+ *
+ * At EVERY width now, where this used to live inside the narrow-viewport block,
+ * because the bar used to exist only there. `#main` needs it too, since the skip
+ * link targets it, and `/glossary`'s anchors are its `<dt>` elements, so a link
+ * straight to `#net-interest` would otherwise land the term under the bar.
+ *
+ * The contents rail is the reason this matters more than it did: every link in
+ * it is an in-page anchor, so a reader meets this on every click. */
+section[id],
+#main,
+.glossary dt[id] { scroll-margin-top: calc(var(--navbar-h) + 0.75rem); }
 
 /* ---- Figure apparatus ---------------------------------------------------
  * The signature of the whole design, and the one place it is elaborate.
@@ -315,20 +576,31 @@ section[id]:first-of-type { border-top: 0; padding-top: 1.5rem; }
    counter on this pseudo-element, which meant the number existed only in the rendered layout,
    absent from the DOM, from `dist/`, and from anything /contents could read. Same typography,
    now in the served bytes. */
+/* The number is a locator and the title is the name of the thing. Until now the
+ * number was 18px in `--ink` and the title 15px in `--ink-soft`, in the same
+ * flex row, so the locator outranked what it located. Both channels are
+ * reversed: the title takes the body size and the strong ink, the number drops
+ * to the label size and the soft ink it shares with every other locator on the
+ * site. */
 .figure-no {
   font-variant-caps: all-small-caps;
   font-variant-numeric: var(--num-table);
   letter-spacing: 0.08em;
-  color: var(--ink);
+  font-size: var(--ts-meta);
+  color: var(--ink-soft);
   white-space: nowrap;
 }
-.figure-title { font-style: italic; color: var(--ink-soft); font-size: 0.9375rem; }
+.figure-title {
+  font-style: italic;
+  font-size: var(--ts-0);
+  color: var(--ink);
+}
 
 .chart { width: 100%; height: auto; display: block; }
 
 figcaption {
   font-family: var(--font-data);
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   line-height: 1.45;
   color: var(--ink-soft);
   margin-top: 0.7rem;
@@ -385,8 +657,16 @@ figcaption .lead,
 }
 
 /* Direct end-of-line series names (sections 5, 6): a line's colour is never
- * the only way to tell it apart from its neighbours. */
-.series-label {
+ * the only way to tell it apart from its neighbours.
+ *
+ * Compounded with `.annotation`, which is where its 11.5px comes from.
+ * `Annotation.tsx` appends `series-label` to whatever `className` it was given
+ * and defaults that to `annotation`, so the pairing was a convention held in a
+ * `.tsx` file. Written this way the stylesheet holds it instead: the italic
+ * cannot apply to an element that is not carrying the size it was drawn for.
+ * A second `font-size` here would be a fourth copy of 11.5px, and
+ * `pipeline/tests/test_accessibility.py` pins the three that exist. */
+.annotation.series-label {
   font-style: italic;
 }
 
@@ -412,13 +692,13 @@ figcaption .lead,
   font-variant-caps: all-small-caps;
   letter-spacing: 0.08em;
   color: var(--ink-soft);
-  font-size: 0.9375rem;
+  font-size: var(--ts-meta);
 }
 
 .unit-toggle { display: inline-flex; align-items: baseline; gap: 0.9rem; }
 .unit-toggle-item {
   font-family: var(--font-data);
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   padding: 0;
   background: transparent;
   border: 0;
@@ -480,9 +760,25 @@ figcaption .lead,
  */
 
 .tableview { margin-top: 0.4rem; }
+/* `inline-block`, and the whole point of it is the border below.
+ *
+ * This element is the `<summary>`, so it is block-level by default and its
+ * `border-bottom` painted the full 1120px of the content column. Every figure
+ * on the site carries one, 11px under the figcaption's own rule, and the two
+ * were the same length: 20 of the 162 full-width rules on `/government` were
+ * this control, doubling a rule that already belonged to the caption. Shrinking
+ * the box to its label makes the border an underline on a word, which is what
+ * the control language wanted, and it is the same affordance `.select-trigger`
+ * and the toggle groups already draw.
+ *
+ * Toggling is unaffected: a `<summary>`'s activation behaviour does not depend
+ * on its `display`, and the marker is already suppressed by `list-style` and
+ * the WebKit pseudo-element below. The `::before` target overlay is
+ * `left: 0; right: 0`, so it shrinks with the host and still spans it. */
 .tableview-trigger {
+  display: inline-block;
   font-family: var(--font-data);
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   background: transparent;
   border: 0;
   border-bottom: var(--rule-width) solid var(--rule);
@@ -521,16 +817,28 @@ figcaption .lead,
 .tableview table {
   border-collapse: collapse;
   font-family: var(--font-data);
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   font-variant-numeric: var(--num-table);
   width: 100%;
 }
-.tableview caption {
+/* One caption rule for all three tables. It was written out three times, byte
+ * for byte, and the three copies had to be held in step by hand. `.tableview`,
+ * `.law-table` and `.sortable-table` are the site's three table classes; the
+ * last adds a container-relative width below, and adds nothing else.
+ *
+ * `.sortable-table caption` is listed FIRST, and the order matters:
+ * `pipeline/tests/test_accessibility.py::_mutate_rule` finds a rule by matching
+ * a selector immediately followed by `{`, and the block it has to find is the
+ * one further down carrying `width: 100cqi`. Listed last here, this rule would
+ * shadow it and the by-state mutation guard would stop biting. */
+.sortable-table caption,
+.tableview caption,
+.law-table caption {
   text-align: left;
   font-family: var(--font-text);
   font-style: italic;
   color: var(--ink-soft);
-  font-size: 0.875rem;
+  font-size: var(--ts-caption);
   padding-bottom: 0.5rem;
 }
 .tableview th, .tableview td {
@@ -552,7 +860,7 @@ figcaption .lead,
   display: block;
   font-variant-caps: all-small-caps;
   letter-spacing: 0.06em;
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   color: var(--ink-soft);
 }
 
@@ -572,7 +880,10 @@ figcaption .lead,
   font-size: 11.5px;
   fill: var(--ink-soft);
 }
-.dotplot-label-us { fill: var(--ink); font-weight: 700; }
+/* Same compounding as `.annotation.series-label` above, and for the same
+   reason: the size lives on the base class the markup always writes with it
+   (`OecdChart.tsx` emits `dotplot-label dotplot-label-us`). */
+.dotplot-label.dotplot-label-us { fill: var(--ink); font-weight: 700; }
 
 .dotplot-value {
   font-family: var(--font-data);
@@ -580,7 +891,7 @@ figcaption .lead,
   fill: var(--ink-soft);
   font-variant-numeric: var(--num-table);
 }
-.dotplot-value-us { fill: var(--ink); font-weight: 700; }
+.dotplot-value.dotplot-value-us { fill: var(--ink); font-weight: 700; }
 
 .dotplot-average-label {
   font-family: var(--font-data);
@@ -591,7 +902,7 @@ figcaption .lead,
 
 .readout {
   font-family: var(--font-data);
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   font-variant-numeric: var(--num-table);
   color: var(--ink-soft);
   margin: 0.55rem 0 0;
@@ -658,7 +969,7 @@ figcaption .lead,
   align-items: center;
   gap: 0.5rem;
   font-family: var(--font-data);
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   background: transparent;
   border: 0;
   border-bottom: var(--rule-width) solid var(--rule);
@@ -692,7 +1003,7 @@ figcaption .lead,
   background: var(--panel);
   border: var(--rule-width) solid var(--ink);
   font-family: var(--font-data);
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   z-index: 20;
   /* Radix sizes a popper to its widest option, so a long label opens a
    * listbox wider than the phone it opens on, past the edge and unreachable
@@ -735,7 +1046,7 @@ figcaption .lead,
 
 .clear-filters {
   font-family: var(--font-data);
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   background: transparent;
   border: 0;
   border-bottom: var(--rule-width) solid var(--rule);
@@ -748,14 +1059,22 @@ figcaption .lead,
 
 .totals-line {
   font-family: var(--font-data);
-  font-size: 0.875rem;
+  font-size: var(--ts-caption);
   font-variant-numeric: var(--num-table);
   margin: 0.9rem 0 0;
 }
 
+/* "No law matches these filters." The same message `.panel-empty` carries
+ * inside an emptied plot, and until now the two were set 6px apart in size and
+ * in different faces: 18px italic prose here, 12px italic SVG there. Both
+ * report that a control the reader set returned nothing, so both belong to the
+ * control language rather than to the prose: the data face, `--ink-soft`, and
+ * no italic (see "What italic means" above). Sized to its neighbours in the
+ * filter bar, `.totals-line` and `.readout`, not to the paragraph it replaces. */
 .empty-state {
   margin: 1.4rem 0;
-  font-style: italic;
+  font-family: var(--font-data);
+  font-size: var(--ts-data);
   color: var(--ink-soft);
 }
 
@@ -768,17 +1087,9 @@ figcaption .lead,
 .law-table {
   border-collapse: collapse;
   font-family: var(--font-data);
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   font-variant-numeric: var(--num-table);
   width: 100%;
-}
-.law-table caption {
-  text-align: left;
-  font-family: var(--font-text);
-  font-style: italic;
-  color: var(--ink-soft);
-  font-size: 0.875rem;
-  padding-bottom: 0.5rem;
 }
 .law-table th, .law-table td {
   text-align: left;
@@ -799,7 +1110,7 @@ figcaption .lead,
   display: block;
   font-variant-caps: all-small-caps;
   letter-spacing: 0.06em;
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   color: var(--ink-soft);
   font-weight: 400;
   white-space: normal;
@@ -861,7 +1172,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 .character-swatch.swatch-mix { background: var(--mix); }
 
 .footnote {
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   color: var(--ink-soft);
   margin-top: 0.6rem;
 }
@@ -874,7 +1185,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
  */
 .inspector {
   font-family: var(--font-data);
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   font-variant-numeric: var(--num-table);
   color: var(--ink);
   margin: 0.55rem 0 0;
@@ -1014,7 +1325,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   gap: 0.4rem 0.9rem;
   margin-top: 0.7rem;
   font-family: var(--font-data);
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   color: var(--ink-soft);
 }
 .state-legend-item {
@@ -1029,19 +1340,24 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   display: inline-block;
   width: 0.85rem;
   height: 0.85rem;
-  border: 1px solid var(--rule);
+  border: var(--rule-width) solid var(--rule);
 }
-/* The glyph each tile carries. Same family and size as the tile's `<text>`, so
- * the legend key and the mark on the grid read as the same character. */
+/* The glyph each tile carries. Same family and same character as the tile's
+ * `<text>`, at a different size, and the comment here used to claim otherwise:
+ * `.state-tile-mark` is 10px because the tile grid sizes it, and this one is
+ * 13px because it sits in a run of 13px legend text. Matching the tile would
+ * set an HTML glyph below the smallest size the site sets anywhere. Declared
+ * rather than inherited, so the difference is a decision on the page. */
 .state-legend-mark {
   font-family: var(--font-data);
+  font-size: var(--ts-data);
   color: var(--ink);
 }
 
 .basis-toggle { display: inline-flex; align-items: baseline; gap: 0.9rem; }
 .basis-toggle-item {
   font-family: var(--font-data);
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   padding: 0;
   background: transparent;
   border: 0;
@@ -1058,17 +1374,11 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 .sortable-table {
   border-collapse: collapse;
   font-family: var(--font-data);
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   font-variant-numeric: var(--num-table);
   width: 100%;
 }
 .sortable-table caption {
-  text-align: left;
-  font-family: var(--font-text);
-  font-style: italic;
-  color: var(--ink-soft);
-  font-size: 0.875rem;
-  padding-bottom: 0.5rem;
   /* A `<caption>`'s box is the table's width, so at 745px the caption's first
    * line ran 375px past a 390px phone before it wrapped (#63). `cqi` is the
    * scroll container's own inline size, 350px there, so the text wraps
@@ -1141,7 +1451,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 
 .tax-mix-select {
   font-family: var(--font-data);
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   background: transparent;
   border: 0;
   border-bottom: var(--rule-width) solid var(--rule);
@@ -1167,9 +1477,9 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 }
 .tax-mix-select-content {
   background: var(--panel);
-  border: 1px solid var(--rule);
+  border: var(--rule-width) solid var(--rule);
   font-family: var(--font-data);
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   max-height: 20rem;
   overflow-y: auto;
   /* CSS computes `overflow-x` to `auto` whenever `overflow-y` is not
@@ -1208,7 +1518,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   margin: 0.5rem 0 0;
   padding: 0;
   font-family: var(--font-data);
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   font-variant-numeric: var(--num-table);
   color: var(--ink-soft);
   display: flex;
@@ -1229,7 +1539,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 .attrib-tabs { display: flex; gap: 1.4rem; margin-bottom: 0.7rem; }
 .attrib-tab {
   font-family: var(--font-data);
-  font-size: 0.875rem;
+  font-size: var(--ts-caption);
   background: transparent;
   border: 0;
   border-bottom: var(--rule-width) solid transparent;
@@ -1268,7 +1578,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   gap: 0.4rem 1.1rem;
   margin: 0.4rem 0 0.6rem;
   font-family: var(--font-data);
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   color: var(--ink-soft);
 }
 
@@ -1278,23 +1588,37 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
  * appendix. The marker is the only ornament, and nothing here is collapsible.
  */
 
+/* No rule between items. The counter already numbers them and the 1.5rem gap
+   already separates them, so the rule was a third mark saying what two marks
+   said, six times on `/government` alone. */
 .limits { list-style: none; counter-reset: limit; margin: 0 0 1.6rem; padding: 0; }
 .limits > li {
   counter-increment: limit;
   max-width: var(--measure);
   margin: 0 0 1.5rem;
-  padding-top: 0.6rem;
-  border-top: var(--rule-hair) solid var(--rule);
 }
-.limits > li > h3 { display: inline; margin: 0; }
-.limits > li > h3::before {
+/* The run-in head, and its number.
+ *
+ * The head is a `<strong>` opening the paragraph, which is the shape all three
+ * routes now use; `/economy` and `/households` write the same thing without the
+ * list around it. It needs no size and no display of its own: it is already
+ * inline and already at the body size it inherits. The `<h3>` this replaced
+ * needed `display: inline` and a size, and both are gone with it.
+ *
+ * The number is set at weight 400 and roman, so it reads as a locator rather
+ * than as the first word of the head. `/government` links to "Limit 6 in
+ * section 12", so the six numbers are a cross-reference, not an ornament. */
+.limits > li > .prose > strong:first-child::before {
   content: counter(limit) '. ';
-  font-style: normal;
+  font-weight: 400;
   font-variant-numeric: var(--num-table);
 }
-/* The heading runs into its paragraph, textbook-style, so the caveat reads as
-   one sentence rather than as a headed block. */
-.limits > li > h3 + .prose { display: inline; text-indent: 0; }
+/* The space after the head comes from the markup, and it only survives while
+ * the head and the first words of the body sit on ONE source line. Astro's
+ * compiler strips the trailing space in `<strong>Head.</strong>\n  Body`, which
+ * served `...borne.</strong>Federal tax is...` with nothing between them. No
+ * CSS rule here compensates for that, because a margin added on this side would
+ * double the space on `/economy` and `/households`, which write it correctly. */
 .reference-doc { max-width: var(--measure-wide); }
 .reference-doc table { border-collapse: collapse; font-variant-numeric: var(--num-table); }
 /* #79. `/sources` overflowed a 390px viewport by 130px: three `<code>` spans
@@ -1320,21 +1644,38 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
  */
 
 .glossary { margin: 0; }
+/* The term, set as the label it is. It used to be 17px at weight 600, sitting
+ * above a definition set at 18px at weight 400, so the bold term was smaller
+ * than the sentence defining it, and the 600 was one of two places on the site
+ * that broke the weight-400 rule the type scale states. Both are gone. Small
+ * caps at the body size is the site's label voice, the one `.kicker`,
+ * `.figure-no` and `.lead` already speak, and it separates the term from its
+ * definition without asking the serif stack for an intermediate weight that
+ * four of its five families do not have.
+ *
+ * The rule above each term stays, weakened. It is the only mark that groups a
+ * term with its own three-part entry across a page of 40 of them, and the
+ * entries carry no counter to do that job. */
 .glossary dt {
-  font-weight: 600;
-  font-size: 1.0625rem;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.07em;
+  font-size: var(--ts-0);
+  /* The rule is the entry's own boundary, so it stops where the entry stops.
+     Unbounded, a `<dt>` is a block in the 70rem column and its rule ran 240px
+     past every definition beneath it. */
+  max-width: var(--measure);
   margin: 1.5rem 0 0.35rem;
   padding-top: 0.85rem;
   border-top: var(--rule-hair) solid var(--rule);
 }
-.glossary dt:first-of-type { margin-top: 0.6rem; }
+.glossary dt:first-of-type { margin-top: 0.6rem; border-top: 0; padding-top: 0; }
 .glossary dd { margin: 0 0 0.2rem; max-width: var(--measure); }
 /* The one-sentence definition is the thing a reader came for, so it is set at
    reading size and the full entry sits beneath it, quieter. */
 .glossary-short { margin: 0 0 0.55em; }
 .glossary-long { margin: 0 0 0.6em; color: var(--ink); }
 .glossary-meta {
-  font-size: 0.9375rem;
+  font-size: var(--ts-meta);
   color: var(--ink-soft);
   display: grid;
   gap: 0.22rem;
@@ -1367,11 +1708,15 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   counter-reset: index-section;
   max-width: var(--measure);
 }
+/* The rule about rules on a list of entries, stated once and obeyed by
+ * `.limits`, `.cards`, `.index-section`, `.index-term` and `.glossary dt`: an
+ * entry that carries a counter gets no rule, because the number already says
+ * where it starts; an entry with no counter and more than one part gets a
+ * hairline, because nothing else says where it starts. `.index-section` is
+ * counted, so its rule is gone. `.index-term` and `.glossary dt` are not. */
 .index-section {
   counter-increment: index-section;
-  padding-top: 0.55rem;
   margin: 0 0 0.9rem;
-  border-top: var(--rule-hair) solid var(--rule);
 }
 .index-section > a {
   font-variant-numeric: var(--num-table);
@@ -1392,7 +1737,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   display: grid;
   gap: 0.15rem;
   margin: 0.5rem 0 0 1.1rem;
-  font-size: 0.9375rem;
+  font-size: var(--ts-meta);
   color: var(--ink-soft);
 }
 .index-figure-no {
@@ -1405,7 +1750,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 .index-figure-title { font-style: italic; }
 .index-source {
   font-family: var(--font-data);
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   overflow-wrap: anywhere;
 }
 .index-source .lead,
@@ -1424,9 +1769,15 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   border-top: var(--rule-hair) solid var(--rule);
   overflow-wrap: anywhere;
 }
-.index-term-name { font-weight: 600; justify-self: start; }
+/* Set exactly as `.glossary dt`, because it is the same term in the other
+   place it appears. This was the second of the two weight-600 rules. */
+.index-term-name {
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.07em;
+  justify-self: start;
+}
 .index-term-short { color: var(--ink); }
-.index-term-first { font-size: 0.9375rem; color: var(--ink-soft); }
+.index-term-first { font-size: var(--ts-meta); color: var(--ink-soft); }
 
 /* ---- Households route: brushable year range and multi-panel figures -----
  * The shared timeline (`YearRange.tsx`) and the sub-heads/empty-state used by
@@ -1440,7 +1791,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   font-variant-caps: all-small-caps;
   letter-spacing: 0.08em;
   color: var(--ink-soft);
-  font-size: 0.9375rem;
+  font-size: var(--ts-meta);
   margin: 0 0 0.65rem;
 }
 .year-range-slider {
@@ -1466,7 +1817,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   height: 15px;
   border-radius: 50%;
   background: var(--panel);
-  border: 1.5px solid var(--ink);
+  border: var(--rule-width) solid var(--ink);
   cursor: pointer;
   /* #65, E7. Radix positions `Slider.Thumb` with inline styles; if it ever
    * sets `position` itself this is overridden, harmlessly, an absolutely
@@ -1494,7 +1845,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   display: flex;
   justify-content: space-between;
   font-family: var(--font-data);
-  font-size: 0.75rem;
+  font-size: var(--ts-micro);
   font-variant-numeric: var(--num-table);
   color: var(--ink-soft);
   margin-top: 0.35rem;
@@ -1508,11 +1859,14 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   font-size: 10.5px;
   fill: var(--ink-soft);
 }
+/* The SVG twin of `.empty-state`, and it says the same thing. 11.5px is the
+ * size every other in-plot label takes (`.annotation`, `.attrib-row-label`),
+ * because this sentence sits inside the plot rectangle and reads against the
+ * marks that would have been there. */
 .panel-empty {
   font-family: var(--font-data);
-  font-size: 12px;
+  font-size: 11.5px;
   fill: var(--ink-soft);
-  font-style: italic;
 }
 
 /* ---- In-prose glossary markers (#47) --------------------------------------
@@ -1547,7 +1901,7 @@ p:has(.term), li:has(.term), h2:has(.term), .standfirst:has(.term) { position: r
  * the body colour, so nothing here depends on hue. */
 .term-trigger {
   text-decoration: underline dotted;
-  text-decoration-thickness: 1px;
+  text-decoration-thickness: var(--rule-width);
   text-underline-offset: 0.18em;
   color: var(--ink);
 }
@@ -1564,7 +1918,7 @@ p:has(.term), li:has(.term), h2:has(.term), .standfirst:has(.term) { position: r
   border: var(--rule-width) solid var(--ink);
   color: var(--ink);
   font-family: var(--font-text);
-  font-size: 0.9375rem;
+  font-size: var(--ts-meta);
   font-style: normal;
   line-height: 1.45;
   text-indent: 0;
@@ -1579,7 +1933,7 @@ p:has(.term), li:has(.term), h2:has(.term), .standfirst:has(.term) { position: r
   display: block;
   margin-top: 0.5rem;
   font-family: var(--font-data);
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   color: var(--ink);
 }
 
@@ -1592,12 +1946,12 @@ p:has(.term), li:has(.term), h2:has(.term), .standfirst:has(.term) { position: r
  */
 
 .cards { list-style: none; counter-reset: card; margin: 0 0 1.6rem; padding: 0; }
+/* No rule between entries, for the reason `.limits` has none: the counter and
+   the gap already separate them. */
 .cards > li {
   counter-increment: card;
   max-width: var(--measure);
   margin: 0 0 1.5rem;
-  padding-top: 0.6rem;
-  border-top: var(--rule-hair) solid var(--rule);
 }
 .cards > li > h3 { margin: 0 0 0.35rem; font-style: normal; }
 .cards > li > h3::before {
@@ -1608,7 +1962,7 @@ p:has(.term), li:has(.term), h2:has(.term), .standfirst:has(.term) { position: r
 /* Route number and section count: a locator, set as data. */
 .card-meta {
   margin: 0.4rem 0 0;
-  font-size: 0.9375rem;
+  font-size: var(--ts-meta);
   color: var(--ink-soft);
   font-variant-numeric: var(--num-table);
 }
@@ -1625,7 +1979,7 @@ p:has(.term), li:has(.term), h2:has(.term), .standfirst:has(.term) { position: r
   column-gap: 0.55rem;
   row-gap: 0.28rem;
   font-family: var(--font-data);
-  font-size: 0.8125rem;
+  font-size: var(--ts-data);
   line-height: 1.45;
   color: var(--ink-soft);
 }
@@ -1641,10 +1995,10 @@ p:has(.term), li:has(.term), h2:has(.term), .standfirst:has(.term) { position: r
   border-left: var(--rule-width) solid var(--ink);
   max-width: var(--measure);
 }
-.brief-quote p { margin: 0; font-size: 1.0625rem; line-height: 1.5; }
+.brief-quote p { margin: 0; line-height: 1.5; }
 .brief-attrib {
   margin: 0 0 1.6rem;
   padding-left: 0.9rem;
-  font-size: 0.9375rem;
+  font-size: var(--ts-meta);
   color: var(--ink-soft);
 }

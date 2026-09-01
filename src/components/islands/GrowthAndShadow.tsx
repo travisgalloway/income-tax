@@ -3,20 +3,39 @@
  *  Two series from two different files, two different sources, two different
  *  calendars, indexed to a shared base year so they can share one axis. The
  *  chart shows that they diverged; it does not, and cannot, show why.
+ *
+ *  Recharts draws the two lines, the grid and the axes. The band marks, the
+ *  focus dots and the two direct labels stay the site's own code, drawn in the
+ *  plot coordinates `useFrame` returns. See `../charts/RechartsFrame.tsx` for
+ *  the reference-identity rules every Recharts island obeys.
  */
 import { useMemo, useState } from 'react'
-import { line as d3line } from 'd3-shape'
-import { Chart } from '../charts/Chart'
+import { Line, LineChart } from 'recharts'
 import { Annotation } from '../charts/Annotation'
-import { AxisBottom, AxisLeft } from '../charts/Axis'
-import { linear } from '../charts/scales'
+import {
+  PlotGrid,
+  PlotOverlay,
+  PlotXAxis,
+  PlotYAxis,
+  SURFACE_DEFAULTS,
+  useFrame,
+} from '../charts/RechartsFrame'
 import { dollars } from '../charts/format'
 import { TableView } from './TableView'
-import { useChartSize } from '../charts/useChartSize'
 import type { EconomyYear, IncomeYear } from '../../data/types'
 import { ChartHint } from '../charts/ChartHint'
 
 const BASE = 1984
+
+/** Fixed, because the tick array below is fixed. Hoisted so the axis prop keeps
+ *  its reference between renders. */
+const Y_DOMAIN: [number, number] = [90, 230]
+const WIDE_TICKS = [100, 140, 180, 220]
+const NARROW_TICKS = [100, 160, 220]
+
+/** The index is a pure number, and its base year is named by the axis title. */
+const INDEX_TICK = (v: number) => `${v}`
+const YEAR_TICK = (t: number) => `${t}`
 
 interface Row {
   y: number
@@ -42,12 +61,6 @@ function describe(r: Row): string {
 export function GrowthAndShadow({ economyRows, incomeRows }: { economyRows: EconomyYear[]; incomeRows: IncomeYear[] }) {
   const [focus, setFocus] = useState<number | null>(null)
 
-  const [boxRef, size] = useChartSize()
-  const { width: W, height: H, margin: f } = size
-  const iw = W - f.left - f.right
-  const ih = H - f.top - f.bottom
-  const narrow = W < 500
-
   const prodByYear = useMemo(
     () => new Map(economyRows.filter((r) => r.actual).map((r) => [r.y, r.prod])),
     [economyRows],
@@ -57,11 +70,11 @@ export function GrowthAndShadow({ economyRows, incomeRows }: { economyRows: Econ
   // The shared window is computed, not hardcoded: the first and last year at
   // which BOTH an actual prod value and a non-null mhi exist. With the shipped
   // data this resolves to [1984, 2024].
-  const window = useMemo(() => {
+  const span = useMemo(() => {
     const years = [...prodByYear.keys()].filter((y) => prodByYear.get(y) != null && mhiByYear.get(y) != null)
     return [Math.min(...years), Math.max(...years)] as [number, number]
   }, [prodByYear, mhiByYear])
-  const [winStart, winEnd] = window
+  const [winStart, winEnd] = span
 
   const prodAtBase = prodByYear.get(BASE) as number
   const mhiAtBase = mhiByYear.get(BASE) as number
@@ -82,51 +95,95 @@ export function GrowthAndShadow({ economyRows, incomeRows }: { economyRows: Econ
   })
   const shown = fullRows.filter((r) => r.y >= winStart && r.y <= winEnd)
 
-  const x = linear([winStart, winEnd], [0, iw])
-  const yTicks = narrow ? [100, 160, 220] : [100, 140, 180, 220]
-  const y = linear([90, Math.max(...yTicks) + 10], [ih, 0])
-  const xTicks = x.ticks(narrow ? 4 : 8).filter((t) => Number.isInteger(t))
+  const {
+    boxRef, size, f, narrow, xDomain, yDomain, x, y, xTicks,
+    chartMargin, chartStyle, surfaceRef, wrapperProps, mark,
+  } = useFrame({
+    rows: shown,
+    xOf: (r) => r.y,
+    yValues: shown.flatMap((r) => [r.prodIndex, r.mhiIndex]).filter((v): v is number => v != null),
+    xDomain: span,
+    yDomain: Y_DOMAIN,
+  })
 
-  const prodLine = d3line<Row>().defined((r) => r.prodIndex != null).x((r) => x(r.y)).y((r) => y(r.prodIndex as number))
-  const mhiLine = d3line<Row>().defined((r) => r.mhiIndex != null).x((r) => x(r.y)).y((r) => y(r.mhiIndex as number))
+  // The tick array is fixed rather than derived, so it is memoised here instead
+  // of coming from the frame.
+  const yTicks = useMemo(() => (narrow ? NARROW_TICKS : WIDE_TICKS), [narrow])
 
   const lastShown = shown[shown.length - 1]
   const active = focus != null ? fullRows.find((r) => r.y === focus) : null
 
+  const band = f.innerWidth / shown.length
+  // Order is data order, and the array is built in this render.
+  const markProps = shown.map(() => mark())
+
   return (
     <div ref={boxRef}>
-      <Chart
-        ariaLabel="Indexed to 1984 = 100, output per hour reached 216.5 by 2024 while real median household income reached 138.6, the two lines separating over the period."
-        interactive
-        width={W}
-        height={H}
-        margin={f}
-      >
-        {(fr, mark) => (
-          <>
-            <AxisLeft frame={fr} ticks={yTicks} format={(v) => `${v}`} label="Index, 1984 = 100" scale={y} />
-            <AxisBottom frame={fr} ticks={xTicks} format={(t) => `${t}`} label="Year" scale={x} />
+      <div {...wrapperProps}>
+        <LineChart
+          ref={surfaceRef}
+          data={shown}
+          width={size.width}
+          height={size.height}
+          margin={chartMargin}
+          style={chartStyle}
+          aria-label="Indexed to 1984 = 100, output per hour reached 216.5 by 2024 while real median household income reached 138.6, the two lines separating over the period."
+          {...SURFACE_DEFAULTS}
+        >
+          <PlotGrid />
+          <PlotXAxis
+            domain={xDomain}
+            ticks={xTicks}
+            gutter={size.margin.bottom}
+            unit="Year"
+            format={YEAR_TICK}
+          />
+          <PlotYAxis
+            domain={yDomain}
+            ticks={yTicks}
+            gutter={size.margin.left}
+            unit="Index, 1984 = 100"
+            format={INDEX_TICK}
+          />
+          <Line
+            type="linear"
+            dataKey="prodIndex"
+            stroke="var(--mand)"
+            strokeWidth={2}
+            dot={false}
+            activeDot={false}
+            connectNulls={false}
+            isAnimationActive={false}
+          />
+          <Line
+            type="linear"
+            dataKey="mhiIndex"
+            stroke="var(--int)"
+            strokeWidth={2}
+            dot={false}
+            activeDot={false}
+            connectNulls={false}
+            isAnimationActive={false}
+          />
 
-            <path d={prodLine(shown) ?? ''} fill="none" stroke="var(--mand)" strokeWidth={2} />
-            <path d={mhiLine(shown) ?? ''} fill="none" stroke="var(--int)" strokeWidth={2} />
-
+          <PlotOverlay margin={f.margin}>
             {lastShown?.prodIndex != null && (
-              <Annotation frame={fr} x={x(lastShown.y) - 4} y={y(lastShown.prodIndex) - 6} anchor="end" label="Output per hour" />
+              <Annotation frame={f} x={x(lastShown.y) - 4} y={y(lastShown.prodIndex) - 6} anchor="end" halo label="Output per hour" />
             )}
             {lastShown?.mhiIndex != null && (
-              <Annotation frame={fr} x={x(lastShown.y) - 4} y={y(lastShown.mhiIndex) + 14} anchor="end" label="Real median household income" />
+              <Annotation frame={f} x={x(lastShown.y) - 4} y={y(lastShown.mhiIndex) + 14} anchor="end" halo label="Real median household income" />
             )}
 
-            {shown.map((r) => (
+            {shown.map((r, i) => (
               <g key={r.y}>
                 <rect
                   className="datum"
-                  x={x(r.y) - iw / shown.length / 2}
+                  x={x(r.y) - band / 2}
                   y={0}
-                  width={iw / shown.length}
-                  height={ih}
+                  width={band}
+                  height={f.innerHeight}
                   fill="transparent"
-                  {...mark()}
+                  {...markProps[i]}
                   role="img"
                   aria-label={describe(r)}
                   onFocus={() => setFocus(r.y)}
@@ -142,9 +199,9 @@ export function GrowthAndShadow({ economyRows, incomeRows }: { economyRows: Econ
                 )}
               </g>
             ))}
-          </>
-        )}
-      </Chart>
+          </PlotOverlay>
+        </LineChart>
+      </div>
 
       <p aria-live="polite" className="readout">
         {active ? describe(active) : <ChartHint noun="year" />}

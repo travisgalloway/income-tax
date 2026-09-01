@@ -17,6 +17,11 @@
  *    3. a rotated axis title runs down a 316-unit SVG, not a 396-unit one, and
  *       two of the site's panels are shorter still.
  *
+ *  The 1120-unit WIDER preset is invisible to pytest for the same reason, and
+ *  it moves two decisions rather than tightening them. Its gutter holds 11
+ *  characters, so `Bottom 50%` and even `$30,000,000` fit where they did not.
+ *  Every case below therefore states which preset binds it.
+ *
  *  The browser probe with real `getBoundingClientRect()` belongs to #67;
  *  `docs/contracts/accessibility.md` records it as measured, not asserted.
  */
@@ -49,9 +54,14 @@ import {
   type Unit,
 } from './format.ts'
 
-/** The two presets in useChartSize.ts, verbatim. */
+/** The three presets in useChartSize.ts, verbatim. */
 const WIDE: Frame = frame(720, 396, { top: 20, right: 24, bottom: 52, left: 74 })
 const NARROW: Frame = frame(360, 316, { top: 22, right: 12, bottom: 50, left: 52 })
+const WIDER: Frame = frame(1120, 520, { top: 24, right: 32, bottom: 56, left: 88 })
+
+/** Every preset, for the properties that must hold at all three.
+ *  One list, so a fourth preset is added in one place. */
+const PRESETS: Frame[] = [WIDE, NARROW, WIDER]
 
 /** BracketHistory builds its own frame with a fixed 60-unit left margin. */
 const BRACKETS_NARROW: Frame = frame(360, 470, { top: 8, right: 16, bottom: 34, left: 60 })
@@ -66,12 +76,18 @@ function paintedBox(x: number, w: number, anchor: string): [number, number] {
 // The left gutter, the geometry that shipped `$30,000,000` as `0,000,000`.
 // ---------------------------------------------------------------------------
 
-test('the left gutter is 64 units wide at 720 and 42 at 360', () => {
+test('the left gutter is 64 units wide at 720, 42 at 360 and 78 at 1120', () => {
   assert.equal(leftGutterRoom(WIDE), 64)
   assert.equal(leftGutterRoom(NARROW), 42)
+  assert.equal(leftGutterRoom(WIDER), 78)
   assert.equal(leftGutterRoom(BRACKETS_NARROW), 50)
   // Six characters at 11px, which is the whole constraint on axis formatters.
   assert.equal(Math.floor(leftGutterRoom(NARROW) / (AXIS_LABEL_FONT_PX * 0.62)), 6)
+  // The 1120 preset grows its gutter with the plot, to 11 characters. NARROW
+  // stays the binding case, so no formatter is retuned against this number.
+  assert.equal(Math.floor(leftGutterRoom(WIDER) / (AXIS_LABEL_FONT_PX * 0.62)), 11)
+  assert.ok(leftGutterRoom(NARROW) < leftGutterRoom(WIDE))
+  assert.ok(leftGutterRoom(WIDE) < leftGutterRoom(WIDER))
 })
 
 test('every formatter in format.ts fits the narrow left gutter at its real magnitudes', () => {
@@ -117,18 +133,35 @@ test('every formatter in format.ts fits the narrow left gutter at its real magni
     assert.ok(leftGutterFits(fiscalYear(y), NARROW), tooWide(fiscalYear(y)))
   }
 
-  // And the negative: `dollars()` is exactly what an axis may NOT use, at
-  // either preset. If this ever passes, the guard has stopped meaning anything.
+  // NARROW binds every formatter choice, because the gutter grows with the
+  // preset. A label that clears 42 units clears 64 and 78 as well, so the
+  // sweep above covers all three presets once this holds.
+  for (const label of [dollarsCompact(30_000_000), tick(-1.5, 'nominal'), percent(37, 1), fiscalYear(2025)]) {
+    assert.ok(leftGutterFits(label, WIDE), tooWide(label))
+    assert.ok(leftGutterFits(label, WIDER), tooWide(label))
+  }
+
+  // And the negative: `dollars()` is exactly what an axis may NOT use, at the
+  // two presets that bind. If this ever passes, the guard has stopped meaning
+  // anything. WIDER is excluded on a measurement, not an oversight:
+  // `$30,000,000` needs 75.0 units and its gutter holds 78, so the 1120 preset
+  // would draw the label whole. The formatter still may not use it, because
+  // the same axis renders at 360 as well.
   assert.equal(leftGutterFits(dollars(30_000_000), NARROW), false)
   assert.equal(leftGutterFits(dollars(30_000_000), WIDE), false)
+  assert.equal(leftGutterFits(dollars(30_000_000), WIDER), true)
 })
 
 test('everyLeftGutterLabelFits is all-or-none over a category axis', () => {
-  // WhoPays' six groups. `Bottom 50%` needs 68.2 units, more than either
-  // preset's gutter, so the whole axis takes the in-plot treatment.
+  // WhoPays' six groups. `Bottom 50%` needs 68.2 units, more than the 360 and
+  // 720 gutters hold, so the whole axis takes the in-plot treatment there.
   const groups = ['Top 1%', 'Top 5%', 'Top 10%', 'Top 25%', 'Top 50%', 'Bottom 50%']
   assert.equal(everyLeftGutterLabelFits(groups, WIDE), false)
   assert.equal(everyLeftGutterLabelFits(groups, NARROW), false)
+  // The 1120 preset is the first one whose gutter holds `Bottom 50%`, at 68.2
+  // units against 78, so the same axis takes the gutter treatment there and
+  // the in-plot treatment at the other two.
+  assert.equal(everyLeftGutterLabelFits(groups, WIDER), true)
   // One long member is enough to move them all; drop it and the gutter is back
   // at the wide preset, where the rest need at most 7 characters.
   assert.equal(everyLeftGutterLabelFits(groups.slice(0, 5), WIDE), true)
@@ -141,7 +174,7 @@ test('everyLeftGutterLabelFits is all-or-none over a category axis', () => {
 // ---------------------------------------------------------------------------
 
 test('an interior bottom tick is returned unchanged', () => {
-  for (const f of [WIDE, NARROW]) {
+  for (const f of PRESETS) {
     for (const x of [0, 40, f.innerWidth / 2, f.innerWidth - 60]) {
       assert.deepEqual(
         placeTickLabel(x, '2000', f),
@@ -169,18 +202,21 @@ test('a bottom tick at the right end of the domain shifts left by exactly its ov
     assert.ok(l >= visibleSpan(NARROW)[0] - 1e-9 && r <= hi + 1e-9)
   }
 
-  // The same ticks clear the 720 preset untouched, which is why `dist/` shows
-  // nothing and why this property has no static lane.
-  for (const label of ['2025', 'FY2025']) {
-    assert.deepEqual(placeTickLabel(WIDE.innerWidth, label, WIDE), {
-      x: WIDE.innerWidth,
-      textAnchor: 'middle',
-    })
+  // The same ticks clear the 720 and 1120 presets untouched, which is why
+  // `dist/` shows nothing and why this property has no static lane. WIDER has
+  // a 32-unit right margin, so a 27.3-unit year label sits well inside it.
+  for (const f of [WIDE, WIDER]) {
+    for (const label of ['2025', 'FY2025']) {
+      assert.deepEqual(placeTickLabel(f.innerWidth, label, f), {
+        x: f.innerWidth,
+        textAnchor: 'middle',
+      })
+    }
   }
 })
 
 test('a bottom tick never flips, and placing twice changes nothing', () => {
-  for (const f of [WIDE, NARROW]) {
+  for (const f of PRESETS) {
     for (const x of [-200, -40, 0, 100, f.innerWidth, f.innerWidth + 90, 900]) {
       const placed = placeTickLabel(x, 'FY2025', f)
       assert.ok(placed)
@@ -209,9 +245,17 @@ test('tickLabelOverlaps is silent on the shipped year axis and loud on a dense o
   assert.ok(clashes.length > 0, 'a decade-per-tick axis at 360 units was reported as clear')
   assert.deepEqual(clashes[0], ['1910', '1920'])
 
-  // The same set has room at 720.
+  // The same set has room at 720, and more of it at 1120.
   const wideX = linear([1913, 2025], [0, WIDE.innerWidth])
   assert.deepEqual(tickLabelOverlaps(decades, calendarYear, wideX, WIDE), [])
+  const widerX = linear([1913, 2025], [0, WIDER.innerWidth])
+  assert.deepEqual(tickLabelOverlaps(decades, calendarYear, widerX, WIDER), [])
+  // Every year from 1913 is 113 labels over 1000 units, which no preset holds.
+  const everyYear = Array.from({ length: 113 }, (_, i) => 1913 + i)
+  assert.ok(
+    tickLabelOverlaps(everyYear, calendarYear, widerX, WIDER).length > 0,
+    'a label-per-year axis at 1120 units was reported as clear',
+  )
 })
 
 // ---------------------------------------------------------------------------
@@ -224,6 +268,13 @@ test('spanRoomAt measures from the reference point to the SVG edge, per anchor',
   assert.equal(spanRoomAt(0, NARROW, 'end'), -lo)
   assert.equal(spanRoomAt(0, NARROW, 'middle'), 2 * Math.min(-lo, hi))
   assert.equal(spanRoomAt(1000, NARROW, 'start'), 0, 'room is never negative')
+
+  // The same three identities at the 1120 preset, whose span is [-86, 1030].
+  const [wLo, wHi] = visibleSpan(WIDER)
+  assert.equal(spanRoomAt(0, WIDER, 'start'), wHi)
+  assert.equal(spanRoomAt(0, WIDER, 'end'), -wLo)
+  assert.equal(spanRoomAt(0, WIDER, 'middle'), 2 * Math.min(-wLo, wHi))
+  assert.equal(spanRoomAt(2000, WIDER, 'start'), 0, 'room is never negative')
 })
 
 test("BracketHistory's panel titles pick a variant that fits the narrow panel", () => {
@@ -309,37 +360,46 @@ test('the rotated axis title is measured against the SVG height, not its width',
   assert.equal(estimateTextWidth(long, AXIS_TITLE_FONT_PX) > NARROW.height, true)
   assert.equal(rotatedTitleFits(long, NARROW), false)
   assert.equal(rotatedTitleFits(long, WIDE), true)
+  // 520 units of height give the 1120 preset the most room of the three, so a
+  // title that fits WIDE fits WIDER as well.
+  assert.equal(rotatedTitleFits(long, WIDER), true)
+  assert.ok(WIDER.height > WIDE.height && WIDE.height > NARROW.height)
 })
 
-test('every rotated axis title the site ships fits both presets', () => {
+test('every rotated axis title the site ships fits all three presets', () => {
   // Frame heights are the islands' own: most take useChartSize's height, while
   // WhoWorks' and PricesAndRates' lower panels are 0.66 of it and
-  // HouseholdSpread pins two fixed heights.
-  const panels: Array<[string, number, number]> = [
-    ['Real GDP, $ trillions, log scale', 396, 316],
-    ['Index, 1984 = 100', 396, 316],
-    ['Percent of the labour force', 396, 316],
-    ['Percent of the population 16+', 261, 209],
-    ['Percent change from the previous fiscal year', 396, 316],
-    ['Percent per year', 261, 209],
-    ['Percent of GDP', 396, 316],
-    ['$ trillions', 396, 316],
-    ['Nominal dollars', 396, 316],
-    ['Real dollars, FY2025', 396, 316],
-    ['Nominal $ trillions', 396, 316],
-    ['Real $ trillions, FY2025', 396, 316],
-    ['Coalition', 396, 316],
-    ['Signing president', 396, 316],
-    ['Constant 2024 dollars', 396, 316],
-    ['Families Gini index, ratio 0 to 1', 260, 240],
-    ['Percent of income', 200, 190],
-    ['Percent', 396, 316],
-    ['Percent of income tax paid', 396, 316],
+  // HouseholdSpread pins two fixed heights per breakpoint.
+  //
+  // The third column is the 1120 preset. 520 is useChartSize's own height,
+  // 343 is `Math.round(520 * 0.66)`, and HouseholdSpread's two panels repeat
+  // their wide numbers because it keys those on `narrow`, not on the preset.
+  const panels: Array<[string, number, number, number]> = [
+    ['Real GDP, $ trillions, log scale', 396, 316, 520],
+    ['Index, 1984 = 100', 396, 316, 520],
+    ['Percent of the labour force', 396, 316, 520],
+    ['Percent of the population 16+', 261, 209, 343],
+    ['Percent change from the previous fiscal year', 396, 316, 520],
+    ['Percent per year', 261, 209, 343],
+    ['Percent of GDP', 396, 316, 520],
+    ['$ trillions', 396, 316, 520],
+    ['Nominal dollars', 396, 316, 520],
+    ['Real dollars, FY2025', 396, 316, 520],
+    ['Nominal $ trillions', 396, 316, 520],
+    ['Real $ trillions, FY2025', 396, 316, 520],
+    ['Coalition', 396, 316, 520],
+    ['Signing president', 396, 316, 520],
+    ['Constant 2024 dollars', 396, 316, 520],
+    ['Families Gini index, ratio 0 to 1', 260, 240, 260],
+    ['Percent of income', 200, 190, 200],
+    ['Percent', 396, 316, 520],
+    ['Percent of income tax paid', 396, 316, 520],
   ]
-  for (const [label, wideH, narrowH] of panels) {
+  for (const [label, wideH, narrowH, widerH] of panels) {
     for (const [h, margin] of [
       [wideH, WIDE.margin],
       [narrowH, NARROW.margin],
+      [widerH, WIDER.margin],
     ] as const) {
       const f = frame(360, h, margin)
       assert.ok(

@@ -7,14 +7,22 @@
  *  series that was never observed. Marker SHAPE plus a legend distinguishes
  *  the six income groups, so colour never carries meaning alone, none of
  *  this data is partisan, so no --dem/--gop/--mix token belongs here either.
+ *
+ *  Recharts draws the statutory line, the grid and the axes. The anchor markers
+ *  keep their own shapes, drawn in the plot coordinates `useFrame` returns,
+ *  because a Recharts series would join them into the line this figure refuses.
  */
 import { useMemo, useState } from 'react'
-import { line as d3line, curveMonotoneX } from 'd3-shape'
-import { Chart } from '../charts/Chart'
+import { Line, LineChart } from 'recharts'
 import { Annotation } from '../charts/Annotation'
-import { AxisBottom, AxisLeft } from '../charts/Axis'
-import { linear } from '../charts/scales'
-import { useChartSize } from '../charts/useChartSize'
+import {
+  PlotGrid,
+  PlotOverlay,
+  PlotXAxis,
+  PlotYAxis,
+  SURFACE_DEFAULTS,
+  useFrame,
+} from '../charts/RechartsFrame'
 import { TableView } from './TableView'
 import { percentRate, calendarYear } from '../charts/format'
 import type { BracketYear, CboEffectiveRates } from '../../data/types'
@@ -33,6 +41,13 @@ const COLOR: Record<string, string> = {
   lowest: 'var(--positive)', second: 'var(--foreign)', middle: 'var(--mand)',
   fourth: 'var(--disc)', highest: 'var(--domestic)', top1: 'var(--int)',
 }
+
+/** Fixed, so the six marker rows sit on the same axis whichever years are
+ *  published. Hoisted so the axis prop keeps its reference between renders. */
+const Y_DOMAIN: [number, number] = [0, 45]
+
+const PERCENT_TICK = (v: number) => `${v}%`
+const YEAR_TICK = (t: number) => `${t}`
 
 function Marker({ shape, x, y, fill }: { shape: string; x: number; y: number; fill: string }) {
   const s = 4.5
@@ -70,26 +85,19 @@ export function StatutoryVsEffective({
   statutory: BracketYear[]
   cbo: CboEffectiveRates
 }) {
-  const [boxRef, size] = useChartSize()
-  const { width: W, height: H, margin: f } = size
-  const iw = W - f.left - f.right
-  const ih = H - f.top - f.bottom
-  const narrow = W < 500
-
   const [focusYear, setFocusYear] = useState<number | null>(null)
 
   const span = useMemo(() => statutory.filter((r) => r.y >= 1979 && r.y <= 2022), [statutory])
-  const years = span.map((r) => r.y)
-  const x = linear([Math.min(...years), Math.max(...years)], [0, iw])
-  const y = linear([0, 45], [ih, 0])
 
-  const path = useMemo(
-    () => d3line<BracketYear>().x((r) => x(r.y)).y((r) => y(r.top)).curve(curveMonotoneX)(span) ?? '',
-    [span, x, y],
-  )
-
-  const yTicks = y.ticks(narrow ? 4 : 6)
-  const xTicks = x.ticks(narrow ? 4 : 8).filter((t) => Number.isInteger(t))
+  const {
+    boxRef, size, f, xDomain, yDomain, x, y, xTicks, yTicks,
+    chartMargin, chartStyle, surfaceRef, wrapperProps, mark,
+  } = useFrame({
+    rows: span,
+    xOf: (r) => r.y,
+    yValues: span.map((r) => r.top),
+    yDomain: Y_DOMAIN,
+  })
 
   const active = focusYear != null ? span.find((r) => r.y === focusYear) : null
   const activeAnchor = focusYear != null ? cbo.rows.find((r) => r.year === focusYear) : null
@@ -98,6 +106,9 @@ export function StatutoryVsEffective({
     'The top statutory income tax rate ran from 70% in 1979 to 37% in 2022, while the average ' +
     'federal tax rate actually paid by the top 1 percent -- which includes payroll tax -- moved ' +
     'far less, from 35.1% to 31.5%. Nobody pays the top statutory rate on their whole income.'
+
+  // Order is data order, and the array is built in this render.
+  const markProps = span.map(() => mark())
 
   return (
     <div ref={boxRef}>
@@ -110,13 +121,44 @@ export function StatutoryVsEffective({
         ))}
       </div>
 
-      <Chart ariaLabel={label} interactive width={W} height={H} margin={f}>
-        {(fr, mark) => (
-          <>
-            <AxisLeft frame={fr} ticks={yTicks} format={(v) => `${v}%`} label="Percent" scale={y} />
-            <AxisBottom frame={fr} ticks={xTicks} format={(t) => `${t}`} label="Tax / calendar year" scale={x} />
+      <div {...wrapperProps}>
+        <LineChart
+          ref={surfaceRef}
+          data={span}
+          width={size.width}
+          height={size.height}
+          margin={chartMargin}
+          style={chartStyle}
+          aria-label={label}
+          {...SURFACE_DEFAULTS}
+        >
+          <PlotGrid />
+          <PlotXAxis
+            domain={xDomain}
+            ticks={xTicks}
+            gutter={size.margin.bottom}
+            unit="Tax / calendar year"
+            format={YEAR_TICK}
+          />
+          <PlotYAxis
+            domain={yDomain}
+            ticks={yTicks}
+            gutter={size.margin.left}
+            unit="Percent"
+            format={PERCENT_TICK}
+          />
 
-            <path d={path} fill="none" stroke="var(--ink)" strokeWidth={2} />
+          <Line
+            type="monotone"
+            dataKey="top"
+            stroke="var(--ink)"
+            strokeWidth={2}
+            dot={false}
+            activeDot={false}
+            isAnimationActive={false}
+          />
+
+          <PlotOverlay margin={f.margin}>
             {/* End-anchored and lifted clear of the curve, which is
                 VotedAndNot's idiom for naming a line. At `+ 6` past the last
                 point this overran the SVG by 110 units and was clipped to two
@@ -124,10 +166,11 @@ export function StatutoryVsEffective({
                 laid it along the flat right-hand end of the very line it
                 names. */}
             <Annotation
-              frame={fr}
+              frame={f}
               x={x(span[span.length - 1].y) - 4}
               y={y(span[span.length - 1].top) - 8}
               anchor="end"
+              halo
               label="Top statutory rate"
             />
 
@@ -145,26 +188,27 @@ export function StatutoryVsEffective({
               return (
                 <Annotation
                   key={yr}
-                  frame={fr}
+                  frame={f}
                   x={x(yr)}
                   y={y(row.v.top1) - 10}
                   anchor="middle"
+                  halo
                   label={`${yr}: top 1% ${percentRate(row.v.top1)}`}
                 />
               )
             })}
 
-            {span.map((r) => (
+            {span.map((r, i) => (
               <rect
                 key={r.y}
                 className="datum"
                 x={x(r.y) - 4}
                 y={0}
                 width={8}
-                height={ih}
+                height={f.innerHeight}
                 fill={active?.y === r.y ? 'var(--ink)' : 'transparent'}
                 opacity={active?.y === r.y ? 0.06 : 0}
-                {...mark()}
+                {...markProps[i]}
                 role="img"
                 aria-label={
                   `${calendarYear(r.y)}: top statutory rate ${percentRate(r.top)}` +
@@ -182,9 +226,9 @@ export function StatutoryVsEffective({
                 onMouseLeave={() => setFocusYear(null)}
               />
             ))}
-          </>
-        )}
-      </Chart>
+          </PlotOverlay>
+        </LineChart>
+      </div>
 
       <p aria-live="polite" className="readout">
         {active

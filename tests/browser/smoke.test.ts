@@ -30,6 +30,7 @@ import { test, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import { ADVANCE_EM } from '../../src/components/charts/annotate.ts'
 import {
+  CHART_SURFACE,
   CONSOLE_ALLOWLIST,
   ROUTES,
   TARGET_SELECTOR,
@@ -49,10 +50,24 @@ import {
  *  Not a tolerance and not a skip, a recorded baseline, asserted with `<=` so
  *  a new clip fails and a fix also fails, forcing a deliberate re-baseline.
  *  Every entry is enumerated in the failure message when the budget is
- *  exceeded. `/economy` is absent because it has none. */
+ *  exceeded. `/economy` is absent because it has none.
+ *
+ *  LOWERED, from 2/2 and 11/4. Recharts places an `insideBottom` axis label on
+ *  the axis box's bottom edge, so every x-axis title on the site hung 2px below
+ *  its surface and this budget went to 7, 10 and 11. The offset in
+ *  `RechartsFrame.tsx`'s `useAxisLabel` lifts them back inside, and what is
+ *  left is one clip per route: `/households`' rotated y title at 390px, which
+ *  runs longer than its own plot, and `/government` §5's curated-scope note,
+ *  drawn in the top margin. Both are #83's original subject. */
 export const VERTICAL_CLIP_BASELINE: Record<string, Record<string, number>> = {
-  '/households': { narrow: 2, wide: 2 },
-  '/government': { narrow: 11, wide: 4 },
+  /* Both defects are repaired, so the budget is zero and this guard bites
+   * again. `/households` narrow was the rotated axis title `placeAxisTitleY`
+   * now places (see `clipping.test.ts`'s ROTATED_CLIP_BASELINE).
+   * `/government` was `BudgetChart`'s control-strip caption, whose baseline sat
+   * 7 units below the surface's top edge against about 8.4 units of ascent; it
+   * is now derived from the font rather than tuned. */
+  '/households': { narrow: 0, wide: 0 },
+  '/government': { narrow: 0, wide: 0 },
 }
 
 /** The `<text>` classes whose width `estimateTextWidth` estimates, the keys of
@@ -106,15 +121,23 @@ async function assertNoHorizontalOverflow(page: import('playwright').Page, where
 }
 
 /** Check 6. The skip link is the first tab stop, its target exists and is
- *  focusable, and, below 62rem, where the navbar is the navigation, the next
- *  two stops are the nav disclosure and something inside `<main>`. Inventory
- *  #27; the contract already records this order at
- *  `docs/contracts/accessibility.md:1181`.
+ *  focusable, and, below 62rem, the stops that follow reach the nav disclosure
+ *  and then something inside `<main>`. Inventory #27; the contract already
+ *  records this order at `docs/contracts/accessibility.md:1181`.
  *
- *  At or above 62rem `.navbar` is `display: none` and the rail is the
- *  navigation, so the second stop is a rail link. The three-stop assertion is
- *  scoped to the width the contract states it for rather than restated for a
- *  layout it was never measured against. */
+ *  WHAT CHANGED. This used to assert that the SECOND stop was
+ *  `summary.navbar-trigger`, because the narrow-viewport bar held nothing else
+ *  focusable. The bar now carries the site title (`a.navbar-title`) and a
+ *  three-option theme control ahead of the disclosure, so the second stop is
+ *  the title link and the trigger is the fourth. The property that matters is
+ *  unchanged and is what is asserted here: every stop before `<main>` belongs
+ *  to the site bar, the disclosure trigger is among them, and the first stop
+ *  inside `<main>` follows immediately after the bar. Pinning the ordinal would
+ *  make this red the next time the bar gains a control, which is not a defect.
+ *
+ *  At or above 62rem `.navbar-disclosure` is `display: none` and the wide route
+ *  list carries the links, so the disclosure assertion is scoped to the width
+ *  the contract states it for. */
 async function assertTabOrder(page: import('playwright').Page, where: string, narrow: boolean) {
   await page.keyboard.press('Tab')
   const first = await page.evaluate(() => {
@@ -138,15 +161,44 @@ async function assertTabOrder(page: import('playwright').Page, where: string, na
 
   if (!narrow) return
 
-  await page.keyboard.press('Tab')
-  const second = await page.evaluate(() => document.activeElement?.className ?? '')
+  // Walk out of the site bar. Bounded at eight presses, which is four more
+  // than the bar holds today: a walk that never leaves it is a failure, not a
+  // number to accept.
+  const trail: string[] = []
+  let reachedMain = false
+  for (let i = 0; i < 8 && !reachedMain; i += 1) {
+    await page.keyboard.press('Tab')
+    const here = await page.evaluate(() => {
+      const el = document.activeElement
+      if (el === null) return null
+      return {
+        cls: el.className?.toString() ?? '',
+        inMain: el.closest('main') !== null,
+        inBar: el.closest('.navbar') !== null,
+      }
+    })
+    assert.notEqual(here, null, `${where}: focus left the document inside the site bar`)
+    trail.push(here!.cls)
+    if (here!.inMain) {
+      reachedMain = true
+      break
+    }
+    assert.ok(
+      here!.inBar,
+      `${where}: tab stop ${JSON.stringify(here!.cls)} is in neither the site bar nor <main>; ` +
+        `the stops between the skip link and the content are supposed to be the bar's`,
+    )
+  }
   assert.ok(
-    second.split(' ').includes('navbar-trigger'),
-    `${where}: the second tab stop is ${JSON.stringify(second)}, expected summary.navbar-trigger`,
+    reachedMain,
+    `${where}: eight presses after the skip link never reached <main>; the trail was ` +
+      `${JSON.stringify(trail)}`,
   )
-  await page.keyboard.press('Tab')
-  const thirdInMain = await page.evaluate(() => document.activeElement?.closest('main') !== null)
-  assert.ok(thirdInMain, `${where}: the third tab stop is outside <main>`)
+  assert.ok(
+    trail.some((cls) => cls.split(' ').includes('navbar-trigger')),
+    `${where}: the nav disclosure is not among the stops before <main>; the trail was ` +
+      `${JSON.stringify(trail)}`,
+  )
 }
 
 for (const route of ROUTES) {
@@ -164,8 +216,12 @@ for (const route of ROUTES) {
         assert.equal(figures, route.figures, `${where}: <figure> count`)
         await mountIslands(page, route.hydratedSvg)
 
+        /* CHART SURFACES, not every `<svg>`: `hydratedSvg` counts those, and
+         * every question below is about a chart. A zero-width one means an
+         * island rendered and never laid out; a navigation icon means nothing
+         * here. See `CHART_SURFACE` in `harness.ts`. */
         const svgs = await page.evaluate(() => {
-          const all = [...document.querySelectorAll('svg')]
+          const all = [...document.querySelectorAll('.chart svg, svg.chart')]
           return {
             total: all.length,
             zeroWidthVisible: all
@@ -386,8 +442,8 @@ test('scripting off @ 390x844', async () => {
     try {
       await assertNoHorizontalOverflow(page, where)
       await assertTabOrder(page, where, true)
-      const svgs = await page.locator('svg').count()
-      assert.equal(svgs, route.ssrSvg, `${where}: server-rendered <svg> count`)
+      const svgs = await page.locator(CHART_SURFACE).count()
+      assert.equal(svgs, route.ssrSvg, `${where}: server-rendered chart-surface count`)
 
       if (route.path === '/government') {
         // #63's by-state geometry, unchanged with scripting off: the scroll
@@ -425,15 +481,27 @@ test('scripting off @ 390x844', async () => {
  *  `client:visible`, so a name that only becomes correct at hydration would
  *  satisfy a check on a hydrated page while the scripting-off reader hears
  *  nothing useful, the shape #69's lane had, passing 59/59 while 113 data
- *  points sat in the tab order. The scripting-off pass below proves the eight
- *  groups and their `aria-labelledby` lists are in the HTML Astro shipped;
- *  only then is Chromium asked what it makes of them.
+ *  points sat in the tab order. The scripting-off pass below proves the nine
+ *  groups and their names are in the HTML Astro shipped; only then is Chromium
+ *  asked what it makes of them.
+ *
+ *  NINE, NOT EIGHT, AND ONE OF THEM IS NOT A FIGURE. The site bar now carries a
+ *  three-state theme control, which is a `radiogroup` with an `aria-label` of
+ *  its own and no figure to be numbered by. The uniqueness rule is what #72 is
+ *  about and it still runs over every group on the page; the `Figure N` prefix
+ *  rule belongs to the eight unit toggles inside `<main>` and is asserted over
+ *  those, so the population each half covers is stated rather than assumed.
  *
  *  Bounded explicitly (#123): `node --test` has no default per-test timeout, and
  *  an unbounded wait in this lane hung CI for fifteen minutes during #71. */
 test('every radiogroup on /government has a distinct accessible name (#72)', { timeout: 60_000 }, async () => {
   const route = ROUTES.find((r) => r.path === '/government')!
-  const EXPECTED = 8
+  /** Every radiogroup on the route: eight figure unit toggles and the site
+   *  bar's theme control. */
+  const EXPECTED = 9
+  /** Of those, the ones bound to a figure. The remaining one is the theme
+   *  control, which lives in `.navbar` and is named by `aria-label`. */
+  const EXPECTED_FIGURE_GROUPS = 8
 
   // 1. The served bytes, scripting off.
   {
@@ -445,6 +513,7 @@ test('every radiogroup on /government has a distinct accessible name (#72)', { t
         [...document.querySelectorAll('[role="radiogroup"]')].map((n) => ({
           labelledby: n.getAttribute('aria-labelledby'),
           label: n.getAttribute('aria-label'),
+          inMain: n.closest('main') !== null,
         })),
       )
       assert.equal(
@@ -453,12 +522,26 @@ test('every radiogroup on /government has a distinct accessible name (#72)', { t
         `scripting off: ${ssr.length} [role=radiogroup] in the served HTML, expected ${EXPECTED}. ` +
           `The names must be right before hydration, not because of it.`,
       )
-      for (const g of ssr) {
+      const figureGroups = ssr.filter((g) => g.inMain)
+      assert.equal(
+        figureGroups.length,
+        EXPECTED_FIGURE_GROUPS,
+        `scripting off: ${figureGroups.length} radiogroups inside <main>, expected ` +
+          `${EXPECTED_FIGURE_GROUPS}. This test's figure rules run over that set.`,
+      )
+      for (const g of figureGroups) {
         assert.ok(
           g.labelledby && g.labelledby.split(' ').length === 2,
           `scripting off: a radiogroup carries aria-labelledby=${JSON.stringify(g.labelledby)} / ` +
             `aria-label=${JSON.stringify(g.label)} instead of a two-token figure+label list. ` +
             `A name typed at the call site is what #72 removed.`,
+        )
+      }
+      for (const g of ssr.filter((x) => !x.inMain)) {
+        assert.ok(
+          (g.label ?? '').trim() !== '',
+          `scripting off: the radiogroup outside <main> carries no aria-label. The theme control ` +
+            `has no figure to be named by, so its own label is the whole name it gets.`,
         )
       }
     } finally {
@@ -475,6 +558,13 @@ test('every radiogroup on /government has a distinct accessible name (#72)', { t
       groups.length,
       EXPECTED,
       `${groups.length} radiogroups after hydration, expected ${EXPECTED}`,
+    )
+    const inMain = await page.locator('main [role="radiogroup"]').all()
+    assert.equal(
+      inMain.length,
+      EXPECTED_FIGURE_GROUPS,
+      `${inMain.length} radiogroups inside <main> after hydration, expected ` +
+        `${EXPECTED_FIGURE_GROUPS}`,
     )
 
     // `ariaSnapshot()` yields `- radiogroup "Figure 1 Measured in":`, the name
@@ -496,7 +586,19 @@ test('every radiogroup on /government has a distinct accessible name (#72)', { t
       `Chromium computes ${new Set(names).size} distinct names for ${EXPECTED} radiogroups on ` +
         `/government: ${JSON.stringify(names)}. A reader entering two of these hears the same thing.`,
     )
-    for (const n of names) {
+    const figureNames: string[] = []
+    for (const g of inMain) {
+      const snapshot = await g.ariaSnapshot()
+      const name = /^- radiogroup "([^"]*)"/.exec(snapshot)?.[1]
+      assert.ok(name, `could not read a radiogroup name: ${JSON.stringify(snapshot)}`)
+      figureNames.push(name!)
+    }
+    assert.equal(
+      figureNames.length,
+      EXPECTED_FIGURE_GROUPS,
+      'a figure radiogroup was skipped uncounted',
+    )
+    for (const n of figureNames) {
       assert.match(
         n,
         /^Figure \d+ .+/,

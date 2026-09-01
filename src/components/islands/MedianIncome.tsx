@@ -5,17 +5,26 @@
  *  field family, and there is no honest second unit to offer here (see
  *  docs/contracts/interfaces/income-inequality-data.md). The shared
  *  `YearRange` brush is the interaction instead of a unit toggle.
+ *
+ *  Recharts draws the line, the grid and the two axes. The focusable points,
+ *  the readout and the table stay the site's own code, and the two
+ *  reference-identity rules that govern every Recharts island are stated in
+ *  `../charts/RechartsFrame.tsx`.
  */
 import { useMemo, useState } from 'react'
-import { line as d3line } from 'd3-shape'
-import { Chart } from '../charts/Chart'
-import { AxisBottom, AxisLeft } from '../charts/Axis'
-import { linear, niceExtent } from '../charts/scales'
+import { Line, LineChart } from 'recharts'
+import {
+  PlotGrid,
+  PlotOverlay,
+  PlotXAxis,
+  PlotYAxis,
+  SURFACE_DEFAULTS,
+  useFrame,
+} from '../charts/RechartsFrame'
 import { calendarYear, dollars, dollarsCompact } from '../charts/format'
 import { seriesSpan, clampToRange } from '../charts/series'
 import { YearRange } from './YearRange'
 import { TableView } from './TableView'
-import { useChartSize } from '../charts/useChartSize'
 import type { IncomeYear } from '../../data/types'
 import { ChartHint } from '../charts/ChartHint'
 
@@ -28,23 +37,25 @@ export function MedianIncome({ rows }: { rows: IncomeYear[] }) {
   const [focus, setFocus] = useState<number | null>(null)
 
   const shown = useMemo(() => clampToRange(rows, range), [rows, range])
+  // Nulls are dropped before the frame sees them, because the memo key inside
+  // `useFrame` reads `Math.min` over this array and null coerces to zero.
+  const values = useMemo(
+    () => shown.map((r) => r.mhi).filter((v): v is number => v != null),
+    [shown],
+  )
+  const points = useMemo(() => shown.filter((r) => r.mhi != null), [shown])
 
-  const [boxRef, size] = useChartSize()
-  const { width: W, height: H, margin: f } = size
-  const iw = W - f.left - f.right
-  const ih = H - f.top - f.bottom
-  const narrow = W < 500
-
-  const x = linear(range, [0, iw])
-  const y = linear(niceExtent(shown.map((r) => r.mhi)), [ih, 0])
-
-  const path = d3line<IncomeYear>()
-    .defined((r) => r.mhi != null)
-    .x((r) => x(r.y))
-    .y((r) => y(r.mhi as number))
-
-  const yTicks = y.ticks(narrow ? 4 : 6)
-  const xTicks = x.ticks(narrow ? 4 : 8).filter((t) => Number.isInteger(t))
+  const {
+    boxRef, size, f, xDomain, yDomain, x, y, xTicks, yTicks,
+    chartMargin, chartStyle, surfaceRef, wrapperProps, mark,
+  } = useFrame({
+    rows: shown,
+    xOf: (r) => r.y,
+    yValues: values,
+    // The brush sets the domain, so an end year with no observation still
+    // reaches the axis edge the slider promised.
+    xDomain: range,
+  })
 
   const fmtFull = (r: IncomeYear) => `${calendarYear(r.y)}: ${dollars(r.mhi as number)}`
   const active = focus != null ? shown.find((r) => r.y === focus) : null
@@ -55,6 +66,10 @@ export function MedianIncome({ rows }: { rows: IncomeYear[] }) {
     first && last
       ? `Real median household income at each year from ${range[0]} to ${range[1]}, from ${dollars(first.mhi as number)} in ${first.y} to ${dollars(last.mhi as number)} in ${last.y}, in constant 2024 dollars.`
       : 'Real median household income, constant 2024 dollars.'
+
+  // Order is data order, and the array is built in this render. Calling
+  // `mark()` from a Recharts callback would advance the counter out of step.
+  const markProps = points.map(() => mark())
 
   return (
     <div ref={boxRef}>
@@ -67,27 +82,46 @@ export function MedianIncome({ rows }: { rows: IncomeYear[] }) {
         onChange={setRange}
       />
 
-      <Chart ariaLabel={label} interactive width={W} height={H} margin={f}>
-        {(fr, mark) => (
-          <>
-            <AxisLeft
-              frame={fr}
-              ticks={yTicks}
-              format={dollarsCompact}
-              label="Constant 2024 dollars"
-              scale={y}
-            />
-            <AxisBottom
-              frame={fr}
-              ticks={xTicks}
-              format={calendarYear}
-              label="Calendar year"
-              scale={x}
-            />
-            <path d={path(shown) ?? ''} fill="none" stroke="var(--ink)" strokeWidth={2} />
+      <div {...wrapperProps}>
+        <LineChart
+          ref={surfaceRef}
+          data={shown}
+          width={size.width}
+          height={size.height}
+          margin={chartMargin}
+          style={chartStyle}
+          aria-label={label}
+          {...SURFACE_DEFAULTS}
+        >
+          <PlotGrid />
+          <PlotXAxis
+            domain={xDomain}
+            ticks={xTicks}
+            gutter={size.margin.bottom}
+            unit="Calendar year"
+            format={calendarYear}
+          />
+          <PlotYAxis
+            domain={yDomain}
+            ticks={yTicks}
+            gutter={size.margin.left}
+            unit="Constant 2024 dollars"
+            format={dollarsCompact}
+          />
+          <Line
+            type="linear"
+            dataKey="mhi"
+            stroke="var(--ink)"
+            strokeWidth={2}
+            dot={false}
+            activeDot={false}
+            connectNulls={false}
+            isAnimationActive={false}
+          />
 
+          <PlotOverlay margin={f.margin}>
             {/* Every point is Tab-focusable and reports the same thing hover does. */}
-            {shown.filter((r) => r.mhi != null).map((r) => (
+            {points.map((r, i) => (
               <circle
                 key={r.y}
                 className="datum"
@@ -95,7 +129,7 @@ export function MedianIncome({ rows }: { rows: IncomeYear[] }) {
                 cy={y(r.mhi as number)}
                 r={active?.y === r.y ? 5 : 8}
                 fill={active?.y === r.y ? 'var(--ink)' : 'transparent'}
-                {...mark()}
+                {...markProps[i]}
                 // NOT role="button": focusing a point reveals its value, it does
                 // not activate anything.
                 role="img"
@@ -106,9 +140,9 @@ export function MedianIncome({ rows }: { rows: IncomeYear[] }) {
                 onMouseLeave={() => setFocus(null)}
               />
             ))}
-          </>
-        )}
-      </Chart>
+          </PlotOverlay>
+        </LineChart>
+      </div>
 
       <p aria-live="polite" className="readout">
         {active ? fmtFull(active) : <ChartHint noun="year" />}

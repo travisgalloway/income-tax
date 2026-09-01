@@ -241,16 +241,42 @@ follows the same skeleton:
    `onFocus`. Its idle text is `<ChartHint noun="…" />`, never a hand-written sentence.
 5. A `<TableView>` mirroring the chart's active unit and columns.
 
-**Every island server-renders its whole `<svg>`.** The skeleton above must produce its chart in the
-build output, not on mount: with scripting off a reader still gets the SVG, both axis labels, the
-tick text, the figcaption apparatus and the table. Two things are therefore forbidden. The first is mounting an
-island `client:only` (which emits an empty `<astro-island>` and no chart at all), and gating any
-part of the render on having measured the client, which is why `useChartSize` returns the `WIDE`
-preset *before* measurement rather than `null`. `client:visible` and `client:load` both server-render
-and differ only in when hydration fires, so either is fine.
-`pipeline/tests/test_accessibility.py::test_every_figure_server_renders_its_chart_svg` holds this for
-every `<figure class="figure">` on every built page; `test_government_section_1_renders_its_whole_apparatus_without_scripting`
-holds the fuller enumeration for `DebtChart`.
+**Every island server-renders its apparatus, and the chart itself does not.** This clause was
+rewritten when the site adopted Recharts, and the change is a real loss recorded here rather than a
+detail. It previously read that every island server-renders its whole `<svg>`.
+
+Recharts 3.10.1 renders no chart during `renderToString`. `ReportChartSize` dispatches the chart's
+width and height from a `useEffect`, effects do not run in a static render, so the store still holds
+`width: 0` when `MainChartSurface` reads it and that component returns `null` for a non-positive
+width. `CartesianChart` hardcodes the store's `preloadedState`, so no prop reaches past it. Explicit
+`width` and `height` on the chart do not change the outcome. The measurements are in
+`docs/design-notes-recharts.md`.
+
+What a reader without scripting therefore gets, and what they lose:
+
+| Served in the build output | Absent until hydration |
+|---|---|
+| The figure number, title and deck | The chart `<svg>` |
+| Both axis units, in the caption | The axis labels and tick text drawn in the plot |
+| The `Units.` / `Note.` / `Source.` / `Follow.` caption lines | The focusable marks and their `aria-label`s |
+| The full `<TableView>` table, with every row, column and unit | The chart's own `aria-label` finding sentence |
+| The unit toggle markup, inert | The live readout |
+
+The table is the reason this is acceptable rather than merely tolerated. It is a real table, it
+carries every number the chart draws with its units, and it is a native `<details>` that opens
+without scripting. A reader without JavaScript reaches every figure's data, through one more click.
+
+**`client:only` stays forbidden, and the reason changed.** It is no longer about the chart, which
+does not server-render either way. `TableView` is rendered inside the island, so `client:only` would
+take the table out of the served bytes with it, and the table is now the whole no-script path.
+`client:visible` and `client:load` both server-render the island's markup and defer only hydration,
+so either is fine and one of them is required.
+
+`pipeline/tests/test_accessibility.py::test_every_figure_server_renders_its_apparatus` holds this for
+every `<figure class="figure">` on every built page, asserting the caption and the table rather than
+the SVG. `test_every_chart_has_a_real_table_in_the_static_html` now guards the whole
+no-script path, and `test_government_section_1_renders_its_whole_apparatus_without_scripting` holds
+the fuller enumeration for `DebtChart` against the table.
 
 `LawExplorer.tsx` extends this skeleton with a second focusable set beyond the chart's own
 per-fiscal-year data points: each table row's law-name `<button aria-pressed>` (real button

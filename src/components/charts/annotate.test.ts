@@ -8,6 +8,11 @@
  *  is worst (`innerWidth` 296 against 622, while label text does not shrink),
  *  and it is the only geometry where a label clips off the LEFT edge.
  *
+ *  WIDER is client-only for the same reason. The redesign added it for the
+ *  70rem content column, so every reader above about 1160px gets 1120x520 and
+ *  no static assertion ever observes it. Its plot is 1000 units, which is 3.4
+ *  times NARROW, and its span reaches 1030, past every x the WIDE cases probe.
+ *
  *  The pytest guard `test_no_chart_annotation_is_clipped_by_its_svg` owns the
  *  WIDE half against the served bytes. These two together are the whole
  *  automated floor; the browser probe at 390x844 belongs to #67.
@@ -25,9 +30,14 @@ import {
 } from './annotate.ts'
 import { frame, type Frame } from './scales.ts'
 
-/** The two presets in useChartSize.ts, verbatim. */
+/** The three presets in useChartSize.ts, verbatim. */
 const WIDE: Frame = frame(720, 396, { top: 20, right: 24, bottom: 52, left: 74 })
 const NARROW: Frame = frame(360, 316, { top: 22, right: 12, bottom: 50, left: 52 })
+const WIDER: Frame = frame(1120, 520, { top: 24, right: 32, bottom: 56, left: 88 })
+
+/** Every preset, for the properties that must hold at all three.
+ *  One list, so a fourth preset is added in one place. */
+const PRESETS: Frame[] = [WIDE, NARROW, WIDER]
 
 /** The box a placement actually paints, in local (post-translate) coords. */
 function box(x: number, w: number, anchor: Anchor): [number, number] {
@@ -49,10 +59,12 @@ function assertInside(p: { x: number; textAnchor: Anchor } | null, label: string
 test('the frame presets are the ones useChartSize ships', () => {
   assert.equal(WIDE.innerWidth, 622)
   assert.equal(NARROW.innerWidth, 296)
+  assert.equal(WIDER.innerWidth, 1000)
   // The SVG span is wider than the plot by both margins: annotations may sit
   // over the margin, they may only not leave the viewBox.
   assert.deepEqual(visibleSpan(WIDE), [-72, 644])
   assert.deepEqual(visibleSpan(NARROW), [-50, 306])
+  assert.deepEqual(visibleSpan(WIDER), [-86, 1030])
 })
 
 test('estimateTextWidth is monotone in length and linear in font size', () => {
@@ -129,23 +141,28 @@ test('a label wider than the whole span is absent, not truncated', () => {
   assert.notEqual(placeAnnotation({ x: 0, label: tween, frame: NARROW }), null)
 })
 
-test('the real labels #64 clipped all fit inside the NARROW span', () => {
+test('the real labels #64 clipped all fit inside every preset span', () => {
   // SSR cannot reach this geometry; this is the whole reason test:unit exists
-  // for #64. Criterion 4: BudgetChart's four series labels at both presets.
+  // for #64. Criterion 4: BudgetChart's four series labels at every preset.
+  //
+  // The x is an OFFSET from the plot's right edge, not an absolute unit, so
+  // one list places each label at the same relative position in all three
+  // frames. The frame is the only thing that changes.
   const cases: Array<[number, string, Anchor]> = [
-    [296 + 4, 'Last actual, FY2025', 'start'],
-    [296, 'Top statutory rate', 'start'],
-    [296, '2022: top 1% 31.5%', 'middle'],
-    [296 + 6, 'Mandatory (net)', 'start'],
-    [296 + 6, 'Discretionary', 'start'],
-    [296 + 6, 'Net interest', 'start'],
-    [296 + 6, 'Revenue', 'start'],
-    [296, '2022, 18%', 'start'],
-    [296, '2023: 38.4%', 'middle'],
+    [4, 'Last actual, FY2025', 'start'],
+    [0, 'Top statutory rate', 'start'],
+    [0, '2022: top 1% 31.5%', 'middle'],
+    [6, 'Mandatory (net)', 'start'],
+    [6, 'Discretionary', 'start'],
+    [6, 'Net interest', 'start'],
+    [6, 'Revenue', 'start'],
+    [0, '2022, 18%', 'start'],
+    [0, '2023: 38.4%', 'middle'],
   ]
-  for (const [x, label, anchor] of cases) {
-    assertInside(placeAnnotation({ x, label, frame: NARROW, anchor }), label, NARROW)
-    assertInside(placeAnnotation({ x: x * 2, label, frame: WIDE, anchor }), label, WIDE)
+  for (const f of PRESETS) {
+    for (const [offset, label, anchor] of cases) {
+      assertInside(placeAnnotation({ x: f.innerWidth + offset, label, frame: f, anchor }), label, f)
+    }
   }
 })
 
@@ -163,9 +180,9 @@ test('placement is vintage-independent: the same label places at any x', () => {
 
 test('placement is idempotent', () => {
   const anchors: Anchor[] = ['start', 'middle', 'end']
-  for (const frameUnder of [WIDE, NARROW]) {
+  for (const frameUnder of PRESETS) {
     for (const anchor of anchors) {
-      for (const x of [-300, -60, 0, 150, 296, 620, 700, 900]) {
+      for (const x of [-300, -60, 0, 150, 296, 620, 700, 900, 1030, 1200]) {
         const label = 'Mandatory (net)'
         const first = placeAnnotation({ x, label, frame: frameUnder, anchor })
         assert.ok(first)
@@ -178,9 +195,9 @@ test('placement is idempotent', () => {
 
 test('every anchor at every extreme x lands inside the span', () => {
   const anchors: Anchor[] = ['start', 'middle', 'end']
-  for (const frameUnder of [WIDE, NARROW]) {
+  for (const frameUnder of PRESETS) {
     for (const anchor of anchors) {
-      for (const x of [-1000, -80, -50, 0, 100, 296, 306, 622, 644, 1000]) {
+      for (const x of [-1000, -80, -50, 0, 100, 296, 306, 622, 644, 1000, 1030, 1200]) {
         const label = 'Net interest'
         assertInside(placeAnnotation({ x, label, frame: frameUnder, anchor }), label, frameUnder)
       }
@@ -265,9 +282,9 @@ test('gap is clearance in the anchor\'s own direction, so it survives a flip', (
 
 test('gap does not break idempotence or the null contract', () => {
   const anchors: Anchor[] = ['start', 'middle', 'end']
-  for (const f of [WIDE, NARROW]) {
+  for (const f of PRESETS) {
     for (const anchor of anchors) {
-      for (const x of [-200, -50, 0, 150, 296, 622, 800]) {
+      for (const x of [-200, -50, 0, 150, 296, 622, 800, 1000, 1200]) {
         const label = 'Last actual, FY2025'
         const p = placeAnnotation({ x, gap: 4, label, frame: f, anchor })
         assertInside(p, label, f)

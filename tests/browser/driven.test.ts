@@ -20,6 +20,7 @@
 import { test, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  CHART_SURFACE,
   ROUTES,
   TOLERANCE_PX,
   VIEWPORTS,
@@ -426,8 +427,8 @@ for (const viewport of [NARROW, WIDE]) {
           clientWidth,
           `${where}: the page now scrolls horizontally (${scrollWidth} vs ${clientWidth})`,
         )
-        const svgs = await page.locator('svg').count()
-        assert.equal(svgs, route.hydratedSvg, `${where}: the <svg> count changed`)
+        const svgs = await page.locator(CHART_SURFACE).count()
+        assert.equal(svgs, route.hydratedSvg, `${where}: the chart-surface count changed`)
       } finally {
         await context.close()
       }

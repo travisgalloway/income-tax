@@ -39,6 +39,10 @@
  *  the transform. F2 measures that, and refuses to run on a page where no chart
  *  has a scale other than 1, without a non-unit scale a scaling stroke and a
  *  non-scaling one are indistinguishable and the guard would pass vacuously.
+ *  Two route/viewport combinations now render every chart at exactly 1:1. The
+ *  1120-unit preset meets a 1120px content column at 1440px. `UNSCALED` below
+ *  names those two, and the naming is itself asserted, so a chart that quietly
+ *  stopped scaling still turns this red.
  *
  *  This closes inventory row 29 in `docs/contracts/accessibility.md` and
  *  retires `smoke.test.ts`'s `#75` expected-failure entry.
@@ -355,7 +359,7 @@ test('F1 edge case: the skip link keeps its own colour while inheriting the toke
  *  `a0eec29`+#75 and asserted as an EQUALITY before anything is measured over
  *  them: a route that stops rendering a chart must turn this red rather than
  *  quietly measure fewer. */
-const DATUM_SVGS: Record<string, number> = { '/economy': 5, '/households': 8, '/government': 14 }
+const DATUM_SVGS: Record<string, number> = { '/economy': 5, '/households': 10, '/government': 14 }
 
 /** Of those, the ones that are actually LAID OUT and can therefore be focused.
  *
@@ -365,7 +369,16 @@ const DATUM_SVGS: Record<string, number> = { '/economy': 5, '/households': 8, '/
  *  its `<svg>` is 0x0 and its marks decline focus. Both numbers are asserted:
  *  the first says no chart vanished, the second says none of the ones on screen
  *  was quietly skipped. */
-const RENDERED_SVGS: Record<string, number> = { '/economy': 5, '/households': 8, '/government': 13 }
+const RENDERED_SVGS: Record<string, number> = { '/economy': 5, '/households': 10, '/government': 13 }
+
+/** The route/viewport combinations where EVERY chart's screen CTM is exactly 1,
+ *  so a scaling stroke and a non-scaling one cannot be told apart there.
+ *
+ *  Both entries are the 1120-unit preset meeting a 1120px content column at
+ *  1440px, measured. `/government` is absent from both viewports because §11's
+ *  cartogram and §12's stacked bar keep their own viewBoxes and scale at every
+ *  width. An entry removed from here must be measured, not assumed. */
+const UNSCALED = new Set(['/economy wide', '/households wide'])
 
 for (const route of CHART_ROUTES) {
   for (const viewport of VIEWPORTS) {
@@ -467,14 +480,34 @@ for (const route of CHART_ROUTES) {
         // THE ANTI-BLINDNESS HALF, and the whole point of the guard. Without a
         // chart whose screen CTM scales, a scaling stroke and a non-scaling one
         // are indistinguishable and every assertion below passes vacuously.
-        // Recorded at a0eec29+#75: 0.9722 at 390px, 1.0222 at 1440px, and
-        // /government also carries 0.795 / 1.673.
+        //
+        // WHAT CHANGED. The demand used to run on every route at every
+        // viewport, and it held at a0eec29+#75, at 0.9722 for 390px and 1.0222
+        // for 1440px. `useChartSize` now offers a 1120-unit preset for the
+        // 70rem content column the redesign adopted. That column measures
+        // 1120px at 1440px, so `/economy`'s and `/households`' surfaces render
+        // at EXACTLY 1:1 and their screen CTM is 1. The preset matches the
+        // column there; no chart stopped scaling.
+        //
+        // The demand is therefore scoped to the combinations that can meet it,
+        // and the ones that cannot are NAMED. A route/viewport that stops
+        // scaling turns this red and has to be added deliberately, so the guard
+        // never falls silent on its own. Measured on this branch at 0.9722 for
+        // 390px on all three routes, with /government also at 0.7954 there and
+        // 2.5454 at 1440px.
         const scaled = charts.filter((c) => c.scale !== null && Math.abs(c.scale - 1) > 1e-6)
         assert.ok(
-          scaled.length > 0,
+          scaled.length > 0 || UNSCALED.has(`${route.path} ${viewport.name}`),
           `${route.path} at ${viewport.name}: every chart reports a screen-CTM scale of 1, so this ` +
             `guard cannot tell a scaling stroke from a non-scaling one. It is measuring blind; ` +
             `do not read its silence as a pass.`,
+        )
+        assert.equal(
+          UNSCALED.has(`${route.path} ${viewport.name}`),
+          scaled.length === 0,
+          `${route.path} at ${viewport.name} reports ${scaled.length} scaled charts of ` +
+            `${charts.length}, which disagrees with the UNSCALED list above. A named exception ` +
+            `that has started scaling again is a stale exception, not a pass.`,
         )
 
         for (const c of charts) {
@@ -531,11 +564,30 @@ for (const route of CHART_ROUTES) {
  *
  *  The wide zeros are a fact, not a skip: at 1440px `.navbar-panel` is
  *  `display: none` and `/economy`'s and `/households`' table containers hold no
- *  focusable descendant at all, so those two rows measure nothing and say so. */
+ *  focusable descendant at all, so those two rows measure nothing and say so.
+ *
+ *  EACH NARROW NUMBER FELL BY ONE WHEN THE SITE BAR MOVED THE INTRODUCTION TO
+ *  THE WORDMARK. The disclosure's route list carries six links now, not seven,
+ *  and every one of these counts is one link shorter for that reason alone.
+ *  Re-measured against a build, and the difference was isolated rather than
+ *  assumed: re-inserting one `.navbar-routes` link at runtime returns all three
+ *  routes to 13, 14 and 50 exactly.
+ *
+ *  The panel's own focusability is NOT what moved, and it could not be. This
+ *  walk counts `container.querySelectorAll(...)`, so a container never counts
+ *  itself, and `.navbar-panel` carries a static `tabindex="-1"` written in
+ *  `BaseLayout.astro` for the disclosure to move focus into. It is not a
+ *  `useScrollableRegion` container and never takes a `0`.
+ *
+ *  Nor did any panel cross the overflow threshold, which would have been the
+ *  other way to lose a stop. Against a 776px `max-height`, measured at 390px:
+ *  `/economy` 586px and 630px with the link restored, `/households` 630px and
+ *  674px, `/government` 850px and 894px. The first two never overflow and the
+ *  third always does, in both states. */
 const F3A: Record<string, Record<string, { containers: number; focused: number }>> = {
-  '/economy': { narrow: { containers: 6, focused: 13 }, wide: { containers: 6, focused: 0 } },
-  '/households': { narrow: { containers: 8, focused: 14 }, wide: { containers: 8, focused: 0 } },
-  '/government': { narrow: { containers: 16, focused: 50 }, wide: { containers: 16, focused: 31 } },
+  '/economy': { narrow: { containers: 6, focused: 12 }, wide: { containers: 6, focused: 0 } },
+  '/households': { narrow: { containers: 8, focused: 13 }, wide: { containers: 8, focused: 0 } },
+  '/government': { narrow: { containers: 16, focused: 49 }, wide: { containers: 16, focused: 31 } },
 }
 
 for (const route of CHART_ROUTES) {
@@ -644,18 +696,24 @@ for (const route of CHART_ROUTES) {
  * That instruction now means what it says, because platform drift can no longer
  * be the explanation for crossing one.
  *
- * Measured at a0eec29+#75, counting only elements that actually took focus. The
+ * Measured on this branch, counting only elements that actually took focus. The
  * narrow numbers are lower because the contents rail is `display: none` below
- * 62rem and its links cannot be focused at all there.
+ * 76rem and its links cannot be focused at all there.
+ *
+ * RAISED, by four to six per row, from the a0eec29+#75 measurement. The
+ * redesign puts a site title link and a three-option theme control in the bar
+ * at every width. Those are four more controls a reader can reach. The floors
+ * record what the site now offers, because a floor under the real count is a
+ * sweep claiming less coverage than it has.
  * ------------------------------------------------------------------------- */
 const FOCUS_FLOOR: Record<string, Record<string, number>> = {
-  '/': { narrow: 10, wide: 20 },
-  '/economy': { narrow: 41, wide: 53 },
-  '/households': { narrow: 68, wide: 81 },
-  '/government': { narrow: 156, wide: 174 },
-  '/sources': { narrow: 25, wide: 31 },
-  '/glossary': { narrow: 97, wide: 116 },
-  '/contents': { narrow: 96, wide: 109 },
+  '/': { narrow: 14, wide: 26 },
+  '/economy': { narrow: 45, wide: 57 },
+  '/households': { narrow: 74, wide: 87 },
+  '/government': { narrow: 160, wide: 178 },
+  '/sources': { narrow: 29, wide: 35 },
+  '/glossary': { narrow: 101, wide: 120 },
+  '/contents': { narrow: 102, wide: 115 },
 }
 
 /** #71's containers, excluded from the floor above and asserted separately. */
@@ -735,38 +793,46 @@ for (const viewport of VIEWPORTS) {
  * The case the issue names, `/economy`'s 87-mark group, 3.31px marks at a
  * 3.35px pitch, is ZERO at the old 1.5px rule and zero at 2px: the ring box
  * grows from 7.31px to 9.31px and reaches the same two neighbour centres
- * either way. Both offenders below are pinned by GROUP IDENTITY rather than by
- * magnitude, so a third chart crossing the line turns this red while ordinary
+ * either way. Every offender below is pinned by GROUP IDENTITY rather than by
+ * magnitude, so a further chart crossing the line turns this red while ordinary
  * data drift does not.
  * ------------------------------------------------------------------------- */
 
-/** The two groups where a focused mark's ring fully encloses a neighbour, both
- *  measured at 390px against the old 1.5px rule as well as the new token:
+/** The groups where a focused mark's ring fully encloses a neighbour, measured
+ *  at 390px against the old 1.5px rule as well as the new token:
  *
- *  - `BracketHistory` on `/households`: 113 marks, 5.83px hit rects at a
- *    **2.465px** pitch, the rects already overlap each other by 3.4px. 0
- *    enclosed at 1.5px, 224 at 2px (~2 per focused mark). 0 at 1440px. This is
- *    mark density (#73 measured 0.9px per datum at 390px), not ring width: no
- *    ring that meets WCAG can be narrower than a 2.465px pitch. PARKED, not
- *    absorbed by keeping 1.5px there.
+ *  - `BracketHistory`'s THREE panels on `/households`: 113 marks each, 5.83px
+ *    hit rects at a **2.465px** pitch, so the rects already overlap each other
+ *    by 3.4px. 0 enclosed at 1.5px, 224 at 2px (~2 per focused mark). 0 at
+ *    1440px. This is mark density (#73 measured 0.9px per datum at 390px), not
+ *    ring width: no ring that meets WCAG can be narrower than a 2.465px pitch.
+ *    PARKED, not absorbed by keeping 1.5px there.
  *  - `OecdChart` on `/government`: its first mark is the OECD-average
  *    reference band, a `<rect>` 11.67px wide and **272.21px tall** spanning the
  *    whole plot, so the countries whose dots fall inside its x-span are
  *    enclosed by its ring whatever the width. **2 enclosed at 1.5px, 3 at
  *    2px**, pre-existing, and the plan for this issue did not have it. PARKED.
- */
+ *
+ *  WHAT CHANGED. The list carried two entries. One named `/households` by the
+ *  prefix `The top US income tax bracket has run`. The redesign gives
+ *  `BracketHistory` three panels, each with its own finding sentence, and all
+ *  three carry the same 2.465px geometry. The one entry became three, and the
+ *  old prefix matches none of them. The ring and the density are unchanged;
+ *  only the labels moved. */
 const F4_EXCEPTIONS = [
   '/government:Total tax revenue as a share of GDP',
-  '/households:The top US income tax bracket has run',
+  '/households:The top statutory US income tax rate has ranged',
+  '/households:The US income tax schedule has run',
+  '/households:The income threshold where the top bracket begins',
 ]
 
 /** Groups with three or more marks per chart route at 390px, asserted as an
- *  equality before any enclosure is counted. (`/households` has eight
- *  mark-bearing `<svg>`s but only seven with three or more marks, the eighth
- *  is `TopShare`'s two-mark comparison.) */
-const F4_GROUPS: Record<string, number> = { '/economy': 5, '/households': 7, '/government': 14 }
+ *  equality before any enclosure is counted. (`/households` has ten
+ *  mark-bearing `<svg>`s and nine with three or more marks; the tenth is
+ *  `TopShare`'s two-mark comparison.) */
+const F4_GROUPS: Record<string, number> = { '/economy': 5, '/households': 9, '/government': 14 }
 
-test('F4 narrow: a focused ring encloses no neighbouring mark, outside two pinned groups', async () => {
+test('F4 narrow: a focused ring encloses no neighbouring mark, outside the pinned groups', async () => {
   const offenders: string[] = []
   for (const route of CHART_ROUTES) {
     const { context, page } = await open(route, VIEWPORTS[0])
@@ -837,6 +903,6 @@ test('F4 narrow: a focused ring encloses no neighbouring mark, outside two pinne
     [...F4_EXCEPTIONS].sort(),
     `the set of chart groups whose focused ring fully encloses a neighbouring mark at 390px is ` +
       `${JSON.stringify(offenders)}, and the carried exceptions are ${JSON.stringify(F4_EXCEPTIONS)}. ` +
-      `Both exceptions are geometry, not ring width.`,
+      `Every carried exception is geometry, not ring width.`,
   )
 })

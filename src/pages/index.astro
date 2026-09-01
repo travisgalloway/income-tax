@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro'
 import { getCollection } from 'astro:content'
 import { routeFigures } from '../data/figures'
-import { introSections, join, routeSections, siteRoutes } from '../data/sections'
+import { introRoute, introSections, join, routeSections, siteRoutes } from '../data/sections'
 
 /* Static Astro, no island, no `client:` directive and no chart: the front door is prose, so
  * #36's server-render rule is satisfied vacuously and greppably. */
@@ -16,7 +16,15 @@ import { introSections, join, routeSections, siteRoutes } from '../data/sections
 /* Every count on this page is read from the same arrays and the same collection the rest of the
  * site renders from, never typed here: a route that gains or loses a section, a figure or a term
  * updates this page in the same build, so the two cannot drift. */
-const siteSectionCount = siteRoutes.reduce((n, r) => n + r.sections.length, 0)
+/* `introRoute` is counted alongside `siteRoutes`, and the pairing matters. The
+ * front door left `siteRoutes` when the bar moved it to the wordmark, but
+ * `/contents` still indexes it, so counting `siteRoutes` alone made this card
+ * advertise 25 sections against the 31 that page lists. The two now read the
+ * same array, which is the property the comment above claims. */
+const siteSectionCount = [introRoute, ...siteRoutes].reduce(
+  (n, r) => n + r.sections.length,
+  0
+)
 const siteFigureCount = Object.values(routeFigures).reduce((n, f) => n + f.length, 0)
 const termCount = (await getCollection('glossary')).length
 
@@ -78,34 +86,15 @@ const cards = [
   <section id="purpose-and-scope">
     <p class="kicker"><span class="section-no">Section 1</span></p>
     <h2>Purpose and scope</h2>
-    <p class="prose">
-      This site presents an account of United States federal finance, drawn only from primary
-      data. Four subjects carry it. The first is the federal debt and who holds it. The second is
-      the whole budget and where the revenue comes from. The third is the major laws that moved
-      the deficit, each with its recorded vote. The fourth is the economy those figures are
-      measured in, and what a household earns and pays inside it.
-    </p>
-    <p class="prose">
-      The scope is federal. State and local finance appears only where a federal figure would
-      otherwise mislead. The two are labelled apart wherever they meet. Nothing here forecasts,
-      and nothing here recommends. Where the data cannot answer a question, the route says so
-      rather than estimating.
-    </p>
+    <p class="prose">This site presents an account of United States federal finance, drawn only from primary data. Four subjects carry it. The first is the federal debt and who holds it. The second is the whole budget and where the revenue comes from. The third is the major laws that moved the deficit, each with its recorded vote. The fourth is the economy those figures are measured in, and what a household earns and pays inside it.</p>
+    <p class="prose">The scope is federal. State and local finance appears only where a federal figure would otherwise mislead. The two are labelled apart wherever they meet. Nothing here forecasts, and nothing here recommends. Where the data cannot answer a question, the route says so rather than estimating.</p>
   </section>
 
   <section id="data-and-coverage">
     <p class="kicker"><span class="section-no">Section 2</span></p>
     <h2>Data and coverage</h2>
-    <p class="prose">
-      The three routes run over different spans, because their sources do. The economy route runs
-      fiscal 1950 to fiscal 2036, with everything after fiscal 2025 a CBO baseline projection. The
-      households route reaches back to 1913 for the bracket ladder and 1984 for household income.
-      The government route runs FY1995 to FY2025, and its budget series reaches back to FY1962.
-    </p>
-    <p class="prose">
-      Six destinations follow, in two kinds. The three routes present the analysis. The three
-      reference pages hold the sources, the contents and the definitions.
-    </p>
+    <p class="prose">The three routes run over different spans, because their sources do. The economy route runs fiscal 1950 to fiscal 2036, with everything after fiscal 2025 a CBO baseline projection. The households route reaches back to 1913 for the bracket ladder and 1984 for household income. The government route runs FY1995 to FY2025, and its budget series reaches back to FY1962.</p>
+    <p class="prose">Six destinations follow, in two kinds. The three routes present the analysis. The three reference pages hold the sources, the contents and the definitions.</p>
     <ol class="cards">
       {cards.map((c) => (
         <li>
@@ -120,87 +109,35 @@ const cards = [
   <section id="reading-a-figure">
     <p class="kicker"><span class="section-no">Section 3</span></p>
     <h2>Reading a figure</h2>
-    <p class="prose">
-      Every figure carries the same apparatus, in the same order, on every route. A section opens
-      with its number, a heading, a standfirst and then a finding. The finding is one sentence,
-      ruled off above and below. The finding states the single claim the figure supports, and it
-      comes before the picture on purpose. Read it, look at the figure, and see whether the two
-      agree.
-    </p>
-    <p class="prose">
-      Beneath the figure sit up to three lines, always in this order.
-    </p>
+    <p class="prose">Every figure carries the same apparatus, in the same order, on every route. A section opens with its number, a heading, a standfirst and then a finding. The finding is one sentence, ruled off above and below. The finding states the single claim the figure supports, and it comes before the picture on purpose. Read it, look at the figure, and see whether the two agree.</p>
+    <p class="prose">Beneath the figure sit up to three lines, always in this order.</p>
     <dl class="apparatus">
       <dt><span class="lead">Units.</span></dt>
       <dd>What each axis measures, the horizontal one first, in the units the numbers are in.</dd>
       <dt><span class="lead">Note.</span></dt>
-      <dd>
-        A scope or method warning. A projection drawn beyond the last actual year, or a series
-        that changes definition partway. Present only when there is one to give.
-      </dd>
+      <dd>A scope or method warning. A projection drawn beyond the last actual year, or a series that changes definition partway. Present only when there is one to give.</dd>
       <dt><span class="lead">Source.</span></dt>
       <dd>The agency, the dataset and its vintage, as the dataset itself states them.</dd>
     </dl>
-    <p class="prose">
-      Units come first, because a number without its unit cannot be checked. Beneath the caption
-      sits a closed disclosure holding the numbers the figure draws. The disclosure holds a real
-      table in the served HTML, present whether or not scripting runs. Where a series can honestly
-      be shown in more than one unit, the figure carries a toggle. The three settings are nominal,
-      real FY2025, and percent of GDP. The same series reads three ways, and all three are true at
-      once. The caption always states which one is showing.
-    </p>
+    <p class="prose">Units come first, because a number without its unit cannot be checked. Beneath the caption sits a closed disclosure holding the numbers the figure draws. The disclosure holds a real table in the served HTML, present whether or not scripting runs. Where a series can honestly be shown in more than one unit, the figure carries a toggle. The three settings are nominal, real FY2025, and percent of GDP. The same series reads three ways, and all three are true at once. The caption always states which one is showing.</p>
   </section>
 
   <section id="provenance-and-method">
     <p class="kicker"><span class="section-no">Section 4</span></p>
     <h2>Provenance and method</h2>
-    <p class="prose">
-      Every number here is published by an agency of record. The Congressional Budget Office
-      supplies the budget and economic series. The US Treasury supplies the debt, its maturity and
-      its holders. The Internal Revenue Service supplies the income tax shares and the bracket
-      ladder. The Census Bureau, through FRED, supplies household income and the Gini index. The
-      OECD supplies the cross-country comparison, and USASpending the award spending by state.
-      Voteview supplies the roll calls, cross-checked against the House Clerk record.
-    </p>
-    <p class="prose">
-      Each figure carries a vintage, which is the release its data came from rather than the years
-      it covers. Official statistics are revised, so the same fiscal year has several published
-      values over time. A figure without its vintage cannot be reconciled against the release it
-      was drawn from.
-    </p>
-    <p class="prose">
-      The basis is the federal fiscal year, October to September, named for the year it ends in.
-      Four series depart from it, and each says so where it appears. The IRS shares are tax year
-      2023. Household income is calendar 2024, the CBO distribution is calendar 2022, and the OECD
-      comparison is 2024 preliminary.
-    </p>
-    <p class="prose">
-      A figure that omits its source, or either axis unit, does not build. The full register is
-      on <a href={join('/sources')}>Sources</a>, where each entry carries its vintage and any
-      known discrepancy between official series.
-    </p>
+    <p class="prose">Every number here is published by an agency of record. The Congressional Budget Office supplies the budget and economic series. The US Treasury supplies the debt, its maturity and its holders. The Internal Revenue Service supplies the income tax shares and the bracket ladder. The Census Bureau, through FRED, supplies household income and the Gini index. The OECD supplies the cross-country comparison, and USASpending the award spending by state. Voteview supplies the roll calls, cross-checked against the House Clerk record.</p>
+    <p class="prose">Each figure carries a vintage, which is the release its data came from rather than the years it covers. Official statistics are revised, so the same fiscal year has several published values over time. A figure without its vintage cannot be reconciled against the release it was drawn from.</p>
+    <p class="prose">The basis is the federal fiscal year, October to September, named for the year it ends in. Four series depart from it, and each says so where it appears. The IRS shares are tax year 2023. Household income is calendar 2024, the CBO distribution is calendar 2022, and the OECD comparison is 2024 preliminary.</p>
+    <p class="prose">A figure that omits its source, or either axis unit, does not build. The full register is on <a href={join('/sources')}>Sources</a>, where each entry carries its vintage and any known discrepancy between official series.</p>
   </section>
 
   <section id="impartiality-and-its-limits">
     <p class="kicker"><span class="section-no">Section 5</span></p>
     <h2>Impartiality and its limits</h2>
-    <p class="prose">
-      The site takes no position on what any of these figures should be. Four practices hold that
-      in place. Party votes are counted from the roll calls rather than classified from the
-      character of a vote. The two attributions of legislative cost, by coalition and by signing
-      president, total the same figure. Party colours appear only on partisan data. And no causal
-      claim is made that the data cannot settle.
-    </p>
-    <p class="prose">
-      Impartiality is not the same as completeness. Every route closes on its own limits, and the
-      government route names six of them. A recorded vote is not a cause, and a fiscal year is not
-      a presidency. A cost estimate at enactment is not an outcome.
-    </p>
+    <p class="prose">The site takes no position on what any of these figures should be. Four practices hold that in place. Party votes are counted from the roll calls rather than classified from the character of a vote. The two attributions of legislative cost, by coalition and by signing president, total the same figure. Party colours appear only on partisan data. And no causal claim is made that the data cannot settle.</p>
+    <p class="prose">Impartiality is not the same as completeness. Every route closes on its own limits, and the government route names six of them. A recorded vote is not a cause, and a fiscal year is not a presidency. A cost estimate at enactment is not an outcome.</p>
     <blockquote class="brief-quote">
-      <p>
-        The site's job is to let a reader check that for themselves. Persuading the reader is not
-        the job.
-      </p>
+      <p>The site's job is to let a reader check that for themselves. Persuading the reader is not the job.</p>
     </blockquote>
     <p class="brief-attrib">The site's design brief</p>
   </section>
@@ -208,15 +145,7 @@ const cards = [
   <section id="suggested-reading-order">
     <p class="kicker"><span class="section-no">Section 6</span></p>
     <h2>Suggested reading order</h2>
-    <p class="prose">
-      The three routes are written to be read in order. The{' '}
-      <a href={`${join('/economy')}/`}>economy</a> comes first, because it sets the denominators
-      the other two are measured against. Households follows, where the tax code meets a person.
-      Government comes last, and is the other side of that bill.
-    </p>
-    <p class="prose">
-      The three reference pages assume no reading order at all. Each serves a look-up at any
-      point: a source, a section, or a definition.
-    </p>
+    <p class="prose">The three routes are written to be read in order. The <a href={`${join('/economy')}/`}>economy</a> comes first, because it sets the denominators the other two are measured against. Households follows, where the tax code meets a person. Government comes last, and is the other side of that bill.</p>
+    <p class="prose">The three reference pages assume no reading order at all. Each serves a look-up at any point: a source, a section, or a definition.</p>
   </section>
 </BaseLayout>

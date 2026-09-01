@@ -13,12 +13,32 @@
  *  reflow the page, and a reader with JavaScript disabled still gets one full,
  *  server-rendered figure (the default coalition view) with nothing to grow
  *  into later.
+ *
+ *  Drawn on `charts/RechartsFrame.tsx` as a `<BarChart layout="vertical">` per
+ *  panel, with `stackOffset="sign"` so the two signed series diverge from one
+ *  baseline. Read that file's header before editing this one.
+ *
+ *  `useFrame` IS NOT USED HERE, and the reason is the forceMount above. That
+ *  hook measures its own container, and the inactive panel is `hidden`, so it
+ *  would measure zero and keep the wide preset on a phone until the reader
+ *  switched tabs. The parent measures once and hands both panels one size, as
+ *  it always has. Everything else comes from the shared frame, including the
+ *  two reference-identity rules, which are restated at the code they govern.
  */
-import { useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import * as Tabs from '@radix-ui/react-tabs'
-import { Chart } from '../charts/Chart'
-import { AxisBottom, AxisLeft, ZeroLine } from '../charts/Axis'
-import { linear } from '../charts/scales'
+import { Bar, BarChart, YAxis, type BarShapeProps } from 'recharts'
+import { ZeroLine } from '../charts/Axis'
+import {
+  PlotGrid,
+  PlotOverlay,
+  PlotXAxis,
+  SURFACE_DEFAULTS,
+  useAxisLabel,
+  useTickFormat,
+} from '../charts/RechartsFrame'
+import { frame as makeFrame, linear } from '../charts/scales'
+import { useRovingMarks } from '../charts/roving'
 import { useChartSize, type ChartSize } from '../charts/useChartSize'
 import { TableView } from './TableView'
 import { byCoalition, byPresident, TOTALS, type Bucket } from '../attribution/aggregate'
@@ -31,6 +51,24 @@ const VIEWS: { value: View; label: string; buckets: Bucket[]; axisLabel: string 
 ]
 
 const fmtT = (v: number) => `${v < 0 ? '−' : ''}$${Math.abs(v).toFixed(2)}T`
+
+/** The bar thickness, in plot units. Fixed rather than derived, so a three-row
+ *  panel and a five-row panel draw the same bar. */
+const BAR_H = 12
+
+/** A Recharts bar span turned into an SVG rect's `x` and `width`.
+ *
+ *  MEASURED, NOT DEFENSIVE. Recharts computes a horizontal bar as
+ *  `x = scale(base)` and `width = scale(value) - scale(base)`, so a bar running
+ *  LEFT of the zero line arrives with a NEGATIVE width and an `x` that is its
+ *  right edge. An SVG rect cannot express that. Chromium rejects the attribute
+ *  and paints nothing, which cost this figure its four deficit-reduction bars
+ *  on `/government`, in both panels, with no visible fault other than the
+ *  missing bars. The diverging half of a diverging bar chart is exactly the
+ *  half this hits, so both shapes below go through here. */
+function spanOf(x: number, width: number): { x: number; width: number } {
+  return { x: Math.min(x, x + width), width: Math.abs(width) }
+}
 
 /** The one string shared by a bar's aria-label and its focus/hover readout,
  *  so the two can never say different things about the same row. */
@@ -57,6 +95,15 @@ function announcement(view: View, buckets: Bucket[]): string {
   )
 }
 
+/** The bar colour for one bucket. The president view is deliberately NOT
+ *  coloured by party, because a president is not a voting coalition. */
+function bucketColor(view: View, key: string): string {
+  if (view !== 'coalition') return 'var(--mand)'
+  if (key === 'party-line-r') return 'var(--gop)'
+  if (key === 'party-line-d') return 'var(--dem)'
+  return 'var(--mix)'
+}
+
 /** One tab's figure + table. Pure function of its bucket list and the shared
  *  container size, so coalition (3 rows) and president (5 rows) each get
  *  their own row height and x-scale rather than borrowing the other's. */
@@ -79,76 +126,157 @@ function Panel({
   onActivate: (key: string) => void
   onDeactivate: () => void
 }): ReactNode {
-  const { width: W, height: H, margin: f } = size
+  const { width: W, height: H, margin: m } = size
   const narrow = W < 500
-  const iw = W - f.left - f.right
-  const rowH = (H - f.top - f.bottom) / buckets.length
+  const f = useMemo(() => makeFrame(W, H, m), [W, H, m])
+  const iw = f.innerWidth
+  const rowH = (H - m.top - m.bottom) / buckets.length
   const y = (i: number) => rowH * i + rowH / 2
-  const maxMag = Math.max(...buckets.map((b) => Math.max(b.increases, -b.reductions, Math.abs(b.net))), 0.1)
-  const x = linear([-maxMag * 1.08, maxMag * 1.08], [0, iw])
-  const xTicks = x.ticks(narrow ? 4 : 6)
+
+  const maxMag = Math.max(
+    ...buckets.map((b) => Math.max(b.increases, -b.reductions, Math.abs(b.net))),
+    0.1,
+  )
+
+  /* RULE 1. Both of these are compared by reference. A fresh `ticks` array on
+   * each render makes Recharts unmount and remount the graphical item, and the
+   * remount destroys whichever mark holds focus, so the roving group answers
+   * one arrow press and then leaves focus on `<body>`. */
+  const { x, xDomain, xTicks } = useMemo(() => {
+    const domain: [number, number] = [-maxMag * 1.08, maxMag * 1.08]
+    const scale = linear(domain, [0, iw])
+    return { x: scale, xDomain: domain, xTicks: scale.ticks(narrow ? 4 : 6) }
+  }, [maxMag, iw, narrow])
+
+  const xFormat = useTickFormat(fmtT, null)
+  const yLabel = useAxisLabel(axisLabel, 'y')
+  const chartMargin = useMemo(
+    () => ({ top: m.top, right: m.right, bottom: 0, left: 0 }),
+    [m.top, m.right],
+  )
+  const chartStyle = useMemo(
+    () => ({ width: '100%', height: 'auto', aspectRatio: `${W} / ${H}` }),
+    [W, H],
+  )
+
+  /* The chart's prop bag is filtered down to SVG attributes, so the roving
+   * group's handlers cannot ride the surface. They sit on the wrapper and
+   * reach the marks by bubbling. Only `ref`, `role`, `aria-label` and `data-*`
+   * survive the filter. */
+  const { groupProps, mark } = useRovingMarks()
+  const { ref: surfaceRef, 'data-roving': roving, ...handlers } = groupProps
+  const wrapperHandlers = handlers as unknown as React.HTMLAttributes<HTMLDivElement>
+
+  // `mark()` runs once per row HERE, in this component's own render, in row
+  // order. Every mark lives in the overlay, so no Recharts subtree advances
+  // the counter on its own.
+  const markProps = buckets.map(() => mark())
 
   return (
     <>
-      <Chart
-        ariaLabel={`Net ten-year legislative cost ${view === 'coalition' ? 'by voting coalition' : 'by signing president'}, totalling ${fmtT(TOTALS.net)} net and ${fmtT(TOTALS.increases)} gross.`}
-        interactive
-        width={W}
-        height={H}
-        margin={f}
+      <div
+        className="chart"
+        {...wrapperHandlers}
+        {...(roving != null ? { 'data-roving': '' } : {})}
       >
-        {(fr, mark) => (
-          <>
-            <AxisLeft
-              frame={fr}
-              ticks={buckets.map((_, i) => i)}
-              format={() => ''}
-              label={axisLabel}
-              scale={(i) => y(i)}
-            />
-            <AxisBottom
-              frame={fr}
-              ticks={xTicks}
-              format={(t) => fmtT(t)}
-              label="$ trillions, ten-year score at enactment"
-              scale={x}
-            />
-            <ZeroLine frame={fr} y={0} />
-            <line x1={x(0)} x2={x(0)} y1={0} y2={fr.innerHeight} stroke="var(--ink)" strokeWidth={1} />
+        <BarChart
+          ref={surfaceRef}
+          layout="vertical"
+          stackOffset="sign"
+          data={buckets}
+          width={W}
+          height={H}
+          margin={chartMargin}
+          style={chartStyle}
+          {...SURFACE_DEFAULTS}
+          aria-label={`Net ten-year legislative cost ${view === 'coalition' ? 'by voting coalition' : 'by signing president'}, totalling ${fmtT(TOTALS.net)} net and ${fmtT(TOTALS.increases)} gross.`}
+        >
+          <PlotGrid />
+          <PlotXAxis
+            dataKey="net"
+            domain={xDomain}
+            ticks={xTicks}
+            gutter={m.bottom}
+            unit="$ trillions, ten-year score at enactment"
+            format={xFormat}
+          />
+          {/* The bucket names are drawn on their own rows rather than as ticks,
+              because they sit above each bar pair and a Recharts `tick`
+              renderer is a fresh function on every render, which rule 1
+              forbids. The axis keeps the gutter and the title. */}
+          <YAxis
+            type="category"
+            dataKey="key"
+            width={m.left}
+            tick={false}
+            axisLine={false}
+            tickLine={false}
+            label={yLabel}
+          />
+
+          {/* `stackOffset="sign"` is what makes these two diverge from one
+              baseline. Increases are positive and run right of zero;
+              reductions are kept negative and run left of it.
+
+              Both shapes go through `spanOf`, for the reason recorded there. */}
+          <Bar
+            dataKey="increases"
+            stackId="score"
+            barSize={BAR_H}
+            isAnimationActive={false}
+            activeBar={false}
+            shape={(props: BarShapeProps) => {
+              const i = props.originalDataIndex
+              const b = buckets[i]
+              if (!b || b.increases <= 0 || !Number.isFinite(props.width)) return null
+              const span = spanOf(props.x, props.width)
+              return (
+                <rect
+                  key={b.key}
+                  x={span.x}
+                  y={y(i) - BAR_H / 2}
+                  width={span.width}
+                  height={BAR_H}
+                  fill={bucketColor(view, b.key)}
+                  opacity={0.55}
+                />
+              )
+            }}
+          />
+          <Bar
+            dataKey="reductions"
+            stackId="score"
+            barSize={BAR_H}
+            isAnimationActive={false}
+            activeBar={false}
+            shape={(props: BarShapeProps) => {
+              const i = props.originalDataIndex
+              const b = buckets[i]
+              if (!b || b.reductions >= 0 || !Number.isFinite(props.width)) return null
+              const span = spanOf(props.x, props.width)
+              return (
+                <rect
+                  key={b.key}
+                  x={span.x}
+                  y={y(i) - BAR_H / 2}
+                  width={span.width}
+                  height={BAR_H}
+                  fill="var(--positive)"
+                  opacity={0.55}
+                />
+              )
+            }}
+          />
+
+          <PlotOverlay margin={f.margin}>
+            <ZeroLine frame={f} y={0} />
+            <line x1={x(0)} x2={x(0)} y1={0} y2={f.innerHeight} stroke="var(--ink)" strokeWidth={1} />
 
             {buckets.map((b, i) => {
               const isActive = active === b.key
-              const partyColor =
-                view === 'coalition'
-                  ? b.key === 'party-line-r'
-                    ? 'var(--gop)'
-                    : b.key === 'party-line-d'
-                      ? 'var(--dem)'
-                      : 'var(--mix)'
-                  : 'var(--mand)'
-              const netColor = b.net < 0 ? 'var(--positive)' : partyColor
+              const netColor = b.net < 0 ? 'var(--positive)' : bucketColor(view, b.key)
               return (
                 <g key={b.key}>
-                  {b.increases > 0 && (
-                    <rect
-                      x={x(0)}
-                      y={y(i) - 6}
-                      width={x(b.increases) - x(0)}
-                      height={12}
-                      fill={partyColor}
-                      opacity={0.55}
-                    />
-                  )}
-                  {b.reductions < 0 && (
-                    <rect
-                      x={x(b.reductions)}
-                      y={y(i) - 6}
-                      width={x(0) - x(b.reductions)}
-                      height={12}
-                      fill="var(--positive)"
-                      opacity={0.55}
-                    />
-                  )}
                   <path
                     d={`M ${x(b.net) - 6} ${y(i)} L ${x(b.net)} ${y(i) - 6} L ${x(b.net) + 6} ${y(i)} L ${x(b.net)} ${y(i) + 6} Z`}
                     fill={netColor}
@@ -179,7 +307,7 @@ function Panel({
                     width={iw}
                     height={rowH}
                     fill="transparent"
-                    {...mark()}
+                    {...markProps[i]}
                     role="img"
                     aria-label={describe(b)}
                     onFocus={() => onActivate(b.key)}
@@ -192,9 +320,9 @@ function Panel({
                 </g>
               )
             })}
-          </>
-        )}
-      </Chart>
+          </PlotOverlay>
+        </BarChart>
+      </div>
 
       <TableView
         caption={`Net ten-year legislative cost, ${label.toLowerCase()}`}

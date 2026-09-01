@@ -5,51 +5,72 @@
  * IBM Plex loaded from Google Fonts. No webfont is loaded now: the page paints
  * with the reader's own faces on first byte.
  *
- * COLOUR is unchanged from BRIEF.md and remains non-negotiable. The data hues
- * are semantic and were contrast-tuned against this ground, and the cool stone
- * already reads as aged publication stock, so warming it would buy nothing.
+ * COLOUR was reviewed and replaced. The ground moves from a cool stone to a
+ * warm paper one step deeper than Financial Times paper #FFF1E5, and the party
+ * pair takes FT oxford and claret. The values come from the Origami package
+ * `@financial-times/o-colors` 6.7.1, read directly rather than quoted.
+ *
+ * The 13 semantic data tokens keep their meanings exactly. Only the values
+ * moved, and they moved to buy two things the old palette did not have. Six
+ * series tokens scored under 3:1 against the old panel and every token here
+ * clears it. `--mix` sat OKLab dE 4.9 from `--dem` under protanopia, below the
+ * floor of 6, so mixed control and Democratic control were indistinguishable to
+ * those readers; the deep aubergine lifts the worst party pair to 11.3.
+ *
+ * SURFACES. `--panel` sits one hair from `--ground`, at 1.06:1 in both themes.
+ * It used to sit at 1.20:1 in light and 1.08:1 in dark, and the light value
+ * `#FDFAF5` was near white, so every plot area read as a bright card laid on
+ * warm paper. A statistical publication prints the plot area at the paper
+ * colour or a shade off it, and lets the axis rules and the frame say where
+ * the plot is. The two surfaces are not made identical, because three islands
+ * (`DebtMaturity`, `DebtHolders`, `WhoPays`) draw no gridline and no axis line
+ * at all, so the `--panel` fill is the only thing that states the plot
+ * rectangle. At 1.06:1 that rectangle still reads, and it no longer competes
+ * with the marks inside it.
+ *
+ * Every ratio is tabulated in `docs/design-notes-color.md`.
  */
 
 :root {
   /* Surface */
-  --ground: #DDE0DB;   /* page background, a cool stone */
-  --panel: #F3F4F0;    /* chart plot areas */
-  --ink: #11161B;
-  --ink-soft: #5A6268;
-  --rule: #B4BAB3;
+  --ground: #ede5d9;   /* page background, a warm paper */
+  --panel: #f2ebe1;    /* chart plot areas */
+  --ink: #14181d;
+  --ink-soft: #57534b;
+  --rule: #857e72;
 
   /* Party. ONLY for partisan data. Never for holders, maturity, OECD or macro. */
-  --dem: #1D4E89;
-  --gop: #A8322D;
-  --mix: #6E3FA3;
+  --dem: #0f5499;
+  --gop: #990f3d;
+  --mix: #421a5c;
 
   /* Budget categories */
-  --mand: #55606B;
-  --disc: #3E7C86;
-  --int: #C77D28;
+  --mand: #37434f;
+  --disc: #0d7680;
+  --int: #a85c11;
 
   /* Non-partisan series */
-  --domestic: #55606B;
-  --foreign: #93A8B3;
-  --public: #3E7C86;
-  --intragov: #C77D28;
-  --positive: #2E7D5B;  /* surplus, deficit reduction */
+  --domestic: #37434f;
+  --foreign: #647e9c;
+  --public: #0d7680;
+  --intragov: #a85c11;
+  --positive: #1e7a4b;  /* surplus, deficit reduction */
 
   /* Era shading (crisis / pandemic bands). Neutral: never a party or budget hue,
    * so a shaded span cannot be misread as carrying partisan or category meaning. */
-  --band: #C9CCC3;
+  --band: #dcd3c6;
 
   /* Revenue by source (§10). Non-partisan, and deliberately NOT --positive:
    * a tax line growing or shrinking is not a surplus/deficit judgement. Largest
    * band first, adjacent bands vary in lightness as well as hue so the stack
    * survives greyscale even with a direct label on only the top few bands. */
-  --rev-ii: #3E7C86;  /* individual income tax */
-  --rev-pr: #C77D28;  /* payroll taxes */
-  --rev-ci: #55606B;  /* corporate income tax */
-  --rev-ex: #93A8B3;  /* excise taxes */
-  --rev-cu: #263038;  /* customs duties: darker slate, the fastest-growing line */
-  --rev-eg: #A8895A;  /* estate and gift taxes */
-  --rev-mi: #B7BDB0;  /* miscellaneous */
+  --rev-ii: #0d7680;  /* individual income tax */
+  --rev-pr: #a85c11;  /* payroll taxes */
+  --rev-ci: #37434f;  /* corporate income tax */
+  --rev-ex: #647e9c;  /* excise taxes */
+  --rev-cu: #1b2026;  /* customs duties: darker slate, the fastest-growing line */
+  --rev-eg: #6e4d22;  /* estate and gift taxes */
+  --rev-mi: #807f78;  /* miscellaneous */
 
   /* ---- Type ---------------------------------------------------------------
    * Two roles, the way a statistical publication is set: a reading face for
@@ -75,10 +96,93 @@
   --num-prose: oldstyle-nums proportional-nums;
   --num-table: lining-nums tabular-nums;
 
-  /* Scale. A textbook measure: roughly 65 characters. */
-  --measure: 33rem;
-  --measure-wide: 46rem;
+  /* ---- Measure -----------------------------------------------------------
+   * A descending ladder, and the reason it descends is the rules. Every rule on
+   * this site is drawn by a `border-top` or a `border-bottom` on a block, so a
+   * rule is exactly as long as the block's measure. When prose, findings,
+   * headings and figures all shared one 70rem bound, every rule on the page was
+   * the same length, and two rules at different levels read as siblings.
+   *
+   * Widths, widest first:
+   *   70rem  --measure-wide  figures, tables, the year-range slider
+   *   55rem  --measure       running text, findings' parent lists, popovers
+   *   46rem  h1
+   *   40rem  h2, --measure-lede
+   *   36rem  h3, h4
+   *
+   * This reverses, for running text only, the earlier decision to widen
+   * everything to the content column. Figures did not narrow: a chart drawn at
+   * 880px loses resolution a paragraph does not lose.
+   */
+  --measure: 55rem;                          /* running text */
+  --measure-wide: var(--content-w, 70rem);   /* figures and tables */
+  /* The deck belongs to the heading above it, so it takes that heading's bound.
+   * 11 of the 12 decks on a report route follow an h2. */
+  --measure-lede: 40rem;
   --gap: 1.5rem;
+
+  /* ---- Type scale --------------------------------------------------------
+   * Two ratios. Above the body size the ratio is 1.25, the major third, which
+   * gives a jump a reader sees across a page. Below it the ratio is the square
+   * root of 1.25, about 1.118, because at 11px two pixels decide whether an
+   * axis label fits between two ticks.
+   *
+   * Every clamp reaches its minimum at a 360px viewport and its maximum at
+   * 1184px. Weight stays 400 at every level: the serif stack spans Baskerville,
+   * Minion, Garamond and Georgia, and those families expose different
+   * intermediate weights, so a weight step would land differently per machine.
+   * Size, small caps and italic carry the hierarchy instead.
+   */
+  --ts-5: clamp(2.15rem, 1.55rem + 2.67vw, 3.24rem);   /* h1 */
+  --ts-3: clamp(1.50rem, 1.18rem + 1.42vw, 2.08rem);   /* h2 */
+  --ts-2: clamp(1.33rem, 1.15rem + 0.81vw, 1.66rem);   /* h3, italic */
+  --ts-1: clamp(1.22rem, 1.16rem + 0.27vw, 1.33rem);   /* h4, small caps */
+  --ts-0: 1.125rem;        /* running text, raised from 1.0625 for the measure */
+  --ts-lede: 1.3125rem;    /* standfirst */
+
+  /* The ladder skips a step between h1 and h2, a ratio of 1.5625 rather than
+   * 1.25. h1 appears once per route and names the whole document, so the gap is
+   * what separates a document title from a section head. The old `--ts-4` held
+   * that step open as a reserve and no rule ever read it. */
+
+  /* ---- Below the body size -----------------------------------------------
+   * Five steps, every one of them a size the site already sets. `--ts-meta`,
+   * `--ts-caption` and `--ts-micro` were declared at 15.2px, 13.6px and 12.16px
+   * and read by no rule at all, while 46 declarations hardcoded 17, 16, 15, 14,
+   * 13 and 12px. The values moved to the shipped sizes rather than the other
+   * way round, because each of those sizes was chosen against a measured
+   * constraint (the 24px target floor, the 320px site-bar row, a 350px table
+   * window) and moving one by 0.6px moves a layout that was measured. The 17px
+   * step is gone: its two rules, `.glossary dt` and `.brief-quote p`, both
+   * belong at the body size.
+   *
+   * The ratio above the body size is not maintained here. These are interface
+   * sizes, not a reading ladder, and each names a role instead:
+   */
+  --ts-chrome: 1rem;       /* 16px. The site bar, set in small caps, where the
+                              cap height and not the em is what a reader sees. */
+  --ts-meta: 0.9375rem;    /* 15px. A label or a locator beside running text:
+                              kicker, control label, figure number, card meta. */
+  --ts-caption: 0.875rem;  /* 14px. A caption or a tab, in the reading face. */
+  --ts-data: 0.8125rem;    /* 13px. Anything set in `--font-data`: table bodies,
+                              controls, readouts, the apparatus lists. */
+  --ts-micro: 0.75rem;     /* 12px. The smallest text the site sets in HTML.
+                              Chart furniture goes smaller, but it is SVG and
+                              sized in px against a viewBox, not from here. */
+
+  /* ---- Spacing scale -----------------------------------------------------
+   * Ratio 1.5, the perfect fifth, rounded to a 0.05rem grid. Wider than the
+   * type ratio deliberately: a reader detects a difference in glyph size sooner
+   * than a difference in whitespace, so space needs the larger interval to
+   * register as a step. `--sp-5` equals the existing `--gap`.
+   */
+  --sp-1: 0.3rem;
+  --sp-2: 0.45rem;
+  --sp-3: 0.7rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2.3rem;
+  --sp-section: clamp(2.3rem, 1.5rem + 3.4vw, 3.45rem);
   --rule-width: 1px;
   --rule-hair: 0.5px;
   /* WCAG 2.2 SC 2.4.13 Focus Appearance, Level AAA, and the 2px perimeter SC
@@ -102,4 +206,92 @@
      (`test_nav_bar_tap_targets_clear_44px`) is not lowered; that bar is a
      dedicated surface with no dense control rows. */
   --target-min: 1.5rem;
+}
+
+/* ---- Dark ---------------------------------------------------------------
+ * The site's first dark theme. Two entry points, following astro-paper: the
+ * media query supplies the operating-system default, and `[data-theme]` on
+ * `:root` carries an explicit choice.
+ *
+ * `system` is written as the ABSENCE of the attribute rather than as a third
+ * value, which is why the media query needs no third branch and why the toggle
+ * removes the attribute rather than setting it to a string.
+ *
+ * `:where()` holds the media query's `:root` compound at zero specificity, and
+ * both blocks exclude an explicit light stamp, so a reader who chooses light
+ * keeps light on a dark-set operating system.
+ *
+ * The steps are a selection, not an inversion. `--mand` and `--rev-cu` become
+ * the lightest marks in their groups, because a near-black band is invisible on
+ * a near-black ground.
+ */
+
+@media (prefers-color-scheme: dark) {
+  :where(:root:not([data-theme='light'])) {
+    color-scheme: dark;
+
+    --ground: #16130f;
+    --panel: #1c1914;
+    --ink: #ede5d9;
+    --ink-soft: #a79e90;
+    --rule: #786d5c;
+
+    --dem: #6fa8e8;
+    --gop: #e8798d;
+    --mix: #8e6bc8;
+
+    --mand: #c4cbd2;
+    --disc: #3fa9b4;
+    --int: #db9440;
+
+    --domestic: #c4cbd2;
+    --foreign: #5f7a8a;
+    --public: #3fa9b4;
+    --intragov: #db9440;
+    --positive: #4fb27f;
+
+    --band: #2b251d;
+
+    --rev-ii: #3fa9b4;
+    --rev-pr: #db9440;
+    --rev-ci: #c4cbd2;
+    --rev-ex: #5f7a8a;
+    --rev-cu: #e8d2a8;
+    --rev-eg: #be9660;
+    --rev-mi: #726f66;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --ground: #16130f;
+  --panel: #1c1914;
+  --ink: #ede5d9;
+  --ink-soft: #a79e90;
+  --rule: #786d5c;
+
+  --dem: #6fa8e8;
+  --gop: #e8798d;
+  --mix: #8e6bc8;
+
+  --mand: #c4cbd2;
+  --disc: #3fa9b4;
+  --int: #db9440;
+
+  --domestic: #c4cbd2;
+  --foreign: #5f7a8a;
+  --public: #3fa9b4;
+  --intragov: #db9440;
+  --positive: #4fb27f;
+
+  --band: #2b251d;
+
+  --rev-ii: #3fa9b4;
+  --rev-pr: #db9440;
+  --rev-ci: #c4cbd2;
+  --rev-ex: #5f7a8a;
+  --rev-cu: #e8d2a8;
+  --rev-eg: #be9660;
+  --rev-mi: #726f66;
 }

@@ -39,6 +39,21 @@
  *  anything is measured over them. That is what stops a mistyped selector from
  *  sweeping an empty set and reporting green, the failure shape #72 found twice
  *  and the one this lane is least able to notice on its own.
+ *
+ *  HOW A CHART SURFACE IS SELECTED, AND WHY IT CHANGED. This file read
+ *  `svg.chart`, because `Chart.tsx` put the class on the `<svg>` itself. The
+ *  site now draws with Recharts. `.chart` is the wrapper `<div>` carrying the
+ *  roving group's handlers, and the Recharts surface sits inside it
+ *  (`src/components/charts/RechartsFrame.tsx`). Three figures still hand-roll
+ *  their `<svg>` through `Chart.tsx` and keep `svg.chart`. The selector is
+ *  therefore the union of the two, in document order, and the counts below are
+ *  what the union measures. `svg.chart` alone matched none of `/economy`'s
+ *  charts and reported "0 tappable charts". That empty sweep is the failure the
+ *  paragraph above names.
+ *
+ *  The union reads `.chart svg, svg.chart`. Every `page.evaluate` below repeats
+ *  it as a literal, because a browser-context function cannot close over a
+ *  Node-context constant.
  */
 import { test, before, after } from 'node:test'
 import assert from 'node:assert/strict'
@@ -56,12 +71,16 @@ const CHART_PATHS = ['/economy', '/households', '/government'] as const
  *
  *  Not the same as the svg count in `harness.ts`: `/economy` draws two svgs for
  *  each of two figures and the second of each carries no marks (it is the
- *  inflation strip), and `/government` renders `AttributionSplit`'s inactive tab
- *  panel at 0x0. Both are correctly outside this contract, and both are why the
- *  number is recorded rather than derived from `ROUTES`. */
+ *  inflation strip), `/households` draws six Radix slider icons that are not
+ *  charts at all, and `/government` renders `AttributionSplit`'s inactive tab
+ *  panel at 0x0. All three are correctly outside this contract, and all three
+ *  are why the number is recorded rather than derived from `ROUTES`.
+ *
+ *  `/households` reads 10 where it read 8. The redesign gives `BracketHistory`
+ *  three panels where it had one; nothing stopped being tappable. */
 const TAPPABLE_CHARTS: Record<string, number> = {
   '/economy': 5,
-  '/households': 8,
+  '/households': 10,
   '/government': 13,
 }
 
@@ -86,8 +105,14 @@ const HINT_CARRIERS: Record<string, number> = {
  *  That is a `TableView` completeness question, not #73's. It is named
  *  here as an exception rather than
  *  softening B1c's table half into "where present", which would pass over any
- *  number of charts losing their tables. */
-const TABLE_INCOMPLETE = new Set(['/households#4'])
+ *  number of charts losing their tables.
+ *
+ *  NAMED BY ITS OWN LABEL, NOT BY ITS INDEX. This read `/households#4` and the
+ *  index moved to 6 when `BracketHistory` grew from one panel to three, so the
+ *  exception silently pointed at a different chart, excused that one, and
+ *  demanded a completeness the real offender cannot meet. A prefix of the
+ *  figure's own `aria-label` cannot drift that way. */
+const TABLE_INCOMPLETE_LABELS = ['The top statutory income tax rate ran from 70%']
 
 /** The three sentences, verbatim from `src/components/charts/hint.ts`. Repeated
  *  here on purpose: a test that imported them could not tell a change in the
@@ -127,7 +152,7 @@ function identifier(label: string): string {
 async function tappableCharts(page: Page): Promise<{ svg: number; marks: number[] }[]> {
   return page.evaluate(() => {
     const out: { svg: number; marks: number[] }[] = []
-    document.querySelectorAll('svg.chart').forEach((svg, svgIndex) => {
+    document.querySelectorAll('.chart svg, svg.chart').forEach((svg, svgIndex) => {
       const r = svg.getBoundingClientRect()
       if (r.width === 0 || r.height === 0) return
       const marks: number[] = []
@@ -155,7 +180,7 @@ async function tappableCharts(page: Page): Promise<{ svg: number; marks: number[
  *  three lines they save. */
 async function readoutText(page: Page, svgIndex: number): Promise<string> {
   return page.evaluate((k) => {
-    const svg = document.querySelectorAll('svg.chart')[k] as Element
+    const svg = document.querySelectorAll('.chart svg, svg.chart')[k] as Element
     const host = svg.closest('figure') ?? svg.parentElement!
     const all = Array.from(host.querySelectorAll('.readout, .inspector'))
     const el = all.find((e) => (svg.compareDocumentPosition(e) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0) ?? all[0]
@@ -171,7 +196,7 @@ async function chartBox(
   svgIndex: number,
 ): Promise<{ x: number; y: number; w: number; h: number }> {
   return page.evaluate((k) => {
-    const svg = document.querySelectorAll('svg.chart')[k] as Element
+    const svg = document.querySelectorAll('.chart svg, svg.chart')[k] as Element
     svg.scrollIntoView({ block: 'center' })
     const r = svg.getBoundingClientRect()
     return { x: r.left, y: r.top, w: r.width, h: r.height }
@@ -219,9 +244,23 @@ for (const path of CHART_PATHS) {
         `${path}: ${charts.length} tappable charts, expected ${TAPPABLE_CHARTS[path]}`,
       )
 
+      // EVERY IDLE READOUT IS CAPTURED BEFORE ANY TAP, and that is not tidiness.
+      // A figure may draw several panels over one readout. `BracketHistory`
+      // draws three over `/households` §3's single `p.readout`, and that
+      // sentence names the YEAR, which all three panels share. Read per chart
+      // inside the tap loop, panel 2's idle text is whatever panel 1's last tap
+      // left behind. A tap at the same x fraction then resolves to the same
+      // year and the same sentence, so a correct tap looked like a tap that did
+      // nothing. Captured here, every comparison runs against the hint the
+      // reader actually starts from.
+      const idle = new Map<number, string>()
       for (const { svg } of charts) {
-        const idle = await readoutText(page, svg)
-        assert.ok(idle.length > 0, `${path}#${svg}: no readout to change`)
+        const text = await readoutText(page, svg)
+        assert.ok(text.length > 0, `${path}#${svg}: no readout to change`)
+        idle.set(svg, text)
+      }
+
+      for (const { svg } of charts) {
         for (const fraction of [0.3, 0.7]) {
           const box = await chartBox(page, svg)
           await page.touchscreen.tap(box.x + box.w * fraction, box.y + box.h * 0.5)
@@ -229,8 +268,9 @@ for (const path of CHART_PATHS) {
           const after = await readoutText(page, svg)
           assert.notEqual(
             after,
-            idle,
-            `${path}#${svg}: a tap at ${fraction * 100}% left the readout unchanged at ${JSON.stringify(idle)}`,
+            idle.get(svg),
+            `${path}#${svg}: a tap at ${fraction * 100}% left the readout at the hint, ` +
+              `${JSON.stringify(idle.get(svg))}`,
           )
         }
       }
@@ -260,7 +300,7 @@ for (const path of CHART_PATHS) {
           await chartBox(page, svg)
           const point = await page.evaluate(
             ([k, m]) => {
-              const b = (document.querySelectorAll('svg.chart')[k] as Element)
+              const b = (document.querySelectorAll('.chart svg, svg.chart')[k] as Element)
                 .querySelectorAll('[data-mark]')[m]!
                 .getBoundingClientRect()
               return { x: b.left + b.width / 2, y: b.top + b.height / 2 }
@@ -271,7 +311,7 @@ for (const path of CHART_PATHS) {
           // The oracle, computed before the tap.
           const expected = await page.evaluate(
             ([k, x, y]) => {
-              const ms = (document.querySelectorAll('svg.chart')[k as number] as Element)
+              const ms = (document.querySelectorAll('.chart svg, svg.chart')[k as number] as Element)
                 .querySelectorAll('[data-mark]')
               for (let n = 0; n < ms.length; n += 1) {
                 const b = ms[n]!.getBoundingClientRect()
@@ -296,7 +336,7 @@ for (const path of CHART_PATHS) {
           await page.waitForTimeout(SETTLE_MS)
 
           const got = await page.evaluate((k) => {
-            const svgEl = document.querySelectorAll('svg.chart')[k] as Element
+            const svgEl = document.querySelectorAll('.chart svg, svg.chart')[k] as Element
             const ms = svgEl.querySelectorAll('[data-mark]')
             const host = svgEl.closest('figure') ?? svgEl.parentElement!
             const all = Array.from(host.querySelectorAll('.readout, .inspector'))
@@ -335,10 +375,17 @@ for (const path of CHART_PATHS) {
         )
 
         // B1c, second half: the value read out is in the figure's own table.
-        if (TABLE_INCOMPLETE.has(`${path}#${svg}`)) {
+        const chartLabel = await page.evaluate(
+          (k) =>
+            (document.querySelectorAll('.chart svg, svg.chart')[k] as Element).getAttribute(
+              'aria-label',
+            ) ?? '',
+          svg,
+        )
+        if (TABLE_INCOMPLETE_LABELS.some((prefix) => chartLabel.startsWith(prefix))) {
           assert.ok(
             keysInTable < sampled.length,
-            `${path}#${svg} is recorded as a chart whose table omits some of its data, but every sampled value was found — remove it from TABLE_INCOMPLETE`,
+            `${path}#${svg} is recorded as a chart whose table omits some of its data, but every sampled value was found — remove it from TABLE_INCOMPLETE_LABELS`,
           )
         } else {
           assert.equal(
@@ -500,10 +547,18 @@ test('B3a: on desktop a mouse press inside a chart still selects no datum', { ti
 })
 
 test('B3b: marks are inert to the pointer on touch and live on desktop', { timeout: TEST_TIMEOUT }, async () => {
+  /** `touch-action` is read from `.chart` and not from the `<svg>`, because
+   *  `.chart` carries the roving group's pointer handlers. The class sat on the
+   *  `<svg>` before Recharts and now sits on the wrapper `<div>` around the
+   *  surface. The three hand-rolled figures still put it on their `<svg>`.
+   *  Either way the stylesheet and the handler wiring name the same element,
+   *  which is what makes that element the right one to measure. Read from the
+   *  `<svg>` after the change, the value came back `auto` on every Recharts
+   *  route, because `touch-action` does not inherit. */
   const read = async (page: Page) =>
     page.evaluate(() => {
       const mark = document.querySelector('.chart [data-mark]')
-      const chart = document.querySelector('svg.chart')
+      const chart = document.querySelector('.chart')
       if (mark === null || chart === null) return null
       return {
         pointerEvents: getComputedStyle(mark).pointerEvents,

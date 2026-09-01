@@ -20,6 +20,7 @@ import {
   estimateTextWidth,
   placeAnnotation,
   type Anchor,
+  type Within,
 } from './annotate'
 
 /** Font size per annotation class, from global.css. Must stay in step with
@@ -33,6 +34,11 @@ const FONT_PX_BY_CLASS: Record<string, number> = {
   // `Foreign $9.64T (30% of publicly held debt, 24% of gross debt)`, which
   // shipped cut at `…of publicly held d`, can no longer be emitted partial.
   'holders-label': DATA_LABEL_FONT_PX,
+  // The three instrument-band labels on `/government` Fig 3. They were bare
+  // `<text>` until this entry existed, so the bills label, centred over a band
+  // that starts at year zero, slid into the left gutter and painted across the
+  // y-axis ticks. See `Within`.
+  'maturity-label': DATA_LABEL_FONT_PX,
 }
 
 function fontPxFor(className: string): number {
@@ -75,6 +81,8 @@ export interface AnnotationProps {
    *  so it survives a flip. See `placeAnnotation`. */
   gap?: number
   pad?: number
+  /** Which rectangle holds the label, the surface or the plot. See `Within`. */
+  within?: Within
 }
 
 export function Annotation({
@@ -92,12 +100,13 @@ export function Annotation({
   flip,
   gap,
   pad,
+  within,
 }: AnnotationProps) {
   const cls = seriesLabel ? `${className} series-label` : className
   const fontPx = fontPxFor(cls)
   const all = lines?.length ? [label, ...lines] : [label]
   const width = Math.max(...all.map((line) => estimateTextWidth(line, fontPx)))
-  const placed = placeAnnotation({ x, label, width, frame, anchor, fontPx, flip, gap, pad })
+  const placed = placeAnnotation({ x, label, width, frame, anchor, fontPx, flip, gap, pad, within })
   if (!placed) return null
   return (
     <text

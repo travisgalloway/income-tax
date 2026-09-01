@@ -13,16 +13,27 @@
  *  would misstate the ratios between years. The "$153B must not look like
  *  zero" edge case is solved by tick granularity (every $200B) rather than by
  *  clipping the axis.
+ *
+ *  Drawn on `charts/RechartsFrame.tsx` as a `<BarChart>`. Read that file's
+ *  header before editing this one. Two reference-identity rules govern the code
+ *  below, they point in opposite directions, and both fail silently.
  */
 import { useMemo, useState } from 'react'
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
-import { Chart } from '../charts/Chart'
+import { Bar, BarChart, type BarShapeProps } from 'recharts'
 import { Annotation } from '../charts/Annotation'
-import { AxisBottom, AxisLeft } from '../charts/Axis'
-import { linear, niceExtent, scalePoint } from '../charts/scales'
+import {
+  PlotGrid,
+  PlotOverlay,
+  PlotXAxis,
+  PlotYAxis,
+  SURFACE_DEFAULTS,
+  useFrame,
+  useTickFormat,
+} from '../charts/RechartsFrame'
+import { niceExtent } from '../charts/scales'
 import { TableView } from './TableView'
-import { useChartSize } from '../charts/useChartSize'
-import { value, fiscalYear } from '../charts/format'
+import { tick, value, fiscalYear } from '../charts/format'
 import type { BudgetYear } from '../../data/types'
 import { labelledByFigure } from './figureLabel'
 import { ChartHint } from '../charts/ChartHint'
@@ -37,6 +48,12 @@ const TROUGH_YEAR = 2015
 const SERIES_LOW_YEAR = 2003
 const TICK_STEP = 0.2 // $200B, rendered in $ trillions
 
+/** The bars stand on a point band, so the numeric domain is widened by half a
+ *  band at each end. `scalePoint().padding(0.5)` put the first and last mark
+ *  half a step inside the plot, and a bare `[1995, 2025]` domain would centre
+ *  those two bars on the plot edges and clip half of each. */
+const X_PAD = 0.5
+
 type View = 'nominal' | 'real'
 
 const VIEWS: { value: View; label: string }[] = [
@@ -48,13 +65,15 @@ function netInterestOf(r: BudgetYear, view: View): number {
   return view === 'real' ? r.r_ni : r.n_ni
 }
 
-/** `format.ts`'s `tick` renders zero as "$0B". A bare "$0" reads better on
- *  this axis; this is a local, additive wrapper, not a change to the shared
- *  helper, #2, #3 and #4 also depend on `tick` unmodified. */
-function axisTick(v: number): string {
-  if (v === 0) return '$0'
-  return `$${(v * 1000).toFixed(0)}B`
-}
+/** MEASURED. This axis used a local wrapper that rendered every tick in
+ *  billions, so the top of the range printed `$1000B`: 38.9 units at the 360
+ *  preset, starting at x=5.1, which is inside the rotated axis title's own
+ *  band (2.7 to 14.1). `format.ts`'s shared `tick` switches to trillions at
+ *  1.0 and prints `$1T` at 20.5 units, and it already renders zero as a bare
+ *  `$0`, which is the only reason the wrapper existed. See `leftTickRoom` in
+ *  `axisFit.ts` for the budget. */
+
+const YEAR_FORMAT = (t: number) => `${t}`
 
 function noteFor(y: number): string | null {
   if (y === TROUGH_YEAR) return 'a recent trough, not the series low'
@@ -86,33 +105,92 @@ export function NetInterest({ rows }: { rows: BudgetYear[] }) {
   const [focus, setFocus] = useState<number | null>(null)
 
   const span = useMemo(() => rows.filter((r) => r.y >= START && r.y <= END), [rows])
+  const values = span.map((r) => netInterestOf(r, view))
 
-  const [boxRef, size] = useChartSize()
-  const { width: W, height: H, margin: f } = size
-  const iw = W - f.left - f.right
-  const ih = H - f.top - f.bottom
-  const narrow = W < 500
+  const {
+    size,
+    boxRef,
+    f,
+    x,
+    y,
+    xDomain,
+    yDomain,
+    xTicks,
+    chartMargin,
+    chartStyle,
+    surfaceRef,
+    wrapperProps,
+    mark,
+  } = useFrame({
+    rows: span,
+    xOf: (r) => r.y,
+    yValues: values,
+    xDomain: [START - X_PAD, END + X_PAD],
+    // Zero-anchored, from the raw values, for the reason in the file header.
+    yDomain: niceExtent(values),
+  })
 
-  const years = span.map((r) => r.y)
-  const x = scalePoint<number>().domain(years).range([0, iw]).padding(0.5)
-  const barWidth = Math.max(2, x.step() * 0.6)
-  const domain = niceExtent(span.map((r) => netInterestOf(r, view)))
-  const y = linear(domain, [ih, 0])
+  const barWidth = Math.max(2, (f.innerWidth / span.length) * 0.6)
 
   // Ticks every $200B, zero-anchored, up to the padded domain top, never
-  // the shared `tick()` step, which is unitless about spacing.
+  // the shared `tick()` step, which is unitless about spacing. Memoised for
+  // the same reason `useFrame` memoises its own, and `yDomain` is already a
+  // stable reference, so this memo holds across renders.
   const yTicks = useMemo(() => {
-    const top = domain[1]
+    const top = yDomain[1]
     const out: number[] = []
     for (let t = 0; t <= top + 1e-9; t += TICK_STEP) out.push(Math.round(t * 10) / 10)
     return out
-  }, [domain])
-  const xTicks = years.filter((yr) => yr % (narrow ? 10 : 5) === 0)
+  }, [yDomain])
 
   const active = focus != null ? span.find((r) => r.y === focus) : null
   const readoutFor = (r: BudgetYear) => {
     const note = noteFor(r.y)
     return `FY${r.y}: ${value(netInterestOf(r, view), view)}${note ? `, ${note}` : ''}`
+  }
+
+  /* Rule 1: `tick` is a module import and `view` is a plain string, so this
+   * formatter keeps its identity until the toggle actually moves. */
+  const yFormat = useTickFormat(tick, view)
+
+  const yTitle = view === 'real' ? 'Real $ trillions, FY2025' : 'Nominal $ trillions'
+  const dataKey = view === 'real' ? 'r_ni' : 'n_ni'
+
+  // `mark()` runs once per year HERE, in this island's own render, and the
+  // results reach the shape renderer by index. The renderer runs inside
+  // `<Bar>`, which subscribes to Recharts' store and may render without this
+  // island rendering, so calling `mark()` from there would advance the counter
+  // past the end and leave the group with no focusable mark.
+  const markProps = span.map(() => mark())
+
+  /** A NEW FUNCTION on every render, deliberately. Recharts calls a `shape`
+   *  renderer as a plain function, so a memoised one leaves the graphical item
+   *  with identical props, React bails out of the subtree, and the bars freeze
+   *  at their first paint. See rule 2 in `RechartsFrame.tsx`.
+   *
+   *  The bar's HEIGHT comes from Recharts, through the y scale it built from
+   *  the domain above. Its width and its centre come from the site's own point
+   *  band, because the band width is fixed at 0.6 of a step here and Recharts
+   *  derives a numeric axis band from the data spacing instead.
+   *
+   *  IT DRAWS THE VISIBLE BAR AND NOTHING FOCUSABLE. See the overlay below. */
+  const bar = (props: BarShapeProps) => {
+    const i = props.originalDataIndex
+    const r = span[i]
+    if (!r || !Number.isFinite(props.y) || !Number.isFinite(props.height)) return null
+    const cx = x(r.y)
+    const marked = r.y === TROUGH_YEAR || r.y === SERIES_LOW_YEAR
+    return (
+      <rect
+        key={r.y}
+        x={cx - barWidth / 2}
+        y={props.y}
+        width={barWidth}
+        height={props.height}
+        fill={marked ? 'var(--int)' : 'var(--mand)'}
+        opacity={marked ? 1 : 0.55}
+      />
+    )
   }
 
   return (
@@ -134,79 +212,99 @@ export function NetInterest({ rows }: { rows: BudgetYear[] }) {
         </ToggleGroup.Root>
       </div>
 
-      <Chart ariaLabel={shapeLabel(view)} interactive width={W} height={H} margin={f}>
-        {(fr, mark) => (
-          <>
-            <AxisLeft
-              frame={fr}
-              ticks={yTicks}
-              format={axisTick}
-              label={view === 'real' ? 'Real $ trillions, FY2025' : 'Nominal $ trillions'}
-              scale={y}
-            />
-            <AxisBottom
-              frame={fr}
-              ticks={xTicks}
-              format={(t) => `${t}`}
-              label="Fiscal year"
-              scale={(v) => x(v) ?? 0}
-            />
+      <div {...wrapperProps}>
+        <BarChart
+          ref={surfaceRef}
+          data={span}
+          width={size.width}
+          height={size.height}
+          margin={chartMargin}
+          style={chartStyle}
+          {...SURFACE_DEFAULTS}
+          aria-label={shapeLabel(view)}
+        >
+          <PlotGrid />
+          <PlotXAxis
+            dataKey="y"
+            domain={xDomain}
+            ticks={xTicks}
+            gutter={size.margin.bottom}
+            unit="Fiscal year"
+            format={YEAR_FORMAT}
+          />
+          <PlotYAxis
+            domain={yDomain}
+            ticks={yTicks}
+            gutter={size.margin.left}
+            unit={yTitle}
+            format={yFormat}
+          />
+          <Bar
+            dataKey={dataKey}
+            barSize={barWidth}
+            isAnimationActive={false}
+            activeBar={false}
+            shape={bar}
+          />
 
-            {span.map((r) => {
-              const cx = x(r.y) ?? 0
-              const top = y(netInterestOf(r, view))
-              const marked = r.y === TROUGH_YEAR || r.y === SERIES_LOW_YEAR
+          {/* THE FOCUSABLE MARKS, and the reason they are here rather than in
+              the `shape` renderer above. Recharts keys each bar's wrapper on
+              its own geometry and rebuilds that subtree on every render of
+              this island, so a mark drawn inside `shape` is DESTROYED the
+              moment focusing it sets `focus` state. Measured: the mark took
+              focus, the island re-rendered, the node was replaced, and
+              `document.activeElement` was `<body>` one tick later, so the
+              first arrow press reached no key handler at all. `WhoPays` states
+              the same rule for a different reason.
+
+              Every year is a focusable datum; the hit target spans the full
+              plot height so a thin bar is still easy to reach with the
+              pointer, and reports the same text Tab does. Nothing here needs
+              Recharts' geometry: the centre is the site's own point band and
+              the height is the whole plot. */}
+          <PlotOverlay margin={f.margin}>
+            {span.map((r, i) => {
+              const cx = x(r.y)
+              const isActive = active?.y === r.y
               return (
                 <rect
                   key={r.y}
+                  className="datum"
                   x={cx - barWidth / 2}
-                  y={top}
+                  y={0}
                   width={barWidth}
-                  height={Math.max(0, ih - top)}
-                  fill={marked ? 'var(--int)' : 'var(--mand)'}
-                  opacity={marked ? 1 : 0.55}
+                  height={f.innerHeight}
+                  fill={isActive ? 'var(--ink)' : 'transparent'}
+                  opacity={isActive ? 0.08 : 0}
+                  {...markProps[i]}
+                  role="img"
+                  aria-label={readoutFor(r)}
+                  onFocus={() => setFocus(r.y)}
+                  onBlur={() => setFocus(null)}
+                  onMouseEnter={() => setFocus(r.y)}
+                  onMouseLeave={() => setFocus(null)}
                 />
               )
             })}
 
+            {/* The two marked years are labelled through the site's own clamp,
+                which draws nothing for a label too wide to fit. Recharts has no
+                equivalent, so the labels are drawn in plot coordinates here. */}
             {span
               .filter((r) => r.y === TROUGH_YEAR || r.y === SERIES_LOW_YEAR)
               .map((r) => (
                 <Annotation
                   key={r.y}
-                  frame={fr}
-                  x={x(r.y) ?? 0}
+                  frame={f}
+                  x={x(r.y)}
                   y={y(netInterestOf(r, view)) - 8}
                   anchor="middle"
                   label={r.y === TROUGH_YEAR ? 'Trough' : 'Series low'}
                 />
               ))}
-
-            {/* Every year is a focusable datum; a large invisible hit target
-                spans the full plot height so a thin bar is still easy to
-                reach with the pointer, and reports the same text Tab does. */}
-            {span.map((r) => (
-              <rect
-                key={r.y}
-                className="datum"
-                x={(x(r.y) ?? 0) - barWidth / 2}
-                y={0}
-                width={barWidth}
-                height={ih}
-                fill={active?.y === r.y ? 'var(--ink)' : 'transparent'}
-                opacity={active?.y === r.y ? 0.08 : 0}
-                {...mark()}
-                role="img"
-                aria-label={readoutFor(r)}
-                onFocus={() => setFocus(r.y)}
-                onBlur={() => setFocus(null)}
-                onMouseEnter={() => setFocus(r.y)}
-                onMouseLeave={() => setFocus(null)}
-              />
-            ))}
-          </>
-        )}
-      </Chart>
+          </PlotOverlay>
+        </BarChart>
+      </div>
 
       <p aria-live="polite" className="readout">
         {active ? readoutFor(active) : <ChartHint noun="year" />}

@@ -8,16 +8,26 @@
  *  them apart. FY2015 net interest is marked on the chart so the "endpoints
  *  hide the trajectory" paragraph is visible in the graphic, not just
  *  asserted in prose.
+ *
+ *  Recharts draws the three lines, the grid and the axes. The three direct
+ *  labels, the FY2015 marker and the focusable years stay the site's own code,
+ *  drawn in the plot coordinates `useFrame` returns.
  */
 import { useMemo, useState } from 'react'
-import { line as d3line, curveMonotoneX } from 'd3-shape'
-import { Chart } from '../charts/Chart'
+import { Line, LineChart } from 'recharts'
 import { Annotation } from '../charts/Annotation'
-import { AxisBottom, AxisLeft } from '../charts/Axis'
-import { linear, niceExtent } from '../charts/scales'
+import { labelHeight } from '../charts/annotate'
+import {
+  PlotGrid,
+  PlotOverlay,
+  PlotXAxis,
+  PlotYAxis,
+  SURFACE_DEFAULTS,
+  useFrame,
+  useTickFormat,
+} from '../charts/RechartsFrame'
 import { TableView } from './TableView'
 import { UnitToggle } from './UnitToggle'
-import { useChartSize } from '../charts/useChartSize'
 import { UNIT_LABEL, tick, value, fiscalYear, type Unit } from '../charts/format'
 import type { BudgetYear } from '../../data/types'
 import { ChartHint } from '../charts/ChartHint'
@@ -29,6 +39,8 @@ const FIGURE = 'voted-and-not'
 const START = 1995
 const END = 2025
 const MARK_YEAR = 2015
+
+const YEAR_TICK = (t: number) => `${t}`
 
 function mandatoryNetOf(r: BudgetYear, unit: Unit): number {
   switch (unit) {
@@ -69,28 +81,30 @@ export function VotedAndNot({ rows }: { rows: BudgetYear[] }) {
 
   const span = useMemo(() => rows.filter((r) => r.y >= START && r.y <= END), [rows])
 
-  const [boxRef, size] = useChartSize()
-  const { width: W, height: H, margin: f } = size
-  const iw = W - f.left - f.right
-  const ih = H - f.top - f.bottom
-  const narrow = W < 500
-
-  const years = span.map((r) => r.y)
-  const x = linear([Math.min(...years), Math.max(...years)], [0, iw])
-  const y = linear(
-    niceExtent(span.flatMap((r) => [mandatoryNetOf(r, unit), discretionaryOf(r, unit), netInterestOf(r, unit)])),
-    [ih, 0],
+  /* The three series are derived per unit, so they are resolved into plain
+   * fields once and Recharts reads them by name. A function `dataKey` would be
+   * a fresh reference on every render, which rule 1 warns against. */
+  const plot = useMemo(
+    () =>
+      span.map((r) => ({
+        y: r.y,
+        mandatory: mandatoryNetOf(r, unit),
+        discretionary: discretionaryOf(r, unit),
+        netInterest: netInterestOf(r, unit),
+      })),
+    [span, unit],
   )
 
-  const lineFor = (get: (r: BudgetYear) => number) =>
-    d3line<BudgetYear>().x((r) => x(r.y)).y((r) => y(get(r))).curve(curveMonotoneX)
-  const mandatoryLine = lineFor((r) => mandatoryNetOf(r, unit))
-  const discretionaryLine = lineFor((r) => discretionaryOf(r, unit))
-  const netInterestLine = lineFor((r) => netInterestOf(r, unit))
+  const {
+    boxRef, size, f, xDomain, yDomain, x, y, xTicks, yTicks,
+    chartMargin, chartStyle, surfaceRef, wrapperProps, mark,
+  } = useFrame({
+    rows: plot,
+    xOf: (r) => r.y,
+    yValues: plot.flatMap((r) => [r.mandatory, r.discretionary, r.netInterest]),
+  })
 
-  const yTicks = y.ticks(narrow ? 4 : 6)
-  const xTicks = x.ticks(narrow ? 4 : 8).filter((t) => Number.isInteger(t))
-  const tickFmt = (v: number) => tick(v, unit)
+  const yFormat = useTickFormat(tick, unit)
 
   const active = focus != null ? span.find((r) => r.y === focus) : null
   const readoutFor = (r: BudgetYear) =>
@@ -101,41 +115,99 @@ export function VotedAndNot({ rows }: { rows: BudgetYear[] }) {
   const last = span[span.length - 1]
   const marked = span.find((r) => r.y === MARK_YEAR)
 
+  // Order is data order, and the array is built in this render.
+  const markProps = span.map(() => mark())
+
   return (
     <div ref={boxRef}>
       <div className="controls">
         <UnitToggle figure={FIGURE} value={unit} onChange={setUnit} />
       </div>
 
-      <Chart ariaLabel={shapeLabel(unit)} interactive width={W} height={H} margin={f}>
-        {(fr, mark) => (
-          <>
-            <AxisLeft frame={fr} ticks={yTicks} format={tickFmt} label={UNIT_LABEL[unit]} scale={y} />
-            <AxisBottom frame={fr} ticks={xTicks} format={(t) => `${t}`} label="Fiscal year" scale={x} />
+      <div {...wrapperProps}>
+        <LineChart
+          ref={surfaceRef}
+          data={plot}
+          width={size.width}
+          height={size.height}
+          margin={chartMargin}
+          style={chartStyle}
+          aria-label={shapeLabel(unit)}
+          {...SURFACE_DEFAULTS}
+        >
+          <PlotGrid />
+          <PlotXAxis
+            domain={xDomain}
+            ticks={xTicks}
+            gutter={size.margin.bottom}
+            unit="Fiscal year"
+            format={YEAR_TICK}
+          />
+          <PlotYAxis
+            domain={yDomain}
+            ticks={yTicks}
+            gutter={size.margin.left}
+            unit={UNIT_LABEL[unit]}
+            format={yFormat}
+          />
 
-            <path d={mandatoryLine(span) ?? ''} fill="none" stroke="var(--mand)" strokeWidth={2} />
-            <path d={discretionaryLine(span) ?? ''} fill="none" stroke="var(--disc)" strokeWidth={2} />
-            <path d={netInterestLine(span) ?? ''} fill="none" stroke="var(--int)" strokeWidth={2} />
+          <Line
+            type="monotone"
+            dataKey="mandatory"
+            stroke="var(--mand)"
+            strokeWidth={2}
+            dot={false}
+            activeDot={false}
+            isAnimationActive={false}
+          />
+          <Line
+            type="monotone"
+            dataKey="discretionary"
+            stroke="var(--disc)"
+            strokeWidth={2}
+            dot={false}
+            activeDot={false}
+            isAnimationActive={false}
+          />
+          <Line
+            type="monotone"
+            dataKey="netInterest"
+            stroke="var(--int)"
+            strokeWidth={2}
+            dot={false}
+            activeDot={false}
+            isAnimationActive={false}
+          />
 
-            <Annotation frame={fr} x={x(last.y) - 4} y={y(mandatoryNetOf(last, unit)) - 8} anchor="end" seriesLabel label="Mandatory (net)" />
-            <Annotation frame={fr} x={x(last.y) - 4} y={y(discretionaryOf(last, unit)) - 8} anchor="end" seriesLabel label="Discretionary" />
-            <Annotation frame={fr} x={x(last.y) - 4} y={y(netInterestOf(last, unit)) - 8} anchor="end" seriesLabel label="Net interest" />
+          <PlotOverlay margin={f.margin}>
+            <Annotation frame={f} x={x(last.y) - 4} y={y(mandatoryNetOf(last, unit)) - 8} anchor="end" seriesLabel halo label="Mandatory (net)" />
+            <Annotation frame={f} x={x(last.y) - 4} y={y(discretionaryOf(last, unit)) - 8} anchor="end" seriesLabel halo label="Discretionary" />
+            <Annotation frame={f} x={x(last.y) - 4} y={y(netInterestOf(last, unit)) - 8} anchor="end" seriesLabel halo label="Net interest" />
 
+            {/* Below the point where the plot floor allows it, above it where
+                it does not. Net interest is the lowest of the three series, so
+                at the 360 preset the label below its FY2015 point reached
+                1.5px into the x-axis tick row. */}
             {marked && (
               <>
                 <circle cx={x(marked.y)} cy={y(netInterestOf(marked, unit))} r={3.5} fill="var(--int)" />
                 <Annotation
-                  frame={fr}
+                  frame={f}
                   x={x(marked.y)}
-                  y={y(netInterestOf(marked, unit)) + 18}
+                  y={
+                    y(netInterestOf(marked, unit)) + 18 + labelHeight() * 0.2 > f.innerHeight
+                      ? y(netInterestOf(marked, unit)) - 8
+                      : y(netInterestOf(marked, unit)) + 18
+                  }
                   anchor="middle"
+                  halo
                   label={`FY2015: ${value(netInterestOf(marked, unit), unit)}`}
                 />
               </>
             )}
 
             {/* Every year is a focusable datum reporting all three series. */}
-            {span.map((r) => (
+            {span.map((r, i) => (
               <circle
                 key={r.y}
                 className="datum"
@@ -143,7 +215,7 @@ export function VotedAndNot({ rows }: { rows: BudgetYear[] }) {
                 cy={y(mandatoryNetOf(r, unit))}
                 r={active?.y === r.y ? 5 : 9}
                 fill={active?.y === r.y ? 'var(--ink)' : 'transparent'}
-                {...mark()}
+                {...markProps[i]}
                 role="img"
                 aria-label={readoutFor(r)}
                 onFocus={() => setFocus(r.y)}
@@ -152,9 +224,9 @@ export function VotedAndNot({ rows }: { rows: BudgetYear[] }) {
                 onMouseLeave={() => setFocus(null)}
               />
             ))}
-          </>
-        )}
-      </Chart>
+          </PlotOverlay>
+        </LineChart>
+      </div>
 
       <p aria-live="polite" className="readout">
         {active ? readoutFor(active) : <ChartHint noun="year" />}

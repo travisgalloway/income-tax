@@ -60,6 +60,54 @@ export function leftGutterRoom(frame: Frame, offset: number = TICK_OFFSET, pad =
   return Math.max(0, frame.margin.left - offset - pad)
 }
 
+/**
+ * Distance from the surface's left edge to the rotated axis title's baseline.
+ *
+ * The title is drawn `translate(AXIS_TITLE_X, y) rotate(-90)`, so its ADVANCE
+ * runs down the page and what sits on the x axis is the font's ascent on one
+ * side of the baseline and its descent on the other. MEASURED in Chromium at
+ * both presets: the box runs 2.7 to 14.1 for this value, being 9.3 units of
+ * ascent and 2.1 of descent.
+ */
+export const AXIS_TITLE_X = 12
+
+/** The ascent-plus-descent band the rotated title occupies, as a fraction of
+ *  the em. See `AXIS_TITLE_X` for the measurement it comes from. */
+const TITLE_BAND_EM = 1.09
+/** How far the title's box reaches RIGHT of its own baseline, as a fraction of
+ *  the em: the font's descent. */
+const TITLE_DESCENT_EM = 0.2
+
+/**
+ * Room for a left-axis tick label BESIDE the rotated axis title, in user units.
+ *
+ * `leftGutterRoom` measures to the surface's own edge, which is the right
+ * question for clipping and the wrong one for legibility: the title sits in
+ * that same gutter, so a label can satisfy `leftGutterFits` and still land on
+ * the title. MEASURED at the 360 preset, where the gutter is 52 units and the
+ * tick anchor is at 44: `$10.00T` needs 41.4 units, passes `leftGutterFits`'s
+ * 42, and starts at 2.6, which is inside the title's own band.
+ *
+ * The two are therefore both required and neither replaces the other. A tick
+ * must fit the gutter (or it is CUT, see this file's header) and it must fit
+ * this narrower room (or it is merely unreadable).
+ */
+export function leftTickRoom(
+  frame: Frame,
+  offset: number = TICK_OFFSET,
+  titleX: number = AXIS_TITLE_X,
+  titleFontPx: number = AXIS_TITLE_FONT_PX,
+  pad = 2,
+): number {
+  const titleRight = titleX + titleFontPx * TITLE_DESCENT_EM
+  return Math.max(0, frame.margin.left - offset - titleRight - pad)
+}
+
+/** The width the rotated title's box occupies across the gutter. */
+export function axisTitleBand(fontPx: number = AXIS_TITLE_FONT_PX): number {
+  return fontPx * TITLE_BAND_EM
+}
+
 /** Whether `label` fits the left gutter without leaving the SVG. */
 export function leftGutterFits(
   label: string,
@@ -160,6 +208,54 @@ export function tickLabelOverlaps(
     if (boxes[i][1] < boxes[i - 1][2]) clashes.push([boxes[i - 1][0], boxes[i][0]])
   }
   return clashes
+}
+
+/**
+ * The ticks that can be labelled without two labels touching.
+ *
+ * `tickLabelOverlaps` reports collisions and deliberately fixes none, because
+ * thinning is the caller's decision. This is the caller's decision, expressed
+ * once: keep the first tick, keep the last tick, and keep a middle tick only
+ * where its label clears both the tick kept before it and the last one.
+ *
+ * FOR A TICK SET THE CALLER CHOSE, not for a generated one. `scale.ticks(n)`
+ * takes a count and should be given a smaller one. `Top1TaxShare` cannot: its
+ * ticks are the five tax years the IRS has published, 2021, 2022 and 2023 are
+ * 13 units apart at the 360 preset, and a 4-digit label needs 24, so three of
+ * the five overlapped by about 11px. The years that remain are real; none is
+ * invented by interpolation.
+ */
+export function thinTicks(
+  ticks: readonly number[],
+  format: (v: number) => string,
+  scale: (v: number) => number,
+  frame: Frame,
+  fontPx: number = AXIS_LABEL_FONT_PX,
+): number[] {
+  if (ticks.length < 3) return [...ticks]
+  const box = (t: number): [number, number] | null => {
+    const label = format(t)
+    const placed = placeTickLabel(scale(t), label, frame, fontPx)
+    if (placed === null) return null
+    const w = estimateTextWidth(label, fontPx)
+    const left = placed.textAnchor === 'end' ? placed.x - w : placed.x - w / 2
+    return [left, left + w]
+  }
+  const first = ticks[0] as number
+  const last = ticks[ticks.length - 1] as number
+  const lastBox = box(last)
+  const kept: number[] = [first]
+  let prev = box(first)
+  for (const t of ticks.slice(1, -1)) {
+    const b = box(t)
+    if (b === null) continue
+    if (prev !== null && b[0] < prev[1]) continue
+    if (lastBox !== null && lastBox[0] < b[1]) continue
+    kept.push(t)
+    prev = b
+  }
+  kept.push(last)
+  return kept
 }
 
 /**

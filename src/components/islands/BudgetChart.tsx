@@ -1,4 +1,4 @@
-/** Section 4: the whole budget on one axis.
+/** Section 4: the whole budget on one axis, drawn on Recharts.
  *
  *  BRIEF.md/sections.md §4: outlays stacked into mandatory (net), discretionary
  *  and net interest, revenue drawn across the same panel, the deficit below
@@ -7,20 +7,39 @@
  *  sits above the plot for FY1995-2025 only; era bands mark 2008-09 and
  *  2020-21; every year is inspectable by hover or keyboard focus.
  *
+ *  THIS FIGURE OWNS ITS MARGINS, which is why the geometry below is local
+ *  rather than `useFrame`'s. `useFrame` takes its margins from `useChartSize`,
+ *  and neither preset reserves the caption, the three control rows and the
+ *  band-label row that sit above the plot here. The hook is still what supplies
+ *  the container measurement and the roving wiring, and the memo rule it
+ *  documents applies to the local ticks in exactly the same way.
+ *
  *  See docs/contracts/interfaces/budget-data.md for the gross-vs-net trap and
  *  the ctl:null boundary this component depends on, and
  *  docs/contracts/interfaces/charts.md for the shared chart-layer contract.
  */
 import { useMemo, useState } from 'react'
-import { area as d3area, line as d3line } from 'd3-shape'
-import { Chart } from '../charts/Chart'
+import { Area, AreaChart, DefaultZIndexes, Line, ReferenceArea } from 'recharts'
 import { Annotation } from '../charts/Annotation'
-import { AxisBottom, AxisLeft, ZeroLine } from '../charts/Axis'
-import { AXIS_LABEL_FONT_PX, firstThatFits, leftGutterRoom } from '../charts/axisFit'
-import { linear, niceExtent } from '../charts/scales'
+import { ZeroLine } from '../charts/Axis'
+import {
+  AXIS_LABEL_FONT_PX,
+  AXIS_TITLE_FONT_PX,
+  firstThatFits,
+  leftGutterRoom,
+} from '../charts/axisFit'
+import {
+  PlotGrid,
+  PlotOverlay,
+  PlotXAxis,
+  PlotYAxis,
+  SURFACE_DEFAULTS,
+  useFrame,
+  useTickFormat,
+} from '../charts/RechartsFrame'
+import { frame as makeFrame, linear, niceExtent } from '../charts/scales'
 import { UnitToggle } from './UnitToggle'
 import { TableView } from './TableView'
-import { useChartSize } from '../charts/useChartSize'
 import { UNIT_LABEL, UNIT_PREFIX, fiscalYear, tick, value, type Unit } from '../charts/format'
 import type { BudgetYear, Control, Law } from '../../data/types'
 import { ChartHint } from '../charts/ChartHint'
@@ -28,6 +47,8 @@ import { ChartHint } from '../charts/ChartHint'
 /** This island's figure in `src/data/figures.ts`. Its accessible name is derived from
  *  this key rather than typed, see `figureLabel.ts` (#72). */
 const FIGURE = 'whole-budget'
+
+const X_FORMAT = (t: number) => `${t}`
 
 interface Row {
   y: number
@@ -132,12 +153,26 @@ export function BudgetChart({ rows: source }: { rows: BudgetYear[] }) {
   const rows = useMemo(() => deriveRows(source, unit), [source, unit])
   const active = focus != null ? rows.find((r) => r.y === focus) ?? null : null
 
-  const [boxRef, size] = useChartSize()
-  const narrow = size.width < 500
+  const yValues = useMemo(() => rows.flatMap((r) => [r.total, r.def]), [rows])
+
+  /* Only the container ref, the measured preset and the roving wiring are read
+   * from the hook. The scales it returns assume `useChartSize`'s margins, which
+   * this figure replaces. */
+  const { boxRef, size, narrow, chartStyle, surfaceRef, wrapperProps, mark } = useFrame({
+    rows,
+    xOf: (r) => r.y,
+    yValues,
+  })
 
   // ---- Layout: extra top margin for the caption + 3 control rows + a band-
   // label row, none of which the shared `useChartSize` presets anticipate.
-  const capH = narrow ? 9 : 10
+  /* MEASURED. The caption's baseline used to sit at `capH - 2`, being 7 units
+   * below the surface's top edge, and an `axis-title` at 10.5px carries about
+   * 8.4 units of ascent, so its first line was cut by 2.2px at 390px and 2.0px
+   * at 1440px. The band is now the font's own line box and the baseline is its
+   * ascent, both derived rather than tuned, so the glyphs start inside the
+   * surface at every preset. */
+  const capH = Math.ceil(AXIS_TITLE_FONT_PX * 1.2)
   const rowH = narrow ? 10 : 12
   const rowGap = 1
   const bandLabelH = narrow ? 10 : 11
@@ -147,43 +182,67 @@ export function BudgetChart({ rows: source }: { rows: BudgetYear[] }) {
   const stripBlockH = capH + rowsH
   const topExtra = stripBlockH + padB + bandLabelH + padC
 
-  const margin = {
-    top: topExtra,
-    right: narrow ? size.margin.right : size.margin.right + 58,
-    bottom: size.margin.bottom,
-    left: size.margin.left,
-  }
-  const W = size.width
-  const H = size.height
-  const iw = W - margin.left - margin.right
-  const ih = H - margin.top - margin.bottom
+  const margin = useMemo(
+    () => ({
+      top: topExtra,
+      right: narrow ? size.margin.right : size.margin.right + 58,
+      bottom: size.margin.bottom,
+      left: size.margin.left,
+    }),
+    [topExtra, narrow, size.margin.right, size.margin.bottom, size.margin.left],
+  )
 
-  const years = rows.map((r) => r.y)
-  const x = linear([Math.min(...years), Math.max(...years)], [0, iw])
-  const y = linear(niceExtent(rows.flatMap((r) => [r.total, r.def])), [ih, 0])
-  const bw = x(years[1]) - x(years[0])
+  /* Rule 1 applies here exactly as it does inside `useFrame`. A fresh `ticks`
+   * array on each render unmounts and remounts the graphical items, and the
+   * remount destroys whichever mark holds focus. `rows` and `margin` are both
+   * memoised above, so this memo holds across a hover. */
+  const geo = useMemo(() => {
+    const fr = makeFrame(size.width, size.height, margin)
+    const years = rows.map((r) => r.y)
+    const xDomain: [number, number] = [Math.min(...years), Math.max(...years)]
+    const yDomain = niceExtent(rows.flatMap((r) => [r.total, r.def]))
+    const xs = linear(xDomain, [0, fr.innerWidth])
+    const ys = linear(yDomain, [fr.innerHeight, 0])
+    return {
+      fr,
+      xDomain,
+      yDomain,
+      x: xs,
+      y: ys,
+      xTicks: xs.ticks(narrow ? 4 : 8).filter((t) => Number.isInteger(t)),
+      yTicks: ys.ticks(narrow ? 4 : 6),
+      bw: xs(years[1]) - xs(years[0]),
+    }
+  }, [rows, margin, narrow, size.width, size.height])
+
+  const { fr, xDomain, yDomain, x, y, xTicks, yTicks, bw } = geo
+  const ih = fr.innerHeight
+  const iw = fr.innerWidth
+
+  /* Recharts adds each axis's own width or height to this margin, so the left
+   * and bottom gutters are declared on the axes and zeroed here. */
+  const chartMargin = useMemo(
+    () => ({ top: margin.top, right: margin.right, bottom: 0, left: 0 }),
+    [margin],
+  )
+  const plotOrigin = useMemo(
+    () => ({ left: margin.left, top: margin.top }),
+    [margin],
+  )
+
+  const yFormat = useTickFormat(tick, unit)
 
   // y-coordinates above the plot (negative), from the top of the allocated
   // block down to the plot origin at 0.
   const stripAreaTop = -topExtra
-  const captionY = stripAreaTop + capH - 2
+  const captionY = stripAreaTop + Math.ceil(AXIS_TITLE_FONT_PX * 0.85)
   const rowsTop = stripAreaTop + capH
   const rowRectY = (i: number) => rowsTop + i * (rowH + rowGap)
   const rowCenterY = (i: number) => rowRectY(i) + rowH / 2
   const bandLabelY = stripAreaTop + stripBlockH + padB + bandLabelH - 3
 
-  const yTicks = y.ticks(narrow ? 4 : 6)
-  const xTicks = x.ticks(narrow ? 4 : 8).filter((t) => Number.isInteger(t))
-
   const controlled = rows.filter((r): r is Row & { ctl: Control } => r.ctl != null)
   const glyphFits = bw >= 7
-
-  const areaBetween = (y0: (r: Row) => number, y1: (r: Row) => number) =>
-    d3area<Row>().x((r) => x(r.y)).y0((r) => y(y0(r))).y1((r) => y(y1(r)))
-  const mandArea = areaBetween(() => 0, (r) => r.mand)
-  const discArea = areaBetween((r) => r.mand, (r) => r.mand + r.disc)
-  const intArea = areaBetween((r) => r.mand + r.disc, (r) => r.mand + r.disc + r.int)
-  const revLine = d3line<Row>().x((r) => x(r.y)).y((r) => y(r.rev))
 
   const last = rows[rows.length - 1]
   const seriesLabelY = {
@@ -227,32 +286,127 @@ export function BudgetChart({ rows: source }: { rows: BudgetYear[] }) {
         <UnitToggle figure={FIGURE} value={unit} onChange={setUnit} />
       </div>
 
-      <Chart ariaLabel={label} interactive width={W} height={H} margin={margin}>
-        {(fr, mark) => (
-          <>
-            <defs>
-              <pattern id="gop-hatch" width={4} height={4} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                <rect width={4} height={4} fill="var(--gop)" />
-                <line x1={0} y1={0} x2={0} y2={4} stroke="var(--ink)" strokeWidth={1} opacity={0.4} />
-              </pattern>
-            </defs>
+      <div {...wrapperProps}>
+        <AreaChart
+          ref={surfaceRef}
+          data={rows}
+          width={size.width}
+          height={size.height}
+          margin={chartMargin}
+          {...SURFACE_DEFAULTS}
+          aria-label={label}
+          style={chartStyle}
+        >
+          {/* A plain child, not an overlay: `<defs>` renders nothing in place,
+              so it needs no plot transform, and the control strip must be able
+              to resolve the pattern on the first paint. An overlay is a portal
+              and reaches the DOM one render later. */}
+          <defs>
+            <pattern id="gop-hatch" width={4} height={4} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <rect width={4} height={4} fill="var(--gop)" />
+              <line x1={0} y1={0} x2={0} y2={4} stroke="var(--ink)" strokeWidth={1} opacity={0.4} />
+            </pattern>
+          </defs>
 
-            <AxisLeft frame={fr} ticks={yTicks} format={(v) => tick(v, unit)} label={UNIT_LABEL[unit]} scale={y} />
-            <AxisBottom frame={fr} ticks={xTicks} format={(t) => `${t}`} label="Fiscal year" scale={x} />
+          <PlotGrid />
 
-            {/* 1. Era bands, drawn first so all data sits on top of them. */}
-            {ERA_BANDS.map((b) => {
-              const x1 = x(b.from)
-              const x2 = x(b.to)
-              return (
-                <g key={b.from}>
-                  <rect x={x1} y={0} width={x2 - x1} height={ih} fill="var(--band)" opacity={0.55} />
-                  <text x={(x1 + x2) / 2} y={bandLabelY} textAnchor="middle" className="axis-title">
-                    {narrow ? b.labelNarrow : b.label}
-                  </text>
-                </g>
-              )
-            })}
+          {/* 1. Era bands. `ReferenceArea` rather than an overlay because these
+              belong UNDER the data, and its own zIndex prop is the only way to
+              say so: the overlay layer paints at 2000, over the stack it is
+              meant to sit behind. `barBackground` is the one default sitting
+              between the grid at -100 and the areas at 100. */}
+          {ERA_BANDS.map((b) => (
+            <ReferenceArea
+              key={b.from}
+              x1={b.from}
+              x2={b.to}
+              zIndex={DefaultZIndexes.barBackground}
+              fill="var(--band)"
+              fillOpacity={0.55}
+              stroke="none"
+            />
+          ))}
+
+          <PlotXAxis
+            domain={xDomain}
+            ticks={xTicks}
+            gutter={margin.bottom}
+            unit="Fiscal year"
+            format={X_FORMAT}
+          />
+          <PlotYAxis
+            domain={yDomain}
+            ticks={yTicks}
+            gutter={margin.left}
+            unit={UNIT_LABEL[unit]}
+            format={yFormat}
+          />
+
+          {/* 2. The three stacked areas, back to front: mandatory, then
+              discretionary, then net interest on top. Straight segments,
+              a smoothed curve would invent values between fiscal years. */}
+          <Area
+            type="linear"
+            dataKey="mand"
+            stackId="outlays"
+            stroke="none"
+            fill="var(--mand)"
+            fillOpacity={1}
+            isAnimationActive={false}
+            activeDot={false}
+            dot={false}
+          />
+          <Area
+            type="linear"
+            dataKey="disc"
+            stackId="outlays"
+            stroke="none"
+            fill="var(--disc)"
+            fillOpacity={1}
+            isAnimationActive={false}
+            activeDot={false}
+            dot={false}
+          />
+          <Area
+            type="linear"
+            dataKey="int"
+            stackId="outlays"
+            stroke="none"
+            fill="var(--int)"
+            fillOpacity={1}
+            isAnimationActive={false}
+            activeDot={false}
+            dot={false}
+          />
+
+          {/* 3. Revenue, drawn across the stack. */}
+          <Line
+            type="linear"
+            dataKey="rev"
+            stroke="var(--ink)"
+            strokeWidth={2}
+            isAnimationActive={false}
+            activeDot={false}
+            dot={false}
+          />
+
+          {/* Everything below is drawn in the site's own plot coordinates and
+              must sit on top of the stack, so it goes through the overlay: a
+              plain child renders under the area fill. The control strip and
+              the band labels use negative y, which is the top margin this
+              figure reserves for them. */}
+          <PlotOverlay margin={plotOrigin}>
+            {ERA_BANDS.map((b) => (
+              <text
+                key={b.from}
+                x={(x(b.from) + x(b.to)) / 2}
+                y={bandLabelY}
+                textAnchor="middle"
+                className="axis-title"
+              >
+                {narrow ? b.labelNarrow : b.label}
+              </text>
+            ))}
 
             {/* The control strip. Cells render ONLY for FY1995-2025, years
                 outside that range are genuinely empty: no rect, no outline. */}
@@ -300,14 +454,7 @@ export function BudgetChart({ rows: source }: { rows: BudgetYear[] }) {
               </g>
             ))}
 
-            {/* 2. The three stacked areas, back to front: mandatory, then
-                discretionary, then net interest on top. Straight segments,
-                a smoothed curve would invent values between fiscal years. */}
-            <path d={mandArea(rows) ?? ''} fill="var(--mand)" />
-            <path d={discArea(rows) ?? ''} fill="var(--disc)" />
-            <path d={intArea(rows) ?? ''} fill="var(--int)" />
-
-            {/* 3. The deficit, from zero. Surplus years render ABOVE zero
+            {/* 4. The deficit, from zero. Surplus years render ABOVE zero
                 from the same baseline: sign and position carry the meaning,
                 colour (--positive) only reinforces the surplus years. */}
             {rows.map((r) => {
@@ -328,11 +475,8 @@ export function BudgetChart({ rows: source }: { rows: BudgetYear[] }) {
 
             <ZeroLine frame={fr} y={y(0)} />
 
-            {/* 4. Revenue, drawn last of the data so it reads across the stack. */}
-            <path d={revLine(rows) ?? ''} fill="none" stroke="var(--ink)" strokeWidth={2} />
-
             {/* 5. In-chart series labels at wide; a text legend below the
-                figure replaces these at narrow (see the <p> after </Chart>).
+                figure replaces these at narrow (see the <p> after the chart).
 
                 These sit INSIDE the plot, right-anchored with a halo, which is
                 the treatment RevenueChart's band labels already use two
@@ -377,9 +521,9 @@ export function BudgetChart({ rows: source }: { rows: BudgetYear[] }) {
                 />
               )
             })}
-          </>
-        )}
-      </Chart>
+          </PlotOverlay>
+        </AreaChart>
+      </div>
 
       {narrow && (
         <p className="controls-label">Mandatory (net) · Discretionary · Net interest · Revenue</p>
