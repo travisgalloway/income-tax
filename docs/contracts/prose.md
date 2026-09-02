@@ -65,9 +65,9 @@ Nothing else is a prose string. In particular:
 - **`<span class="unit">—</span>` is not prose.** In a built table the character means "this column
   has no unit". The character is typographic, and `.unit` is outside the allow-list, so it needs no
   exemption. Do not add one.
-- **The `Source.` span is not prose.** `src/components/Figure.astro:68` renders `fig.sourceLine`
-  verbatim, and `src/components/Figure.astro:52-53` makes a missing one a build failure. The span
-  carries no class, and `.figure-caveat` at `src/components/Figure.astro:67` is its *sibling* rather
+- **The `Source.` span is not prose.** `src/components/Figure.astro:61` renders `fig.sourceLine`
+  verbatim, and `src/components/Figure.astro:45-46` makes a missing one a build failure. The span
+  carries no class, and `.figure-caveat` at `src/components/Figure.astro:60` is its *sibling* rather
   than its ancestor, so the check never visits it. See **Drift and quoted material**.
 - **A glossary popover body is not this page's prose.** `src/components/Term.astro` renders the
   term's `short` into a `.term-pop` inside the paragraph. A reader sees the popover, and the text is
@@ -90,7 +90,7 @@ profit shares — is one number". The aside is itself a list, so it takes parent
 Fail, as `/households` read before #58: "what people actually pay -- the average federal tax rate --
 has moved far less". An appositive gloss takes a comma pair, and it now reads "what people actually
 pay, the average federal tax rate, has moved far less". Pass:
-`src/pages/government/index.astro:178`, which does the same work with a full stop and a new
+`src/pages/government/index.astro:179`, which does the same work with a full stop and a new
 sentence. Enforced by `test_no_prose_string_contains_an_em_dash_or_a_double_hyphen`.
 **No all-caps emphasis.** Capitals are the `.kicker`'s role and nothing else's (Ruling 2). All
 three worked fails are quoted historically, because #58 discharged all three and their lines no
@@ -104,7 +104,7 @@ PAYROLL TAX", now recast to "counts payroll tax, corporate income tax and excise
 individual income tax", because a `note=` prop is a plain attribute rendered as text and cannot carry
 markup.
 
-Pass: `src/pages/government/index.astro:279` and `src/pages/government/index.astro:281`, which put
+Pass: `src/pages/government/index.astro:279` and `src/pages/government/index.astro:280`, which put
 the emphasis on a `<strong>` noun phrase, and `src/pages/households/index.astro:164`, which does the
 same for a numbered limit. Enforced by `test_no_prose_string_shouts`.
 
@@ -116,7 +116,7 @@ than as capitals. Adding an acronym means adding it to the set with a comment sa
 for, which is a deliberate act and leaves a diff. Enforced by `test_no_prose_string_shouts`.
 
 **Body copy is sentence case.** `BRIEF.md:79`. The kicker is not an exception, because it carries no
-literal capitals. `src/styles/global.css:98-105` sets `font-variant-caps: all-small-caps` with
+literal capitals. `src/styles/global.css:60-66` sets `font-variant-caps: all-small-caps` with
 `letter-spacing: 0.09em` at `0.9375rem`, and no `text-transform`. Pass:
 `src/pages/economy/index.astro:72` writes `<span class="section-no">Section 3</span>`, in sentence
 case, and the CSS does the rest. There is therefore no kicker carve-out anywhere in this contract.
@@ -132,7 +132,7 @@ form detaches the registry from the prose it describes. Not mechanically enforce
 **Every figure carries its unit.** `sections.md:10-11`. Pass: `src/pages/economy/index.astro:74`,
 "Unemployment was 4.2% in fiscal 2025 against a noncyclical rate of 4.4%". Fail: any bare "4.2" in
 running prose. Not mechanically enforced here. The *figure*'s axes are separately gated by
-`src/components/Figure.astro:54`, which fails the build when either axis is unnamed.
+`src/components/Figure.astro:47`, which fails the build when either axis is unnamed.
 
 **No causation the data does not support.** `BRIEF.md:202-203`. Pass:
 `src/pages/economy/index.astro:68`, which states what a series shows and then says outright that
@@ -150,12 +150,12 @@ makes two claims joined by "and". Not mechanically enforced. Criterion 2 owns it
 **A chart's `aria-label` is prose, and it is the finding.** The `<figure>`'s name and the `<svg>`'s
 name are deliberately the same sentence per `docs/contracts/accessibility.md`, so a convention that
 moves one must move both, in the same commit. The label is additionally bound by
-`pipeline/tests/test_accessibility.py:350-373`, which requires a digit, at least 40 characters, no
+`pipeline/tests/test_accessibility.py:284-306`, which requires a digit, at least 40 characters, no
 leading shape word, and never "chart showing".
 
-Pass: `src/pages/economy/index.astro:78`. Fail: `src/components/islands/StatutoryVsEffective.tsx:107`,
-which is a ` -- ` violation *inside* an accessible name. It reached `dist/households/index.html`
-until the site adopted Recharts, and it now reaches only the hydrated page. Enforced by
+Pass: `src/pages/economy/index.astro:78`. Fail: `src/components/islands/StatutoryVsEffective.tsx:97`,
+which is a ` -- ` violation *inside* an accessible name, and is the reason
+`dist/households/index.html` carries more banned dashes than its page source does. Enforced by
 `test_no_prose_string_contains_an_em_dash_or_a_double_hyphen` and, for the accessibility half, by
 `test_every_chart_svg_states_a_finding`.
 
@@ -181,7 +181,7 @@ replacement per grammatical job makes remediation a mechanical pass rather than 
 | parenthetical aside | `/economy`: "Every series on this route — GDP, prices, rates, the wage and profit shares — is one number" | comma pair; parentheses where the aside is itself a list, as it is there |
 | amplifying clause | `/government`: "not the balance-of-payments question it sounds like — what follows is narrower on both sides" | colon, or a full stop and a new sentence |
 | appositive gloss | `/households`: "what people actually pay -- the average federal tax rate -- has moved far less" | comma pair |
-| generated readout separator | `src/components/islands/BudgetChart.tsx:107` | full stop. The readout's other fields are already separated by ". ", so one template edit clears all 31 labels |
+| generated readout separator | `src/components/islands/BudgetChart.tsx:84` | full stop. The readout's other fields are already separated by ". ", so one template edit clears all 31 labels |
 
 Rows 1 to 3 carry no `path:line`, for the reason given under **Conventions**. #58 fixed all three,
 and a citation would now bind a quotation to a line that no longer supports it. Row 4 keeps its
@@ -194,21 +194,19 @@ Four scoping decisions, each stated so that no future issue reopens it:
    viewport. 10 instances reached `dist/` on the day this contract landed, all on `/households`.
    #53's Criterion 2 rewrites took two of them, leaving eight. #58 measured six still standing in
    prose classes and cleared all six, so **no ` -- ` reaches a reader in prose today**. The two
-   that remain are both inside one chart's accessible name at
-   `src/components/islands/StatutoryVsEffective.tsx:107`, which is #102's, and which is why a
-   dist-wide grep is the wrong check. Since the site adopted Recharts that name no longer reaches
-   `dist/` at all, because no chart server-renders, so the check reads the template as source.
-   A reader whose browser runs the island still hears the string.
+   that remain anywhere in `dist/` are both inside one chart's accessible name at
+   `src/components/islands/StatutoryVsEffective.tsx:97`, which is #102's, and which is why a
+   dist-wide grep is the wrong check.
 2. **Numeric-range hyphens are out of scope.** "1946-1950" at
    `src/pages/households/index.astro:82` and "FY1995-FY2025" throughout are ranges. A hyphen
    between two numbers is a range operator rather than punctuation. **No en dash is introduced in
    its place.** The minus-sign ambiguity that justifies the em-dash ban applies to the en dash
    identically, so this site uses the hyphen and only the hyphen.
 3. **Island-generated strings are in scope.** Anything a reader can read or hear is prose, including
-   a string assembled at runtime. `src/components/islands/StatutoryVsEffective.tsx:107` proves the
+   a string assembled at runtime. `src/components/islands/StatutoryVsEffective.tsx:97` proves the
    point, because it puts a banned construction inside an accessible name, which
    `docs/contracts/accessibility.md` also governs. Owner: **#102**, together with
-   `src/components/islands/BudgetChart.tsx:107`.
+   `src/components/islands/BudgetChart.tsx:84`.
 4. **Curated pipeline data is out of scope for the dash and capitals rules, by name.**
    `pipeline/curated/laws.yaml:287` carries "VOICE VOTE" and `src/data/party_splits.json:22` carries
    "AT LEAST ONE". Both are authored by this repository but reach the page through generated JSON.
@@ -221,17 +219,17 @@ Four scoping decisions, each stated so that no future issue reopens it:
 
 **All-caps is reserved for the `.kicker` role and banned in body copy and figure notes.** The
 replacement is `<strong>` on the emphasised noun phrase, which the pages already do at
-`src/pages/government/index.astro:279`, `src/pages/government/index.astro:281` and
+`src/pages/government/index.astro:279`, `src/pages/government/index.astro:280` and
 `src/pages/households/index.astro:164`. A recast that puts the emphasis where the word order puts it
 is the second replacement.
 
 Two refinements:
 
-- **The kicker is not literal capitals**, so there is no carve-out. `src/styles/global.css:98-105` is
+- **The kicker is not literal capitals**, so there is no carve-out. `src/styles/global.css:60-66` is
   `font-variant-caps: all-small-caps`; kicker source text is sentence case
   (`src/pages/economy/index.astro:72`) and passes the same mechanical check as body copy. The rule
   is uniform across every prose class.
-- **Figure notes are ruled in, explicitly.** `src/components/Figure.astro:67` renders a `note` into
+- **Figure notes are ruled in, explicitly.** `src/components/Figure.astro:60` renders a `note` into
   the figcaption as `.figure-caveat`, and `.figure-caveat` is inside the allow-list. Without that
   rule, the figure note's "it INCLUDES PAYROLL TAX" would have stayed legal. All three shouts were
   assigned to **#58** as one pass, because splitting a three-instance fix across issues costs more
@@ -283,6 +281,9 @@ The consequences are recorded here, and the change is deferred to that follow-on
 
 ### Ruling 4: the heading register
 
+**Superseded by Ruling 5 on 2026-08-29.** The text below stays as the record, in the way
+the quoted fail examples under **Conventions** stay. Ruling 5 states what governs now.
+
 Set by #60, because Criterion 5 asked what a heading and a standfirst are allowed to assert and the
 contract had no answer. The obvious answer, a list of forbidden words, would have been the wrong one.
 
@@ -309,6 +310,43 @@ half already exists. `test_no_section_heading_names_the_charts_construction` cat
 the apparatus, and its own docstring says it cannot catch a heading naming the variables. Checklist
 item 8 holds the rest, and this ruling is what that item now reads a heading against.
 
+### Ruling 5: the heading names the subject
+
+Set on 2026-08-29, superseding Ruling 4. The front door was rewritten as a report preface, and the
+three routes did not match it. The register across the site is now the analytical report's, and a
+heading is a subject rather than a claim.
+
+**The ruling.** *A heading names the section's subject. The standfirst poses the question and says
+what is set against what. The finding states the claim, in one sentence a reader can falsify against
+the figure. No heading, standfirst or prose element addresses the reader in the second person or
+speaks in the first.*
+
+Ruling 4 held the opposite on both halves. It blessed the pointed heading, on the ground that a flat
+heading fails to say what the section found, and it recorded that the site's second person was not a
+fault. The reply is that the finding already says what the section found, in a ruled-off sentence a
+reader can check against the figure. A heading repeating that claim states it twice, and states it
+where no figure sits beside it. The claim moves to the one element built to carry it.
+
+Ruling 4's third worked row, `/government` §12's standfirst "Read them before arguing with anyone
+about the charts above", was judged in register by that ruling and is out under this one. It now
+reads "Each one bounds a claim the preceding sections make".
+
+**Every `id` is unchanged.** All 25 route headings moved and no anchor did, so `#how-old`,
+`#the-spread`, `#net-interest`, `#by-state` and the rest resolve exactly as before. Ruling 4 set
+that precedent when it rewrote `/government` §3's heading and held its anchor, and this ruling
+follows it at scale.
+
+**Two rail labels moved with their headings.** `routeSections` labels the rail and `/contents`,
+and two carried the second person: `/households`'s `the-bill-you-do-not-see` and `/government`'s
+`limits`. They now read "Payroll tax" and "Limits". The rail is 13rem wide, so the other labels stay
+shorter than their headings rather than tracking them.
+
+**The mechanical half is unchanged, and it is the same check.**
+`test_no_section_heading_names_the_charts_construction` bans `CONSTRUCTION_WORDS` in an `<h2>`, and
+every new heading clears it. Nothing else in the suite reads a heading, which is why this ruling
+costs a contract edit rather than a test edit. Whether a heading names its subject accurately stays
+Checklist item 8.
+
 ## Drift and quoted material
 
 **No prose edit may move a number registered in `pipeline/curated/prose_figures.yaml`.** Rewording
@@ -327,7 +365,7 @@ detach the registry from the prose it describes, which is the failure this secti
 trades a typographic preference for a data-integrity hazard.
 
 **`_meta.source` is quoted material and no prose rule may edit it.** The line is rendered verbatim at
-`src/components/Figure.astro:68` and required at `src/components/Figure.astro:52-53`. The line is
+`src/components/Figure.astro:61` and required at `src/components/Figure.astro:45-46`. The line is
 also outside the check's allow-list by construction, because the span carries no class and
 `.figure-caveat` is its sibling rather than its ancestor. The exclusion is deliberate, because a
 deny-list check would have needed a class added to `src/components/Figure.astro` purely to express
@@ -336,7 +374,7 @@ the exemption.
 **A `.finding` and its chart `aria-label` move together.** They are deliberately the same sentence
 per `docs/contracts/accessibility.md`. A C-issue that edits a finding and not its label breaks the
 accessibility contract silently. The label must still satisfy
-`pipeline/tests/test_accessibility.py:350-373` afterwards: a digit, at least 40 characters, no
+`pipeline/tests/test_accessibility.py:284-306` afterwards: a digit, at least 40 characters, no
 leading shape word.
 ## Rubric
 
@@ -347,17 +385,23 @@ the numbering is for.
 ### Criterion 1 — the question comes first
 
 **Asks:** does the section state the question it answers before its first figure appears?
-**Pass:** the kicker, heading and standfirst together name a question a reader could have asked, and
-the chart then answers it. `src/pages/households/index.astro:141-143` poses it and
+**Pass:** the kicker and heading name the section's subject, the standfirst poses the question a
+reader could have asked, and the chart then answers it.
+`src/pages/households/index.astro:143` poses it and
 `src/pages/households/index.astro:156` answers it after the chart. **Fail:** the standfirst
 summarises the chart the reader has not seen yet, so the figure arrives as evidence for a claim
 rather than as an answer to a question. **Cited by #52.**
 
+**Which element carries which job, set by Ruling 5.** The heading names the subject. The standfirst
+poses the question and says what is set against what. The finding states the claim, in one sentence
+a reader can falsify against the figure. Before Ruling 5 the heading carried the claim and the
+standfirst carried the question, and the three-way division replaced that.
+
 **The mechanical half.** The checker measures four positional and textual facts over the four report
-routes' built pages. **Enforced by** `pipeline/tests/test_prose.py:537`, `:556`, `:575` and `:599`:
+routes' built pages. **Enforced by** `pipeline/tests/test_prose.py:453`, `:472`, `:491` and `:515`:
 a `.standfirst` before the section's first `<figure>`; a `.prose` after its **last** `</figure>`; a
 standfirst whose number tokens overlap its finding's by less than `PREEMPTION_CEILING`
-(`pipeline/tests/test_prose.py:471`, 0.5) on Jaccard, because a standfirst quoting the finding's
+(`pipeline/tests/test_prose.py:403`, 0.5) on Jaccard, because a standfirst quoting the finding's
 exact figures posed no question; and no `<h2>` containing a word from `CONSTRUCTION_WORDS`.
 
 Scope is structural, and no exemption list exists anywhere. A section is asked the first two
@@ -365,10 +409,15 @@ questions **because it carries a `<figure>`**, which discharges the three Limits
 `/` intro's four. There is no baseline either. #52 found four violations and fixed all four, which
 is the choice the rule below says to make at that count.
 
-**What the checks cannot see.** They cannot see a heading that names the section's *variables*
-instead of its question. "Prices and rates" and "Labor and capital" told the reader what was
-plotted, neither said what was found, and both passed every word list anyone would write. #52
-rewrote them by reading, to `src/pages/economy/index.astro:98` and
+**What the checks cannot see.** They cannot see whether a heading names the section's subject
+accurately, or whether the standfirst beneath it poses the question the figure answers. Both are
+readings, and no word list reaches either.
+
+**One reversal is recorded here rather than deleted.** #52 read "Prices and rates" and "Labor and
+capital" as defects, on the ground that a heading naming what was plotted does not say what was
+found, and rewrote both. Ruling 5 moves the claim to the finding, so a heading naming the subject is
+now the rule rather than the fault, and those two headings are the shape every route now uses. The
+sites #52 rewrote are `src/pages/economy/index.astro:98` and
 `src/pages/economy/index.astro:124`.
 
 The checks also cannot see a standfirst that restates its finding **in words** rather than in
@@ -378,26 +427,26 @@ posed. Checklist item 8 holds that judgement, and a person makes it.
 ### Criterion 2 — the standfirst sets up, the finding claims
 
 **Asks:** does the standfirst set the chart up, and does the finding state exactly one claim a reader
-could falsify against the figure? **Pass:** `src/pages/economy/index.astro:73-75`, where the
+could falsify against the figure? **Pass:** `src/pages/economy/index.astro:74-75`, where the
 standfirst rounds and orients and the finding gives the unrounded values and the comparison between
 them. **Fail:** a finding that restates the standfirst, or that joins two claims with "and".
 **Cited by #53.**
 
 The pairing rule in **Drift and quoted material** binds this criterion. A finding edit moves the
 matching `aria-label` in the same commit, and the label stays inside
-`pipeline/tests/test_accessibility.py:350-373`.
+`pipeline/tests/test_accessibility.py:284-306`.
 
 **The mechanical half.** The checker measures four facts about every `.finding` on the four report
-routes, and about the standfirst beside it. **Enforced by** `pipeline/tests/test_prose.py:719`,
-`:745`, `:779` and `:804`: no standfirst and finding share a number token that is not a four-digit
+routes, and about the standfirst beside it. **Enforced by** `pipeline/tests/test_prose.py:635`,
+`:661`, `:695` and `:720`: no standfirst and finding share a number token that is not a four-digit
 calendar year; every finding and every `figure.figure` accessible name clears the finding-shape
-floor; no finding runs past `FINDING_CHARS_MAX` (`pipeline/tests/test_prose.py:694`, 220 characters,
+floor; no finding runs past `FINDING_CHARS_MAX` (`pipeline/tests/test_prose.py:626`, 220 characters,
 with the longest surviving finding at 193); and each section carries at most one finding,
 immediately after its standfirst and before its first figure.
 
 The calendar year is exempt as a regex class rather than as a list. A standfirst says over what
 window and a finding says when, so both name the same years by construction. The floor is
-`finding_shape_problems` at `pipeline/tests/test_accessibility.py:350`, extracted from
+`finding_shape_problems` at `pipeline/tests/test_accessibility.py:284`, extracted from
 `test_every_chart_svg_states_a_finding` with no assertion changed. The finding and the accessible
 name this contract calls the same sentence are therefore held to one predicate rather than to two
 copies of one.
@@ -426,7 +475,7 @@ below hold those judgements.
 ### Criterion 3 — sentence craft
 
 **Asks:** sentence length, clause count, punctuation (Ruling 1) and emphasis (Ruling 2).
-**Pass:** `src/pages/government/index.astro:178`, three sentences, one clause each, a full stop
+**Pass:** `src/pages/government/index.astro:179`, three sentences, one clause each, a full stop
 where a dash was tempting. **Fail**, all quoted historically because #58 fixed every one of them:
 "Every series on this route — GDP, prices, rates, the wage and profit shares — is one number" and
 "what people actually pay -- the average federal tax rate -- has moved far less" for punctuation;
@@ -438,10 +487,10 @@ to zero is the criterion being met**, and #58 took it there. **Cited by #58.**
 
 **The mechanical half now spans three of this checker's numbered blocks.** Sections 1 and 2 are
 punctuation and emphasis, both `==` against the baselines. Section 8, added by #58, is sentence
-length and word spacing. `pipeline/tests/test_prose.py:927` caps a prose sentence at
-`SENTENCE_WORDS_MAX` (`pipeline/tests/test_prose.py:886`, 45 words),
-`pipeline/tests/test_prose.py:993` fails a `.term` span that abuts a letter, digit or comma in the
-served bytes, and `pipeline/tests/test_prose.py:1041` gates the audit table below. All three assert
+length and word spacing. `pipeline/tests/test_prose.py:834` caps a prose sentence at
+`SENTENCE_WORDS_MAX` (`pipeline/tests/test_prose.py:818`, 45 words),
+`pipeline/tests/test_prose.py:900` fails a `.term` span that abuts a letter, digit or comma in the
+served bytes, and `pipeline/tests/test_prose.py:946` gates the audit table below. All three assert
 zero.
 
 **The counts, and the exemption policy they chose (rule 3).** #58 met four numbers. It retired **23
@@ -500,7 +549,7 @@ discharged it.**
 
 **Scope is markable prose: `prose`, `standfirst` and `finding`.** Three of `PROSE_CLASSES`' four,
 and the fourth is out **structurally rather than by a list**. `.figure-caveat` renders
-`src/components/Figure.astro:39`'s `note?: string`, a plain string prop that cannot carry a
+`src/components/Figure.astro:38`'s `note?: string`, a plain string prop that cannot carry a
 component, and an `aria-label` is an attribute, which cannot carry one either. A term whose only
 occurrence on a route is inside a figure note is therefore not a violation and needs no exemption
 entry. `offsetting receipts`, `incidence` and `gdp-deflator` are all of that shape.
@@ -658,8 +707,8 @@ small mechanical surface reads as a finding rather than an omission:
 them? **Pass:** a reworded paragraph whose registered figure is unchanged, whose `_meta.source` is
 untouched, and whose finding and `aria-label` moved together. **Fail:** any one of the three moved
 alone. Cross-cutting, and **cited by all six** C-issues. Its surfaces are
-`pipeline/curated/prose_figures.yaml`, `src/components/Figure.astro:52-53` and
-`src/components/Figure.astro:68`, and `pipeline/tests/test_accessibility.py:350-373`.
+`pipeline/curated/prose_figures.yaml`, `src/components/Figure.astro:45-46` and
+`src/components/Figure.astro:61`, and `pipeline/tests/test_accessibility.py:284-306`.
 
 ### How a C-issue lands its criterion
 
@@ -706,13 +755,13 @@ docs are most of the diff.
 | 4 | **#59** | `src/content/glossary/` (23 entries), `src/components/Term.astro`, and each route's first use of each term. Owns any move of `REGISTERED_INITIALISMS` onto the glossary |
 | 5 | **#60** | `.prose` bodies and `.figure-caveat` notes across all three routes, plus the Government route's section 12 limits block |
 | 6 | **#61** | The closing paragraph of each section and the terminal section of each route: Economy section 6, Households section 7, Government section 12 |
-| 7 | all six | `pipeline/curated/prose_figures.yaml`, `src/components/Figure.astro:52-53` and `src/components/Figure.astro:68`, and `pipeline/tests/test_accessibility.py:350-373` |
+| 7 | all six | `pipeline/curated/prose_figures.yaml`, `src/components/Figure.astro:45-46` and `src/components/Figure.astro:61`, and `pipeline/tests/test_accessibility.py:284-306` |
 
 Two surfaces no C-issue can reach, each filed and each named beside the baseline entries it owns:
 
-- **#102**, the island-generated accessible names. `src/components/islands/BudgetChart.tsx:107` (31
+- **#102**, the island-generated accessible names. `src/components/islands/BudgetChart.tsx:84` (31
   per-fiscal-year labels from one template) and
-  `src/components/islands/StatutoryVsEffective.tsx:107` (` -- ` inside a chart's accessible name).
+  `src/components/islands/StatutoryVsEffective.tsx:97` (` -- ` inside a chart's accessible name).
   Both are `.tsx` edits, outside #58's prose-editing remit.
 - **#103**, the curated-data shouts. `pipeline/curated/laws.yaml:287` and
   `src/data/party_splits.json:22`. A pipeline change requiring regeneration and revalidation.
@@ -721,7 +770,7 @@ Two surfaces no C-issue can reach, each filed and each named beside the baseline
 
 One row per `<section id>` on the four report routes, 29 of them. The question is a reviewer's
 one-line paraphrase of what the section's kicker, heading and standfirst pose before the reader
-meets a chart. `pipeline/tests/test_prose.py:654` asserts this table's `Route` and `Section id` set
+meets a chart. `pipeline/tests/test_prose.py:570` asserts this table's `Route` and `Section id` set
 **equals** the set built from `dist/`, so a section cannot ship without declaring its question and
 a deleted section cannot leave its judgement behind. The test asserts the **coverage** and never
 the wording. Whether the paraphrase is honest, and whether the closing prose answers it, is
@@ -771,7 +820,7 @@ first figure" and "prose after the last figure" are not asked of a section that 
 One row per `.finding` on the four report routes, 22 of them. `The one claim it makes` is a
 reviewer's paraphrase of the single thing the finding asserts. `Checkable against` names the figure
 whose `<details>` table settles it, which is where the two-figure sections are discharged, because a
-finding cannot be checkable against both. `pipeline/tests/test_prose.py:843` asserts this table's
+finding cannot be checkable against both. `pipeline/tests/test_prose.py:759` asserts this table's
 `Route` and `Section id` set **equals** the set of sections carrying a finding in `dist/`. The test
 asserts the coverage and never the wording. Whether the paraphrase is honest, and whether the
 finding really states one claim rather than two, is Checklist item 9.
@@ -809,7 +858,7 @@ the absence, and no exemption is involved.
 One row per **built page**, seven of them. Criterion 3's surface is the page rather than the
 section, because punctuation and emphasis conventions are page-wide and both baselines above are
 keyed by page. `What its sentence craft turns on` is a reviewer's one-line paraphrase of the pressure
-this page's prose is under. `pipeline/tests/test_prose.py:1041` asserts this table's page set
+this page's prose is under. `pipeline/tests/test_prose.py:946` asserts this table's page set
 **equals** the set `dist/` carries, so a new route cannot ship without declaring what its sentence
 craft turns on and a deleted one cannot leave its judgement behind.
 

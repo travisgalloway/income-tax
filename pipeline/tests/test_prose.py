@@ -600,11 +600,15 @@ def test_no_section_heading_names_the_charts_construction():
     """Dimension D: no `<h2>` names the drawing instead of the subject.
 
     **This test sees half of what Criterion 1 asks.** It catches a heading that names the apparatus
-   , an axis, a panel, a scale. It cannot catch a heading that names the *variables*: "Prices and
-    rates" and "Labor and capital" are headings that tell the reader what was plotted rather than
-    what was found, and both pass this test on every word list anyone would write. That failure
-    mode is human-judged, it is Checklist item 8 in docs/contracts/prose.md, and no word list is
-    added here to fake it.
+   , an axis, a panel, a scale. It cannot judge whether a heading names its subject ACCURATELY,
+    which is the other half and is human-judged as Checklist item 8 in docs/contracts/prose.md. No
+    word list is added here to fake it.
+
+    Naming the variables was a defect under Ruling 4 and is the rule under Ruling 5. "Prices and
+    rates" and "Labor and capital" were rewritten by #52 for telling a reader what was plotted
+    rather than what was found; Ruling 5 moved the claim to the finding, so those two headings are
+    now the shape every route uses. The assertion below did not move across that reversal, which is
+    the point of scoping it to the apparatus alone.
     """
     offenders = []
     for page in REPORT_PAGES:

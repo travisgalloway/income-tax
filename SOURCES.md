@@ -184,7 +184,7 @@ $4.9T elsewhere. **Omit rather than pick.**
 **Gini index.** The family series (GINIALLRF) reads 0.456 for 2024. Household
 series run 0.47 to 0.49 depending on whether the source is CPS or ACS. The family
 series is used because it runs cleanly to 1947. **Label it "families" on the
-chart** or a reader will correct you with the household figure.
+chart.** An unlabelled figure invites correction with the household number.
 
 **Tax-to-GDP scope.** OECD 25.6% counts federal, state and local. CBO 17.2% is
 federal only. Both are correct. **Never present them as a contradiction or as
@@ -200,7 +200,7 @@ deficit. **If both numbers appear, explain the gap.**
 
 ---
 
-## The counted vote splits, and what they still cannot tell you
+## The counted vote splits and their limits
 
 This was the dataset's weakest point and is no longer. Each of the 23 laws
 carries per-party yea and nay counts taken from Voteview roll-call records by
@@ -239,7 +239,7 @@ period. **A chart must say which basis it shows.**
 
 ---
 
-## State give-and-get
+## State tax collected and award spending
 
 Government §11 compares what each state pays the federal government against what it gets back.
 Four sources were probed; two were fetched, one was rejected outright, and one is cited but never

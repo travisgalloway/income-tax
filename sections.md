@@ -14,7 +14,7 @@ causation the data does not support.
 
 ## 1 / The $40 trillion
 
-**Heading:** Ten years, twice the debt
+**Heading:** Gross federal debt, FY2016 to FY2026
 
 **Standfirst:** The US crossed $40 trillion in August 2026. Ten fiscal years ago
 it was $19.6 trillion. Measured against the economy, though, the same decade
@@ -48,7 +48,7 @@ goes 105% to 124%. A reader who only sees one has been misled.
 
 ## 2 / Who holds it
 
-**Heading:** Most of it is owed to us
+**Heading:** Composition of the debt by holder
 
 **Standfirst:** About 80% is held by the public: investors, pension funds, banks,
 the Federal Reserve and foreign governments. The other 20% the government owes
@@ -84,7 +84,7 @@ nothing here is partisan.
 
 ## 3 / How old is the debt
 
-**Heading:** The debt is younger than you think
+**Heading:** Maturity structure of marketable debt
 
 **Standfirst:** The longest security the Treasury sells is the 30-year bond, so
 nothing outstanding today was issued before 1996. But the average is nowhere near
@@ -113,7 +113,7 @@ not a trend. Do not build this as a time series.
 
 ## 4 / The whole budget
 
-**Heading:** One axis, everything on it
+**Heading:** Outlays, revenue and the deficit
 
 **Standfirst:** Above the line, outlays stacked by category with revenue drawn
 across. Below it, the deficit that gap produces. Colour marks who held all three
@@ -141,7 +141,7 @@ offsetting receipts, so the three segments sum to total outlays.
 
 ## 5 / The structural gap
 
-**Heading:** Revenue barely moves. Spending does.
+**Heading:** Revenue and outlays as shares of GDP
 
 **Standfirst:** Revenue has sat in a narrow band for three decades. Outlays have
 not. The distance between the two lines is the deficit, in every single year.
@@ -164,7 +164,7 @@ spike in 2009 and 2020.
 
 ## 6 / What Congress votes on
 
-**Heading:** The part they vote on is the part that shrank
+**Heading:** Mandatory, discretionary and net interest
 
 **Standfirst:** Discretionary spending is the only category set by an annual
 appropriation. It is also the only one smaller today, relative to GDP, than in
@@ -194,7 +194,7 @@ about
 
 ## 7 / Net interest
 
-**Heading:** Nobody appropriates the interest
+**Heading:** Net interest and its appropriation status
 
 **Standfirst:** Net interest is the compounding cost of every prior year's
 borrowing. It passed $1 trillion in FY2025 and now exceeds defence spending.
@@ -220,7 +220,7 @@ to $970 billion by 2025.
 
 ## 8 / The laws
 
-**Heading:** The bill arrives long after the vote
+**Heading:** Major deficit-moving laws since 1995
 
 **Standfirst:** Twenty-three major deficit-moving laws since 1995. Each carries
 what it was scored to cost, who voted for it, and when it was signed.
@@ -266,7 +266,7 @@ SOURCES.md.
 
 ## 9 / Who passed it, who signed it
 
-**Heading:** The same $16.75 trillion, two ways
+**Heading:** Legislative cost by coalition and by signing president
 
 **Standfirst:** Every major law scored since 1995 nets to $16.75 trillion in
 ten-year costs. Sorted by the coalition that voted for it, and by the president
@@ -300,7 +300,7 @@ it.
 
 ## 10 / Where the money comes from
 
-**Heading:** The mix changed. The total did not.
+**Heading:** Federal revenue by source
 
 **Standfirst:** Federal revenue was 17.9% of GDP in FY1995 and 17.2% in FY2025.
 Thirty years apart, essentially the same take. What moved is who pays it and
@@ -368,7 +368,7 @@ IRS data at tax year 2023.
 
 ## 11 / By state, and which states give more than they get
 
-**Heading:** By state, and which states give more than they get
+**Heading:** Federal tax collected and award spending, by state
 
 **Standfirst:** Every state pays federal tax and every state receives federal spending. Comparing
 the two by state is not the balance-of-payments question it sounds like.
@@ -412,7 +412,7 @@ FY2022, not ingested).
 
 ## 12 / What this cannot tell you
 
-**Heading:** Six things this data cannot tell you
+**Heading:** Six limits on what this data settles
 
 **Standfirst:** The charts above rest on these limits. Read them before arguing
 with anyone about those charts.
