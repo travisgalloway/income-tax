@@ -28,11 +28,12 @@ jobs:
           PR: ${{ github.event.pull_request.number }}
           ADDITIONS: ${{ github.event.pull_request.additions }}
           DELETIONS: ${{ github.event.pull_request.deletions }}
+          USE_GEMINI_PRO: ${{ vars.USE_GEMINI_PRO || 'false' }}
         run: |
           set -euo pipefail
           CHANGED_LINES=$(( ADDITIONS + DELETIONS ))
 
-          # Sensitive paths requiring deep reasoning (Pro model):
+          # Sensitive paths requiring deep reasoning:
           # - Data pipeline fetching IRS SOI / Treasury / BLS data
           # - Core tax bracket and calculation datasets (*.json)
           # - CI/CD deployment and check workflows
@@ -53,7 +54,9 @@ jobs:
 
           echo "should_review=true" >> "$GITHUB_OUTPUT"
 
-          if printf '%s\n' "$reviewable" | grep -Eq "$SENSITIVE" || [ "$CHANGED_LINES" -gt 300 ]; then
+          # Free Tier Google AI Studio projects have quota limit 0 on Pro models.
+          # To use Gemini 3.1 Pro on billed projects, set repository variable USE_GEMINI_PRO: 'true'.
+          if [ "$USE_GEMINI_PRO" = "true" ] && (printf '%s\n' "$reviewable" | grep -Eq "$SENSITIVE" || [ "$CHANGED_LINES" -gt 300 ]); then
             echo "Routing to Gemini 3.1 Pro ($CHANGED_LINES changed lines or sensitive pipeline/tax data)."
             echo "model=gemini-3.1-pro-high" >> "$GITHUB_OUTPUT"
           else
