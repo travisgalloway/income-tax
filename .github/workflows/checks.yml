@@ -40,9 +40,16 @@ jobs:
     name: Browser lane
     runs-on: ubuntu-latest
     # A hung browser test used to burn GitHub's six-hour default and report
-    # nothing. `--test-timeout` in `package.json` fails the individual test and
-    # names it; this bounds the job even when the runner itself wedges.
-    timeout-minutes: 20
+    # nothing. Two bounds replace that. `--test-timeout` in `package.json`
+    # names the file that stalled, and this bounds the job even when the runner
+    # itself wedges.
+    #
+    # MEASURED, on both numbers. `--test-timeout` bounds a whole FILE, not only
+    # an individual test, because the runner treats each file as a top-level
+    # test. At 180s two files failed on the cap alone, with 150 subtests passing
+    # and zero assertion failures. This runner is several times slower than a
+    # developer machine, where the entire suite finishes in 181s.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
 

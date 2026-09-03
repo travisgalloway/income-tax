@@ -9,7 +9,7 @@
     "preview": "astro preview",
     "check": "astro check",
     "test:unit": "node --test 'src/**/*.test.ts'",
-    "test:browser": "node --test --test-concurrency=1 --test-timeout=180000 'tests/browser/**/*.test.ts'",
+    "test:browser": "node --test --test-concurrency=1 --test-timeout=600000 'tests/browser/**/*.test.ts'",
     "test": "npm run test:unit && npm run test:browser"
   },
   "dependencies": {
