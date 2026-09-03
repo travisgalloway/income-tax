@@ -1,0 +1,131 @@
+name: Antigravity Code Review
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, synchronize]
+    branches: [main]
+
+concurrency:
+  group: agy-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  triage:
+    name: Triage & Route
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      model: ${{ steps.pick.outputs.model }}
+      should_review: ${{ steps.pick.outputs.should_review }}
+    steps:
+      - id: pick
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          ADDITIONS: ${{ github.event.pull_request.additions }}
+          DELETIONS: ${{ github.event.pull_request.deletions }}
+        run: |
+          set -euo pipefail
+          CHANGED_LINES=$(( ADDITIONS + DELETIONS ))
+
+          # Sensitive paths requiring deep reasoning (Pro model):
+          # - Data pipeline fetching IRS SOI / Treasury / BLS data
+          # - Core tax bracket and calculation datasets (*.json)
+          # - CI/CD deployment and check workflows
+          SENSITIVE='^(pipeline/|\.github/workflows/|src/data/)|\.(json|sql)$'
+
+          # Paths ignored for review:
+          IGNORED='^docs/|\.(md|lock|svg|png|jpg|jpeg|snap)$|(^|/)(package-lock\.json|pnpm-lock\.yaml)$'
+
+          files=$(gh api "repos/$REPO/pulls/$PR/files" --paginate --jq '.[].filename')
+          reviewable=$(printf '%s\n' "$files" | grep -Ev "$IGNORED" || true)
+
+          if [ -z "$reviewable" ]; then
+            echo "Nothing reviewable in this PR."
+            echo "should_review=false" >> "$GITHUB_OUTPUT"
+            echo "model=none" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "should_review=true" >> "$GITHUB_OUTPUT"
+
+          if printf '%s\n' "$reviewable" | grep -Eq "$SENSITIVE" || [ "$CHANGED_LINES" -gt 300 ]; then
+            echo "Routing to Gemini 3.1 Pro ($CHANGED_LINES changed lines or sensitive pipeline/tax data)."
+            echo "model=gemini-3.1-pro-high" >> "$GITHUB_OUTPUT"
+          else
+            echo "Routing to Gemini 3.8 Flash ($CHANGED_LINES changed lines)."
+            echo "model=gemini-3.8-flash-high" >> "$GITHUB_OUTPUT"
+          fi
+
+  review:
+    name: Code Review
+    needs: triage
+    if: needs.triage.outputs.should_review == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Antigravity CLI (agy)
+        run: |
+          curl -fsSL https://antigravity.google/cli/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Configure agy settings
+        run: |
+          mkdir -p "$HOME/.gemini/antigravity-cli"
+          cat << 'EOF' > "$HOME/.gemini/antigravity-cli/settings.json"
+          {
+            "modelProvider": "gemini"
+          }
+          EOF
+
+      - name: Run Antigravity Review
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          MODEL: ${{ needs.triage.outputs.model }}
+        run: |
+          git config --global user.name "antigravity-bot[bot]"
+          git config --global user.email "antigravity-bot[bot]@users.noreply.github.com"
+
+          agy -p "You are an expert web engineer and code reviewer for this Astro + TypeScript application.
+          Review pull request #$PR in repository $REPO.
+
+          1. Fetch and examine the PR diff:
+             gh pr diff $PR
+
+          2. Conduct a thorough code review against project standards:
+             - Data Integrity: For changes in pipeline/ or tax JSON datasets, verify inflation indexation, formula accuracy, and schema consistency.
+             - Frontend & Accessibility: In Astro and React components, check accessibility (ARIA landmarks, focus rings, mobile responsive layouts), semantic HTML, and clean styling.
+             - Code Quality & Types: Check TypeScript safety, DRY principles, and error handling.
+             - Security: Ensure no secrets, unsafe eval, or uncontrolled network fetches are introduced.
+
+          3. Structure your review into:
+             - 🔴 CRITICAL ISSUES (must fix before merge — correctness or safety)
+             - 🟡 WARNINGS (should fix — accessibility, maintainability, edge cases)
+             - 🟢 SUGGESTIONS (style, minor polish, optimizations)
+
+          4. Submit the review to the PR:
+             If issues or suggestions are found, format a clear, constructive review and submit via:
+               gh pr review $PR --comment --body \"\$REVIEW_BODY\"
+             If the diff is clean, well-crafted, and meets all standards, submit an approving summary comment:
+               gh pr review $PR --comment --body \"✓ **Antigravity Code Review**: All checks passed. Clean implementation adhering to project standards.\"
+
+          Run all steps to completion in this single turn in the foreground." \
+            --model "$MODEL" \
+            --dangerously-skip-permissions \
+            --print-timeout 15m
