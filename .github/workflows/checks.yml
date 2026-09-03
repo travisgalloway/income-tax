@@ -39,6 +39,10 @@ jobs:
   browser:
     name: Browser lane
     runs-on: ubuntu-latest
+    # A hung browser test used to burn GitHub's six-hour default and report
+    # nothing. `--test-timeout` in `package.json` fails the individual test and
+    # names it; this bounds the job even when the runner itself wedges.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
 
