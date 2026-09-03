@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 import { getCollection } from 'astro:content'
 import { routeFigures } from '../data/figures'
 import { sortKey } from '../data/glossary-sort'
-import { join, siteRoutes, type ContentRoute } from '../data/sections'
+import { introRoute, join, siteRoutes, type ContentRoute } from '../data/sections'
 
 /* Static Astro, no island, no hydration directive and no chart: this page is a list of links, so
  * #36's server-render rule is satisfied vacuously and greppably. The directive's name is
@@ -33,16 +33,21 @@ const terms = entries
 /* An id per route block. `/` has no path segment to slug, so it is named for what it is. */
 const blockId = (path: string) => `contents-${path === '/' ? 'introduction' : path.replace(/^\//, '')}`
 
-/* `siteRoutes` also carries `/`, `/sources` and `/glossary`, none of which are `ContentRoute`
- * keys and so carry no figures. A real type guard, not an `as ContentRoute` assertion, keeps
- * the compiler honest about that instead of lying to it for every route in the array. */
+/* `/`, `/sources` and `/glossary` are not `ContentRoute` keys and so carry no figures. A real
+ * type guard, not an `as ContentRoute` assertion, keeps the compiler honest about that instead
+ * of lying to it for every route in the array. */
 const isContentRoute = (path: string): path is ContentRoute =>
   Object.prototype.hasOwnProperty.call(routeFigures, path)
 
-/* Every destination the rail names except this one. Listing the index inside the index would make
- * its own section list self-referential; the rail still carries it, which is how a reader gets
- * here. */
-const blocks = siteRoutes
+/* Every destination the site serves except this one. Listing the index inside the index would
+ * make its own section list self-referential; the bar still carries it, which is how a reader
+ * gets here.
+ *
+ * `introRoute` is prepended because the front door left `siteRoutes` when the bar moved it to the
+ * wordmark. That is a navigation decision, and this page is an index of the site, so a page the
+ * index omits is a page a reader cannot find from here. The order matches reading order: the
+ * introduction, the three routes, then the reference pages. */
+const blocks = [introRoute, ...siteRoutes]
   .filter((r) => r.path !== '/contents')
   .map((r) => ({
     ...r,
@@ -83,21 +88,13 @@ const sectionCount = blocks.reduce((n, b) => n + b.sections.length, 0)
 >
   <p class="kicker">Reference</p>
   <h1>Contents</h1>
-  <p class="standfirst">
-    The whole of the site on one page. It holds {sectionCount} sections across{' '}
-    {blocks.length} destinations, {figureCount} numbered figures with their sources, and{' '}
-    {terms.length} defined terms. Nothing here is a list somebody keeps up to date. Every line is
-    read from the same declaration the page it points at renders from.
-  </p>
+  <p class="standfirst">The whole of the site on one page. It holds {sectionCount} sections across {blocks.length} destinations, {figureCount} numbered figures with their sources, and {terms.length} defined terms. Nothing here is a list somebody keeps up to date. Every line is read from the same declaration the page it points at renders from.</p>
 
   {blocks.map((block) => (
     <section id={block.id}>
       <h2><a href={block.href}>{block.label}</a></h2>
       {block.sections.length === 0 ? (
-        <p class="index-empty">
-          One page, with no section anchors of its own.
-          {block.path === '/glossary' && ' Its terms are listed below.'}
-        </p>
+        <p class="index-empty">One page, with no section anchors of its own.{block.path === '/glossary' && ' Its terms are listed below.'}</p>
       ) : (
         <ol class="index-sections">
           {block.sections.map((s) => (

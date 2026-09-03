@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css'
-import { join, siteRoutes } from '../data/sections'
+import { introRoute, join, siteRoutes } from '../data/sections'
 
 interface NavItem { id: string; label: string }
 interface Props {
@@ -19,8 +19,53 @@ const base = import.meta.env.BASE_URL
  * both, and /contents derives its whole outline from it rather than from a copy of its own. */
 const routes = siteRoutes.map((r) => ({ href: join(r.path), label: r.label }))
 
+/* The wordmark's destination. The introduction left the route list, so the bar reaches it from
+ * `a.navbar-title` and from nowhere else, which is where a reader looks for a site's front page.
+ * Read from `introRoute` rather than from `routes[0]`, which used to be the introduction and is
+ * now `/contents`. */
+const home = join(introRoute.path)
+
 const current = Astro.url.pathname.replace(/\/$/, '')
-const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
+const isCurrent = (href: string) => href.replace(/\/$/, '') === current
+/* The disclosure names where the reader is. The front door answers that question like any other
+ * destination, so it joins the lookup even though the route list omits it. */
+const currentRoute = [{ href: home, label: introRoute.label }, ...routes].find((r) =>
+  isCurrent(r.href)
+)
+
+/* Radix Icons, MIT licensed, 15x15. The path data is copied in rather than installed, for the
+ * reason the rest of the page obeys: this site loads no external resource, and a dependency for
+ * four glyphs would ship a React component tree to draw them. `fill-rule` and `clip-rule` come
+ * with the paths and each icon is one path, so the markup below carries no other geometry.
+ *
+ * A theme option is an icon plus a `.vh` label. The visible glyph is the whole control, so the
+ * name a screen reader announces lives in the hidden span. Colour alone does not carry the
+ * selected state: `.theme-option[aria-checked='true']` draws a rule under the chosen icon. */
+const themeOptions = [
+  {
+    choice: 'light',
+    label: 'Light',
+    /* sun */
+    d: 'M7.5 0C7.77614 0 8 0.223858 8 0.5V2.5C8 2.77614 7.77614 3 7.5 3C7.22386 3 7 2.77614 7 2.5V0.5C7 0.223858 7.22386 0 7.5 0ZM2.1967 2.1967C2.39196 2.00144 2.70854 2.00144 2.90381 2.1967L4.31802 3.61091C4.51328 3.80617 4.51328 4.12276 4.31802 4.31802C4.12276 4.51328 3.80617 4.51328 3.61091 4.31802L2.1967 2.90381C2.00144 2.70854 2.00144 2.39196 2.1967 2.1967ZM0.5 7C0.223858 7 0 7.22386 0 7.5C0 7.77614 0.223858 8 0.5 8H2.5C2.77614 8 3 7.77614 3 7.5C3 7.22386 2.77614 7 2.5 7H0.5ZM2.1967 12.8033C2.00144 12.608 2.00144 12.2915 2.1967 12.0962L3.61091 10.682C3.80617 10.4867 4.12276 10.4867 4.31802 10.682C4.51328 10.8772 4.51328 11.1938 4.31802 11.3891L2.90381 12.8033C2.70854 12.9986 2.39196 12.9986 2.1967 12.8033ZM12.5 7C12.2239 7 12 7.22386 12 7.5C12 7.77614 12.2239 8 12.5 8H14.5C14.7761 8 15 7.77614 15 7.5C15 7.22386 14.7761 7 14.5 7H12.5ZM10.682 4.31802C10.4867 4.12276 10.4867 3.80617 10.682 3.61091L12.0962 2.1967C12.2915 2.00144 12.608 2.00144 12.8033 2.1967C12.9986 2.39196 12.9986 2.70854 12.8033 2.90381L11.3891 4.31802C11.1938 4.51328 10.8772 4.51328 10.682 4.31802ZM8 12.5C8 12.2239 7.77614 12 7.5 12C7.22386 12 7 12.2239 7 12.5V14.5C7 14.7761 7.22386 15 7.5 15C7.77614 15 8 14.7761 8 14.5V12.5ZM10.682 10.682C10.8772 10.4867 11.1938 10.4867 11.3891 10.682L12.8033 12.0962C12.9986 12.2915 12.9986 12.608 12.8033 12.8033C12.608 12.9986 12.2915 12.9986 12.0962 12.8033L10.682 11.3891C10.4867 11.1938 10.4867 10.8772 10.682 10.682ZM5.5 7.5C5.5 6.39543 6.39543 5.5 7.5 5.5C8.60457 5.5 9.5 6.39543 9.5 7.5C9.5 8.60457 8.60457 9.5 7.5 9.5C6.39543 9.5 5.5 8.60457 5.5 7.5ZM7.5 4.5C5.84315 4.5 4.5 5.84315 4.5 7.5C4.5 9.15685 5.84315 10.5 7.5 10.5C9.15685 10.5 10.5 9.15685 10.5 7.5C10.5 5.84315 9.15685 4.5 7.5 4.5Z',
+  },
+  {
+    choice: 'dark',
+    label: 'Dark',
+    /* moon */
+    d: 'M2.89998 0.499976C2.89998 0.279062 2.72089 0.0999756 2.49998 0.0999756C2.27906 0.0999756 2.09998 0.279062 2.09998 0.499976V1.09998H1.49998C1.27906 1.09998 1.09998 1.27906 1.09998 1.49998C1.09998 1.72089 1.27906 1.89998 1.49998 1.89998H2.09998V2.49998C2.09998 2.72089 2.27906 2.89998 2.49998 2.89998C2.72089 2.89998 2.89998 2.72089 2.89998 2.49998V1.89998H3.49998C3.72089 1.89998 3.89998 1.72089 3.89998 1.49998C3.89998 1.27906 3.72089 1.09998 3.49998 1.09998H2.89998V0.499976ZM5.89998 3.49998C5.89998 3.27906 5.72089 3.09998 5.49998 3.09998C5.27906 3.09998 5.09998 3.27906 5.09998 3.49998V4.09998H4.49998C4.27906 4.09998 4.09998 4.27906 4.09998 4.49998C4.09998 4.72089 4.27906 4.89998 4.49998 4.89998H5.09998V5.49998C5.09998 5.72089 5.27906 5.89998 5.49998 5.89998C5.72089 5.89998 5.89998 5.72089 5.89998 5.49998V4.89998H6.49998C6.72089 4.89998 6.89998 4.72089 6.89998 4.49998C6.89998 4.27906 6.72089 4.09998 6.49998 4.09998H5.89998V3.49998ZM1.89998 6.49998C1.89998 6.27906 1.72089 6.09998 1.49998 6.09998C1.27906 6.09998 1.09998 6.27906 1.09998 6.49998V7.09998H0.499976C0.279062 7.09998 0.0999756 7.27906 0.0999756 7.49998C0.0999756 7.72089 0.279062 7.89998 0.499976 7.89998H1.09998V8.49998C1.09998 8.72089 1.27906 8.89997 1.49998 8.89997C1.72089 8.89997 1.89998 8.72089 1.89998 8.49998V7.89998H2.49998C2.72089 7.89998 2.89998 7.72089 2.89998 7.49998C2.89998 7.27906 2.72089 7.09998 2.49998 7.09998H1.89998V6.49998ZM8.54406 0.98184L8.24618 0.941586C8.03275 0.917676 7.90692 1.1655 8.02936 1.34194C8.17013 1.54479 8.29981 1.75592 8.41754 1.97445C8.91878 2.90485 9.20322 3.96932 9.20322 5.10022C9.20322 8.37201 6.82247 11.0878 3.69887 11.6097C3.45736 11.65 3.20988 11.6772 2.96008 11.6906C2.74563 11.702 2.62729 11.9535 2.77721 12.1072C2.84551 12.1773 2.91535 12.2458 2.98667 12.3128L3.05883 12.3795L3.31883 12.6045L3.50684 12.7532L3.62796 12.8433L3.81491 12.9742L3.99079 13.089C4.11175 13.1651 4.23536 13.2375 4.36157 13.3059L4.62496 13.4412L4.88553 13.5607L5.18837 13.6828L5.43169 13.7686C5.56564 13.8128 5.70149 13.8529 5.83857 13.8885C5.94262 13.9155 6.04767 13.9401 6.15405 13.9622C6.27993 13.9883 6.40713 14.0109 6.53544 14.0298L6.85241 14.0685L7.11934 14.0892C7.24637 14.0965 7.37436 14.1002 7.50322 14.1002C11.1483 14.1002 14.1032 11.1453 14.1032 7.50023C14.1032 7.25044 14.0893 7.00389 14.0623 6.76131L14.0255 6.48407C13.991 6.26083 13.9453 6.04129 13.8891 5.82642C13.8213 5.56709 13.7382 5.31398 13.6409 5.06881L13.5279 4.80132L13.4507 4.63542L13.3766 4.48666C13.2178 4.17773 13.0353 3.88295 12.8312 3.60423L12.6782 3.40352L12.4793 3.16432L12.3157 2.98361L12.1961 2.85951L12.0355 2.70246L11.8134 2.50184L11.4925 2.24191L11.2483 2.06498L10.9562 1.87446L10.6346 1.68894L10.3073 1.52378L10.1938 1.47176L9.95488 1.3706L9.67791 1.2669L9.42566 1.1846L9.10075 1.09489L8.83599 1.03486L8.54406 0.98184ZM10.4032 5.30023C10.4032 4.27588 10.2002 3.29829 9.83244 2.40604C11.7623 3.28995 13.1032 5.23862 13.1032 7.50023C13.1032 10.593 10.596 13.1002 7.50322 13.1002C6.63646 13.1002 5.81597 12.9036 5.08355 12.5522C6.5419 12.0941 7.81081 11.2082 8.74322 10.0416C8.87963 10.2284 9.10028 10.3497 9.34928 10.3497C9.76349 10.3497 10.0993 10.0139 10.0993 9.59971C10.0993 9.24256 9.84965 8.94373 9.51535 8.86816C9.57741 8.75165 9.63653 8.63334 9.6926 8.51332C9.88358 8.63163 10.1088 8.69993 10.35 8.69993C11.0403 8.69993 11.6 8.14028 11.6 7.44993C11.6 6.75976 11.0406 6.20024 10.3505 6.19993C10.3853 5.90487 10.4032 5.60464 10.4032 5.30023Z',
+  },
+  {
+    choice: 'system',
+    label: 'System',
+    /* half-2, a disc filled on one side, for the theme the operating system decides */
+    d: 'M7.49991 0.876892C3.84222 0.876892 0.877075 3.84204 0.877075 7.49972C0.877075 11.1574 3.84222 14.1226 7.49991 14.1226C11.1576 14.1226 14.1227 11.1574 14.1227 7.49972C14.1227 3.84204 11.1576 0.876892 7.49991 0.876892ZM7.49988 1.82689C4.36688 1.8269 1.82707 4.36672 1.82707 7.49972C1.82707 10.6327 4.36688 13.1725 7.49988 13.1726V1.82689Z',
+  },
+]
+
+/* github-logo, from the same set. The repository the site is built from, and the URL resolves. */
+const sourceUrl = 'https://github.com/travisgalloway/income-tax'
+const sourceIconPath =
+  'M7.49933 0.25C3.49635 0.25 0.25 3.49593 0.25 7.50024C0.25 10.703 2.32715 13.4206 5.2081 14.3797C5.57084 14.446 5.70302 14.2222 5.70302 14.0299C5.70302 13.8576 5.69679 13.4019 5.69323 12.797C3.67661 13.235 3.25112 11.825 3.25112 11.825C2.92132 10.9874 2.44599 10.7644 2.44599 10.7644C1.78773 10.3149 2.49584 10.3238 2.49584 10.3238C3.22353 10.375 3.60629 11.0711 3.60629 11.0711C4.25298 12.1788 5.30335 11.8588 5.71638 11.6732C5.78225 11.205 5.96962 10.8854 6.17658 10.7043C4.56675 10.5209 2.87415 9.89918 2.87415 7.12104C2.87415 6.32925 3.15677 5.68257 3.62053 5.17563C3.54576 4.99226 3.29697 4.25521 3.69174 3.25691C3.69174 3.25691 4.30015 3.06196 5.68522 3.99973C6.26337 3.83906 6.8838 3.75895 7.50022 3.75583C8.1162 3.75895 8.73619 3.83906 9.31523 3.99973C10.6994 3.06196 11.3069 3.25691 11.3069 3.25691C11.7026 4.25521 11.4538 4.99226 11.3795 5.17563C11.8441 5.68257 12.1245 6.32925 12.1245 7.12104C12.1245 9.9063 10.4292 10.5192 8.81452 10.6985C9.07444 10.9224 9.30633 11.3648 9.30633 12.0413C9.30633 13.0102 9.29742 13.7922 9.29742 14.0299C9.29742 14.2239 9.42828 14.4496 9.79591 14.3788C12.6746 13.4179 14.75 10.7025 14.75 7.50024C14.75 3.49593 11.5036 0.25 7.49933 0.25Z'
 ---
 
 <!doctype html>
@@ -29,6 +74,25 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`} />
+    {/* Theme, applied before first paint.
+     * Inline and synchronous on purpose: a deferred script would let the page
+     * paint light and then repaint dark, which is the flash every themed site
+     * gets wrong once. `system` is stored as the absence of the attribute, so
+     * the media query in tokens.css handles it with no third branch and this
+     * script writes nothing in that case. */}
+    <script is:inline>
+      ;(function () {
+        try {
+          var stored = localStorage.getItem('theme')
+          if (stored === 'light' || stored === 'dark') {
+            document.documentElement.setAttribute('data-theme', stored)
+          }
+        } catch (e) {
+          /* Private mode, or storage disabled. System default is the right
+           * fallback, and it is what the absent attribute already gives. */
+        }
+      })()
+    </script>
     <title>{title}</title>
     <meta name="description" content={description} />
     <noscript>
@@ -64,12 +128,70 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
-    {/* Narrow-viewport navigation chrome. `display: none` at >= 62rem, where the
-     * rail is the navigation; the rail is `display: none` below it. Sits after
-     * the skip link so the skip link stays the first focusable node, and is
-     * `position: fixed`, so its DOM position costs nothing visually. */}
-    <div class="navbar">
-      <span class="navbar-title">Income &amp; Tax</span>
+    {/* The site bar. Present at every width, unlike the old narrow-only navbar:
+     * the left rail it replaces used to carry the routes at >= 62rem, and with
+     * the rail gone this is the only place they live. Below 62rem the route list
+     * collapses into the disclosure, which is the same native <details> the old
+     * navbar used and works with scripting off.
+     *
+     * Sits after the skip link so the skip link stays the first focusable node,
+     * and is `position: sticky`, so its DOM position costs nothing visually. */}
+    <header class="navbar">
+      <a class="navbar-title" href={home} aria-current={isCurrent(home) ? 'page' : undefined}>Income &amp; Tax</a>
+
+      {/* The wide route list. `display: none` below 62rem, where the disclosure
+       * below carries the same links. Exactly one of the two is ever in the
+       * accessibility tree, which is how the page exposes two <nav> landmarks
+       * at every width rather than four. */}
+      <nav class="navbar-routes-wide" aria-label="Site">
+        <ol>
+          {routes.map((r) => (
+            <li>
+              <a href={r.href} aria-current={isCurrent(r.href) ? 'page' : undefined}>
+                {r.label}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+
+      {/* Light, dark and system. `system` is the absence of a `data-theme`
+       * attribute rather than a third value, so the media query in tokens.css
+       * needs no third branch. Rendered with `light` pre-checked and corrected
+       * by the head script before paint, so the control agrees with the page
+       * even when the stored choice is dark.
+       *
+       * The three words became three icons, and each button keeps the word as
+       * its accessible name in a `.vh` span. The `<svg>` is `aria-hidden` and
+       * `focusable="false"`, so a screen reader meets the name alone and no
+       * engine puts the glyph in the tab order. */}
+      <div class="theme-toggle" role="radiogroup" aria-label="Colour theme">
+        {themeOptions.map((o, i) => (
+          <button
+            type="button"
+            class="theme-option"
+            data-theme-choice={o.choice}
+            role="radio"
+            aria-checked={i === 0 ? 'true' : 'false'}
+          >
+            <svg class="navbar-icon" width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true" focusable="false">
+              <path d={o.d} fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path>
+            </svg>
+            <span class="vh">{o.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* The source, beside the setting it sits with, because both are about
+       * the site rather than about the page. The name says where the link goes,
+       * which an icon cannot say on its own. */}
+      <a class="navbar-source" href={sourceUrl}>
+        <svg class="navbar-icon" width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true" focusable="false">
+          <path d={sourceIconPath} fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path>
+        </svg>
+        <span class="vh">Source code on GitHub</span>
+      </a>
+
       <details class="navbar-disclosure" id="navbar-disclosure">
         <summary class="navbar-trigger">
           <span class="navbar-where" data-navbar-where>{currentRoute?.label ?? 'Menu'}</span>
@@ -81,7 +203,7 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
             <ol class="navbar-routes">
               {routes.map((r) => (
                 <li>
-                  <a href={r.href} aria-current={r.href.replace(/\/$/, '') === current ? 'page' : undefined}>
+                  <a href={r.href} aria-current={isCurrent(r.href) ? 'page' : undefined}>
                     {r.label}
                   </a>
                 </li>
@@ -90,7 +212,7 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
           </nav>
           {sections.length > 0 && (
             <nav aria-labelledby="navbar-toc-heading">
-              <p class="navbar-toc-heading" id="navbar-toc-heading">Contents</p>
+              <p class="navbar-toc-heading" id="navbar-toc-heading">On this page</p>
               <ol class="toc navbar-toc">
                 {sections.map((s, i) => (
                   <li>
@@ -103,24 +225,19 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
           )}
         </div>
       </details>
-    </div>
+    </header>
     <div class="page">
       <div class="shell">
-        <div class="rail">
-          <nav aria-label="Site">
-            <ol class="route-links">
-              {routes.map((r) => (
-                <li>
-                  <a href={r.href} aria-current={r.href.replace(/\/$/, '') === current ? 'page' : undefined}>
-                    {r.label}
-                  </a>
-                </li>
-              ))}
-            </ol>
-          </nav>
-          {sections.length > 0 && (
+        {/* `<main>` precedes the rail in the DOM now, where the old left rail
+         * preceded it. Reading order therefore reaches the content first, and
+         * the contents list reads as the aside it is. */}
+        <main id="main" tabindex="-1">
+          <slot />
+        </main>
+        {sections.length > 0 && (
+          <aside class="rail">
             <nav aria-labelledby="toc-heading">
-              <p class="toc-heading" id="toc-heading">Contents</p>
+              <p class="toc-heading" id="toc-heading">On this page</p>
               <ol class="toc">
                 {sections.map((s, i) => (
                   <li>
@@ -130,11 +247,8 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
                 ))}
               </ol>
             </nav>
-          )}
-        </div>
-        <main id="main" tabindex="-1">
-          <slot />
-        </main>
+          </aside>
+        )}
       </div>
     </div>
     <script is:inline>
@@ -190,6 +304,82 @@ const currentRoute = routes.find((r) => r.href.replace(/\/$/, '') === current)
        * docs/contracts/accessibility.md. No scripted scrolling exists here at
        * all, which is how prefers-reduced-motion is satisfied: vacuously, and
        * greppably, the same way the bar above satisfies it. */
+      /* The theme control.
+       *
+       * Three states, and `system` is the absence of `data-theme` rather than a
+       * third attribute value. That asymmetry is deliberate: it is what lets the
+       * `prefers-color-scheme` media query in tokens.css stay a two-branch rule
+       * and still be correct for all three.
+       *
+       * Nothing here reads or writes a colour. The attribute selects a token
+       * block and the stylesheet decides what that means, so no hex is held in
+       * JavaScript and the two cannot disagree. */
+      ;(function themeControl() {
+        var root = document.documentElement
+        var buttons = document.querySelectorAll('[data-theme-choice]')
+        if (!buttons.length) return
+
+        var mq = window.matchMedia('(prefers-color-scheme: dark)')
+
+        function stored() {
+          try {
+            var v = localStorage.getItem('theme')
+            return v === 'light' || v === 'dark' ? v : 'system'
+          } catch (e) {
+            return 'system'
+          }
+        }
+
+        function mark(choice) {
+          for (var i = 0; i < buttons.length; i++) {
+            var b = buttons[i]
+            b.setAttribute('aria-checked', b.getAttribute('data-theme-choice') === choice ? 'true' : 'false')
+            /* Roving tabindex, the pattern a radiogroup owes a keyboard reader:
+             * one stop for the group, and arrow keys move within it. */
+            b.tabIndex = b.getAttribute('data-theme-choice') === choice ? 0 : -1
+          }
+        }
+
+        function apply(choice) {
+          if (choice === 'system') root.removeAttribute('data-theme')
+          else root.setAttribute('data-theme', choice)
+          try {
+            if (choice === 'system') localStorage.removeItem('theme')
+            else localStorage.setItem('theme', choice)
+          } catch (e) {
+            /* The attribute is already set; only persistence is lost. */
+          }
+          mark(choice)
+        }
+
+        for (var i = 0; i < buttons.length; i++) {
+          buttons[i].addEventListener('click', function () {
+            apply(this.getAttribute('data-theme-choice'))
+          })
+          buttons[i].addEventListener('keydown', function (e) {
+            var k = e.key
+            if (k !== 'ArrowRight' && k !== 'ArrowLeft' && k !== 'ArrowDown' && k !== 'ArrowUp') return
+            e.preventDefault()
+            var list = Array.prototype.slice.call(buttons)
+            var at = list.indexOf(this)
+            var step = k === 'ArrowRight' || k === 'ArrowDown' ? 1 : -1
+            var next = list[(at + step + list.length) % list.length]
+            apply(next.getAttribute('data-theme-choice'))
+            next.focus()
+          })
+        }
+
+        /* System mode follows the operating system mid-session. Without this the
+         * page would hold whatever the system was when it loaded. */
+        var onChange = function () {
+          if (stored() === 'system') mark('system')
+        }
+        if (mq.addEventListener) mq.addEventListener('change', onChange)
+        else if (mq.addListener) mq.addListener(onChange)
+
+        mark(stored())
+      })()
+
       ;(function sectionSpy() {
         var sections = Array.prototype.slice.call(
           document.querySelectorAll('main section[id]')

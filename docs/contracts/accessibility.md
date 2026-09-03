@@ -60,9 +60,18 @@ in a real browser. The counts, at 1440x900 on `/government`:
 | Tab stops on the whole of `/government` | **512** | **161** hydrated, **136** with scripting off |
 | `tabindex="0"` marks per chart `<svg>` in `dist/government/index.html` | `32,7,3,64,31,31,31,31,3,5,64,11,51,5` | `1` x 14 |
 
-The 369 marks on `/government` (389 on `/economy`, 356 on `/households`) are all still there and all
-still reachable. `test_the_label_coverage_did_not_narrow` pins the total at 1114 so the roving change
-cannot quietly shrink the corpus every other guard reads.
+The 369 marks on `/government` (389 on `/economy`, 356 on `/households`) were all still there and all
+still reachable, and `test_the_label_coverage_did_not_narrow` pinned the total at 1114 so the roving
+change could not quietly shrink the corpus every other guard reads.
+
+**Every number in the table above is a measurement of the pre-Recharts build, and the served bytes
+no longer carry those marks.** Recharts renders no chart during a static render, so 27 of the 29
+chart `<svg>` elements and 1058 of the 1114 marks now reach the DOM only at hydration. The static
+corpus is 2 SVGs and 56 marks, all in Government §11, whose cartogram and tax-mix bar hand-roll
+their own markup: 51 tiles and 5 segments, the last two entries of the per-SVG row above.
+`test_the_label_coverage_did_not_narrow` is re-baselined to `{'government': 56}` and its docstring
+records what the number used to be. The hydrated tab-stop counts in the first two rows are browser
+measurements and are unaffected by where the markup is generated.
 
 Two things stay human-judged and are not fixed here. Nothing announces to a keyboard reader that the
 arrow keys work inside a group, and announcement is #30's territory. Whether an index-based active
@@ -328,9 +337,13 @@ island encodes a category in colour on `main` today, because `DebtChart`'s `--ma
 single accent under one series rather than a category. The rule is therefore a structural lock for
 the 11 sections still to land rather than a fix.
 
-**`tokens.css` is non-negotiable.** No hex value moves. Where a token's contrast is insufficient,
-the fix changes *where it may be used*, never as text and never where a sub-3:1 series colour
-carries meaning alone. The fix is never a retune.
+**A single token is never retuned to rescue a single ratio.** Where one token's contrast is
+insufficient, the fix changes *where it may be used*, never as text and never where a sub-3:1
+series colour carries meaning alone. A hex value moves only as part of a whole-palette pass that
+re-measures all 24 tokens against both surfaces in both themes, which is what the tables below
+record. Two such passes have run. The first replaced the cool stone ground with the warm paper and
+re-stepped every hue. The second moved `--panel` alone, and the "The plot surface" paragraph after
+the light table states why.
 
 ## Token contrast
 
@@ -341,34 +354,40 @@ match (within 0.01). `test_text_role_tokens_meet_4_5_to_1` enforces the `role: t
 `test_series_tokens_below_3_to_1_are_documented_as_needing_redundant_encoding` enforces that every
 `role: series` row scoring below 3:1 against `--panel` carries a `redundant-encoding:` note.
 
+**Two palettes now ship, so every one of those tests is parameterised over the theme.** The table
+directly below holds the light theme, and the one under "The dark theme's tokens" holds the dark
+theme. Each table states its own surfaces, and each token is scored against the surfaces of its own
+palette. Scoring a dark hex against the light ground is meaningless arithmetic, and it reports
+`--ink` at 1.00:1 against itself, because the dark `--ink` is the light `--ground`.
+
 | Token | Hex | vs `--ground` | vs `--panel` | Role | Redundant encoding |
 |---|---|---|---|---|---|
-| `--ground` | `#DDE0DB` | 1.00 | 1.21 | surface | |
-| `--panel` | `#F3F4F0` | 1.21 | 1.00 | surface | |
-| `--ink` | `#11161B` | 13.65 | 16.47 | text | |
-| `--ink-soft` | `#5A6268` | 4.66 | 5.62 | text | |
-| `--rule` | `#B4BAB3` | 1.48 | 1.79 | rule | |
-| `--dem` | `#1D4E89` | 6.30 | 7.59 | series | |
-| `--gop` | `#A8322D` | 4.99 | 6.02 | series | |
-| `--mix` | `#6E3FA3` | 5.43 | 6.55 | series | |
-| `--mand` | `#55606B` | 4.82 | 5.81 | series | |
-| `--domestic` | `#55606B` | 4.82 | 5.81 | series | |
-| `--disc` | `#3E7C86` | 3.56 | 4.29 | series | |
-| `--public` | `#3E7C86` | 3.56 | 4.29 | series | |
-| `--int` | `#C77D28` | 2.47 | 2.97 | series | redundant-encoding: table column (`th scope` cell carries the category as text) |
-| `--intragov` | `#C77D28` | 2.47 | 2.97 | series | redundant-encoding: table column (`th scope` cell carries the category as text) |
-| `--foreign` | `#93A8B3` | 1.86 | 2.24 | series | redundant-encoding: table column (`th scope` cell carries the category as text) |
-| `--positive` | `#2E7D5B` | 3.75 | 4.53 | series | |
-| `--band` | `#C9CCC3` | 1.22 | 1.47 | rule | |
-| `--rev-ii` | `#3E7C86` | 3.56 | 4.29 | series | |
-| `--rev-pr` | `#C77D28` | 2.47 | 2.97 | series | redundant-encoding: table column (`th scope` cell carries the category as text) |
-| `--rev-ci` | `#55606B` | 4.82 | 5.81 | series | |
-| `--rev-ex` | `#93A8B3` | 1.86 | 2.24 | series | redundant-encoding: table column (`th scope` cell carries the category as text) |
-| `--rev-cu` | `#263038` | 10.09 | 12.17 | series | |
-| `--rev-eg` | `#A8895A` | 2.47 | 2.97 | series | redundant-encoding: table column (`th scope` cell carries the category as text) |
-| `--rev-mi` | `#B7BDB0` | 1.44 | 1.74 | series | redundant-encoding: table column (`th scope` cell carries the category as text) |
-
-`--rule` clears neither the 4.5:1 text threshold nor the 3:1 non-text threshold on either ground.
+| `--ground` | `#EDE5D9` | 1.00 | 1.06 | surface |  |
+| `--panel` | `#F2EBE1` | 1.06 | 1.00 | surface |  |
+| `--ink` | `#14181D` | 14.27 | 15.06 | text |  |
+| `--ink-soft` | `#57534B` | 6.13 | 6.47 | text |  |
+| `--rule` | `#857E72` | 3.22 | 3.40 | rule |  |
+| `--dem` | `#0F5499` | 6.12 | 6.46 | series |  |
+| `--gop` | `#990F3D` | 6.75 | 7.13 | series |  |
+| `--mix` | `#421A5C` | 10.96 | 11.57 | series |  |
+| `--mand` | `#37434F` | 8.09 | 8.54 | series |  |
+| `--domestic` | `#37434F` | 8.09 | 8.54 | series |  |
+| `--disc` | `#0D7680` | 4.29 | 4.53 | series |  |
+| `--public` | `#0D7680` | 4.29 | 4.53 | series |  |
+| `--int` | `#A85C11` | 4.00 | 4.22 | series |  |
+| `--intragov` | `#A85C11` | 4.00 | 4.22 | series |  |
+| `--foreign` | `#647E9C` | 3.36 | 3.54 | series |  |
+| `--positive` | `#1E7A4B` | 4.27 | 4.50 | series |  |
+| `--band` | `#DCD3C6` | 1.19 | 1.25 | rule |  |
+| `--rev-ii` | `#0D7680` | 4.29 | 4.53 | series |  |
+| `--rev-pr` | `#A85C11` | 4.00 | 4.22 | series |  |
+| `--rev-ci` | `#37434F` | 8.09 | 8.54 | series |  |
+| `--rev-ex` | `#647E9C` | 3.36 | 3.54 | series |  |
+| `--rev-cu` | `#1B2026` | 13.12 | 13.85 | series |  |
+| `--rev-eg` | `#6E4D22` | 6.12 | 6.46 | series |  |
+| `--rev-mi` | `#807F78` | 3.22 | 3.40 | series |  |
+`--rule` clears the 3:1 non-text threshold on both surfaces, at 3.22 and 3.40, and clears the 4.5:1
+text threshold on neither. It failed both thresholds under the old cool-stone palette, at 1.48:1.
 The token is used only for hairline rules, never for text and never for a category-carrying series,
 so it is marked `role: rule` rather than `text` or `series` and carries no enforcement test of its
 own. The reason is recorded here so that a future use of `--rule` for anything else is a deliberate
@@ -378,26 +397,121 @@ reason. `tokens.css`'s own comment calls it "neutral", and it never carries part
 meaning.
 
 `--rev-ii` through `--rev-mi` (GOV-10's revenue-by-source stack) are `role: series` like the other
-category colours above. `RevenueChart.tsx`'s `<TableView>` carries every one of the seven sources
-as its own labelled column, so the four scoring below 3:1 against `--panel` (`--rev-pr`, `--rev-ex`,
-`--rev-eg`, `--rev-mi`) carry the same `redundant-encoding:` note as `--int`, `--intragov` and
-`--foreign` above.
+category colours above. Every one of them now clears 3:1 against both surfaces, where four scored
+below it against the old panel. `RevenueChart.tsx`'s `<TableView>` still carries all seven sources
+as labelled columns, so the redundant channel remains in place; it is no longer the only thing
+holding the figure up.
 
-`--ink-soft` at 4.66:1 against `--ground` has 0.16 of headroom above the 4.5:1 floor.
-`test_text_role_tokens_meet_4_5_to_1` locks that margin, so a future ground-token edit that erodes
-it fails loudly rather than shipping a body-text regression.
+**No series token scores below 3:1 in this palette.** Six did against the old cool stone. The gain
+came from the ground rather than from any single hue: the warm paper is lighter, so every category
+colour could move darker without losing its identity. The `redundant-encoding:` column above is
+therefore empty, and the seven notes it used to carry are retired.
 
-## Known limitation: JS-disabled narrow-viewport chart legibility
+Colour-vision separation was measured as well as contrast, and it found a defect the ratios could
+not. The old `--mix` sat OKLab dE 4.9 from `--dem` under simulated protanopia, against a floor of 6,
+so mixed control and Democratic control were indistinguishable to those readers wherever the two
+appeared together. The deep aubergine lifts the worst party pair to 11.3. Full separations, under
+protanopia and deuteranopia at severity 1.0, are tabulated in `docs/design-notes-color.md`.
 
-`useChartSize` returns the `WIDE` preset (720×396) before the first client measurement, so with
-scripting disabled the wide viewBox is never swapped for the 360-unit `NARROW` one. At a 390px
-viewport the plot is scaled by roughly 0.49, taking an 11px axis label down to about 5.4px
-rendered.
+`--ink-soft` at 6.13:1 against `--ground` has 1.63 of headroom above the 4.5:1 floor, and 1.97
+against `--panel` at 6.47:1. `test_text_role_tokens_meet_4_5_to_1` locks both margins, so a future
+surface-token edit that erodes either one fails loudly rather than shipping a body-text regression.
 
-A `<noscript>`-scoped stylesheet in `BaseLayout.astro`'s `<head>` reduces the effect by enlarging
-`.axis-label`, `.axis-title` and `.annotation` in viewBox units, landing back near 10 to 11px
-rendered at 390px, below a 34.9rem breakpoint. The stylesheet applies only when scripting is off, so
-the JavaScript path, already on the `NARROW` preset, is untouched.
+### The plot surface
+
+`--panel` sits 1.06:1 from `--ground` in the light palette and 1.06:1 in the dark one. The light
+figure was 1.20:1 and the dark figure was 1.08:1. The light panel was `#FDFAF5`, within 1.05:1 of
+white, so a plot area read as a bright card laid on warm paper. A statistical publication prints
+the plot area at the paper colour or a shade off it, and lets the axis rules and the frame say
+where the plot is. The panel now sits a shade off the paper.
+
+The two surfaces are deliberately not identical. Three islands draw no gridline and no axis line at
+all, so on those the `--panel` fill is the only element that states the plot rectangle.
+`DebtMaturity` renders `<CartesianGrid horizontal={false} vertical={false}>` with no axis at all,
+`DebtHolders` renders the same grid with both axes `hide`, and `WhoPays` renders the same grid with
+`axisLine={false}` on both axes. At an identical panel those three figures would be marks on an
+open page. At 1.06:1 the rectangle still reads.
+
+Moving the panel toward the ground moves every light ratio in the `vs --panel` column down, and
+every dark ratio up. The light column falls because the panel darkens toward a ground that every
+light mark already clears; the lowest light series ratio is now `--rev-mi` at 3.40 against the
+panel, against 3.86 before, and 3.22 against the ground. Every floor in this contract still holds
+in both palettes.
+
+`--band`'s light wash loses the most. It measures 1.25:1 against the new panel, against 1.42:1
+before, which is a lightness difference of 8.40 in CIE L\*. The dark wash gains, from 1.13:1 to
+1.16:1, or 6.16 in L\*. The dark value has shipped as visible at 5.04 in L\*, so the light wash
+stays the more legible of the two and neither vanishes. `--band` itself was not retuned.
+
+### The dark theme's tokens
+
+`tokens.css` declares the dark palette twice, and the two copies must agree. One copy sits inside
+`@media (prefers-color-scheme: dark)` and supplies the operating-system default. The other sits on
+`:root[data-theme='dark']` and carries an explicit choice from the theme control in the site bar.
+`test_the_two_dark_theme_blocks_declare_the_same_hexes` asserts that the two blocks declare the same
+24 tokens at the same values, because a value edited in one copy alone would ship a palette that
+depends on how the reader arrived at dark.
+
+The ratios below are computed against this palette's own surfaces, the ground `#16130F` and the
+panel `#1C1914`. The steps are a selection rather than an inversion, so `--mand` and `--rev-cu`
+become the lightest marks in their groups.
+
+| Token | Hex | vs `--ground` | vs `--panel` | Role | Redundant encoding |
+|---|---|---|---|---|---|
+| `--ground` | `#16130F` | 1.00 | 1.06 | surface |  |
+| `--panel` | `#1C1914` | 1.06 | 1.00 | surface |  |
+| `--ink` | `#EDE5D9` | 14.82 | 14.03 | text |  |
+| `--ink-soft` | `#A79E90` | 7.00 | 6.62 | text |  |
+| `--rule` | `#786D5C` | 3.65 | 3.45 | rule |  |
+| `--dem` | `#6FA8E8` | 7.44 | 7.04 | series |  |
+| `--gop` | `#E8798D` | 6.66 | 6.30 | series |  |
+| `--mix` | `#8E6BC8` | 4.49 | 4.24 | series |  |
+| `--mand` | `#C4CBD2` | 11.30 | 10.70 | series |  |
+| `--domestic` | `#C4CBD2` | 11.30 | 10.70 | series |  |
+| `--disc` | `#3FA9B4` | 6.65 | 6.30 | series |  |
+| `--public` | `#3FA9B4` | 6.65 | 6.30 | series |  |
+| `--int` | `#DB9440` | 7.34 | 6.94 | series |  |
+| `--intragov` | `#DB9440` | 7.34 | 6.94 | series |  |
+| `--foreign` | `#5F7A8A` | 4.09 | 3.87 | series |  |
+| `--positive` | `#4FB27F` | 7.06 | 6.68 | series |  |
+| `--band` | `#2B251D` | 1.22 | 1.16 | rule |  |
+| `--rev-ii` | `#3FA9B4` | 6.65 | 6.30 | series |  |
+| `--rev-pr` | `#DB9440` | 7.34 | 6.94 | series |  |
+| `--rev-ci` | `#C4CBD2` | 11.30 | 10.70 | series |  |
+| `--rev-ex` | `#5F7A8A` | 4.09 | 3.87 | series |  |
+| `--rev-cu` | `#E8D2A8` | 12.53 | 11.86 | series |  |
+| `--rev-eg` | `#BE9660` | 6.81 | 6.44 | series |  |
+| `--rev-mi` | `#726F66` | 3.69 | 3.49 | series |  |
+Every `role: text` token clears 4.5:1 on both dark surfaces, and every `role: series` token clears
+3:1 on both. The lowest series ratio is `--rev-mi` at 3.49 against the dark panel. The
+`redundant-encoding:` column is therefore empty here as well.
+
+`--rule` and `--band` behave here as they do in the light palette. `--rule` measures 3.45 against
+the panel, so it clears 3:1 and not 4.5:1. `--band` measures 1.16 and clears neither. Both carry
+the same restriction. Neither paints text and neither carries a category, so both stay `role: rule`.
+
+## Known limitation: no chart renders without scripting
+
+The site draws its charts with Recharts, which renders nothing during a static build. A reader with
+scripting disabled gets no chart on any figure. This replaces an earlier, narrower limitation about
+axis-label legibility at a 390px viewport, which described a chart that at least appeared.
+
+The cause is in Recharts itself. `ReportChartSize` dispatches the chart's width and height from a
+`useEffect`, effects do not run in a static render, so the store still holds `width: 0` when
+`MainChartSurface` reads it and that component returns `null`. No prop reaches past it.
+`docs/contracts/interfaces/charts.md` records the decision and `docs/design-notes-recharts.md`
+records the measurements.
+
+What such a reader does get is the whole apparatus and all of the data. Every figure serves its
+number, title, deck and caption, including both axis units and the verbatim source line, and a
+complete `<TableView>` table carrying every value the chart draws with its units in the column
+heads. That table is a native `<details>`, so it opens with no scripting at all.
+`test_every_chart_has_a_real_table_in_the_static_html` and
+`test_every_figure_server_renders_its_apparatus` hold both halves.
+
+The `<noscript>` block in `BaseLayout.astro`'s `<head>` no longer enlarges axis text, because there
+is no axis text to enlarge. It now shows `.hint-nojs`, so the hint under each figure names the
+table rather than a hover or a tap that does nothing.
 
 **Measured 2026-08-26: the mitigation does not apply at all.** The `<noscript><style>` block is
 emitted in `<head>` *before* the bundled stylesheet, which carries `.axis-label { font-size: 11px }`

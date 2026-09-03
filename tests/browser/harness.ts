@@ -34,6 +34,26 @@ import { createServer, type Server } from 'node:http'
 import { extname, join, normalize, resolve } from 'node:path'
 import { chromium, type Browser, type BrowserContext, type Page } from 'playwright'
 
+/** How a CHART SURFACE is selected, everywhere in this lane.
+ *
+ *  `.chart` is the wrapper `<div>` `RechartsFrame.useFrame` returns, and the
+ *  Recharts surface sits inside it. Three figures still hand-roll their `<svg>`
+ *  through `Chart.tsx` and carry the class on the element itself, so the
+ *  selector is the union of the two. `touch.test.ts` settled on exactly this
+ *  union for the same reason, and the two agree deliberately: a lane with two
+ *  ideas of what a chart is measures two different sites.
+ *
+ *  WHY NOT A BARE `svg`. Page chrome is inline SVG too. `BaseLayout.astro`
+ *  draws four navigation icons, and a bare `svg` walk counted them as islands,
+ *  which turned every route red at once and reported "an island never mounted"
+ *  about a file with no islands in it. A guard about charts must not be able to
+ *  see anything that is not a chart.
+ *
+ *  A browser-context function cannot close over this constant, so every
+ *  `page.evaluate` below repeats the literal and this is the one place that
+ *  says why. */
+export const CHART_SURFACE = '.chart svg, svg.chart'
+
 /** Slack allowed when asserting that one box is contained by another.
  *  One device pixel: enough to absorb sub-pixel text metrics, far less than any
  *  real clip, which is measured in glyph widths. */
@@ -74,19 +94,31 @@ export const CONSOLE_ALLOWLIST: readonly string[] = []
 
 /** Every route the site serves, with the counts asserted as equalities.
  *
+ *  BOTH COUNT CHART SURFACES, not every `<svg>` on the page. See
+ *  `CHART_SURFACE`. `ssrSvg` is how many the served HTML contains; `hydratedSvg`
+ *  is how many the mounted page contains.
+ *
  *  The zeros are assertions, not skips: `/` carrying zero figures is a fact
  *  about the intro-route split, and a `/` that grows a chart should turn this
- *  red and be re-baselined deliberately.
+ *  red and be re-baselined deliberately. The three reference routes read zero
+ *  for the same reason, and they read zero again now that page chrome cannot
+ *  reach these numbers.
  *
- *  `ssrSvg` is what the served HTML contains; `hydratedSvg` is what the mounted
- *  page contains. They differ where an island renders more SVG than it shipped
- *  (`BudgetChart`'s legend swatches, the state grid), which is why both are
- *  recorded and the hydrated one is *waited on* rather than sampled. */
+ *  The two diverge because the site draws with Recharts, which renders no chart
+ *  during a static build. `ssrSvg` is therefore 2 on the whole site, being the
+ *  two hand-rolled islands on `/government` (`StateGiveGet`'s tile cartogram
+ *  and `StateTaxMix`'s stacked bar, neither of which was converted).
+ *
+ *  Both numbers are measured against a build, not chosen. `mountIslands` waits
+ *  on `hydratedSvg` and fails loudly on a short count, which is what catches an
+ *  island that never mounted. A wrong number here reports a green run over
+ *  nothing, so re-measure rather than adjust by hand when a figure is added.
+ */
 export const ROUTES = [
   { path: '/', h1: 'Income & Tax', figures: 0, ssrSvg: 0, hydratedSvg: 0 },
-  { path: '/economy', h1: 'The economy', figures: 5, ssrSvg: 7, hydratedSvg: 7 },
-  { path: '/households', h1: 'Households', figures: 7, ssrSvg: 14, hydratedSvg: 14 },
-  { path: '/government', h1: 'Government', figures: 13, ssrSvg: 14, hydratedSvg: 14 },
+  { path: '/economy', h1: 'The economy', figures: 5, ssrSvg: 0, hydratedSvg: 7 },
+  { path: '/households', h1: 'Households', figures: 7, ssrSvg: 0, hydratedSvg: 10 },
+  { path: '/government', h1: 'Government', figures: 13, ssrSvg: 2, hydratedSvg: 14 },
   { path: '/sources', h1: 'Sources', figures: 0, ssrSvg: 0, hydratedSvg: 0 },
   { path: '/glossary', h1: 'Glossary', figures: 0, ssrSvg: 0, hydratedSvg: 0 },
   { path: '/contents', h1: 'Contents', figures: 0, ssrSvg: 0, hydratedSvg: 0 },
@@ -264,8 +296,8 @@ export async function openRoute(
   return { context, page }
 }
 
-/** Mount every `client:visible` island, then WAIT for the exact hydrated SVG
- *  count.
+/** Mount every `client:visible` island, then WAIT for the exact hydrated
+ *  CHART-SURFACE count. See `CHART_SURFACE`.
  *
  *  `/government` is ~26,000px tall at 390px. A single `scrollTo(bottom)` can
  *  jump clean past an `IntersectionObserver` threshold, which produces a
@@ -288,16 +320,17 @@ export async function mountIslands(page: Page, expected: number): Promise<void> 
   })
   try {
     await page.waitForFunction(
-      (n) => document.querySelectorAll('svg').length === n,
+      (n) => document.querySelectorAll('.chart svg, svg.chart').length === n,
       expected,
       { timeout: 15_000 },
     )
   } catch {
-    const actual = await page.locator('svg').count()
+    const actual = await page.locator(CHART_SURFACE).count()
     throw new Error(
-      `hydrated <svg> count settled at ${actual}, expected exactly ${expected}. ` +
+      `hydrated chart-surface count settled at ${actual}, expected exactly ${expected}. ` +
         `A short count means an island never mounted; measuring it anyway would ` +
-        `report a green run over nothing.`,
+        `report a green run over nothing. The selector is ${CHART_SURFACE}, so page ` +
+        `chrome drawn as inline SVG cannot move this number.`,
     )
   }
 }
@@ -460,7 +493,14 @@ export async function legendMarkers(page: Page): Promise<LegendMarker[]> {
       return null
     }
 
-    document.querySelectorAll('body *').forEach((el) => {
+    /* SCOPED TO `main`, not to `body`. The rule below is deliberately generic,
+     * so a legend added tomorrow is swept without anyone remembering to add it,
+     * and that generosity is exactly why it must not see page chrome:
+     * `BaseLayout.astro`'s 15px navigation icons satisfy every clause of
+     * `isMarker` and pushed `/economy` from 0 markers to 4. A legend belongs to
+     * a figure, and every figure is inside `main`. */
+    const scope = document.querySelector('main') ?? document.body
+    scope.querySelectorAll('*').forEach((el) => {
       if (!isMarker(el)) return
       const parent = el.parentElement
       let side: 'after' | 'before' | 'none' = 'none'
@@ -595,13 +635,19 @@ export function collectConsole(page: Page): string[] {
  *  mutation of `BracketHistory`, 113 marks back in the Tab order, went
  *  straight through the lane while the static suite caught it.
  *
+ *  WALKS CHART SURFACES ONLY (`CHART_SURFACE`). The one-stop invariant is a
+ *  claim about figures, and a caller comparing this length against a route's
+ *  `hydratedSvg` is comparing two counts of the same set. A bare `svg` walk put
+ *  `BaseLayout.astro`'s four navigation icons in that set, where they draw no
+ *  mark, offer no stop and can only make the two disagree.
+ *
  *  Returned as plain data so a failure can name the offending svg. The caller
  *  asserts; this file owns no assertions. */
 export async function markStopsPerSvg(
   page: Page,
 ): Promise<{ svgIndex: number; label: string; marks: number; stops: number; role: string }[]> {
   return page.evaluate(() =>
-    Array.from(document.querySelectorAll('svg')).map((svg, svgIndex) => ({
+    Array.from(document.querySelectorAll('.chart svg, svg.chart')).map((svg, svgIndex) => ({
       svgIndex,
       label: (svg.getAttribute('aria-label') ?? '').slice(0, 60),
       marks: svg.querySelectorAll('[data-mark]').length,

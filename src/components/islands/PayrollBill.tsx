@@ -8,17 +8,25 @@
  *  One focusable element per YEAR, not per point: 64 tab stops report both
  *  series together, rather than 128 stops that would force a reader to pair
  *  them up themselves.
+ *
+ *  Recharts draws the two lines, the grid and the axes. The year bands, the two
+ *  direct labels, the readout and the table stay the site's own code.
  */
-import { useMemo, useState } from 'react'
-import { line as d3line, curveMonotoneX } from 'd3-shape'
+import { useState } from 'react'
+import { Line, LineChart } from 'recharts'
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
-import { Chart } from '../charts/Chart'
 import { Annotation } from '../charts/Annotation'
-import { AxisLeft, AxisBottom } from '../charts/Axis'
-import { linear, niceExtent } from '../charts/scales'
+import {
+  PlotGrid,
+  PlotOverlay,
+  PlotXAxis,
+  PlotYAxis,
+  SURFACE_DEFAULTS,
+  useFrame,
+  useTickFormat,
+} from '../charts/RechartsFrame'
 import { percent } from '../charts/format'
 import { TableView } from './TableView'
-import { useChartSize } from '../charts/useChartSize'
 import type { RevenueYear } from '../../data/types'
 import { labelledByFigure } from './figureLabel'
 import { ChartHint } from '../charts/ChartHint'
@@ -39,35 +47,28 @@ const VIEWS: { value: View; label: string }[] = [
   { value: 'revenue', label: 'Percent of total revenue' },
 ]
 
+const YEAR_TICK = (t: number) => `${t}`
+
 export function PayrollBill({ rows }: { rows: RevenueYear[] }) {
   const [view, setView] = useState<View>('gdp')
   const [focus, setFocus] = useState<number | null>(null)
-
-  const [boxRef, size] = useChartSize()
-  const { width: W, height: H, margin: f } = size
-  const iw = W - f.left - f.right
-  const ih = H - f.top - f.bottom
-  const narrow = W < 500
 
   const fields = FIELDS[view]
   const prOf = (r: RevenueYear) => r[fields.pr] as number
   const iiOf = (r: RevenueYear) => r[fields.ii] as number
 
-  const years = rows.map((r) => r.y)
-  const x = linear([Math.min(...years), Math.max(...years)], [0, iw])
-  const y = linear(niceExtent(rows.flatMap((r) => [prOf(r), iiOf(r)])), [ih, 0])
+  const {
+    boxRef, size, f, xDomain, yDomain, x, y, xTicks, yTicks,
+    chartMargin, chartStyle, surfaceRef, wrapperProps, mark,
+  } = useFrame({
+    rows,
+    xOf: (r) => r.y,
+    yValues: rows.flatMap((r) => [prOf(r), iiOf(r)]),
+  })
 
-  const prPath = useMemo(
-    () => d3line<RevenueYear>().x((r) => x(r.y)).y((r) => y(prOf(r))).curve(curveMonotoneX)(rows) ?? '',
-    [rows, view, x, y],
-  )
-  const iiPath = useMemo(
-    () => d3line<RevenueYear>().x((r) => x(r.y)).y((r) => y(iiOf(r))).curve(curveMonotoneX)(rows) ?? '',
-    [rows, view, x, y],
-  )
-
-  const yTicks = y.ticks(narrow ? 4 : 6)
-  const xTicks = x.ticks(narrow ? 4 : 8).filter((t) => Number.isInteger(t))
+  // Rule 1 in `RechartsFrame.tsx` names `tickFormatter`: written inline it
+  // reproduces the focus loss on its own.
+  const yFormat = useTickFormat(percent, 0)
 
   const last = rows[rows.length - 1]
   const active = focus != null ? rows.find((r) => r.y === focus) : null
@@ -80,6 +81,9 @@ export function PayrollBill({ rows }: { rows: RevenueYear[] }) {
     'federal revenue, fiscal 1962 to fiscal 2025. In FY2025 payroll tax was 5.76% of GDP and ' +
     '33.4% of all federal revenue; individual income tax was 8.75% of GDP and 50.7% of revenue. ' +
     'The chart in section 5 counts none of the payroll line.'
+
+  // Order is data order, and the array is built in this render.
+  const markProps = rows.map(() => mark())
 
   return (
     <div ref={boxRef}>
@@ -100,42 +104,68 @@ export function PayrollBill({ rows }: { rows: RevenueYear[] }) {
         </ToggleGroup.Root>
       </div>
 
-      <Chart ariaLabel={ariaLabel} interactive width={W} height={H} margin={f}>
-        {(fr, mark) => (
-          <>
-            <AxisLeft
-              frame={fr}
-              ticks={yTicks}
-              format={(v) => percent(v, 0)}
-              label={fields.axis}
-              scale={y}
-            />
-            <AxisBottom
-              frame={fr}
-              ticks={xTicks}
-              format={(t) => `${t}`}
-              label="Fiscal year"
-              scale={x}
-            />
+      <div {...wrapperProps}>
+        <LineChart
+          ref={surfaceRef}
+          data={rows}
+          width={size.width}
+          height={size.height}
+          margin={chartMargin}
+          style={chartStyle}
+          aria-label={ariaLabel}
+          {...SURFACE_DEFAULTS}
+        >
+          <PlotGrid />
+          <PlotXAxis
+            domain={xDomain}
+            ticks={xTicks}
+            gutter={size.margin.bottom}
+            unit="Fiscal year"
+            format={YEAR_TICK}
+          />
+          <PlotYAxis
+            domain={yDomain}
+            ticks={yTicks}
+            gutter={size.margin.left}
+            unit={fields.axis}
+            format={yFormat}
+          />
 
-            <path d={prPath} fill="none" stroke="var(--mand)" strokeWidth={2} />
-            <path d={iiPath} fill="none" stroke="var(--disc)" strokeWidth={2} />
+          <Line
+            type="monotone"
+            dataKey={fields.pr}
+            stroke="var(--mand)"
+            strokeWidth={2}
+            dot={false}
+            activeDot={false}
+            isAnimationActive={false}
+          />
+          <Line
+            type="monotone"
+            dataKey={fields.ii}
+            stroke="var(--disc)"
+            strokeWidth={2}
+            dot={false}
+            activeDot={false}
+            isAnimationActive={false}
+          />
 
-            <Annotation frame={fr} x={x(last.y) - 6} y={y(prOf(last)) - 8} anchor="end" label="Payroll" />
-            <Annotation frame={fr} x={x(last.y) - 6} y={y(iiOf(last)) - 8} anchor="end" label="Individual income" />
+          <PlotOverlay margin={f.margin}>
+            <Annotation frame={f} x={x(last.y) - 6} y={y(prOf(last)) - 8} anchor="end" halo label="Payroll" />
+            <Annotation frame={f} x={x(last.y) - 6} y={y(iiOf(last)) - 8} anchor="end" halo label="Individual income" />
 
             {/* One focusable element per YEAR, reporting both series together. */}
-            {rows.map((r) => (
+            {rows.map((r, i) => (
               <rect
                 key={r.y}
                 className="datum"
                 x={x(r.y) - 3}
                 y={0}
                 width={6}
-                height={ih}
+                height={f.innerHeight}
                 fill={active?.y === r.y ? 'var(--ink)' : 'transparent'}
                 opacity={active?.y === r.y ? 0.08 : 0}
-                {...mark()}
+                {...markProps[i]}
                 role="img"
                 aria-label={describe(r)}
                 onFocus={() => setFocus(r.y)}
@@ -144,9 +174,9 @@ export function PayrollBill({ rows }: { rows: RevenueYear[] }) {
                 onMouseLeave={() => setFocus(null)}
               />
             ))}
-          </>
-        )}
-      </Chart>
+          </PlotOverlay>
+        </LineChart>
+      </div>
 
       <p aria-live="polite" className="readout">
         {active ? describe(active) : <ChartHint noun="year" />}

@@ -63,6 +63,19 @@ def test_debt_chart_uses_the_shared_unit_toggle() -> None:
 
 
 def test_section_1_spells_out_its_trillions() -> None:
+    """The spelled-out magnitude, in the bytes that carry it and in the source that builds it.
+
+    This read both annotated marker values, `$19.57 trillion` and `$40.05 trillion`, out of the
+    built page. Recharts renders no chart during a static build, so neither annotation reaches
+    `dist/` any more and the second string is gone from it. The first survives, because it is
+    written into the figure's own finding sentence rather than produced by a formatter.
+
+    So the check splits in two. The served half asserts the finding still spells the magnitude and
+    still carries no bare `T`. The source half asserts what the annotations and the per-year
+    `aria-label`s are built from, which is `trillionsLong` through one shared helper. The two
+    together hold what the single dist check used to: `T` is announced as a bare letter, so no
+    read-aloud value on this figure may carry one.
+    """
     if not GOVERNMENT_PAGE.exists():
         pytest.fail(
             f"{GOVERNMENT_PAGE} not built. Run `npm run build` first — "
@@ -70,14 +83,24 @@ def test_section_1_spells_out_its_trillions() -> None:
         )
     sec = section(GOVERNMENT_PAGE.read_text(encoding="utf-8"), "forty-trillion", "who-holds-it")
 
-    # The two annotated marker years, the ten-year doubling the section leads
-    # with, and the word, not the letter.
+    # The ten-year doubling the section leads with, and the word, not the letter.
     assert "$19.57 trillion" in sec
-    assert "$40.05 trillion" in sec
     assert "$19.570T" not in sec and "$40.049T" not in sec, (
         "Section 1's read-aloud values have moved to value()'s abbreviated form. "
         "trillionsLong exists because 'T' is announced as a bare letter."
     )
+
+    src = DEBT_CHART.read_text(encoding="utf-8")
+    assert "trillionsLong(r.debt, 2)" in src, (
+        "DebtChart.tsx no longer spells its nominal magnitude with trillionsLong. Every "
+        "read-aloud surface on this figure reads one helper, and 'T' is announced as a bare "
+        "letter."
+    )
+    for surface in ("aria-label={`Fiscal year ${r.y}: ${full(r)}", "${full(active)}"):
+        assert surface in src, (
+            f"DebtChart.tsx no longer builds {surface!r} from the shared `full` helper. Hover, "
+            "keyboard focus, touch and the annotation must announce one string, not four."
+        )
 
 
 def test_no_dollar_axis_labels_a_zero_tick_in_billions() -> None:

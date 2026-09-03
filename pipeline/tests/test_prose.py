@@ -5,14 +5,21 @@ human reader can judge. This file enforces the part that is mechanically checkab
 emphasis, and nothing else. The rest of the contract says plainly that it is human-judged, and this
 suite does not pretend otherwise.
 
-**It reads `dist/`, not `src/`.** That is the whole design. A grep over the page sources counts
-`---` frontmatter comments and developer-facing `throw` strings as prose (all three `, ` in
-`src/pages/contents.astro`, all five in `src/pages/glossary.astro`, most of the island hits), none
-of which a reader ever meets, and it misses the strings the islands assemble at runtime, which a
-reader does meet. `src/components/islands/StatutoryVsEffective.tsx:97` is the proof in both
-directions: it renders `, ` **into a chart `aria-label`**, so it is a punctuation violation inside
-an accessible name, invisible to a source scan and bound by `docs/contracts/accessibility.md` as
-well as by this one.
+**It reads `dist/`, not `src/`, with one enumerated exception.** That is the whole design. A grep
+over the page sources counts `---` frontmatter comments and developer-facing `throw` strings as
+prose (all three `, ` in `src/pages/contents.astro`, all five in `src/pages/glossary.astro`, most
+of the island hits), none of which a reader ever meets, and it misses the strings the islands
+assemble at runtime, which a reader does meet. `src/components/islands/StatutoryVsEffective.tsx`
+is the proof in both directions: it renders `, ` **into a chart `aria-label`**, so it is a
+punctuation violation inside an accessible name, and it is bound by
+`docs/contracts/accessibility.md` as well as by this one.
+
+The exception is that same file and one other, and the Recharts adoption forced it. Recharts
+renders no chart during a static build, so no chart accessible name and no per-datum label reaches
+the served bytes. A reader whose browser runs the island still hears them. `island_name_strings()`
+therefore reads two named templates as source, for the dash check alone, so #102's baseline stays
+observable instead of reading as discharged. Every other check in this file reads `dist/` and
+nothing else.
 
 **It is an allow-list, never a deny-list.** A prose string is the text of an element carrying one of
 four named classes, or one of three named kinds of accessible name. Nothing else is visited, not
@@ -28,7 +35,7 @@ not `<=` is the choice that matters: `<=` would let a check pass because it is n
 would let a fix leave a stale exemption behind forever. With `==`, adding a violation fails on the
 new fingerprint and *fixing* one fails on the missing entry, so the baseline can only shrink
 deliberately, in the same commit as the fix. #58 has taken its own share of both to zero; what is
-left is #102's four island-generated accessible names and #103's five curated-data shouts, the two
+left is #102's two island-generated accessible names and #103's five curated-data shouts, the two
 surfaces no prose edit to a page source can reach.
 
 Standard library only, and the HTML tree comes from `test_accessibility`'s parser rather than a
@@ -194,6 +201,52 @@ def prose_strings() -> list[tuple[str, str, str]]:
     return found
 
 
+#: The two island templates that assemble a chart accessible name, read as source.
+#:
+#: This is the one exception to the module docstring's "it reads `dist/`, not `src/`", and the
+#: Recharts adoption forced it. Recharts renders no chart during a static build, so no `svg.chart`
+#: and no per-datum `role="img"` element reaches the served bytes any more, and the four #102
+#: fingerprints this suite carried vanished from `dist/` with them. The em dashes did not go
+#: anywhere. They are still in both templates, still assembled into an accessible name, and still
+#: read aloud to anyone whose browser runs the island. Dropping the four entries would have
+#: recorded a debt as paid because the only check that could see it went blind.
+#:
+#: An enumerated pair of files, not a tree walk, for the same reason the dist side is an allow-list.
+#: A grep for a dash across `src/components/` also collects `AttributionSplit.tsx`'s
+#: `unit: '—'` (the "this column has no unit" cell the docstring above rules out of scope), a
+#: developer-facing `throw` string in `aggregate.ts`, and three `*.test.ts` titles. A reader meets
+#: none of those.
+ISLAND_NAME_TEMPLATES = (
+    "src/components/islands/BudgetChart.tsx",
+    "src/components/islands/StatutoryVsEffective.tsx",
+)
+
+#: Line prefixes that mark a comment in those two files. A dash inside a comment is not prose.
+_COMMENT_PREFIXES = ("*", "//", "/*")
+
+
+def island_name_strings() -> list[tuple[str, str, str]]:
+    """Every non-comment source line of `ISLAND_NAME_TEMPLATES`, as `(path, scope, text)`.
+
+    Line-based rather than parsed, because the question asked of these two files is only whether a
+    banned dash is written into a string a reader hears. The fingerprint carries the line's text,
+    not its number, so the baseline survives an edit above it and fails on an edit to it.
+    """
+    found: list[tuple[str, str, str]] = []
+    for rel in ISLAND_NAME_TEMPLATES:
+        path = ROOT / rel
+        assert path.exists(), (
+            f"{rel} does not exist. The #102 baseline names it, so this scan reads nothing and "
+            "the baseline entry it owns can never fail."
+        )
+        for line in path.read_text().splitlines():
+            stripped = line.strip()
+            if not stripped or stripped.startswith(_COMMENT_PREFIXES):
+                continue
+            found.append((rel, "source", stripped))
+    return found
+
+
 # ---------------------------------------------------------------------------
 # The baselines. Every entry is a fingerprint mapped to the issue that owns its
 # removal, and both are asserted with `==`.
@@ -212,14 +265,17 @@ KNOWN_DASH_DEBT: dict[str, str] = {
     #     below lets a baseline shrink.
     # --- #102, island-generated accessible names. Two `.tsx` templates, outside #58's remit
     #     because #58 edits `src/pages/**` prose only.
-    #     `src/components/islands/BudgetChart.tsx:84`, 31 per-fiscal-year `aria-label`s on the
-    #     budget bars, collapsing to the three shapes its number formatter produces:
-    'government/index.html|aria-label:rect|FY# Outlays $#T (mandatory $#B, discretionary $#B, net inter': "#102",
-    'government/index.html|aria-label:rect|FY# Outlays $#T (mandatory $#T, discretionary $#B, net inter': "#102",
-    'government/index.html|aria-label:rect|FY# Outlays $#T (mandatory $#T, discretionary $#T, net inter': "#102",
-    #     `src/components/islands/StatutoryVsEffective.tsx:97`, `, ` twice inside a chart's
-    #     accessible name, which `docs/contracts/accessibility.md` also governs:
-    'households/index.html|aria-label:svg|The top statutory income tax rate ran from #% in # to #% in ': "#102",
+    #
+    #     **These four entries were re-fingerprinted against `src/` when the site adopted
+    #     Recharts.** They read the built page until then, as three shapes of BudgetChart's 31
+    #     per-fiscal-year `aria-label`s plus one StatutoryVsEffective chart name. Recharts renders
+    #     no chart during a static build, so none of those four strings is served any more, and a
+    #     `dist/` reading now reports all four as fixed. Nothing was fixed. Both templates still
+    #     write the dash, so the baseline follows the strings to the surface that still carries
+    #     them, `island_name_strings()` above. Four entries become two because one source line
+    #     produces the three formatter shapes the dist fingerprints split into.
+    'src/components/islands/BudgetChart.tsx|source|? `${partyName(r.ctl.pp)} president, ${partyName(r.ctl.h)} H': "#102",
+    "src/components/islands/StatutoryVsEffective.tsx|source|'federal tax rate actually paid by the top # percent -- whic": "#102",
 }
 
 #: #58 held the three shouts in the page sources and discharged all three. #103 owns the
@@ -252,9 +308,15 @@ def _owned_by(baseline: dict[str, str], owner: str) -> set[str]:
 
 
 def test_no_prose_string_contains_an_em_dash_or_a_double_hyphen():
+    """Ruling 1 over every served prose string, plus the two island name templates.
+
+    The source half is scoped to `ISLAND_NAME_TEMPLATES` and applies to this test alone.
+    `test_no_prose_string_shouts` below keeps reading `dist/` only, because a source line is full
+    of capitalised identifiers a reader never hears and every one of them would be a false shout.
+    """
     offenders = {
         _fingerprint(page, scope, text)
-        for page, scope, text in prose_strings()
+        for page, scope, text in prose_strings() + island_name_strings()
         if any(d in text for d in BANNED_DASHES)
     }
     new = offenders - set(KNOWN_DASH_DEBT)
@@ -322,10 +384,16 @@ def test_the_baselines_are_declining(name):
             f"{name} entry has no owning issue number: {fingerprint!r} -> {owner!r}. "
             "A baseline entry nobody owns is a permanent exemption."
         )
-        page = fingerprint.split("|", 1)[0]
-        assert (DIST / page).exists(), (
-            f"{name} entry names a built page that no longer exists: {page}. "
-            f"The route was renamed or removed; the entry is stale. Fingerprint: {fingerprint!r}"
+        subject = fingerprint.split("|", 1)[0]
+        # A fingerprint names either a built page or, since the Recharts adoption took the
+        # island-generated accessible names out of `dist/`, one of the two source templates
+        # `ISLAND_NAME_TEMPLATES` enumerates. Resolve each against its own root, so a deleted
+        # template fails here rather than leaving an entry nothing can ever discharge.
+        target = (DIST / subject) if subject.endswith(".html") else (ROOT / subject)
+        assert target.exists(), (
+            f"{name} entry names a subject that no longer exists: {subject}. "
+            f"The route or the template was renamed or removed; the entry is stale. "
+            f"Fingerprint: {fingerprint!r}"
         )
 
 

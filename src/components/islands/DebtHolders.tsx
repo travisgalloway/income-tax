@@ -9,15 +9,30 @@
  *  formatter that names both denominators (publicly held debt, gross debt).
  *  See discrepancies.yaml -> foreign_share_of_debt and
  *  docs/contracts/interfaces/curated-snapshots.md.
+ *
+ *  Drawn on `charts/RechartsFrame.tsx` as a `<BarChart layout="vertical">`
+ *  with one stack per bar. Read that file's header before editing this one.
+ *
+ *  BOTH AXES ARE HIDDEN, and that is the figure's own claim rather than an
+ *  omission. Each bar fills the width of its OWN total, and those totals are
+ *  different quantities, gross debt for Bar A and publicly held debt for Bar B.
+ *  One labelled value axis across both would assert a shared denominator that
+ *  discrepancies.yaml forbids. The connector lines carry the subset relation
+ *  and every segment label names its own denominator.
+ *
+ *  THE MARKS ARE DRAWN IN THE OVERLAY, NOT INSIDE THE TWO `<Bar>` ELEMENTS.
+ *  Recharts renders one `<Bar>` completely before the next, so marks nested in
+ *  them would run public, domestic, intragovernmental, foreign. Arrow keys
+ *  follow DOM order, and this figure reads each bar left to right.
  */
 import { useMemo, useState } from 'react'
-import { Chart } from '../charts/Chart'
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, type BarShapeProps } from 'recharts'
 import { Annotation } from '../charts/Annotation'
 import { DATA_LABEL_FONT_PX, placeAnnotation } from '../charts/annotate'
 import { firstThatFits, spanRoomAt } from '../charts/axisFit'
-import { linear } from '../charts/scales'
+import { PlotOverlay, SURFACE_DEFAULTS, useFrame } from '../charts/RechartsFrame'
+import { frame as makeFrame } from '../charts/scales'
 import { TableView } from './TableView'
-import { useChartSize } from '../charts/useChartSize'
 import type { Frame } from '../charts/scales'
 import type { DebtHolders as DebtHoldersData } from '../../data/types'
 import { ChartHint } from '../charts/ChartHint'
@@ -25,6 +40,12 @@ import { ChartHint } from '../charts/ChartHint'
 type FocusKey = 'public' | 'intragov' | 'domestic' | 'foreign' | 'japan' | 'uk' | 'china'
 
 const fmtT = (v: number) => (v < 1 ? `$${Math.round(v * 1000)}B` : `$${v.toFixed(2)}T`)
+
+/** Each bar is expressed as a share of its own total, so one x domain serves
+ *  both rows and each bar fills the width. The shares are computed from the
+ *  amounts, never from the curated percentage fields, so the split lands where
+ *  the two independent dollar scales used to put it. */
+const X_DOMAIN: [number, number] = [0, 100]
 
 /** The one place either denominator's percentage is spelled out. Always names
  *  BOTH: a share of publicly held debt is a different quantity from a share
@@ -34,11 +55,6 @@ const foreignShare = (ofPublicPct: number, ofGrossPct: number) =>
   `${ofPublicPct}% of publicly held debt, ${ofGrossPct}% of gross debt`
 
 export function DebtHolders({ d }: { d: DebtHoldersData }) {
-  const [boxRef, size] = useChartSize()
-  const { width: W, margin: f } = size
-  const iw = W - f.left - f.right
-  const narrow = W < 500
-
   const [focus, setFocus] = useState<FocusKey | null>(null)
 
   const model = useMemo(() => {
@@ -62,16 +78,75 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
 
   const { split, publicSplit, foreignOfGross, publicAmt, domesticAmt, foreignAmt } = model
 
-  // Bar A: full inner width is total gross debt. Bar B: full inner width is
-  // the public amount only, its OWN scale, not a fraction of Bar A's.
-  const xA = linear([0, d.total_debt_t], [0, iw])
-  const xB = linear([0, publicAmt], [0, iw])
+  const rows = useMemo(
+    () => {
+      const pctPublic = (publicAmt / d.total_debt_t) * 100
+      const pctDomestic = (domesticAmt / publicAmt) * 100
+      return [
+        { row: 'gross', first: pctPublic, second: 100 - pctPublic },
+        { row: 'public', first: pctDomestic, second: 100 - pctDomestic },
+      ]
+    },
+    [d.total_debt_t, publicAmt, domesticAmt],
+  )
 
+  /* `useFrame` supplies the container measurement, the roving group and the
+   * wrapper that carries the handlers Recharts strips off the surface. Its own
+   * frame is discarded, because two bars and a leader block set this figure's
+   * height and no viewBox preset expresses that. */
+  const { boxRef, size, narrow, surfaceRef, wrapperProps, mark } = useFrame({
+    rows,
+    xOf: () => 0,
+    yValues: [],
+    xDomain: X_DOMAIN,
+  })
+
+  const W = size.width
   const barH = narrow ? 26 : 34
   const connH = narrow ? 34 : 46
-  const yA = 0
-  const yB = yA + barH + connH
+
+  /* The two rows are Recharts category bands, so each bar is centred in its own
+   * band. Two bands of `barH + connH` therefore leave exactly `connH` between
+   * the bars, which is the gap the connector lines run through. */
+  const innerHeight = 2 * (barH + connH)
+  const barTop = (i: number) => (i + 0.5) * (barH + connH) - barH / 2
+  const yA = barTop(0)
+  const yB = barTop(1)
   const leadersY = yB + barH + (narrow ? 0 : 18)
+  // The leader block sits partly below the plot. `connH / 2` of it fits inside.
+  const gutterBottom = Math.max(0, (narrow ? 30 : 64) - connH / 2)
+  const H = size.margin.top + innerHeight + gutterBottom
+
+  const f = useMemo(
+    () =>
+      makeFrame(W, H, {
+        top: size.margin.top,
+        right: size.margin.right,
+        bottom: gutterBottom,
+        left: size.margin.left,
+      }),
+    [W, H, gutterBottom, size.margin.top, size.margin.right, size.margin.left],
+  )
+  const iw = f.innerWidth
+
+  // The two segment boundaries, in plot units. Same quantities the two dollar
+  // scales produced before, because each is a share of its own bar's total.
+  const boundaryA = (publicAmt / d.total_debt_t) * iw
+  const boundaryB = (domesticAmt / publicAmt) * iw
+
+  const chartMargin = useMemo(
+    () => ({
+      top: size.margin.top,
+      right: size.margin.right,
+      bottom: gutterBottom,
+      left: size.margin.left,
+    }),
+    [size.margin.top, size.margin.right, size.margin.left, gutterBottom],
+  )
+  const chartStyle = useMemo(
+    () => ({ width: '100%', height: 'auto', aspectRatio: `${W} / ${H}` }),
+    [W, H],
+  )
 
   const describe = (k: FocusKey): string => {
     switch (k) {
@@ -95,7 +170,7 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
   const ariaLabel = `${fmtT(d.total_debt_t)} of the federal debt is held by the public and ` +
     `intragovernmentally; about ${foreignShare(publicSplit.foreign.share_of_public_pct, foreignOfGross)} is held abroad.`
 
-  const leaderX = (i: number) => xB(domesticAmt) + ((iw - xB(domesticAmt)) * (i + 1)) / 4
+  const leaderX = (i: number) => boundaryB + ((iw - boundaryB) * (i + 1)) / 4
 
   // Segment labels are middle-anchored on their own segment, so two things
   // bound them: the distance to the neighbouring label's centre, and the SVG's
@@ -112,105 +187,163 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
   // Fitting the centre gap is also what makes a same-row collision impossible
   // by construction rather than by inspection (E8).
   const labelFor = (variants: string[], centre: number, gap: number, fr: Frame) =>
-    firstThatFits(
-      variants,
-      Math.min(gap, spanRoomAt(centre, fr, 'middle')),
-      DATA_LABEL_FONT_PX,
-    )
+    firstThatFits(variants, Math.min(gap, spanRoomAt(centre, fr, 'middle')), DATA_LABEL_FONT_PX)
+
+  const centreA = [boundaryA / 2, boundaryA + (iw - boundaryA) / 2]
+  const centreB = [boundaryB / 2, boundaryB + (iw - boundaryB) / 2]
+  const gapA = centreA[1] - centreA[0]
+  const gapB = centreB[1] - centreB[0]
+  const publicLabel = labelFor([
+    `Held by the public ${fmtT(split.public.amount_t)} (${split.public.share_pct}% of gross debt)`,
+    `Held by the public ${fmtT(split.public.amount_t)} (${split.public.share_pct}%)`,
+    `Public ${fmtT(split.public.amount_t)} (${split.public.share_pct}%)`,
+    `Public ${fmtT(split.public.amount_t)}`,
+    fmtT(split.public.amount_t),
+  ], centreA[0], gapA, f)
+  const intragovLabel = labelFor([
+    `Intragovernmental ${fmtT(split.intragov.amount_t)} (${split.intragov.share_pct}% of gross debt)`,
+    `Intragovernmental ${fmtT(split.intragov.amount_t)} (${split.intragov.share_pct}%)`,
+    `Intragov. ${fmtT(split.intragov.amount_t)} (${split.intragov.share_pct}%)`,
+    `Intragov. ${fmtT(split.intragov.amount_t)}`,
+    fmtT(split.intragov.amount_t),
+  ], centreA[1], gapA, f)
+  // Domestic's percentage always keeps its denominator, for the same
+  // reason foreignShare names both of its own: a share of publicly held
+  // debt is a different quantity from a share of gross debt, and
+  // discrepancies.yaml requires they never read as one. So the ladder
+  // drops the percentage entirely rather than orphaning it.
+  const domesticLabel = labelFor([
+    `Domestic ${fmtT(domesticAmt)} (${publicSplit.domestic.share_of_public_pct}% of publicly held)`,
+    `Domestic ${fmtT(domesticAmt)}`,
+    fmtT(domesticAmt),
+  ], centreB[0], gapB, f)
+  const foreignLabel = labelFor([
+    `Foreign ${fmtT(foreignAmt)} (${foreignShare(publicSplit.foreign.share_of_public_pct, foreignOfGross)})`,
+    `Foreign ${fmtT(foreignAmt)}`,
+    fmtT(foreignAmt),
+  ], centreB[1], gapB, f)
+
+  // `mark()` runs once per mark HERE, in this island's own render, in the order
+  // a reader crosses them. Every mark lives in the overlay, so no Recharts
+  // subtree ever advances the counter on its own.
+  const segmentMarks = {
+    public: mark(),
+    intragov: mark(),
+    domestic: mark(),
+    foreign: mark(),
+  }
+  const leaderMarks = narrow ? [] : (['japan', 'uk', 'china'] as const).map(() => mark())
+
+  const segment = (
+    k: 'public' | 'intragov' | 'domestic' | 'foreign',
+    x: number,
+    width: number,
+    y: number,
+  ) => (
+    <rect
+      className="datum"
+      x={x}
+      y={y}
+      width={width}
+      height={barH}
+      fill="transparent"
+      {...segmentMarks[k]}
+      role="img"
+      aria-label={describe(k)}
+      onFocus={() => setFocus(k)}
+      onBlur={() => setFocus(null)}
+      onMouseEnter={() => setFocus(k)}
+      onMouseLeave={() => setFocus(null)}
+    />
+  )
 
   return (
     <div ref={boxRef}>
-      <Chart ariaLabel={ariaLabel} interactive width={W} height={leadersY + (narrow ? 30 : 46)} margin={f}>
-        {(fr, mark) => {
-          const centreA = [xA(split.public.amount_t) / 2, xA(split.public.amount_t) + (iw - xA(split.public.amount_t)) / 2]
-          const centreB = [xB(domesticAmt) / 2, xB(domesticAmt) + (iw - xB(domesticAmt)) / 2]
-          const gapA = centreA[1] - centreA[0]
-          const gapB = centreB[1] - centreB[0]
-          const publicLabel = labelFor([
-            `Held by the public ${fmtT(split.public.amount_t)} (${split.public.share_pct}% of gross debt)`,
-            `Held by the public ${fmtT(split.public.amount_t)} (${split.public.share_pct}%)`,
-            `Public ${fmtT(split.public.amount_t)} (${split.public.share_pct}%)`,
-            `Public ${fmtT(split.public.amount_t)}`,
-            fmtT(split.public.amount_t),
-          ], centreA[0], gapA, fr)
-          const intragovLabel = labelFor([
-            `Intragovernmental ${fmtT(split.intragov.amount_t)} (${split.intragov.share_pct}% of gross debt)`,
-            `Intragovernmental ${fmtT(split.intragov.amount_t)} (${split.intragov.share_pct}%)`,
-            `Intragov. ${fmtT(split.intragov.amount_t)} (${split.intragov.share_pct}%)`,
-            `Intragov. ${fmtT(split.intragov.amount_t)}`,
-            fmtT(split.intragov.amount_t),
-          ], centreA[1], gapA, fr)
-          // Domestic's percentage always keeps its denominator, for the same
-          // reason foreignShare names both of its own: a share of publicly held
-          // debt is a different quantity from a share of gross debt, and
-          // discrepancies.yaml requires they never read as one. So the ladder
-          // drops the percentage entirely rather than orphaning it.
-          const domesticLabel = labelFor([
-            `Domestic ${fmtT(domesticAmt)} (${publicSplit.domestic.share_of_public_pct}% of publicly held)`,
-            `Domestic ${fmtT(domesticAmt)}`,
-            fmtT(domesticAmt),
-          ], centreB[0], gapB, fr)
-          const foreignLabel = labelFor([
-            `Foreign ${fmtT(foreignAmt)} (${foreignShare(publicSplit.foreign.share_of_public_pct, foreignOfGross)})`,
-            `Foreign ${fmtT(foreignAmt)}`,
-            fmtT(foreignAmt),
-          ], centreB[1], gapB, fr)
-          return (
-          <>
-            {/* ---- Bar A: gross debt, public vs intragovernmental ---- */}
-            <rect
-              className="datum"
-              x={0} y={yA} width={xA(split.public.amount_t)} height={barH}
-              fill="var(--public)"
-              {...mark()} role="img" aria-label={describe('public')}
-              onFocus={() => setFocus('public')} onBlur={() => setFocus(null)}
-              onMouseEnter={() => setFocus('public')} onMouseLeave={() => setFocus(null)}
-            />
-            <rect
-              className="datum"
-              x={xA(split.public.amount_t)} y={yA} width={iw - xA(split.public.amount_t)} height={barH}
-              fill="var(--intragov)"
-              {...mark()} role="img" aria-label={describe('intragov')}
-              onFocus={() => setFocus('intragov')} onBlur={() => setFocus(null)}
-              onMouseEnter={() => setFocus('intragov')} onMouseLeave={() => setFocus(null)}
-            />
+      <div {...wrapperProps}>
+        <BarChart
+          ref={surfaceRef}
+          layout="vertical"
+          data={rows}
+          width={W}
+          height={H}
+          margin={chartMargin}
+          style={chartStyle}
+          {...SURFACE_DEFAULTS}
+          aria-label={ariaLabel}
+        >
+          <CartesianGrid horizontal={false} vertical={false} fill="var(--panel)" fillOpacity={1} />
+          <XAxis type="number" domain={X_DOMAIN} dataKey="first" hide />
+          <YAxis type="category" dataKey="row" hide />
+
+          {/* The stack gives each segment its x and its width. The row geometry
+              stays here, because the connector block between the bars is this
+              figure's own and no band layout expresses it. */}
+          <Bar
+            dataKey="first"
+            stackId="holders"
+            barSize={barH}
+            isAnimationActive={false}
+            activeBar={false}
+            shape={(props: BarShapeProps) => {
+              const i = props.originalDataIndex
+              if (!Number.isFinite(props.width)) return null
+              return (
+                <rect
+                  key={i}
+                  x={props.x}
+                  y={barTop(i)}
+                  width={props.width}
+                  height={barH}
+                  fill={i === 0 ? 'var(--public)' : 'var(--domestic)'}
+                />
+              )
+            }}
+          />
+          <Bar
+            dataKey="second"
+            stackId="holders"
+            barSize={barH}
+            isAnimationActive={false}
+            activeBar={false}
+            shape={(props: BarShapeProps) => {
+              const i = props.originalDataIndex
+              if (!Number.isFinite(props.width)) return null
+              return (
+                <rect
+                  key={i}
+                  x={props.x}
+                  y={barTop(i)}
+                  width={props.width}
+                  height={barH}
+                  fill={i === 0 ? 'var(--intragov)' : 'var(--foreign)'}
+                />
+              )
+            }}
+          />
+
+          <PlotOverlay margin={f.margin}>
             {publicLabel && (
-              <Annotation frame={fr} x={centreA[0]} y={yA - 8} anchor="middle" className="holders-label" label={publicLabel} />
+              <Annotation frame={f} x={centreA[0]} y={yA - 8} anchor="middle" className="holders-label" label={publicLabel} />
             )}
             {intragovLabel && (
-              <Annotation frame={fr} x={centreA[1]} y={yA - 8} anchor="middle" className="holders-label" label={intragovLabel} />
+              <Annotation frame={f} x={centreA[1]} y={yA - 8} anchor="middle" className="holders-label" label={intragovLabel} />
             )}
 
             {/* ---- Connectors: Bar B is the opened-up public slice of Bar A ---- */}
             <line x1={0} y1={yA + barH} x2={0} y2={yB} stroke="var(--ink-soft)" strokeWidth={0.75} />
-            <line
-              x1={xA(split.public.amount_t)} y1={yA + barH} x2={iw} y2={yB}
-              stroke="var(--ink-soft)" strokeWidth={0.75}
-            />
+            <line x1={boundaryA} y1={yA + barH} x2={iw} y2={yB} stroke="var(--ink-soft)" strokeWidth={0.75} />
 
-            {/* ---- Bar B: the public slice, opened, domestic vs foreign ---- */}
-            <rect
-              className="datum"
-              x={0} y={yB} width={xB(domesticAmt)} height={barH}
-              fill="var(--domestic)"
-              {...mark()} role="img" aria-label={describe('domestic')}
-              onFocus={() => setFocus('domestic')} onBlur={() => setFocus(null)}
-              onMouseEnter={() => setFocus('domestic')} onMouseLeave={() => setFocus(null)}
-            />
-            <rect
-              className="datum"
-              x={xB(domesticAmt)} y={yB} width={iw - xB(domesticAmt)} height={barH}
-              fill="var(--foreign)"
-              {...mark()} role="img" aria-label={describe('foreign')}
-              onFocus={() => setFocus('foreign')} onBlur={() => setFocus(null)}
-              onMouseEnter={() => setFocus('foreign')} onMouseLeave={() => setFocus(null)}
-            />
             {domesticLabel && (
-              <Annotation frame={fr} x={centreB[0]} y={yB + barH + 16} anchor="middle" className="holders-label" label={domesticLabel} />
+              <Annotation frame={f} x={centreB[0]} y={yB + barH + 16} anchor="middle" className="holders-label" label={domesticLabel} />
             )}
             {foreignLabel && (
-              <Annotation frame={fr} x={centreB[1]} y={yB + barH + 16} anchor="middle" className="holders-label" label={foreignLabel} />
+              <Annotation frame={f} x={centreB[1]} y={yB + barH + 16} anchor="middle" className="holders-label" label={foreignLabel} />
             )}
+
+            {segment('public', 0, boundaryA, yA)}
+            {segment('intragov', boundaryA, iw - boundaryA, yA)}
+            {segment('domestic', 0, boundaryB, yB)}
+            {segment('foreign', boundaryB, iw - boundaryB, yB)}
 
             {/* ---- Top foreign holders, leadered off the foreign segment ----
              *  Point markers, evenly spaced for legibility: Japan/UK/China are
@@ -226,13 +359,13 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
               // clipping assertion green, and the figure unreadable (E8). A
               // leader line is the idiom that makes a label at a different
               // depth still name its own point.
-              // <Annotation> does not accept tabIndex/role/handlers, and widening
+              // <Annotation> does not accept role or handlers, and widening
               // it to would make the one sanctioned annotation path a props
               // grab-bag. So these three keep their own <text> and take their x
               // from `placeAnnotation` instead. Shift-only: a leader label
               // re-anchored would leave the leader line it belongs to.
               const placed = placeAnnotation({
-                x: cx, label: leaderLabel, frame: fr, anchor: 'middle',
+                x: cx, label: leaderLabel, frame: f, anchor: 'middle',
                 fontPx: DATA_LABEL_FONT_PX, flip: false,
               })
               return (
@@ -243,7 +376,7 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
                     <text
                       className="datum holders-label"
                       x={placed.x} y={leadersY + 12 + i * 13} textAnchor={placed.textAnchor}
-                      {...mark()} role="img" aria-label={describe(k)}
+                      {...leaderMarks[i]} role="img" aria-label={describe(k)}
                       onFocus={() => setFocus(k)} onBlur={() => setFocus(null)}
                       onMouseEnter={() => setFocus(k)} onMouseLeave={() => setFocus(null)}
                     >
@@ -253,10 +386,9 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
                 </g>
               )
             })}
-          </>
-          )
-        }}
-      </Chart>
+          </PlotOverlay>
+        </BarChart>
+      </div>
 
       {narrow && (
         <ul className="holders-foreign-list">

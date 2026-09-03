@@ -28,24 +28,13 @@ const cbo = cboEffectiveRatesData()
 >
   <p class="kicker">Route 2 of 3</p>
   <h1>Households</h1>
-  <p class="standfirst">
-    What a household earns and how far the spread runs. Then what the tax bill actually looks
-    like once <Term id="payroll-tax">payroll tax</Term> is counted.
-  </p>
+  <p class="standfirst">What a household earns and how far the spread runs. Then what the tax bill actually looks like once <Term id="payroll-tax">payroll tax</Term> is counted.</p>
 
   <section id="what-a-household-earns">
     <p class="kicker"><span class="section-no">Section 1</span></p>
     <h2>Real median household income</h2>
-    <p class="standfirst">
-      <Term id="real">Real</Term> <Term id="median">median</Term> household income, one point a
-      calendar year in constant 2024 dollars. The series runs back to 1984, where the Census
-      series starts. Where the line stalls, where it climbs, and how little of the range it covers
-      are what the section settles.
-    </p>
-    <p class="finding">
-      Real median household income was $65,380 in 1995 and $83,730 in 2024, in constant
-      2024 dollars. That is a rise of 28.1%, about 0.86% a year.
-    </p>
+    <p class="standfirst"><Term id="real">Real</Term> <Term id="median">median</Term> household income, one point a calendar year in constant 2024 dollars. The series runs back to 1984, where the Census series starts. Look at where the line stalls and where it climbs, and at how little of the range it covers.</p>
+    <p class="finding">Real median household income was $65,380 in 1995 and $83,730 in 2024, in constant 2024 dollars. That is a rise of 28.1%, about 0.86% a year.</p>
 
     <Figure
       ariaLabel="Real median household income rose from $65,380 in 1995 to $83,730 in 2024, up 28.1%, in constant 2024 dollars."
@@ -54,30 +43,17 @@ const cbo = cboEffectiveRatesData()
       yUnit="constant 2024 dollars"
       note="Constant 2024 dollars. The budget series elsewhere on this site is in FY2025 dollars, a different deflator and a different base year. The two are not directly comparable."
     >
-      <MedianIncome client:visible rows={income.data} />
+      <MedianIncome client:visible={{ rootMargin: '600px' }} rows={income.data} />
     </Figure>
 
-    <p class="prose">
-      The series begins in 1984 because that is where the Census/FRED constant-dollar
-      measure of household income begins. The years before it are not flat. They are
-      unobserved by this measure. The family <Term id="gini-index">Gini index</Term>,
-      in the next section, does run back to 1947.
-    </p>
+    <p class="prose">The series begins in 1984 because that is where the Census/FRED constant-dollar measure of household income begins. The years before it are not flat. They are unobserved by this measure. The family <Term id="gini-index">Gini index</Term>, in the next section, does run back to 1947.</p>
   </section>
 
   <section id="the-spread">
     <p class="kicker"><span class="section-no">Section 2</span></p>
     <h2>Two measures of income dispersion</h2>
-    <p class="standfirst">
-      Two measures of the spread, drawn on one shared range. The Census family Gini index runs
-      annually. <Term id="congressional-budget-office">CBO</Term>'s share of income before
-      transfers and taxes going to the top percentile is published differently. It is two anchor
-      points, decades apart. Whether the two agree on direction is what the section settles.
-    </p>
-    <p class="finding">
-      The family Gini index went from 0.421 in 1995 to 0.456 in 2024. CBO's longer series takes
-      the top 1% income share from 9% in 1979 to 18% in 2022, before transfers.
-    </p>
+    <p class="standfirst">Two measures of the spread, drawn on one shared range. The Census family Gini index runs annually. <Term id="congressional-budget-office">CBO</Term>'s share of income before transfers and taxes going to the top percentile is published differently. It is two anchor points, decades apart. Look at whether the two agree on direction.</p>
+    <p class="finding">The family Gini index went from 0.421 in 1995 to 0.456 in 2024. CBO's longer series takes the top 1% income share from 9% in 1979 to 18% in 2022, before transfers.</p>
 
     <Figure
       ariaLabel="The family Gini index rose from 0.421 in 1995 to 0.456 in 2024. CBO's top 1% income share rose from 9% in 1979 to 18% in 2022, before transfers."
@@ -86,30 +62,17 @@ const cbo = cboEffectiveRatesData()
       yUnit="family Gini index, ratio 0 to 1, and percent of income before transfers and taxes"
       note="The Gini is for families, not households; household series run about 0.47 to 0.49. The top 1% figure is two published points rather than an annual series. It measures income before transfers and taxes, a different measure from the tax-share figures elsewhere on this route. The top 1% series is a curated snapshot, refreshed by hand."
     >
-      <HouseholdSpread client:visible rows={income.data} top1={cboTop1IncomeShare} />
+      <HouseholdSpread client:visible={{ rootMargin: '600px' }} rows={income.data} top1={cboTop1IncomeShare} />
     </Figure>
 
-    <p class="prose">
-      These are shown on one timeline without a causal claim attached. The distribution moved for
-      many reasons, and nothing here connects it to any particular policy.
-    </p>
+    <p class="prose">These are shown on one timeline without a causal claim attached. The distribution moved for many reasons, and nothing here connects it to any particular policy.</p>
   </section>
 
   <section id="a-century-of-brackets">
     <p class="kicker"><span class="section-no">Section 3</span></p>
     <h2>The bracket ladder since 1913</h2>
-    <p class="standfirst">
-      The federal income tax has run 2 brackets (1988) to 56 (1918) since 1913. The chart holds
-      three things on one tax-year timeline. They are the bracket count, the top{' '}
-      <Term id="statutory-rate">statutory rate</Term>, and the income at which the top bracket
-      begins. The threshold is drawn in
-      both <Term id="nominal">nominal</Term> and constant 2024 dollars. What inflation does to a
-      threshold that is not re-indexed is what the section settles.
-    </p>
-    <p class="finding">
-      In constant 2024 dollars, the income at which the top bracket begins has fallen about 96%
-      since 1913. It went from about $16 million to about $610,000.
-    </p>
+    <p class="standfirst">The federal income tax has run 2 brackets (1988) to 56 (1918) since 1913. The chart holds three things on one tax-year timeline. They are the bracket count, the top <Term id="statutory-rate">statutory rate</Term>, and the income at which the top bracket begins. The threshold is drawn in both <Term id="nominal">nominal</Term> and constant 2024 dollars. Look at what inflation does to a threshold that is not re-indexed.</p>
+    <p class="finding">In constant 2024 dollars, the income at which the top bracket begins has fallen about 96% since 1913. It went from about $16 million to about $610,000.</p>
 
     <Figure
       ariaLabel="In constant 2024 dollars, the income at which the top bracket begins has fallen about 96% since 1913. It went from about $16 million to about $610,000."
@@ -118,39 +81,18 @@ const cbo = cboEffectiveRatesData()
       yUnit="top rate in percent, bracket count, and top-bracket threshold in nominal and constant 2024 dollars"
       note="Twelve years show a published top rate that differs from the raw bracket-schedule ladder top. They are 1923, 1929, 1940, 1946-1950, 1968-1970 and 1981. A credit, surtax or part-year rate change moved the effective figure. Both numbers are shown, and the table gives the documented reason each year."
     >
-      <BracketHistory client:visible rows={bracketHistory.data} />
+      <BracketHistory client:visible={{ rootMargin: '600px' }} rows={bracketHistory.data} />
     </Figure>
 
-    <p class="prose">
-      Two things move independently here. The bracket <strong>count</strong> is a policy choice.
-      Congress ran 56 brackets in 1918 to fund the First World War. The 1986 reform cut back to
-      two, 15% and 28%. The threshold is a different story. It is set in nominal dollars,
-      and unless it is deliberately re-indexed, inflation erodes it every year.
-      The 1913 top bracket started at $500,000, which is about $16 million in 2024 dollars.
-      Almost nobody was ever going to pay the top rate. The 2025 top bracket starts at $626,350
-      nominal, about $610,000 in the same dollars.
-    </p>
-    <p class="prose">
-      Ordinary income only. Capital gains have been taxed at separate, usually lower, rates for
-      most of this period. The alternative minimum tax and exemption phase-outs are not in this
-      line either. Nor is the 3.8% net investment income tax, in place since 2013. Surtaxes are
-      the exception. They are folded into the published top rate for 1940 and 1968-1970. Those
-      years therefore read higher than the plain schedule ladder.
-    </p>
+    <p class="prose">Two things move independently here. The bracket <strong>count</strong> is a policy choice. Congress ran 56 brackets in 1918 to fund the First World War. The 1986 reform cut back to two, 15% and 28%. The threshold is a different story. It is set in nominal dollars, and unless it is deliberately re-indexed, inflation erodes it every year. The 1913 top bracket started at $500,000, which is about $16 million in 2024 dollars. Almost nobody was ever going to pay the top rate. The 2025 top bracket starts at $626,350 nominal, about $610,000 in the same dollars.</p>
+    <p class="prose">Ordinary income only. Capital gains have been taxed at separate, usually lower, rates for most of this period. The alternative minimum tax and exemption phase-outs are not in this line either. Nor is the 3.8% net investment income tax, in place since 2013. Surtaxes are the exception. They are folded into the published top rate for 1940 and 1968-1970. Those years therefore read higher than the plain schedule ladder.</p>
   </section>
 
   <section id="statutory-vs-effective">
     <p class="kicker"><span class="section-no">Section 4</span></p>
     <h2>Statutory and effective rates compared</h2>
-    <p class="standfirst">
-      Nobody pays the top rate on their whole income. The top bracket only taxes the slice of
-      income above its threshold. CBO's own measure of what people actually pay is the average
-      federal tax rate. It has moved far less than the statutory rate above it.
-    </p>
-    <p class="finding">
-      Between 1979 and 2022 the top statutory rate fell from 70% to 37%. The average federal tax
-      rate the top 1% actually paid moved only from 35.1% to 31.5%.
-    </p>
+    <p class="standfirst">Nobody pays the top rate on their whole income. The top bracket only taxes the slice of income above its threshold. CBO's own measure of what people actually pay is the average federal tax rate. It has moved far less than the statutory rate above it.</p>
+    <p class="finding">Between 1979 and 2022 the top statutory rate fell from 70% to 37%. The average federal tax rate the top 1% actually paid moved only from 35.1% to 31.5%.</p>
 
     <Figure
       ariaLabel="Between 1979 and 2022 the top statutory income tax rate fell from 70% to 37%. The average federal tax rate actually paid by the top 1 percent moved only from 35.1% to 31.5%."
@@ -159,34 +101,17 @@ const cbo = cboEffectiveRatesData()
       yUnit="percent"
       note="CBO's average federal tax rate counts payroll tax, corporate income tax and excise tax as well as the income tax. It is not comparable to the income-tax-only shares in section 5. The CBO points are published anchor years, 1979, 2000, 2007, 2019 and 2022. They are not an annual series and are never drawn as a connected line."
     >
-      <StatutoryVsEffective client:visible statutory={bracketHistory.data} cbo={cbo} />
+      <StatutoryVsEffective client:visible={{ rootMargin: '600px' }} statutory={bracketHistory.data} cbo={cbo} />
     </Figure>
 
-    <p class="prose">
-      The gap between the two lines is the whole point of this section. Nobody pays the top rate
-      on their whole income. It applies only above a threshold, and deductions and credits reduce
-      it further. Until 2013, income above that threshold could often be recharacterised as
-      capital gains taxed at a separate, lower rate. The lowest quintile's average federal tax
-      rate fell furthest of all, from 9.3% in 1979 to 0.6% by 2019. The anchor years establish the
-      fall rather than what produced it. CBO's measure counts payroll tax, corporate income tax
-      and excise tax as well as the income tax. The two lines above are not measuring the same
-      bill.
-    </p>
+    <p class="prose">The gap between the two lines is the whole point of this section. Nobody pays the top rate on their whole income. It applies only above a threshold, and deductions and credits reduce it further. Until 2013, income above that threshold could often be recharacterised as capital gains taxed at a separate, lower rate. The lowest quintile's average federal tax rate fell furthest of all, from 9.3% in 1979 to 0.6% by 2019. The anchor years establish the fall rather than what produced it. CBO's measure counts payroll tax, corporate income tax and excise tax as well as the income tax. The two lines above are not measuring the same bill.</p>
   </section>
 
   <section id="who-pays">
     <p class="kicker"><span class="section-no">Section 5</span></p>
     <h2>Income tax by percentile group</h2>
-    <p class="standfirst">
-      Tax units ranked by adjusted gross income into nested percentile groups. The first chart
-      pairs each group's share of income against its share of the tax, one bar each. The second
-      follows the top group's tax share across the published years. This is the individual income
-      tax only, and outside the top decile payroll tax is the larger bill.
-    </p>
-    <p class="finding">
-      In tax year 2023 the top 1% earned 20.6% of adjusted gross income. The same group paid
-      38.4% of federal individual income tax.
-    </p>
+    <p class="standfirst">Tax units ranked by adjusted gross income into nested percentile groups. The first chart pairs each group's share of income against its share of the tax, one bar each. The second follows the top group's tax share across the published years. This is the individual income tax only, and outside the top decile payroll tax is the larger bill.</p>
+    <p class="finding">In tax year 2023 the top 1% earned 20.6% of adjusted gross income. The same group paid 38.4% of federal individual income tax.</p>
 
     <Figure
       ariaLabel="In tax year 2023 the top 1% earned 20.6% of adjusted gross income. The same group paid 38.4% of federal individual income tax. AGI share is not published for the Top 5%, Top 25% and Bottom 50% groups."
@@ -195,7 +120,7 @@ const cbo = cboEffectiveRatesData()
       yUnit="Percentile group of tax units"
       note="This chart counts the federal individual income tax only. It excludes refundable credits, which overstates the effective rate at the bottom. The six groups are nested, with Top 1% inside Top 5%, inside Top 10%, and so on. They overlap and do not sum to 100, which is why nothing here is stacked."
     >
-      <WhoPays client:visible rows={incomeGroups.data.groups} />
+      <WhoPays client:visible={{ rootMargin: '600px' }} rows={incomeGroups.data.groups} />
     </Figure>
 
     <Figure
@@ -205,38 +130,18 @@ const cbo = cboEffectiveRatesData()
       yUnit="Percent of income tax paid"
       note="Five published years, not an annual series. The 2001-to-2019 span is unobserved by this series."
     >
-      <Top1TaxShare client:visible rows={incomeGroups.data.top1_tax_share_history} />
+      <Top1TaxShare client:visible={{ rootMargin: '600px' }} rows={incomeGroups.data.top1_tax_share_history} />
     </Figure>
 
-    <p class="prose">
-      The other groups come from the same table. The top 10% earned 47.6% of adjusted gross income
-      and paid 70.5% of the tax. The bottom half paid 3.3% of it, at a 3.7% average rate against
-      the top 1%'s 26.3%. Concentration of tax paid tracks concentration of income. The tax-share
-      column alone misleads about who pays the most against who earns the most. CBO's longer
-      series takes the top 1% income share from 9% in 1979 to 18% in 2022, before transfers. It
-      is shown in <a href="#the-spread">the spread</a> above.
-    </p>
-    <p class="prose">
-      Refundable credits are excluded from
-      the <Term id="internal-revenue-service">IRS</Term> series, which overstates
-      the <Term id="effective-rate">effective rate</Term> at the bottom.
-      Tax year 2023 is the latest IRS year, and it breaks this
-      site's <Term id="fiscal-year">FY1995</Term> to FY2025 convention.
-    </p>
+    <p class="prose">The other groups come from the same table. The top 10% earned 47.6% of adjusted gross income and paid 70.5% of the tax. The bottom half paid 3.3% of it, at a 3.7% average rate against the top 1%'s 26.3%. Concentration of tax paid tracks concentration of income. The tax-share column alone misleads about who pays the most against who earns the most. CBO's longer series takes the top 1% income share from 9% in 1979 to 18% in 2022, before transfers. It is shown in <a href="#the-spread">the spread</a> above.</p>
+    <p class="prose">Refundable credits are excluded from the <Term id="internal-revenue-service">IRS</Term> series, which overstates the <Term id="effective-rate">effective rate</Term> at the bottom. Tax year 2023 is the latest IRS year, and it breaks this site's <Term id="fiscal-year">FY1995</Term> to FY2025 convention.</p>
   </section>
 
   <section id="the-bill-you-do-not-see">
     <p class="kicker"><span class="section-no">Section 6</span></p>
     <h2>Payroll tax as a share of the federal bill</h2>
-    <p class="standfirst">
-      Section 5 measured who pays the income tax. Its chart counts none of the other federal bill
-      a wage earner pays. Which of the two is larger, and for which households, is what the
-      section settles.
-    </p>
-    <p class="finding">
-      In FY2025 payroll tax was 5.76% of <Term id="gross-domestic-product">GDP</Term> and 33.4% of
-      total federal revenue. Individual income tax was 8.75% of GDP and 50.7% of revenue.
-    </p>
+    <p class="standfirst">Section 5 measured who pays the income tax. Its chart counts none of the other federal bill a wage earner pays. Which of the two is larger, and for which households?</p>
+    <p class="finding">In FY2025 payroll tax was 5.76% of <Term id="gross-domestic-product">GDP</Term> and 33.4% of total federal revenue. Individual income tax was 8.75% of GDP and 50.7% of revenue.</p>
 
     <Figure
       ariaLabel="Payroll tax and individual income tax, each as a share of GDP and as a share of total federal revenue, fiscal 1962 to fiscal 2025. In FY2025 payroll tax was 5.76% of GDP and 33.4% of all federal revenue."
@@ -245,46 +150,22 @@ const cbo = cboEffectiveRatesData()
       yUnit="Percent of GDP, or percent of total federal revenue"
       note="This figure is on fiscal years, while sections 1 through 5 are on calendar and tax years. FY2025 began in October 2024. Payroll tax funds Social Security and Medicare and is capped above a wage threshold. Its incidence is not the income tax's. Section 4's chart of CBO average federal tax rates does include payroll tax. This chart shows its scale as a share of federal revenue, which Section 4 does not."
     >
-      <PayrollBill client:visible rows={revenue.data} />
+      <PayrollBill client:visible={{ rootMargin: '600px' }} rows={revenue.data} />
     </Figure>
 
-    <p class="prose">
-      For every household outside the top decile the payroll bill is the larger of the two.
-      That does not put this chart in conflict with the one in Section 5. The two answer
-      different questions about the same taxpayer. One asks who pays the{' '}
-      <strong>income tax</strong>. The other asks what a wage earner owes across both taxes.
-      Read either chart on its own and the federal bill looks like whichever half it drew.
-    </p>
+    <p class="prose">For every household outside the top decile the payroll bill is the larger of the two. That does not put this chart in conflict with the one in Section 5. The two answer different questions about the same taxpayer. One asks who pays the <strong>income tax</strong>. The other asks what a wage earner owes across both taxes. Read either chart on its own and the federal bill looks like whichever half it drew.</p>
   </section>
 
   <section id="limits">
     <p class="kicker"><span class="section-no">Section 7</span></p>
     <h2>Limits of this route</h2>
-    <p class="standfirst">
-      The charts above rest on these limits. Read them before drawing conclusions from those
-      charts.
-    </p>
+    <p class="standfirst">The charts above rest on these limits. Read them before drawing conclusions from those charts.</p>
 
-    <p class="prose">
-      <strong>1. Income tax only.</strong> Section 5 counts the federal individual income tax only. Section 6 shows the payroll bill it omits; excise, corporate, and state and local taxes are outside this route entirely.
-    </p>
-    <p class="prose">
-      <strong>2. The Gini index here is for families, not households.</strong> The household series runs higher, about 0.47 to 0.49. The family series is used because it runs cleanly back to 1947.
-    </p>
-    <p class="prose">
-      <strong>3. Statutory is not effective.</strong> A top <Term id="marginal-rate">marginal rate</Term> applies only to the slice of income above its threshold. Deductions, credits and separately-taxed capital gains all sit between the statutory rate and what anyone pays.
-    </p>
-    <p class="prose">
-      <strong>4. Distributional data is by tax unit, not by person or by household</strong>, and not consistently across sources. The IRS counts returns filed, CBO counts households, and Census counts families. A married couple filing jointly is one tax unit, one household and one family. A household of unrelated adults is several tax units. The shares on this route cannot be added across those sources.
-    </p>
-    <p class="prose">
-      <strong>5. The dates break the site's convention.</strong> The Government route runs FY1995 to FY2025. This route reads IRS tax year 2023, Census/FRED calendar 2024 and CBO calendar 2022. Those are the latest each publishes. Refundable credits are excluded from the IRS series, which overstates the effective rate at the bottom.
-    </p>
-    <p class="prose">
-      The <a href={`${join('/government')}/`}>government route</a> picks up from here. It sets the
-      income tax counted above against the{' '}
-      <a href={`${join('/government')}/#where-money-comes-from`}>other sources federal revenue comes from</a>. It shows what the whole
-      budget spends it on, and prices the borrowing that covers the rest.
-    </p>
+    <p class="prose"><strong>1. Income tax only.</strong> Section 5 counts the federal individual income tax only. Section 6 shows the payroll bill it omits; excise, corporate, and state and local taxes are outside this route entirely.</p>
+    <p class="prose"><strong>2. The Gini index here is for families, not households.</strong> The household series runs higher, about 0.47 to 0.49. The family series is used because it runs cleanly back to 1947.</p>
+    <p class="prose"><strong>3. Statutory is not effective.</strong> A top <Term id="marginal-rate">marginal rate</Term> applies only to the slice of income above its threshold. Deductions, credits and separately-taxed capital gains all sit between the statutory rate and what anyone pays.</p>
+    <p class="prose"><strong>4. Distributional data is by tax unit, not by person or by household</strong>, and not consistently across sources. The IRS counts returns filed, CBO counts households, and Census counts families. A married couple filing jointly is one tax unit, one household and one family. A household of unrelated adults is several tax units. The shares on this route cannot be added across those sources.</p>
+    <p class="prose"><strong>5. The dates break the site's convention.</strong> The Government route runs FY1995 to FY2025. This route reads IRS tax year 2023, Census/FRED calendar 2024 and CBO calendar 2022. Those are the latest each publishes. Refundable credits are excluded from the IRS series, which overstates the effective rate at the bottom.</p>
+    <p class="prose">The <a href={`${join('/government')}/`}>government route</a> picks up from here. It sets the income tax counted above against the <a href={`${join('/government')}/#where-money-comes-from`}>other sources federal revenue comes from</a>. It shows what the whole budget spends it on, and prices the borrowing that covers the rest.</p>
   </section>
 </BaseLayout>

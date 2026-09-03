@@ -176,10 +176,43 @@ for (const route of CHART_ROUTES) {
       })
       try {
         const where = `${route.path} @ ${viewport.width}px, scripting off`
-        const rows = await assertOneStopPerSvg(page, where)
         // The served bytes, not the hydrated DOM: `ssrSvg` is the count that
         // exists before a line of JavaScript runs.
+        const rows = await markStopsPerSvg(page)
         assert.equal(rows.length, route.ssrSvg, `${where}: served <svg> count`)
+        assert.deepEqual(stopFailures(rows), [], `${where}:\n  ${stopFailures(rows).join('\n  ')}`)
+
+        // WHAT THIS USED TO ASSERT, AND WHY IT CANNOT. `client:visible` once
+        // server-rendered every chart. All three routes shipped their marks and
+        // their roving state in the HTML, so this pass proved the tab order was
+        // short BEFORE hydration. Recharts renders no chart during a static
+        // build (`docs/contracts/interfaces/charts.md`). `/economy` now serves
+        // no `<svg>` at all, and `/households` serves six that carry no mark.
+        // On those two the old assertion measured an empty set and passed.
+        //
+        // The property that replaced it is the one a scripting-off reader
+        // depends on. Where the served HTML draws marks, the one-stop rule
+        // above still holds over them, and `/government`'s two hand-rolled
+        // figures keep it honest. Where it draws none, the served bytes must
+        // still carry a route to every number. That route is the `TableView`
+        // disclosure each figure ships. A build with neither chart nor table
+        // leaves the data unreachable, and this is what catches it.
+        const marks = rows.reduce((n, r) => n + r.marks, 0)
+        if (marks > 0) {
+          assert.ok(
+            rows.some((r) => r.stops === 1),
+            `${where}: ${marks} served chart marks and no Tab stop among them`,
+          )
+        } else {
+          const tables = await page.locator('details.tableview').count()
+          assert.equal(
+            tables,
+            route.figures,
+            `${where}: the served HTML draws no chart mark, so the ${route.figures} ` +
+              `\`TableView\` disclosures are the only route to a number, and ${tables} ` +
+              `were served`,
+          )
+        }
       } finally {
         await context.close()
       }
@@ -194,7 +227,9 @@ test('the one-stop checker names the svg that grew a second stop', async () => {
 
     // The mutation: a second mark in ONE svg becomes a Tab stop.
     const mutated = await page.evaluate(() => {
-      const svgs = Array.from(document.querySelectorAll('svg'))
+      /* The same set `markStopsPerSvg` walks, because `mutated` is compared
+       * against the `svg[N]` index in its failure text. See `CHART_SURFACE`. */
+      const svgs = Array.from(document.querySelectorAll('.chart svg, svg.chart'))
       const i = svgs.findIndex((s) => s.querySelectorAll('[data-mark]').length > 1)
       const target = svgs[i]?.querySelectorAll('[data-mark]')[1]
       target?.setAttribute('tabindex', '0')
@@ -221,6 +256,10 @@ test('the one-stop checker reports the all-minus-one state, which is the worse o
         .querySelectorAll('[data-mark][tabindex="0"]')
         .forEach((m) => m.setAttribute('tabindex', '-1'))
     })
+    /* Compared against `hydratedSvg` again, and the two are the same set:
+     * `markStopsPerSvg` walks chart surfaces, which is what that number now
+     * counts. It briefly counted page chrome as well, and this equality was
+     * the assertion that noticed. */
     const failures = stopFailures(await markStopsPerSvg(page))
     assert.equal(failures.length, GOVERNMENT.hydratedSvg, failures.join('; '))
     assert.ok(failures.every((f) => f.includes('offers 0 Tab stop(s)')), failures.join('; '))
@@ -300,7 +339,7 @@ test('the walk would see a figure that stopped roving', async () => {
     // The mutation: every mark of the FIRST chart goes back to `tabindex="0"`,
     // which is what the whole site looked like before #69.
     const added = await page.evaluate(() => {
-      const svg = Array.from(document.querySelectorAll('svg')).find(
+      const svg = Array.from(document.querySelectorAll('.chart svg, svg.chart')).find(
         (s) => s.querySelectorAll('[data-mark]').length > 1,
       )
       const marks = Array.from(svg?.querySelectorAll('[data-mark]') ?? [])
@@ -343,7 +382,9 @@ async function largestGroup(page: Page): Promise<{ index: number; marks: number 
  *  Returns the visited indices in order, INCLUDING the initial focus. */
 async function arrowTraversal(page: Page, index: number, presses: number): Promise<number[]> {
   await page.evaluate((i) => {
-    const svg = document.querySelectorAll('svg')[i] as SVGSVGElement
+    // `index` comes from `largestGroup`, which reads `markStopsPerSvg`, so it
+    // indexes CHART SURFACES. See `CHART_SURFACE`.
+    const svg = document.querySelectorAll('.chart svg, svg.chart')[i] as SVGSVGElement
     const marks = Array.from(svg.querySelectorAll('[data-mark]'))
     const visited: number[] = []
     ;(window as unknown as { __visited: number[] }).__visited = visited
@@ -379,9 +420,9 @@ for (const route of CHART_ROUTES) {
       assert.equal(
         await page.evaluate(
           (i) =>
-            Array.from(document.querySelectorAll('svg')[i].querySelectorAll('[data-mark]')).indexOf(
-              document.activeElement as Element,
-            ),
+            Array.from(
+              document.querySelectorAll('.chart svg, svg.chart')[i].querySelectorAll('[data-mark]'),
+            ).indexOf(document.activeElement as Element),
           index,
         ),
         marks - 1,
@@ -391,9 +432,9 @@ for (const route of CHART_ROUTES) {
       await page.keyboard.press('Home')
       const atHome = await page.evaluate(
         (i) =>
-          Array.from(document.querySelectorAll('svg')[i].querySelectorAll('[data-mark]')).indexOf(
-            document.activeElement as Element,
-          ),
+          Array.from(
+            document.querySelectorAll('.chart svg, svg.chart')[i].querySelectorAll('[data-mark]'),
+          ).indexOf(document.activeElement as Element),
         index,
       )
       assert.equal(atHome, 0, 'Home did not focus the first mark')
@@ -401,9 +442,9 @@ for (const route of CHART_ROUTES) {
       await page.keyboard.press('End')
       const atEnd = await page.evaluate(
         (i) =>
-          Array.from(document.querySelectorAll('svg')[i].querySelectorAll('[data-mark]')).indexOf(
-            document.activeElement as Element,
-          ),
+          Array.from(
+            document.querySelectorAll('.chart svg, svg.chart')[i].querySelectorAll('[data-mark]'),
+          ).indexOf(document.activeElement as Element),
         index,
       )
       assert.equal(atEnd, marks - 1, 'End did not focus the last mark')
@@ -414,9 +455,9 @@ for (const route of CHART_ROUTES) {
       await page.keyboard.press('ArrowUp')
       const backTwo = await page.evaluate(
         (i) =>
-          Array.from(document.querySelectorAll('svg')[i].querySelectorAll('[data-mark]')).indexOf(
-            document.activeElement as Element,
-          ),
+          Array.from(
+            document.querySelectorAll('.chart svg, svg.chart')[i].querySelectorAll('[data-mark]'),
+          ).indexOf(document.activeElement as Element),
         index,
       )
       assert.equal(backTwo, marks - 3, 'ArrowLeft and ArrowUp did not each step back one')
@@ -436,7 +477,7 @@ test('the traversal guard bites when the key handler never runs', async () => {
     // bubble phase, so this is what it looks like when the handler is wired up
     // but never fires, the failure a traversal test exists to catch.
     await page.evaluate((i) => {
-      const svg = document.querySelectorAll('svg')[i] as SVGSVGElement
+      const svg = document.querySelectorAll('.chart svg, svg.chart')[i] as SVGSVGElement
       svg.addEventListener('keydown', (e) => e.stopImmediatePropagation(), true)
     }, index)
 
@@ -648,7 +689,7 @@ test('the driven check reports a figure whose marks all went to -1', async () =>
     const { index } = await largestGroup(page)
     await page.evaluate((i) => {
       document
-        .querySelectorAll('svg')
+        .querySelectorAll('.chart svg, svg.chart')
         [i].querySelectorAll('[data-mark]')
         .forEach((m) => m.setAttribute('tabindex', '-1'))
     }, index)

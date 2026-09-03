@@ -90,7 +90,7 @@ profit shares — is one number". The aside is itself a list, so it takes parent
 Fail, as `/households` read before #58: "what people actually pay -- the average federal tax rate --
 has moved far less". An appositive gloss takes a comma pair, and it now reads "what people actually
 pay, the average federal tax rate, has moved far less". Pass:
-`src/pages/government/index.astro:273-277`, which does the same work with a full stop and a new
+`src/pages/government/index.astro:179`, which does the same work with a full stop and a new
 sentence. Enforced by `test_no_prose_string_contains_an_em_dash_or_a_double_hyphen`.
 **No all-caps emphasis.** Capitals are the `.kicker`'s role and nothing else's (Ruling 2). All
 three worked fails are quoted historically, because #58 discharged all three and their lines no
@@ -104,8 +104,8 @@ PAYROLL TAX", now recast to "counts payroll tax, corporate income tax and excise
 individual income tax", because a `note=` prop is a plain attribute rendered as text and cannot carry
 markup.
 
-Pass: `src/pages/government/index.astro:449` and `src/pages/government/index.astro:456`, which put
-the emphasis on a `<strong>` noun phrase, and `src/pages/households/index.astro:262`, which does the
+Pass: `src/pages/government/index.astro:279` and `src/pages/government/index.astro:280`, which put
+the emphasis on a `<strong>` noun phrase, and `src/pages/households/index.astro:164`, which does the
 same for a numbered limit. Enforced by `test_no_prose_string_shouts`.
 
 **Acronyms are registered.** An all-caps run of two or more letters is either in
@@ -118,24 +118,24 @@ for, which is a deliberate act and leaves a diff. Enforced by `test_no_prose_str
 **Body copy is sentence case.** `BRIEF.md:79`. The kicker is not an exception, because it carries no
 literal capitals. `src/styles/global.css:60-66` sets `font-variant-caps: all-small-caps` with
 `letter-spacing: 0.09em` at `0.9375rem`, and no `text-transform`. Pass:
-`src/pages/economy/index.astro:116` writes `<span class="section-no">Section 3</span>`, in sentence
+`src/pages/economy/index.astro:72` writes `<span class="section-no">Section 3</span>`, in sentence
 case, and the CSS does the rest. There is therefore no kicker carve-out anywhere in this contract.
 Enforced, for the capitals half, by `test_no_prose_string_shouts`.
 
 **Numbers are always mono, and a sentence may open with one.** `BRIEF.md:75` makes mono numerals the
 strongest cue tying the site to the deck. Sentence case and that mandate collide where prose opens
 with a figure, and the ruling is that the numeral wins. Pass:
-`src/pages/economy/index.astro:32-35`, "Real GDP was $2.38 trillion in fiscal 1950". Fail: spelling
+`src/pages/economy/index.astro:29`, "Real GDP was $2.38 trillion in fiscal 1950". Fail: spelling
 the figure out, because `pipeline/curated/prose_figures.yaml` is watching that number and a spelled
 form detaches the registry from the prose it describes. Not mechanically enforced.
 
-**Every figure carries its unit.** `sections.md:10-11`. Pass: `src/pages/economy/index.astro:119`,
+**Every figure carries its unit.** `sections.md:10-11`. Pass: `src/pages/economy/index.astro:74`,
 "Unemployment was 4.2% in fiscal 2025 against a noncyclical rate of 4.4%". Fail: any bare "4.2" in
 running prose. Not mechanically enforced here. The *figure*'s axes are separately gated by
 `src/components/Figure.astro:47`, which fails the build when either axis is unnamed.
 
 **No causation the data does not support.** `BRIEF.md:202-203`. Pass:
-`src/pages/economy/index.astro:109-112`, which states what a series shows and then says outright that
+`src/pages/economy/index.astro:68`, which states what a series shows and then says outright that
 nothing here identifies a cause. Fail: any sentence in which one series "drove", "caused" or "led to"
 another. Not mechanically enforced. Criterion 5 is where a reviewer catches it.
 
@@ -143,7 +143,7 @@ another. Not mechanically enforced. Criterion 5 is where a reviewer catches it.
 rule is broader than the list, and the list is the floor. Not mechanically enforced.
 
 **A finding states one claim a reader could falsify against the figure.** Pass:
-`src/pages/economy/index.astro:122-125`, which gives the unrounded values, both series and the
+`src/pages/economy/index.astro:75`, which gives the unrounded values, both series and the
 comparison between them, in two sentences. Fail: a finding that restates the standfirst, or that
 makes two claims joined by "and". Not mechanically enforced. Criterion 2 owns it.
 
@@ -153,7 +153,7 @@ moves one must move both, in the same commit. The label is additionally bound by
 `pipeline/tests/test_accessibility.py:284-306`, which requires a digit, at least 40 characters, no
 leading shape word, and never "chart showing".
 
-Pass: `src/pages/economy/index.astro:128`. Fail: `src/components/islands/StatutoryVsEffective.tsx:97`,
+Pass: `src/pages/economy/index.astro:78`. Fail: `src/components/islands/StatutoryVsEffective.tsx:97`,
 which is a ` -- ` violation *inside* an accessible name, and is the reason
 `dist/households/index.html` carries more banned dashes than its page source does. Enforced by
 `test_no_prose_string_contains_an_em_dash_or_a_double_hyphen` and, for the accessibility half, by
@@ -198,7 +198,7 @@ Four scoping decisions, each stated so that no future issue reopens it:
    `src/components/islands/StatutoryVsEffective.tsx:97`, which is #102's, and which is why a
    dist-wide grep is the wrong check.
 2. **Numeric-range hyphens are out of scope.** "1946-1950" at
-   `src/pages/households/index.astro:116` and "FY1995-FY2025" throughout are ranges. A hyphen
+   `src/pages/households/index.astro:82` and "FY1995-FY2025" throughout are ranges. A hyphen
    between two numbers is a range operator rather than punctuation. **No en dash is introduced in
    its place.** The minus-sign ambiguity that justifies the em-dash ban applies to the en dash
    identically, so this site uses the hyphen and only the hyphen.
@@ -219,15 +219,15 @@ Four scoping decisions, each stated so that no future issue reopens it:
 
 **All-caps is reserved for the `.kicker` role and banned in body copy and figure notes.** The
 replacement is `<strong>` on the emphasised noun phrase, which the pages already do at
-`src/pages/government/index.astro:449`, `src/pages/government/index.astro:456` and
-`src/pages/households/index.astro:262`. A recast that puts the emphasis where the word order puts it
+`src/pages/government/index.astro:279`, `src/pages/government/index.astro:280` and
+`src/pages/households/index.astro:164`. A recast that puts the emphasis where the word order puts it
 is the second replacement.
 
 Two refinements:
 
 - **The kicker is not literal capitals**, so there is no carve-out. `src/styles/global.css:60-66` is
   `font-variant-caps: all-small-caps`; kicker source text is sentence case
-  (`src/pages/economy/index.astro:116`) and passes the same mechanical check as body copy. The rule
+  (`src/pages/economy/index.astro:72`) and passes the same mechanical check as body copy. The rule
   is uniform across every prose class.
 - **Figure notes are ruled in, explicitly.** `src/components/Figure.astro:60` renders a `note` into
   the figcaption as `.figure-caveat`, and `.figure-caveat` is inside the allow-list. Without that
@@ -355,8 +355,8 @@ for every C-issue. The drift report (`pipeline/lib/report.py`) compares the regi
 and reports editorially rather than auto-correcting. A prose edit that moves a number therefore
 leaves the registry silently describing something that is no longer on the page.
 
-**Prose may round, and harmonising precision is not a prose fix.** `src/pages/economy/index.astro:119`
-gives "4.2%" and `src/pages/economy/index.astro:123` gives "4.175%", the value the registry holds.
+**Prose may round, and harmonising precision is not a prose fix.** `src/pages/economy/index.astro:74`
+gives "4.2%" and `src/pages/economy/index.astro:75` gives "4.175%", the value the registry holds.
 Both are correct, because the standfirst reads and the finding checks. The registered value must
 appear at least once in its section. Every mention need not match it. A precision convention would
 detach the registry from the prose it describes, which is the failure this section exists to prevent.
@@ -387,8 +387,8 @@ the numbering is for.
 **Asks:** does the section state the question it answers before its first figure appears?
 **Pass:** the kicker and heading name the section's subject, the standfirst poses the question a
 reader could have asked, and the chart then answers it.
-`src/pages/households/index.astro:225-230` poses it and
-`src/pages/households/index.astro:244-250` answers it after the chart. **Fail:** the standfirst
+`src/pages/households/index.astro:143` poses it and
+`src/pages/households/index.astro:156` answers it after the chart. **Fail:** the standfirst
 summarises the chart the reader has not seen yet, so the figure arrives as evidence for a claim
 rather than as an answer to a question. **Cited by #52.**
 
@@ -417,8 +417,8 @@ readings, and no word list reaches either.
 capital" as defects, on the ground that a heading naming what was plotted does not say what was
 found, and rewrote both. Ruling 5 moves the claim to the finding, so a heading naming the subject is
 now the rule rather than the fault, and those two headings are the shape every route now uses. The
-sites #52 rewrote are `src/pages/economy/index.astro:166` and
-`src/pages/economy/index.astro:227`.
+sites #52 rewrote are `src/pages/economy/index.astro:98` and
+`src/pages/economy/index.astro:124`.
 
 The checks also cannot see a standfirst that restates its finding **in words** rather than in
 numbers, and they cannot judge whether the closing prose answers the question the standfirst actually
@@ -427,7 +427,7 @@ posed. Checklist item 8 holds that judgement, and a person makes it.
 ### Criterion 2 — the standfirst sets up, the finding claims
 
 **Asks:** does the standfirst set the chart up, and does the finding state exactly one claim a reader
-could falsify against the figure? **Pass:** `src/pages/economy/index.astro:118-125`, where the
+could falsify against the figure? **Pass:** `src/pages/economy/index.astro:74-75`, where the
 standfirst rounds and orients and the finding gives the unrounded values and the comparison between
 them. **Fail:** a finding that restates the standfirst, or that joins two claims with "and".
 **Cited by #53.**
@@ -475,7 +475,7 @@ below hold those judgements.
 ### Criterion 3 — sentence craft
 
 **Asks:** sentence length, clause count, punctuation (Ruling 1) and emphasis (Ruling 2).
-**Pass:** `src/pages/government/index.astro:273-277`, three sentences, one clause each, a full stop
+**Pass:** `src/pages/government/index.astro:179`, three sentences, one clause each, a full stop
 where a dash was tempting. **Fail**, all quoted historically because #58 fixed every one of them:
 "Every series on this route — GDP, prices, rates, the wage and profit shares — is one number" and
 "what people actually pay -- the average federal tax rate -- has moved far less" for punctuation;
@@ -542,7 +542,7 @@ hand and read by a person, as Checklist item 12.
 ### Criterion 4 — terms are defined
 
 **Asks:** is every technical term defined the first time a reader meets it? **Pass:** a first use
-wrapped in `<Term>`, as at `src/pages/economy/index.astro:33`, resolving to an entry under
+wrapped in `<Term>`, as at `src/pages/economy/index.astro:29`, resolving to an entry under
 `src/content/glossary/`. **Fail:** a term used on a route with no marker and no entry, or marked
 somewhere a reader reaches *after* they have already met the word. **Cited by #59, which
 discharged it.**
@@ -606,7 +606,7 @@ is the new acronym-and-gloss Checklist item below.
 
 **Asks:** can a reader verify each claim from the figure and its source? No causation the data does
 not support, no hype, figures always with units. **Pass:**
-`src/pages/economy/index.astro:109-112`, which says outright that nothing in the section identifies a
+`src/pages/economy/index.astro:68`, which says outright that nothing in the section identifies a
 cause. **Fail:** any sentence in which one series drives another, or any bare number without its
 unit. **Drift and quoted material** bounds the criterion, so rewording around a figure is in scope
 and restating the figure is not. **Cited by #60.**

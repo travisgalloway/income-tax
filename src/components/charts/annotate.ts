@@ -40,6 +40,17 @@ export const DATA_LABEL_FONT_PX = 11
 
 export type Anchor = 'start' | 'middle' | 'end'
 
+/** Which rectangle a label is held inside.
+ *
+ *  `surface` is the SVG itself, and it is the right bound for a label whose
+ *  only enemy is the clip: an end-of-line series name is free to sit over the
+ *  right margin. `plot` is the plot rect, and it is the right bound for a label
+ *  that would otherwise slide into a GUTTER THAT IS ALREADY OCCUPIED.
+ *  `DebtMaturity`'s bills band starts at year zero, so its centred band label
+ *  reached 4 units past the surface's left edge and painted across the y-axis
+ *  ticks; nothing was clipped, and the number was still unreadable. */
+export type Within = 'surface' | 'plot'
+
 export interface Placement {
   x: number
   textAnchor: Anchor
@@ -50,6 +61,126 @@ export function estimateTextWidth(label: string, fontPx: number = ANNOTATION_FON
   return label.length * fontPx * ADVANCE_EM
 }
 
+/** Height of one painted line, as a fraction of the em: ascent plus descent,
+ *  MEASURED in Chromium against `var(--font-data)` at 10.5 and 11.5px. An
+ *  over-estimate for the same reason `ADVANCE_EM` is one. */
+export const LINE_EM = 1.32
+
+/** The vertical extent of one line of text, in user units. */
+export function labelHeight(fontPx: number = ANNOTATION_FONT_PX): number {
+  return fontPx * LINE_EM
+}
+
+/** A label's painted box, from its placement and its baseline.
+ *
+ *  The baseline is not the box's centre: glyphs sit mostly above it. The split
+ *  here is the same 0.8/0.2 ascent-to-descent ratio the axis-title band uses. */
+export function labelBox(
+  placed: Placement,
+  y: number,
+  width: number,
+  fontPx: number = ANNOTATION_FONT_PX,
+): Box {
+  const h = labelHeight(fontPx)
+  const left =
+    placed.textAnchor === 'end'
+      ? placed.x - width
+      : placed.textAnchor === 'middle'
+        ? placed.x - width / 2
+        : placed.x
+  return { left, right: left + width, top: y - h * 0.8, bottom: y + h * 0.2 }
+}
+
+export interface Box {
+  left: number
+  right: number
+  top: number
+  bottom: number
+}
+
+/**
+ * Baselines pushed down the page until no two labels touch.
+ *
+ * `ys` must already be in the order the labels read, top to bottom, which for
+ * a set of end-of-line series names is the order of the series values at that
+ * year. Each label stays at its own baseline wherever the one above it allows,
+ * so a panel whose series are far apart is unchanged.
+ *
+ * THIS IS THE ANSWER FOR A SERIES NAME, where `keepUnclashed` is not. Three
+ * converging rates on `/economy` §4 sat within 0.2 percentage points of each
+ * other in FY2025, and hand-tuned offsets of -8, +14 and -20 put `Fed funds`
+ * across `10-year note`. Dropping one would take away the only channel naming
+ * a line that is not its colour.
+ */
+export function stackDown(
+  ys: readonly number[],
+  fontPx: number = ANNOTATION_FONT_PX,
+  gap = 2,
+): number[] {
+  const step = labelHeight(fontPx) + gap
+  const out: number[] = []
+  ys.forEach((y, i) => {
+    const above = out[i - 1]
+    out.push(above == null ? y : Math.max(y, above + step))
+  })
+  return out
+}
+
+export interface Candidate {
+  x: number
+  y: number
+  label: string
+  anchor?: Anchor
+  fontPx?: number
+  flip?: boolean
+  gap?: number
+  within?: Within
+}
+
+/**
+ * The candidates that can be painted without landing on one already kept.
+ *
+ * Returns INDICES into the input, in input order, and the input order is
+ * PRIORITY order: the first candidate is never dropped, and each later one is
+ * kept only if its box clears every box already kept.
+ *
+ * The same contract `placeAnnotation` states for the SVG's edges, applied to
+ * the labels themselves. An absent label beats one painted across another, for
+ * the same reason: two overlapping numbers are two numbers a reader cannot
+ * read, and every value on this site is also in the figure's `TableView` and
+ * its `aria-label`.
+ *
+ * NOT FOR A SERIES NAME. Dropping a direct series label removes the channel
+ * that identifies a line without colour, so a crowded pair of series names is
+ * separated (see `labelHeight`), never thinned.
+ */
+export function keepUnclashed(
+  candidates: readonly Candidate[],
+  frame: Frame,
+  pad = 1,
+): number[] {
+  const kept: number[] = []
+  const boxes: Box[] = []
+  candidates.forEach((c, i) => {
+    const fontPx = c.fontPx ?? ANNOTATION_FONT_PX
+    const width = estimateTextWidth(c.label, fontPx)
+    const placed = placeAnnotation({ ...c, frame, fontPx, width })
+    if (placed === null) return
+    const box = labelBox(placed, c.y, width, fontPx)
+    const clash = boxes.some(
+      (b) =>
+        box.left < b.right - pad &&
+        box.right > b.left + pad &&
+        box.top < b.bottom - pad &&
+        box.bottom > b.top + pad,
+    )
+    if (clash) return
+    kept.push(i)
+    boxes.push(box)
+  })
+  return kept
+}
+
 /** The horizontal span visible inside the SVG, in the local coordinates chart
  *  children work in.
  *
@@ -58,7 +189,8 @@ export function estimateTextWidth(label: string, fontPx: number = ANNOTATION_FON
  *  own left edge is at `-margin.left`. Clipping cares about the SVG edges, not
  *  the plot rect, an annotation is free to sit over the margin, it is only
  *  forbidden to leave the viewBox. */
-export function visibleSpan(frame: Frame, pad = 2): [number, number] {
+export function visibleSpan(frame: Frame, pad = 2, within: Within = 'surface'): [number, number] {
+  if (within === 'plot') return [pad, frame.innerWidth - pad]
   return [-frame.margin.left + pad, frame.innerWidth + frame.margin.right - pad]
 }
 
@@ -110,12 +242,15 @@ export function placeAnnotation(opts: {
   /** Override the measured width, for multi-line `<tspan>` labels whose width
    *  is the widest LINE, not the concatenation of them. */
   width?: number
+  /** Which rectangle holds the label. See `Within`. */
+  within?: Within
 }): Placement | null {
   const {
     x, label, frame, anchor = 'start', fontPx = ANNOTATION_FONT_PX, pad = 2, flip = true, gap = 0,
+    within = 'surface',
   } = opts
   const w = opts.width ?? estimateTextWidth(label, fontPx)
-  const [lo, hi] = visibleSpan(frame, pad)
+  const [lo, hi] = visibleSpan(frame, pad, within)
 
   // Wider than everything there is. Absent beats truncated, see the header.
   if (w > hi - lo) return null

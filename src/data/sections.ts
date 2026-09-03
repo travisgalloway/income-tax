@@ -11,8 +11,8 @@
  *  documented as such in docs/contracts/accessibility.md.
  *
  *  `/` is absent for a different reason. Its six sections live in `introSections` below, not as
- *  an entry in this map, and since #49 they are lifted out of the page's own frontmatter so
- *  `/contents` reads the same array the front door renders. They stay out of `routeSections`
+ *  an entry in this map, and since #49 they are lifted out of the page's own frontmatter so the
+ *  bar's contents list and the front door render one array. They stay out of `routeSections`
  *  because this map's keys are the domain of `ContentRoute` below, the routes a glossary term's
  *  `first_used.route` may name, and a term whose first prose use is the front door is a category
  *  error; the front door names no term. Widening `ContentRoute` would also make the failure mode
@@ -69,9 +69,9 @@ export const routeSections = {
 export type ContentRoute = keyof typeof routeSections
 
 /** The six sections of `/`. Moved here verbatim from `src/pages/index.astro` by #49, for the
- *  reason the header gives: the front door renders these, and `/contents` lists them, and a
- *  hand-copied second list is exactly the drift this module exists to make impossible. See the
- *  header for why they are not an entry in `routeSections`. */
+ *  reason the header gives: the front door renders these, the bar's contents list renders them
+ *  again, and a hand-copied second list is the drift this module exists to make impossible. See
+ *  the header for why they are not an entry in `routeSections`. */
 export const introSections: RouteSection[] = [
   { id: 'purpose-and-scope', label: 'Purpose and scope' },
   { id: 'data-and-coverage', label: 'Data and coverage' },
@@ -99,20 +99,32 @@ export interface SiteRoute {
   sections: RouteSection[]
 }
 
-/** Every destination the site names, in rail order: the front door, the three routes that carry
- *  the argument, then the three reference pages. The rail and the narrow-viewport navbar both map
- *  this one array, so a route added here appears in both, and `/contents` derives its whole
- *  outline from it rather than from a list of its own.
+/** The front door, as a route record.
+ *
+ *  Held apart from `siteRoutes` below because the site bar reaches it from the wordmark, the
+ *  `a.navbar-title` in `BaseLayout.astro`, and a second entry in the route list would name one
+ *  page twice. The wordmark is the conventional link to a site's front page, and the route list
+ *  is shorter for it. Its sections stay in `introSections` above, so `/` still declares them the
+ *  way every other destination does. */
+export const introRoute: SiteRoute = { path: '/', label: 'Introduction', sections: introSections }
+
+/** Every destination the bar's route list names, in bar order: the index, the three routes that
+ *  carry the argument, then the two remaining reference pages. The wide list and the disclosure
+ *  both map this one array, so a route added here appears in both, and `/contents` derives its
+ *  whole outline from it rather than from a list of its own.
+ *
+ *  The front door is deliberately absent, and `introRoute` above says why. One consequence is
+ *  worth stating here, because it is not visible from this file. `/contents` enumerates this
+ *  array, so it now lists five destinations and no longer carries an Introduction block.
  *
  *  `/sources` and `/glossary` declare no sections because neither passes a `sections` prop:
  *  `/sources` carries one section, and `/glossary`'s real structure is its terms, which
  *  `/contents` enumerates term by term rather than as letter groups. */
 export const siteRoutes: SiteRoute[] = [
-  { path: '/', label: 'Introduction', sections: introSections },
+  { path: '/contents', label: 'Contents', sections: [] },
   { path: '/economy', label: 'Economy', sections: routeSections['/economy'] },
   { path: '/households', label: 'Households', sections: routeSections['/households'] },
   { path: '/government', label: 'Government', sections: routeSections['/government'] },
-  { path: '/contents', label: 'Contents', sections: [] },
-  { path: '/sources', label: 'Sources', sections: [] },
   { path: '/glossary', label: 'Glossary', sections: [] },
+  { path: '/sources', label: 'Sources', sections: [] },
 ]

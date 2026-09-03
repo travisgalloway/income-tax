@@ -1,4 +1,4 @@
-/** Section 10: federal revenue by source, FY1962-FY2025.
+/** Section 10: federal revenue by source, FY1962-FY2025, drawn on Recharts.
  *
  *  BRIEF.md rule 3 / edge case 3: `share` (percent of total revenue) sums to
  *  100 BY CONSTRUCTION and is the only normalised view here. `gdp` and
@@ -6,17 +6,28 @@
  *  totals (g_tot ranges 14.5-20.0), so the stack visibly tops out well short
  *  of "the whole thing" and can never be mistaken for the 100%-share view.
  *  The axis title always names which view is active.
+ *
+ *  Recharts stacks the seven bands from the `stackId`, in the order the
+ *  `<Area>` children are declared. The `lo`/`hi` band arithmetic below is kept
+ *  because the direct labels and the readout need it, and because the readout
+ *  must distinguish a null component from a zero one, which a stacked series
+ *  cannot.
  */
 import { useMemo, useState } from 'react'
-import { area as d3area, curveMonotoneX } from 'd3-shape'
+import { Area, AreaChart } from 'recharts'
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
-import { Chart } from '../charts/Chart'
 import { Annotation } from '../charts/Annotation'
-import { AxisBottom, AxisLeft } from '../charts/Axis'
-import { linear, niceExtent } from '../charts/scales'
+import {
+  PlotGrid,
+  PlotOverlay,
+  PlotXAxis,
+  PlotYAxis,
+  SURFACE_DEFAULTS,
+  useFrame,
+  useTickFormat,
+} from '../charts/RechartsFrame'
 import { trillions, percentGdp, percent, tick } from '../charts/format'
 import { TableView } from './TableView'
-import { useChartSize } from '../charts/useChartSize'
 import type { RevenueYear } from '../../data/types'
 import { labelledByFigure } from './figureLabel'
 import { ChartHint } from '../charts/ChartHint'
@@ -79,6 +90,13 @@ const COLOR: Record<Component, string> = {
 const LABELED_WIDE: Component[] = ['ii', 'pr', 'ci', 'cu']
 const LABELED_NARROW: Component[] = ['ii', 'pr', 'ci']
 
+/** The 100%-share view is normalised by construction, so it takes a fixed
+ *  domain rather than a derived one. Module scope: rule 1 compares an axis
+ *  prop by reference. */
+const SHARE_DOMAIN: [number, number] = [0, 100]
+
+const X_FORMAT = (t: number) => `${t}`
+
 /** Raw field access. Returns null rather than substituting 0, this series has
  *  no nulls (validated by the pipeline), but a consumer must never assume it. */
 function field(r: RevenueYear, key: string): number | null {
@@ -98,10 +116,20 @@ interface StackedYear {
   total: number | null
 }
 
+/** One flat row per fiscal year, which is what a Recharts stack reads. The
+ *  string keys are deliberate: a `dataKey` written as a closure would be a new
+ *  reference on every render, which is the identity trap rule 1 describes. */
+type ChartRow = { y: number } & Record<Component, number>
+
 function fmtView(v: number, view: View): string {
   if (view === 'nominal') return trillions(v)
   if (view === 'gdp') return percentGdp(v)
   return percent(v)
+}
+
+function axisTick(v: number, view: View): string {
+  if (view === 'share') return `${v.toFixed(0)}%`
+  return tick(v, view === 'gdp' ? 'gdp' : 'nominal')
 }
 
 /** Shared by aria-label and the live-region readout, so keyboard and pointer
@@ -119,11 +147,6 @@ function describeYear(s: StackedYear, view: View): string {
 export function RevenueChart({ rows }: { rows: RevenueYear[] }) {
   const [view, setView] = useState<View>('gdp')
   const [focus, setFocus] = useState<number | null>(null)
-  const [boxRef, size] = useChartSize()
-  const { width: W, height: H, margin: f } = size
-  const iw = W - f.left - f.right
-  const ih = H - f.top - f.bottom
-  const narrow = W < 500
 
   const stacked = useMemo<StackedYear[]>(() => {
     const prefix = PREFIX[view]
@@ -141,22 +164,31 @@ export function RevenueChart({ rows }: { rows: RevenueYear[] }) {
     })
   }, [rows, view])
 
-  const years = stacked.map((s) => s.y)
-  const x = linear([Math.min(...years), Math.max(...years)], [0, iw])
-  const yDomain: [number, number] =
-    view === 'share' ? [0, 100] : niceExtent(stacked.map((s) => s.total))
-  const y = linear(yDomain, [ih, 0])
+  const chartRows = useMemo<ChartRow[]>(
+    () =>
+      stacked.map((s) => {
+        const row = { y: s.y } as ChartRow
+        for (const k of ORDER) row[k] = s.bands[k].v ?? 0
+        return row
+      }),
+    [stacked],
+  )
 
-  const areaFor = (k: Component) =>
-    d3area<StackedYear>()
-      .x((s) => x(s.y))
-      .y0((s) => y(s.bands[k].lo))
-      .y1((s) => y(s.bands[k].hi))
-      .curve(curveMonotoneX)
+  const totals = useMemo(
+    () => stacked.map((s) => s.total).filter((v): v is number => v != null),
+    [stacked],
+  )
 
-  const yTicks = y.ticks(narrow ? 4 : 6)
-  const xTicks = x.ticks(narrow ? 4 : 8).filter((t) => Number.isInteger(t))
-  const bandWidth = years.length > 1 ? iw / (years.length - 1) : iw
+  const { size, boxRef, f, narrow, xDomain, yDomain, x, y, xTicks, yTicks, chartMargin, chartStyle, surfaceRef, wrapperProps, mark } =
+    useFrame({
+      rows: chartRows,
+      xOf: (r) => r.y,
+      yValues: totals,
+      yDomain: view === 'share' ? SHARE_DOMAIN : undefined,
+    })
+
+  const yFormat = useTickFormat(axisTick, view)
+  const bandWidth = chartRows.length > 1 ? f.innerWidth / (chartRows.length - 1) : f.innerWidth
 
   const active = focus != null ? stacked.find((s) => s.y === focus) : null
   const last = stacked[stacked.length - 1]
@@ -194,44 +226,71 @@ export function RevenueChart({ rows }: { rows: RevenueYear[] }) {
         </ToggleGroup.Root>
       </div>
 
-      <Chart ariaLabel={chartLabel} interactive width={W} height={H} margin={f}>
-        {(fr, mark) => (
-          <>
-            <AxisLeft
-              frame={fr}
-              ticks={yTicks}
-              format={(v) => (view === 'share' ? `${v.toFixed(0)}%` : tick(v, view === 'gdp' ? 'gdp' : 'nominal'))}
-              label={AXIS_TITLE[view]}
-              scale={y}
-            />
-            <AxisBottom
-              frame={fr}
-              ticks={xTicks}
-              format={(t) => `${t}`}
-              label="Fiscal year"
-              scale={x}
-            />
+      <div {...wrapperProps}>
+        <AreaChart
+          ref={surfaceRef}
+          data={chartRows}
+          width={size.width}
+          height={size.height}
+          margin={chartMargin}
+          {...SURFACE_DEFAULTS}
+          aria-label={chartLabel}
+          style={chartStyle}
+        >
+          <PlotGrid />
+          <PlotXAxis
+            domain={xDomain}
+            ticks={xTicks}
+            gutter={size.margin.bottom}
+            unit="Fiscal year"
+            format={X_FORMAT}
+          />
+          <PlotYAxis
+            domain={yDomain}
+            ticks={yTicks}
+            gutter={size.margin.left}
+            unit={AXIS_TITLE[view]}
+            format={yFormat}
+          />
 
-            {ORDER.map((k) => (
-              <path key={k} d={areaFor(k)(stacked) ?? ''} fill={COLOR[k]} />
-            ))}
+          {ORDER.map((k) => (
+            <Area
+              key={k}
+              type="monotone"
+              dataKey={k}
+              stackId="revenue"
+              stroke="none"
+              fill={COLOR[k]}
+              fillOpacity={1}
+              isAnimationActive={false}
+              activeDot={false}
+              dot={false}
+            />
+          ))}
 
+          {/* Everything below sits ON the stack, so it goes through the
+              overlay: a plain child renders under the area fill. */}
+          <PlotOverlay margin={f.margin}>
             {markers.map((s) => {
               if (s.total == null) return null
-              const isLast = s.y === Math.max(...years)
+              const isLast = s.y === xDomain[1]
               return (
                 <g key={s.y}>
                   <circle cx={x(s.y)} cy={y(s.total)} r={3.5} fill="var(--ink)" />
                   <line
-                    x1={x(s.y)} x2={x(s.y)}
-                    y1={y(s.total) - 6} y2={y(s.total) - (isLast ? 16 : 28)}
-                    stroke="var(--ink)" strokeWidth={0.75}
+                    x1={x(s.y)}
+                    x2={x(s.y)}
+                    y1={y(s.total) - 6}
+                    y2={y(s.total) - (isLast ? 16 : 28)}
+                    stroke="var(--ink)"
+                    strokeWidth={0.75}
                   />
                   <Annotation
-                    frame={fr}
+                    frame={f}
                     x={x(s.y) - (isLast ? 4 : 0)}
                     y={y(s.total) - (isLast ? 20 : 32)}
                     anchor={isLast ? 'end' : 'middle'}
+                    halo
                     label={`FY${s.y} ${fmtView(s.total, view)}`}
                   />
                 </g>
@@ -246,7 +305,7 @@ export function RevenueChart({ rows }: { rows: RevenueYear[] }) {
                 return (
                   <text
                     key={k}
-                    x={iw - 6}
+                    x={f.innerWidth - 6}
                     y={y(mid)}
                     dy="0.32em"
                     textAnchor="end"
@@ -259,7 +318,15 @@ export function RevenueChart({ rows }: { rows: RevenueYear[] }) {
               })}
 
             {active && (
-              <line x1={x(active.y)} x2={x(active.y)} y1={0} y2={ih} stroke="var(--ink)" strokeWidth={1} opacity={0.4} />
+              <line
+                x1={x(active.y)}
+                x2={x(active.y)}
+                y1={0}
+                y2={f.innerHeight}
+                stroke="var(--ink)"
+                strokeWidth={1}
+                opacity={0.4}
+              />
             )}
 
             {/* Every fiscal year is Tab-focusable and reports the same thing hover does. */}
@@ -270,7 +337,7 @@ export function RevenueChart({ rows }: { rows: RevenueYear[] }) {
                 x={x(s.y) - bandWidth / 2}
                 y={0}
                 width={bandWidth}
-                height={ih}
+                height={f.innerHeight}
                 fill="transparent"
                 {...mark()}
                 role="img"
@@ -281,9 +348,9 @@ export function RevenueChart({ rows }: { rows: RevenueYear[] }) {
                 onMouseLeave={() => setFocus(null)}
               />
             ))}
-          </>
-        )}
-      </Chart>
+          </PlotOverlay>
+        </AreaChart>
+      </div>
 
       <p aria-live="polite" className="readout">
         {active ? describeYear(active, view) : <ChartHint noun="year" />}
