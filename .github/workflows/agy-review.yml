@@ -91,6 +91,24 @@ jobs:
           }
           EOF
 
+      - name: Preflight API Key Check
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "::error::GEMINI_API_KEY secret is not set or empty in GitHub Secrets!"
+            exit 1
+          fi
+          echo "Validating Gemini API key against Google Generative Language API..."
+          http_status=$(curl -s -o /tmp/gemini_preflight.json -w "%{http_code}" \
+            "https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}")
+          if [ "$http_status" != "200" ]; then
+            echo "::error::Gemini API key check failed with HTTP status $http_status"
+            cat /tmp/gemini_preflight.json
+            exit 1
+          fi
+          echo "Gemini API key is active and valid (HTTP 200)."
+
       - name: Run Antigravity Review
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -129,3 +147,9 @@ jobs:
             --model "$MODEL" \
             --dangerously-skip-permissions \
             --print-timeout 15m
+
+      - name: Dump Diagnostic Logs on Failure
+        if: failure()
+        run: |
+          echo "=== Antigravity CLI Logs ==="
+          cat ~/.gemini/antigravity-cli/log/cli-*.log 2>/dev/null || echo "No CLI logs found"
