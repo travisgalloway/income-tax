@@ -123,7 +123,7 @@ jobs:
           git config --global user.name "antigravity-bot[bot]"
           git config --global user.email "antigravity-bot[bot]@users.noreply.github.com"
 
-          agy -p "You are an expert web engineer and code reviewer for this Astro + TypeScript application.
+          REVIEW_PROMPT="You are an expert web engineer and code reviewer for this Astro + TypeScript application.
           Review pull request #$PR in repository $REPO.
 
           1. Fetch and examine the PR diff:
@@ -146,10 +146,38 @@ jobs:
              If the diff is clean, well-crafted, and meets all standards, submit an approving summary comment:
                gh pr review $PR --comment --body \"✓ **Antigravity Code Review**: All checks passed. Clean implementation adhering to project standards.\"
 
-          Run all steps to completion in this single turn in the foreground." \
-            --model "$MODEL" \
-            --dangerously-skip-permissions \
-            --print-timeout 15m
+          Run all steps to completion in this single turn in the foreground."
+
+          # Execute agy with resilience against temporary 503 high-demand spikes
+          max_attempts=3
+          attempt=1
+          current_model="$MODEL"
+          until [ "$attempt" -gt "$max_attempts" ]; do
+            echo "Starting Antigravity Review (attempt $attempt of $max_attempts using $current_model)..."
+            if agy -p "$REVIEW_PROMPT" \
+              --model "$current_model" \
+              --dangerously-skip-permissions \
+              --print-timeout 15m; then
+              echo "Antigravity Review completed successfully."
+              exit 0
+            fi
+
+            echo "Attempt $attempt exited with an error."
+            # Check if failure was due to high demand (503)
+            if grep -q "Error 503" ~/.gemini/antigravity-cli/log/cli-*.log 2>/dev/null; then
+              echo "Model $current_model experienced a temporary 503 high-demand spike. Falling back to gemini-3.7-flash-high."
+              current_model="gemini-3.7-flash-high"
+            fi
+
+            attempt=$((attempt + 1))
+            if [ "$attempt" -le "$max_attempts" ]; then
+              echo "Waiting 10 seconds before next attempt..."
+              sleep 10
+            fi
+          done
+
+          echo "::error::Antigravity Review failed after $max_attempts attempts."
+          exit 1
 
       - name: Dump Diagnostic Logs on Failure
         if: failure()
