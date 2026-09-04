@@ -60,29 +60,35 @@ h1, h2, h3, h4 {
 
 h1 {
   font-size: var(--ts-5);
-  letter-spacing: -0.008em;
+  font-weight: 600;
+  letter-spacing: -0.02em;
   max-width: 46rem;
   margin: 0 0 var(--sp-3);
 }
 
 h2 {
   font-size: var(--ts-3);
-  letter-spacing: -0.004em;
+  font-weight: 600;
+  letter-spacing: -0.015em;
   max-width: 40rem;
   margin: var(--sp-6) 0 var(--sp-3);
 }
 
 h3 {
   font-size: var(--ts-2);
-  font-style: italic;
+  font-weight: 600;
+  font-style: normal;
+  letter-spacing: -0.01em;
   max-width: 36rem;
   margin: var(--sp-5) 0 var(--sp-2);
 }
 
 h4 {
   font-size: var(--ts-1);
+  font-weight: 600;
+  font-style: normal;
   font-variant-caps: all-small-caps;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   max-width: 36rem;
   margin: var(--sp-4) 0 var(--sp-1);
 }
@@ -94,27 +100,11 @@ h4 {
 .kicker + h3,
 .kicker + h4 { margin-top: 0; }
 
-/* ---- What italic means --------------------------------------------------
- * Italic used to appear at 26.6px, 21px, 15px, 14px, 12px and 10.5px, on a
- * heading, a deck, a label, a caption and two running sentences, so a reader
- * had no way to learn what it signalled. Two clauses now, and nothing else on
- * the site is italic:
- *
- * 1. ABOVE the body size, italic is the third heading level (h3) and the deck
- *    that follows a heading (`.standfirst`). Size already says "heading", and
- *    the italic says which of the two it is.
- *
- * 2. AT OR BELOW the body size, italic names something else on the page: a
- *    figure's title, a table's caption, a panel's title, a line's series name,
- *    a reference line's label, an index entry's figure title.
- *
- * It is never running text and it is never a value. That is what moved
- * `.empty-state` and `.panel-empty` out of italic: both are sentences reporting
- * that a control the reader set returned nothing, so both are set in the data
- * face in `--ink-soft`, the site's voice for apparatus, and neither names a
- * thing. Small caps is the other label channel and the two do not overlap:
- * small caps marks a locator or a unit (`.kicker`, `.figure-no`, `.lead`,
- * `.unit`), italic marks a title. */
+/* ---- Typography and hierarchy -------------------------------------------
+ * Italic is retired from headings, standfirsts, and captions to improve
+ * reading speed and legibility on screens. Hierarchy is carried by size,
+ * weight, small caps, and tone.
+ */
 
 /* ---- Running text -------------------------------------------------------- */
 
@@ -136,19 +126,21 @@ p { margin: 0 0 var(--sp-4); max-width: var(--measure); text-wrap: pretty; }
 .kicker {
   font-variant-caps: all-small-caps;
   font-variant-numeric: var(--num-table);
-  letter-spacing: 0.09em;
+  letter-spacing: 0.1em;
   font-size: var(--ts-meta);
+  font-weight: 600;
   color: var(--ink-soft);
   margin: 0 0 0.35rem;
 }
 /* A section number is a locator, not a label. The contents list already names
    the section, so repeating the name here would say it twice. */
-.section-no { font-variant-numeric: var(--num-table); }
+.section-no { font-variant-numeric: var(--num-table); font-weight: 600; }
 
 .standfirst {
   font-size: var(--ts-lede);
-  line-height: 1.5;
-  font-style: italic;
+  line-height: 1.55;
+  font-style: normal;
+  font-weight: 400;
   color: var(--ink);
   max-width: var(--measure-lede);
   margin-bottom: var(--sp-5);
@@ -167,10 +159,11 @@ p { margin: 0 0 var(--sp-4); max-width: var(--measure); text-wrap: pretty; }
  * figures are lining and tabular inside a sentence set in old-style. */
 .finding {
   font-size: var(--ts-0);
-  line-height: 1.45;
-  border-top: var(--rule-hair) solid var(--rule);
-  padding: 0.7rem 0 0;
-  margin: 0 0 1.6rem;
+  line-height: 1.5;
+  font-weight: 500;
+  border-top: var(--rule-width) solid var(--ink);
+  padding: 0.75rem 0 0;
+  margin: 0 0 1.7rem;
   max-width: var(--measure-lede);
   font-variant-numeric: var(--num-table);
 }
@@ -326,8 +319,9 @@ section[id]:first-of-type { padding-top: var(--sp-5); }
 
 .navbar-title {
   font-variant-caps: all-small-caps;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.09em;
   font-size: var(--ts-chrome);
+  font-weight: 600;
   color: var(--ink);
   text-decoration: none;
   white-space: nowrap;
@@ -363,7 +357,12 @@ section[id]:first-of-type { padding-top: var(--sp-5); }
 }
 .navbar-routes-wide a:hover,
 .navbar-routes-wide a:focus-visible { color: var(--ink); text-decoration: underline; }
-.navbar-routes-wide a[aria-current='page'] { color: var(--ink); text-decoration: underline; }
+.navbar-routes-wide a[aria-current='page'] {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
 
 /* A Radix icon, inlined by `BaseLayout.astro`. 15px is the set's own grid, and
  * `currentColor` on the path is what makes one rule below colour the glyph. */
@@ -606,7 +605,8 @@ section[id],
   white-space: nowrap;
 }
 .figure-title {
-  font-style: italic;
+  font-style: normal;
+  font-weight: 600;
   font-size: var(--ts-0);
   color: var(--ink);
 }
@@ -768,6 +768,7 @@ figcaption .lead,
 .unit-toggle-item:hover { color: var(--ink); }
 .unit-toggle-item[data-state='on'] {
   color: var(--ink);
+  font-weight: 600;
   border-bottom-color: var(--ink);
 }
 
@@ -869,8 +870,9 @@ figcaption .lead,
 .law-table caption {
   text-align: left;
   font-family: var(--font-text);
-  font-style: italic;
-  color: var(--ink-soft);
+  font-style: normal;
+  font-weight: 600;
+  color: var(--ink);
   font-size: var(--ts-caption);
   padding-bottom: 0.5rem;
 }
@@ -886,11 +888,17 @@ figcaption .lead,
   background: var(--ground);
   z-index: 2;
   vertical-align: bottom;
-  font-weight: 400;
+  font-weight: 600;
+  color: var(--ink);
   border-bottom: var(--rule-width) solid var(--ink);
-  padding-bottom: 0.3rem;
+  padding-bottom: 0.35rem;
 }
-.tableview tbody tr { border-bottom: var(--rule-hair) solid var(--rule); }
+.tableview tbody tr {
+  border-bottom: var(--rule-hair) solid var(--rule);
+  transition: background-color 0.1s ease;
+}
+.tableview tbody tr:hover { background: rgba(20, 24, 29, 0.03); }
+:root[data-theme='dark'] .tableview tbody tr:hover { background: rgba(237, 229, 217, 0.04); }
 .tableview tbody tr:last-child { border-bottom: var(--rule-width) solid var(--ink); }
 .tableview th[scope='row'] { text-align: left; font-weight: 400; }
 .tableview .unit {
@@ -1418,6 +1426,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 .basis-toggle-item:hover { color: var(--ink); }
 .basis-toggle-item[data-state='on'] {
   color: var(--ink);
+  font-weight: 600;
   border-bottom-color: var(--ink);
 }
 
@@ -1450,11 +1459,17 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   background: var(--ground);
   z-index: 2;
   vertical-align: bottom;
-  font-weight: 400;
+  font-weight: 600;
+  color: var(--ink);
   border-bottom: var(--rule-width) solid var(--ink);
-  padding-bottom: 0.3rem;
+  padding-bottom: 0.35rem;
 }
-.sortable-table tbody tr { border-bottom: var(--rule-hair) solid var(--rule); }
+.sortable-table tbody tr {
+  border-bottom: var(--rule-hair) solid var(--rule);
+  transition: background-color 0.1s ease;
+}
+.sortable-table tbody tr:hover { background: rgba(20, 24, 29, 0.03); }
+:root[data-theme='dark'] .sortable-table tbody tr:hover { background: rgba(237, 229, 217, 0.04); }
 .sortable-table tbody tr:last-child { border-bottom: var(--rule-width) solid var(--ink); }
 .sortable-table th[scope='row'] { text-align: left; font-weight: 400; }
 
@@ -1620,6 +1635,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 .attrib-tab:hover { color: var(--ink); }
 .attrib-tab[data-state='active'] {
   color: var(--ink);
+  font-weight: 600;
   border-bottom-color: var(--ink);
 }
 .attrib-panel[hidden] { display: none; }
@@ -1805,7 +1821,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   color: var(--ink);
   white-space: nowrap;
 }
-.index-figure-title { font-style: italic; }
+.index-figure-title { font-style: normal; font-weight: 600; }
 .index-source {
   font-family: var(--font-data);
   font-size: var(--ts-data);
