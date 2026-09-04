@@ -362,30 +362,30 @@ palette. Scoring a dark hex against the light ground is meaningless arithmetic, 
 
 | Token | Hex | vs `--ground` | vs `--panel` | Role | Redundant encoding |
 |---|---|---|---|---|---|
-| `--ground` | `#EDE5D9` | 1.00 | 1.06 | surface |  |
-| `--panel` | `#F2EBE1` | 1.06 | 1.00 | surface |  |
-| `--ink` | `#14181D` | 14.27 | 15.06 | text |  |
-| `--ink-soft` | `#57534B` | 6.13 | 6.47 | text |  |
-| `--rule` | `#857E72` | 3.22 | 3.40 | rule |  |
-| `--dem` | `#0F5499` | 6.12 | 6.46 | series |  |
-| `--gop` | `#990F3D` | 6.75 | 7.13 | series |  |
-| `--mix` | `#421A5C` | 10.96 | 11.57 | series |  |
-| `--mand` | `#37434F` | 8.09 | 8.54 | series |  |
-| `--domestic` | `#37434F` | 8.09 | 8.54 | series |  |
-| `--disc` | `#0D7680` | 4.29 | 4.53 | series |  |
-| `--public` | `#0D7680` | 4.29 | 4.53 | series |  |
-| `--int` | `#A85C11` | 4.00 | 4.22 | series |  |
-| `--intragov` | `#A85C11` | 4.00 | 4.22 | series |  |
-| `--foreign` | `#647E9C` | 3.36 | 3.54 | series |  |
-| `--positive` | `#1E7A4B` | 4.27 | 4.50 | series |  |
-| `--band` | `#DCD3C6` | 1.19 | 1.25 | rule |  |
-| `--rev-ii` | `#0D7680` | 4.29 | 4.53 | series |  |
-| `--rev-pr` | `#A85C11` | 4.00 | 4.22 | series |  |
-| `--rev-ci` | `#37434F` | 8.09 | 8.54 | series |  |
-| `--rev-ex` | `#647E9C` | 3.36 | 3.54 | series |  |
-| `--rev-cu` | `#1B2026` | 13.12 | 13.85 | series |  |
-| `--rev-eg` | `#6E4D22` | 6.12 | 6.46 | series |  |
-| `--rev-mi` | `#807F78` | 3.22 | 3.40 | series |  |
+| `--ground` | `#F6F1E8` | 1.00 | 1.14 | surface |  |
+| `--panel` | `#EAE2D4` | 1.14 | 1.00 | surface |  |
+| `--ink` | `#14181D` | 15.84 | 13.86 | text |  |
+| `--ink-soft` | `#57534B` | 6.80 | 5.95 | text |  |
+| `--rule` | `#857E72` | 3.57 | 3.13 | rule |  |
+| `--dem` | `#0F5499` | 6.79 | 5.94 | series |  |
+| `--gop` | `#990F3D` | 7.50 | 6.56 | series |  |
+| `--mix` | `#421A5C` | 12.17 | 10.64 | series |  |
+| `--mand` | `#37434F` | 8.98 | 7.86 | series |  |
+| `--domestic` | `#37434F` | 8.98 | 7.86 | series |  |
+| `--disc` | `#0D7680` | 4.76 | 4.17 | series |  |
+| `--public` | `#0D7680` | 4.76 | 4.17 | series |  |
+| `--int` | `#A85C11` | 4.44 | 3.88 | series |  |
+| `--intragov` | `#A85C11` | 4.44 | 3.88 | series |  |
+| `--foreign` | `#647E9C` | 3.73 | 3.26 | series |  |
+| `--positive` | `#1E7A4B` | 4.74 | 4.14 | series |  |
+| `--band` | `#DCD3C6` | 1.32 | 1.15 | rule |  |
+| `--rev-ii` | `#0D7680` | 4.76 | 4.17 | series |  |
+| `--rev-pr` | `#A85C11` | 4.44 | 3.88 | series |  |
+| `--rev-ci` | `#37434F` | 8.98 | 7.86 | series |  |
+| `--rev-ex` | `#647E9C` | 3.73 | 3.26 | series |  |
+| `--rev-cu` | `#1B2026` | 14.57 | 12.74 | series |  |
+| `--rev-eg` | `#6E4D22` | 6.79 | 5.94 | series |  |
+| `--rev-mi` | `#807F78` | 3.57 | 3.13 | series |  |
 `--rule` clears the 3:1 non-text threshold on both surfaces, at 3.22 and 3.40, and clears the 4.5:1
 text threshold on neither. It failed both thresholds under the old cool-stone palette, at 1.48:1.
 The token is used only for hairline rules, never for text and never for a category-carrying series,
@@ -458,30 +458,30 @@ become the lightest marks in their groups.
 
 | Token | Hex | vs `--ground` | vs `--panel` | Role | Redundant encoding |
 |---|---|---|---|---|---|
-| `--ground` | `#16130F` | 1.00 | 1.06 | surface |  |
-| `--panel` | `#1C1914` | 1.06 | 1.00 | surface |  |
-| `--ink` | `#EDE5D9` | 14.82 | 14.03 | text |  |
-| `--ink-soft` | `#A79E90` | 7.00 | 6.62 | text |  |
-| `--rule` | `#786D5C` | 3.65 | 3.45 | rule |  |
-| `--dem` | `#6FA8E8` | 7.44 | 7.04 | series |  |
-| `--gop` | `#E8798D` | 6.66 | 6.30 | series |  |
-| `--mix` | `#8E6BC8` | 4.49 | 4.24 | series |  |
-| `--mand` | `#C4CBD2` | 11.30 | 10.70 | series |  |
-| `--domestic` | `#C4CBD2` | 11.30 | 10.70 | series |  |
-| `--disc` | `#3FA9B4` | 6.65 | 6.30 | series |  |
-| `--public` | `#3FA9B4` | 6.65 | 6.30 | series |  |
-| `--int` | `#DB9440` | 7.34 | 6.94 | series |  |
-| `--intragov` | `#DB9440` | 7.34 | 6.94 | series |  |
-| `--foreign` | `#5F7A8A` | 4.09 | 3.87 | series |  |
-| `--positive` | `#4FB27F` | 7.06 | 6.68 | series |  |
-| `--band` | `#2B251D` | 1.22 | 1.16 | rule |  |
-| `--rev-ii` | `#3FA9B4` | 6.65 | 6.30 | series |  |
-| `--rev-pr` | `#DB9440` | 7.34 | 6.94 | series |  |
-| `--rev-ci` | `#C4CBD2` | 11.30 | 10.70 | series |  |
-| `--rev-ex` | `#5F7A8A` | 4.09 | 3.87 | series |  |
-| `--rev-cu` | `#E8D2A8` | 12.53 | 11.86 | series |  |
-| `--rev-eg` | `#BE9660` | 6.81 | 6.44 | series |  |
-| `--rev-mi` | `#726F66` | 3.69 | 3.49 | series |  |
+| `--ground` | `#16130F` | 1.00 | 1.14 | surface |  |
+| `--panel` | `#232019` | 1.14 | 1.00 | surface |  |
+| `--ink` | `#EDE5D9` | 14.82 | 13.01 | text |  |
+| `--ink-soft` | `#A79E90` | 7.00 | 6.14 | text |  |
+| `--rule` | `#786D5C` | 3.65 | 3.20 | rule |  |
+| `--dem` | `#6FA8E8` | 7.44 | 6.53 | series |  |
+| `--gop` | `#E8798D` | 6.66 | 5.84 | series |  |
+| `--mix` | `#8E6BC8` | 4.49 | 3.94 | series |  |
+| `--mand` | `#C4CBD2` | 11.30 | 9.92 | series |  |
+| `--domestic` | `#C4CBD2` | 11.30 | 9.92 | series |  |
+| `--disc` | `#3FA9B4` | 6.65 | 5.84 | series |  |
+| `--public` | `#3FA9B4` | 6.65 | 5.84 | series |  |
+| `--int` | `#DB9440` | 7.34 | 6.44 | series |  |
+| `--intragov` | `#DB9440` | 7.34 | 6.44 | series |  |
+| `--foreign` | `#5F7A8A` | 4.09 | 3.59 | series |  |
+| `--positive` | `#4FB27F` | 7.06 | 6.20 | series |  |
+| `--band` | `#2B251D` | 1.22 | 1.07 | rule |  |
+| `--rev-ii` | `#3FA9B4` | 6.65 | 5.84 | series |  |
+| `--rev-pr` | `#DB9440` | 7.34 | 6.44 | series |  |
+| `--rev-ci` | `#C4CBD2` | 11.30 | 9.92 | series |  |
+| `--rev-ex` | `#5F7A8A` | 4.09 | 3.59 | series |  |
+| `--rev-cu` | `#E8D2A8` | 12.53 | 11.00 | series |  |
+| `--rev-eg` | `#BE9660` | 6.81 | 5.98 | series |  |
+| `--rev-mi` | `#726F66` | 3.69 | 3.24 | series |  |
 Every `role: text` token clears 4.5:1 on both dark surfaces, and every `role: series` token clears
 3:1 on both. The lowest series ratio is `--rev-mi` at 3.49 against the dark panel. The
 `redundant-encoding:` column is therefore empty here as well.

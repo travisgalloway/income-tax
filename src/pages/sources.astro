@@ -4,24 +4,22 @@ import { getEntry, render } from 'astro:content'
 
 const entry = await getEntry('reference', 'sources')
 if (!entry) throw new Error('SOURCES.md did not load. /sources renders it in full; refusing to build a stub.')
-const { Content, headings } = await render(entry)
+const { Content } = await render(entry)
 
-/* /sources was the one route that rendered without a rail, because
- * `sections.ts` carries an empty list for it: this page's sections are the
- * headings of `SOURCES.md`, and a markdown document does not declare itself in
- * the manifest. `render()` returns those headings already, with the same slugs
- * it puts on the rendered `<h2>` elements, so the rail and the document cannot
- * disagree. Depth 2 only, matching the other routes, where the rail lists
- * sections and not the headings inside them. */
-const sections = headings
-  .filter((h) => h.depth === 2)
-  .map((h) => ({ id: h.slug, label: h.text }))
+/* No rail on this route, and the reason is structural rather than an omission.
+ * `sectionSpy()` tracks `section[id]`, and `/sources` renders exactly one, the
+ * `reference` wrapper below, because its headings come from `SOURCES.md` and a
+ * markdown document does not section itself. A rail built from the markdown's
+ * own `h2` slugs was tried and reverted: it listed five ids that no section
+ * carries, so the reading mark could never track the page, which is what
+ * `test_every_contents_anchor_is_addressable_by_the_spy` reports. Giving this
+ * route a real rail means sectioning `SOURCES.md`, which is a larger change
+ * than a rail is worth here. */
 ---
 
 <BaseLayout
   title="Sources | US federal finance"
   description="Every source, with vintage and known discrepancies."
-  sections={sections}
 >
   <p class="kicker">Reference</p>
   <section id="reference" class="reference-doc">
