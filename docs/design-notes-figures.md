@@ -65,15 +65,16 @@ an equality.
 
 A figure spans the reading column and the margin column and adopts both with
 `grid-template-columns: subgrid`. Its head rule runs the whole band, its
-graphic sits in the reading column at 640px, the measure of the prose around
-it, and its caption sits beside the graphic in the margin at 256px.
+graphic sits in the reading column at 720px, the measure of the prose around
+it, and its caption sits beside the graphic in the margin at 240px. The caption
+also takes the `--quiet` fill, so it reads as apparatus rather than as prose set
+small.
 
 This is the arrangement the earlier version of this note proposed and the site
 never adopted. The caption used to run the full 1120px underneath the graphic,
 where its Note and Source lines reached about 130 characters.
 
-`.figure--wide` is the exception. There the graphic takes the whole band, about
-952px, and the caption returns beneath it at the reading measure with its rule
+`.figure--wide` is the exception. There the graphic takes the whole band, 996px, and the caption returns beneath it at the reading measure with its rule
 back. Three figures carry it: the law explorer and the two state panels.
 
 Nothing in a figure is auto-placed. The graphic is an Astro island, which
@@ -123,8 +124,10 @@ their measured collapse points at 72rem and 48rem. `HouseholdSpread` and
 and `.panel-empty` are what remains of the grid proposal.
 
 The geometry the widths were derived from. The page is an 11rem contents rail,
-a 40rem reading column and a 16rem margin column, with a 2.25rem gap between
-each and 2.5rem of page padding, totalling 1224px. The rail is on the LEFT and
+a 45rem reading column and a 15rem margin column, with a 2.25rem gap between
+each and 2.5rem of page padding, totalling 1272px. The reading column widened
+with the face: a system sans needs 45rem to set the 76 characters Baskerville
+set in 40rem. The rail is on the LEFT and
 leaves the accessibility tree below 78rem; the margin column follows it below
 64rem, and its contents reflow inline beneath whatever they annotate.
 

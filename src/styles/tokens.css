@@ -1,9 +1,25 @@
 /* Design tokens.
  *
- * TYPOGRAPHY: system serifs only, set as a classic textbook. This is a
- * deliberate departure from BRIEF.md, which specified Bricolage Grotesque and
- * IBM Plex loaded from Google Fonts. No webfont is loaded now: the page paints
- * with the reader's own faces on first byte.
+ * TYPOGRAPHY: the system sans, for prose and for interface alike. This returns
+ * to BRIEF.md, which specified IBM Plex Sans for body text; the serif-only
+ * setting was a later decision and is reversed here. No webfont is loaded
+ * either way, so the page still paints with the reader's own faces on the first
+ * byte, and the stack now resolves to the face the reader's own operating
+ * system uses for everything else.
+ *
+ * Chart furniture is the exception and keeps a serif, on `--font-chart`. Not
+ * for looks: `ADVANCE_EM = 0.62` in `axisFit.ts` is a Georgia metric, it is what
+ * every tick-fit and annotation-placement decision is computed from, and
+ * `smoke.test.ts` asserts no label exceeds it against a live measurement.
+ *
+ * Measured rather than assumed, over the site's real label strings at 11px with
+ * tabular figures on. Georgia peaks at 0.599, inside the constant. The system
+ * sans peaks at 0.637, outside it, and the worst case is a bare year: "1950"
+ * runs 0.636 in the sans against 0.534 in Georgia, because a sans has no
+ * narrow-digit advantage to give at that size. Switching the charts therefore
+ * means raising the constant, which the test's own message permits but which
+ * then re-derives every tick-drop and gutter fit on the site. That is a change
+ * of its own and is not made here.
  *
  * COLOUR was reviewed and replaced. The ground moves from a cool stone to a
  * warm paper one step deeper than Financial Times paper #FFF1E5, and the party
@@ -88,27 +104,73 @@
   --rev-eg: #6e4d22;  /* estate and gift taxes */
   --rev-mi: #807f78;  /* miscellaneous */
 
+  /* ---- Chrome accents -----------------------------------------------------
+   * Red, white and blue, where the white is the paper itself. These paint the
+   * page's furniture: links, the current route, section numbers, the finding's
+   * rule, the term marker.
+   *
+   * They hold the same two hexes as `--dem` and `--gop`, and the separation
+   * that keeps the meanings apart is SPATIAL, not chromatic. BRIEF.md's rule
+   * reads "do not reuse party colours for non-partisan DATA", and its reason is
+   * that a colour on a series makes a claim the data does not make. Chrome
+   * carries no series. So the constraint is a boundary rather than a palette:
+   * `--accent` and `--accent-warm` are never painted inside an `<svg>`, and
+   * `--dem`/`--gop` are never painted outside one.
+   *
+   * Separate names rather than reusing `--dem` directly, so that a future tweak
+   * to a link colour cannot silently restyle the party strip. */
+  --accent: #0f5499;       /* links, current route, interactive text */
+  --accent-warm: #990f3d;  /* the finding's rule, section numbers, emphasis */
+
+  /* A neutral grey wash for a set-off block of text: the pull quote, the
+   * finding, a figure caption, the limits and apparatus lists. Grey and not a
+   * warmer tint of the paper, so that a filled block reads as a different KIND
+   * of thing rather than as a slightly different paper.
+   *
+   * Marked `role: surface` in the contract, and added to `surfaces()` in
+   * `test_accessibility.py`, so the text painted on it is measured rather than
+   * assumed. `--ink` scores 14.05 and `--ink-soft` 6.03 against it. */
+  --quiet: #e7e4de;
+
   /* ---- Type ---------------------------------------------------------------
-   * Two roles, the way a statistical publication is set: a reading face for
-   * running text, and a sturdier face for tables and chart furniture, which
-   * must hold up at 10-11px and align in columns.
+   * Three roles now. A reading face for running text, the same face for tables
+   * and controls so the interface does not read as a second publication, and a
+   * serif held back for chart furniture, which must hold up at 10-11px and
+   * align in columns.
    */
 
-  /* Reading face. Baskerville and Minion are the finest available and ship on
-   * macOS and Adobe installs respectively; Georgia is the universal floor. */
+  /* Reading face. `system-ui` first, so the page uses whatever the reader's own
+   * system uses: SF on Apple, Segoe on Windows, Roboto on Android, the
+   * distribution's choice on Linux. The named faces behind it are the fallback
+   * for the engines that resolve `system-ui` poorly. */
   --font-text:
-    "Baskerville", "Baskerville Old Face", "Minion Pro", "Minion 3",
-    "Adobe Garamond Pro", "EB Garamond", Garamond, "Palatino Linotype", Palatino,
-    Georgia, "Times New Roman", Times, serif;
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
 
-  /* Data face. Georgia leads deliberately: it was drawn for screens, its
-   * numerals are unusually sturdy at small sizes, and it holds a column. */
-  --font-data:
+  /* Data face, for HTML tables, captions, controls and the footer. The same
+   * stack as the reading face: a serif table under sans prose read as a second
+   * document, and the tabular-figure alignment these need is a font-feature
+   * setting rather than a property of the face. */
+  --font-data: var(--font-text);
+
+  /* Chart furniture, inside SVG only. Georgia leads deliberately: it was drawn
+   * for screens, its numerals are unusually sturdy at small sizes, and it holds
+   * a column. It stays serif because `ADVANCE_EM` is calibrated to it. See the
+   * note at the head of this file. */
+  --font-chart:
     Georgia, "Minion Pro", "Adobe Garamond Pro", "Baskerville",
     "Palatino Linotype", Palatino, "Times New Roman", Times, serif;
 
   /* Numerals. The textbook distinction: old-style figures sit inside a
-   * sentence at x-height; lining tabular figures line up in a column. */
+   * sentence at x-height; lining tabular figures line up in a column.
+   *
+   * `--num-prose` is now very nearly a no-op, and deliberately kept rather than
+   * deleted. No system sans ships old-style figures, so prose numerals are
+   * lining from here on. It stays declared so that a reader whose fallback
+   * face does have them still gets them, and so the distinction the site makes
+   * between a numeral in a sentence and a numeral in a column stays written
+   * down. `.finding` lost this as one of its three channels and gains the
+   * `--quiet` fill in its place. */
   --num-prose: oldstyle-nums proportional-nums;
   --num-table: lining-nums tabular-nums;
 
@@ -125,8 +187,12 @@
    *   --measure-wide         the text column plus the margin column, for a
    *                          figure that needs the whole band
    *
-   * 40rem is the reading measure and it is the only one. At 19px the reading
-   * face advances about 8.6px per character, so 40rem sets about 76 characters.
+   * 45rem is the reading measure and it is the only one. At 19px the system
+   * sans advances about 9.5px per character, measured in the browser, so 45rem
+   * sets about 76 characters. It was 40rem while the reading face was
+   * Baskerville, which advances 8.6px; the same 76 characters cost 5rem more
+   * once the face changed, because a sans is about 11 percent wider per
+   * character at the same size.
    * The four publications this site was measured against run 76 to 80: the
    * Institute for Fiscal Studies at 76, Works in Progress at 78, Asterisk and
    * Our World in Data at 80. The old 55rem ran 108, which is where a reader
@@ -137,8 +203,8 @@
    * mattered while the body was wider than the heading. At one measure a
    * heading and a paragraph end on the same line, which is the stronger signal.
    */
-  --measure: 40rem;
-  --margin-w: 16rem;                     /* the margin column: captions, notes */
+  --measure: 45rem;
+  --margin-w: 15rem;                     /* the margin column: captions, notes */
   --measure-wide: calc(var(--measure) + var(--shell-gap, 2.25rem) + var(--margin-w));
   --gap: 1.5rem;
 
@@ -264,6 +330,10 @@
     --rule: #786d5c;
     --scroll-shadow: rgba(0, 0, 0, 0.45);
     --row-hover: rgba(237, 229, 217, 0.055);
+    --accent: #6fa8e8;
+    --accent-warm: #e8798d;
+    --quiet: #262421;
+
 
     --dem: #6fa8e8;
     --gop: #e8798d;
@@ -301,6 +371,9 @@
   --rule: #786d5c;
   --scroll-shadow: rgba(0, 0, 0, 0.45);
   --row-hover: rgba(237, 229, 217, 0.055);
+  --accent: #6fa8e8;
+  --accent-warm: #e8798d;
+  --quiet: #262421;
 
   --dem: #6fa8e8;
   --gop: #e8798d;

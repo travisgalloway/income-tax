@@ -79,7 +79,9 @@ h1, h2, h3, h4 {
 h1 {
   font-size: var(--ts-5);
   font-weight: 600;
-  letter-spacing: -0.02em;
+  /* Tracking tuned for Baskerville came off with it. A system sans is already
+   * fitted at display sizes and negative tracking closes its counters. */
+  letter-spacing: -0.01em;
   max-width: var(--measure);
   margin: 0 0 var(--sp-3);
 }
@@ -87,7 +89,7 @@ h1 {
 h2 {
   font-size: var(--ts-3);
   font-weight: 600;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.005em;
   max-width: var(--measure);
   margin: var(--sp-6) 0 var(--sp-3);
 }
@@ -95,7 +97,6 @@ h2 {
 h3 {
   font-size: var(--ts-2);
   font-style: normal;
-  letter-spacing: -0.01em;
   max-width: var(--measure);
   margin: var(--sp-5) 0 var(--sp-2);
 }
@@ -149,7 +150,7 @@ p { margin: 0 0 var(--sp-4); max-width: var(--measure); text-wrap: pretty; }
 }
 /* A section number is a locator, not a label. The contents list already names
    the section, so repeating the name here would say it twice. */
-.section-no { font-variant-numeric: var(--num-table); }
+.section-no { font-variant-numeric: var(--num-table); color: var(--accent-warm); }
 
 .standfirst {
   font-size: var(--ts-lede);
@@ -174,11 +175,29 @@ p { margin: 0 0 var(--sp-4); max-width: var(--measure); text-wrap: pretty; }
  * 40rem. Prose is 40rem now, so that channel is spent, and the weight step to
  * 500 that 1263e30 added is not a replacement: `tokens.css` records why an
  * intermediate weight is unreliable across this stack. */
+/* ---- The quiet fill -----------------------------------------------------
+ * Four kinds of block now take a grey wash: the pull quote, the finding, a
+ * figure caption, and the limits and apparatus lists. Each is text set off from
+ * the running prose, and until now each was set off by a rule, a counter or
+ * space alone.
+ *
+ * The fill also replaces something that was lost. `global.css` used to name
+ * three channels separating a finding from the prose around it, and one of them
+ * was old-style figures in the prose against lining figures in the finding. The
+ * system sans has no old-style figures, so that channel is gone; this is what
+ * takes its place.
+ *
+ * Grey, not a warmer tint of the paper, so a filled block reads as a different
+ * kind of thing rather than as slightly different stock. `--quiet` is measured
+ * as a surface in `test_accessibility.py`, so the text on it is checked rather
+ * than assumed.
+ */
 .finding {
   font-size: var(--ts-0);
   line-height: 1.5;
-  border-top: var(--rule-width) solid var(--ink);
-  padding: 0.75rem 0 0;
+  background: var(--quiet);
+  border-top: var(--rule-width) solid var(--accent-warm);
+  padding: 0.8rem 1rem 0.85rem;
   margin: 0 0 1.7rem;
   max-width: var(--measure);
   font-variant-numeric: var(--num-table);
@@ -187,7 +206,24 @@ p { margin: 0 0 var(--sp-4); max-width: var(--measure); text-wrap: pretty; }
 /* Figures inside prose line up as data, not as words. */
 .num { font-variant-numeric: var(--num-table); }
 
-a { color: inherit; text-underline-offset: 0.16em; text-decoration-thickness: 0.5px; }
+/* Links take the accent blue. Chrome only: `--accent` and `--accent-warm` are
+ * never painted inside an `<svg>`, which is the boundary that keeps them from
+ * colliding with `--dem` and `--gop`. See the note in `tokens.css`. */
+a {
+  color: var(--accent);
+  text-underline-offset: 0.16em;
+  text-decoration-thickness: 0.5px;
+}
+a:hover, a:focus-visible { color: var(--accent-warm); }
+/* Chrome that is a destination rather than a link keeps the ink: the wordmark,
+ * the route list, the rail, and the skip link, each of which marks its own
+ * state and would read as 20 competing blue words in a row. */
+.navbar-title, .navbar-routes-wide a, .navbar-routes a, .rail a, .skip-link,
+.navbar-trigger, .cards a, .tableview-trigger, .law-name-button {
+  color: inherit;
+}
+.rail a:hover, .rail a:focus-visible,
+.navbar-routes-wide a:hover, .navbar-routes-wide a:focus-visible { color: var(--accent); }
 
 /* ---- Layout -------------------------------------------------------------- */
 
@@ -223,9 +259,16 @@ a { color: inherit; text-underline-offset: 0.16em; text-decoration-thickness: 0.
  * left edge of the window at its own design width.
  */
 :root {
-  --rail-w: 11rem;
+  --rail-w: 10rem;
   --shell-gap: 2.25rem;
   --page-pad: 2.5rem;
+  /* The clearance under the sticky bar. One number, read by `.page` and
+   * subtracted by `.rail`, because those two used to set it separately and did
+   * not agree: `.page` had no top padding at all, so the content box touched the
+   * navbar rule and was held off it only by the kicker's own half-leading, while
+   * `.rail` carried a private `padding: 2.6rem 0`. The two columns started 58px
+   * apart and neither offset had been chosen. */
+  --page-top: 2.25rem;
 }
 
 .page {
@@ -233,7 +276,7 @@ a { color: inherit; text-underline-offset: 0.16em; text-decoration-thickness: 0.
     var(--rail-w) + var(--measure) + var(--margin-w) + var(--shell-gap) * 2 + var(--page-pad) * 2
   );
   margin: 0 auto;
-  padding: 0 var(--page-pad) 7rem;
+  padding: var(--page-top) var(--page-pad) 7rem;
 }
 
 /* `minmax(0, ...)` on the reading track so a wide table or a long unbroken
@@ -310,6 +353,18 @@ a { color: inherit; text-underline-offset: 0.16em; text-decoration-thickness: 0.
  * this same specificity, so a `display: block` written here loses to it on
  * source order. It sits with the figure rules instead. */
 
+/* /sources takes its h1 from `SOURCES.md`, so it cannot carry a class. Hidden
+ * here for the same reason as every other route's: the navbar already says
+ * Sources. Same treatment as `.vh`, which cannot be applied at the source. */
+.reference-doc > h1 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* ---- Footer -------------------------------------------------------------
  * The site had none. A statistical publication closes by saying when it was
  * built, what its citation is, and where the data came from, and none of those
@@ -354,7 +409,9 @@ section[id]:first-of-type { padding-top: var(--sp-5); }
   align-self: start;
   max-height: calc(100dvh - var(--navbar-h) - 2rem);
   overflow-y: auto;
-  padding: 2.6rem 0;
+  /* No top padding of its own. `.page` sets the clearance for both columns, so
+   * the rail's first line and the content's first line start level. */
+  padding: 0 0 2.6rem;
   font-size: var(--ts-caption);
 }
 .rail ol { list-style: none; margin: 0; padding: 0; }
@@ -461,7 +518,7 @@ section[id]:first-of-type { padding-top: var(--sp-5); }
 .navbar-routes-wide a:hover,
 .navbar-routes-wide a:focus-visible { color: var(--ink); text-decoration: underline; }
 .navbar-routes-wide a[aria-current='page'] {
-  color: var(--ink);
+  color: var(--accent-warm);
   text-decoration: underline;
   text-underline-offset: 0.3em;
 }
@@ -538,21 +595,29 @@ section[id]:first-of-type { padding-top: var(--sp-5); }
 @media (max-width: 62rem) {
   .navbar-routes-wide { display: none; }
   .navbar-disclosure { display: block; margin-left: auto; min-width: 0; flex: 0 0 auto; }
-  .page { padding: 0 1.25rem 4rem; }
+  .page { padding: var(--page-top) 1.25rem 4rem; }
 
   /* The bar takes the page's own gutter here, not `--page-pad`. At 2rem a side
    * the four items below measured 416px against a 390px viewport and the page
    * scrolled sideways, which `smoke.test.ts` check 1 reports on every route. */
-  .navbar { padding: 0 1.25rem; gap: 0.6rem; }
+  .navbar { padding: 0 1.25rem; gap: 0.45rem; }
   /* 0.25rem, where the three words took 0.5rem. The icons brought a 24px floor
-   * with them, so the row buys its width back from the gaps. Measured at 320px,
-   * the bar's five items and its padding come to 315.1px, and no width from
-   * 320px to 1440px scrolls the page sideways. */
+   * with them, so the row buys its width back from the gaps.
+   *
+   * Re-measured when the reading face became a system sans. Small caps are
+   * SYNTHESISED in a sans, by scaling capitals, and the result is wider than the
+   * real small caps Baskerville and Georgia drew: the wordmark went 98px to
+   * 103px and the row's headroom at 320px went from 4.9px to exactly 0. The
+   * tracking below drops from 0.08em to 0.05em, and the row gap above from
+   * 0.6rem to 0.45rem across three gaps, which together buy back 10px. The bar
+   * never overflowed, because the wordmark is shrinkable; what it did was CLIP
+   * the wordmark by 3px, which no overflow check would have reported. Measured
+   * at 320px, and no width from 320px to 1440px scrolls the page sideways. */
   .theme-toggle { flex: 0 0 auto; gap: 0.25rem; }
 
   .navbar-title {
     font-variant-caps: all-small-caps;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.05em;
     font-size: var(--ts-chrome);
     color: var(--ink);
     white-space: nowrap;
@@ -745,6 +810,8 @@ figcaption {
   font-size: var(--ts-data);
   line-height: 1.45;
   color: var(--ink-soft);
+  background: var(--quiet);
+  padding: 0.7rem 0.85rem;
   display: grid;
   gap: 0.3rem;
   align-content: start;
@@ -801,22 +868,27 @@ figcaption .lead,
 
 /* ---- Chart furniture ----------------------------------------------------- */
 
+/* Chart furniture is the one place the serif survives, on `--font-chart`. Not
+ * an aesthetic holdout: `ADVANCE_EM = 0.62` in `axisFit.ts` is a Georgia metric,
+ * every tick-fit and annotation placement is computed from it, and
+ * `smoke.test.ts` measures it against the live browser. Moving these to the sans
+ * means re-deriving that constant first. */
 .axis-label {
-  font-family: var(--font-data);
+  font-family: var(--font-chart);
   font-size: 11px;
   fill: var(--ink-soft);
   font-variant-numeric: var(--num-table);
   font-feature-settings: 'tnum';
 }
 .axis-title {
-  font-family: var(--font-data);
+  font-family: var(--font-chart);
   font-size: 10.5px;
   fill: var(--ink-soft);
   font-variant-caps: all-small-caps;
   letter-spacing: 0.08em;
 }
 .annotation {
-  font-family: var(--font-data);
+  font-family: var(--font-chart);
   font-size: 11.5px;
   fill: var(--ink);
   font-variant-numeric: var(--num-table);
@@ -1069,14 +1141,14 @@ figcaption .lead,
  * itself, next to a table row and a shared readout, is how that holds.
  */
 .legend-label {
-  font-family: var(--font-data);
+  font-family: var(--font-chart);
   font-size: 11px;
   fill: var(--ink);
   font-variant-numeric: var(--num-table);
 }
 
 .dotplot-label {
-  font-family: var(--font-data);
+  font-family: var(--font-chart);
   font-size: 11.5px;
   fill: var(--ink-soft);
 }
@@ -1086,7 +1158,7 @@ figcaption .lead,
 .dotplot-label.dotplot-label-us { fill: var(--ink); font-weight: 700; }
 
 .dotplot-value {
-  font-family: var(--font-data);
+  font-family: var(--font-chart);
   font-size: 11px;
   fill: var(--ink-soft);
   font-variant-numeric: var(--num-table);
@@ -1094,7 +1166,7 @@ figcaption .lead,
 .dotplot-value.dotplot-value-us { fill: var(--ink); font-weight: 700; }
 
 .dotplot-average-label {
-  font-family: var(--font-data);
+  font-family: var(--font-chart);
   font-size: 10.5px;
   font-style: italic;
   fill: var(--ink-soft);
@@ -1377,6 +1449,12 @@ th[aria-sort='descending'] .sort-button { color: var(--ink); }
 th[aria-sort='ascending'] .unit::after { content: ' ▲'; }
 th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 
+/* The dot is bound to the word before it by a non-breaking space, not just by a
+ * margin. It is `aria-hidden`, so a reader who cannot see it loses nothing when
+ * it wraps, but a reader who can see it loses the pairing entirely: at 320px the
+ * system sans pushed "Party-line" onto one line and its swatch onto the next,
+ * which `legend.test.ts` L1 reports. `margin-left` cannot prevent that, because
+ * the break opportunity is the whitespace in the JSX, not the margin. */
 .character-swatch {
   display: inline-block;
   width: 0.6em;
@@ -1385,6 +1463,9 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   margin-left: 0.4em;
   vertical-align: middle;
 }
+/* The cell keeps the label and its dot on one line. The label is two words at
+ * most ("Party-line", "Cross-party"), so nothing long is being forced. */
+.law-table td:has(> .character-swatch) { white-space: nowrap; }
 .character-swatch.swatch-dem { background: var(--dem); }
 .character-swatch.swatch-gop { background: var(--gop); }
 .character-swatch.swatch-mix { background: var(--mix); }
@@ -1426,7 +1507,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
  * in-cell D/R glyph needs its own rule.
  */
 .control-strip-glyph {
-  font-family: var(--font-data);
+  font-family: var(--font-chart);
   font-size: 8px;
   font-weight: 700;
   fill: var(--panel);
@@ -1501,14 +1582,14 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 .state-tile { cursor: pointer; }
 .state-tile:focus-visible { outline: var(--focus-ring) solid var(--ink); outline-offset: 1px; }
 .state-tile-code {
-  font-family: var(--font-data);
+  font-family: var(--font-chart);
   font-size: 10px;
   font-variant-numeric: var(--num-table);
   fill: var(--ink);
   pointer-events: none;
 }
 .state-tile-mark {
-  font-family: var(--font-data);
+  font-family: var(--font-chart);
   font-size: 10px;
   fill: var(--ink);
   pointer-events: none;
@@ -1567,7 +1648,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
  * set an HTML glyph below the smallest size the site sets anywhere. Declared
  * rather than inherited, so the difference is a decision on the page. */
 .state-legend-mark {
-  font-family: var(--font-data);
+  font-family: var(--font-chart);
   font-size: var(--ts-data);
   color: var(--ink);
 }
@@ -1738,7 +1819,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
  */
 
 .holders-label, .maturity-label {
-  font-family: var(--font-data);
+  font-family: var(--font-chart);
   font-size: 11px;
   fill: var(--ink);
   font-variant-numeric: var(--num-table);
@@ -1758,7 +1839,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 }
 
 .maturity-marker-label {
-  font-family: var(--font-data);
+  font-family: var(--font-chart);
   font-size: 10.5px;
   fill: var(--ink-soft);
   font-variant-caps: all-small-caps;
@@ -1798,7 +1879,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 .attrib-panel[hidden] { display: none; }
 .attrib-panel[data-state='inactive'] { display: none; }
 .attrib-row-label {
-  font-family: var(--font-data);
+  font-family: var(--font-chart);
   font-size: 11.5px;
   fill: var(--ink);
   font-variant-numeric: var(--num-table);
@@ -1826,7 +1907,9 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 .limits > li {
   counter-increment: limit;
   max-width: var(--measure);
-  margin: 0 0 1.5rem;
+  margin: 0 0 0.6rem;
+  background: var(--quiet);
+  padding: 0.7rem 1rem;
 }
 /* The run-in head, and its number.
  *
@@ -2084,7 +2167,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 .year-range-readout { margin-top: 0.3rem; }
 
 .panel-title {
-  font-family: var(--font-data);
+  font-family: var(--font-chart);
   font-variant-caps: all-small-caps;
   letter-spacing: 0.07em;
   font-size: 10.5px;
@@ -2095,7 +2178,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
  * because this sentence sits inside the plot rectangle and reads against the
  * marks that would have been there. */
 .panel-empty {
-  font-family: var(--font-data);
+  font-family: var(--font-chart);
   font-size: 11.5px;
   fill: var(--ink-soft);
 }
@@ -2135,6 +2218,7 @@ p:has(.term), li:has(.term), h2:has(.term), .standfirst:has(.term) { position: r
   text-decoration-thickness: var(--rule-width);
   text-underline-offset: 0.18em;
   color: var(--ink);
+  text-decoration-color: var(--accent);
 }
 
 .term-pop {
@@ -2205,6 +2289,8 @@ p:has(.term), li:has(.term), h2:has(.term), .standfirst:has(.term) { position: r
 .apparatus {
   margin: 0 0 1.4rem;
   max-width: var(--measure);
+  background: var(--quiet);
+  padding: 0.8rem 1rem;
   display: grid;
   grid-template-columns: max-content 1fr;
   column-gap: 0.55rem;
@@ -2222,8 +2308,9 @@ p:has(.term), li:has(.term), h2:has(.term), .standfirst:has(.term) { position: r
    set in pixels nobody chose. */
 .brief-quote {
   margin: 1.4rem 0 0.4rem;
-  padding-left: 0.9rem;
-  border-left: var(--rule-width) solid var(--ink);
+  background: var(--quiet);
+  padding: 0.85rem 1rem;
+  border-left: 3px solid var(--accent);
   max-width: var(--measure);
 }
 .brief-quote p { margin: 0; line-height: 1.5; }

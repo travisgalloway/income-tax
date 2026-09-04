@@ -6,21 +6,23 @@ export interface ChartSize {
   margin: { top: number; right: number; bottom: number; left: number }
 }
 
-/* Retuned from 720x396 when the reading column narrowed to 40rem. The hook's
+/* Retuned with the reading column, which is 45rem since the face became a
+ * system sans: the same 76 characters cost 5rem more in a sans than in
+ * Baskerville. The hook's
  * whole contract is that the viewBox matches the container, so that an 11-unit
  * axis label renders as 11 CSS pixels. A 720-unit box in the 640px reading
  * column scales by 0.89 and prints that label at 9.8px. */
-const WIDE: ChartSize = { width: 640, height: 372, margin: { top: 28, right: 22, bottom: 52, left: 68 } }
+const WIDE: ChartSize = { width: 720, height: 400, margin: { top: 28, right: 24, bottom: 52, left: 72 } }
 const NARROW: ChartSize = { width: 360, height: 316, margin: { top: 30, right: 12, bottom: 50, left: 52 } }
 /* The third preset, for a `.figure--wide` figure. Such a figure spans the
- * reading and margin tracks together, about 952px, so the box is 960 rather
+ * reading and margin tracks together, about 996px, so the box is 1000 rather
  * than the 1120 it was while every figure took a 70rem content column.
  *
  * The margins grow with the plot rather than staying fixed. Holding `left: 68`
  * at 960 units would spend a smaller share of the width on the gutter and
  * crowd the leftmost tick label against the axis title.
  */
-const WIDER: ChartSize = { width: 960, height: 470, margin: { top: 32, right: 30, bottom: 56, left: 84 } }
+const WIDER: ChartSize = { width: 1000, height: 480, margin: { top: 32, right: 32, bottom: 56, left: 86 } }
 
 /**
  * Pick a viewBox that matches the container, rather than scaling one fixed

@@ -386,6 +386,9 @@ palette. Scoring a dark hex against the light ground is meaningless arithmetic, 
 | `--rev-cu` | `#1B2026` | 14.57 | 12.74 | series |  |
 | `--rev-eg` | `#6E4D22` | 6.79 | 5.94 | series |  |
 | `--rev-mi` | `#807F78` | 3.57 | 3.13 | series |  |
+| `--accent` | `#0F5499` | 6.79 | 5.94 | text |  |
+| `--accent-warm` | `#990F3D` | 7.50 | 6.56 | text |  |
+| `--quiet` | `#E7E4DE` | 1.13 | 1.01 | surface |  |
 `--rule` clears the 3:1 non-text threshold on both surfaces, at 3.22 and 3.40, and clears the 4.5:1
 text threshold on neither. It failed both thresholds under the old cool-stone palette, at 1.48:1.
 The token is used only for hairline rules, never for text and never for a category-carrying series,
@@ -482,6 +485,9 @@ become the lightest marks in their groups.
 | `--rev-cu` | `#E8D2A8` | 12.53 | 11.00 | series |  |
 | `--rev-eg` | `#BE9660` | 6.81 | 5.98 | series |  |
 | `--rev-mi` | `#726F66` | 3.69 | 3.24 | series |  |
+| `--accent` | `#6FA8E8` | 7.44 | 6.53 | text |  |
+| `--accent-warm` | `#E8798D` | 6.66 | 5.84 | text |  |
+| `--quiet` | `#262421` | 1.20 | 1.05 | surface |  |
 Every `role: text` token clears 4.5:1 on both dark surfaces, and every `role: series` token clears
 3:1 on both. The lowest series ratio is `--rev-mi` at 3.49 against the dark panel. The
 `redundant-encoding:` column is therefore empty here as well.

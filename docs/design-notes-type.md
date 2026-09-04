@@ -8,17 +8,28 @@ the section headed "Superseded" at the foot records what did not survive.
 
 ## Faces
 
-Two roles, both system serifs, and no webfont loads.
+Three roles, and no webfont loads.
 
-`--font-text` is the reading face. It leads with Baskerville and falls through
-Minion, Garamond and Palatino to Georgia and Times. `--font-data` is the face
-for tables, controls and chart furniture. It leads with Georgia, which was
-drawn for screens and holds a numeric column at 11px.
+`--font-text` is the reading face and it is the system sans: `system-ui` first,
+so the page uses whatever the reader's own system uses, with named faces behind
+it for the engines that resolve `system-ui` poorly. `--font-data` is the same
+stack, because a serif table under sans prose read as a second document.
+`--font-chart` is the exception and keeps the old Georgia-led serif.
 
-A system sans for `--font-data` was proposed and rejected. `tokens.css` states
-a serif-only decision, and the change would have moved every text metric under
-40 selectors at once, against a browser lane whose tolerance is one device
-pixel.
+This reverses the serif-only decision recorded here previously, and it returns
+the site to `BRIEF.md:73`, which specified IBM Plex Sans for body text. The
+serif was the departure, not the sans.
+
+Chart furniture stays serif on a measurement rather than a preference.
+`ADVANCE_EM = 0.62` in `axisFit.ts` is a Georgia metric, every tick-fit and
+annotation placement is computed from it, and `smoke.test.ts` asserts that no
+label exceeds it against a live browser measurement. Measured over the site's
+real label strings at 11px with tabular figures on, Georgia peaks at 0.599 and
+the system sans at 0.637. The worst case is a bare year: "1950" runs 0.636 in
+the sans against 0.534 in Georgia, because a sans has no narrow-digit advantage
+to give at that size. Switching the charts means raising the constant, which the
+test's own failure message permits but which then re-derives every tick-drop and
+gutter fit on the site.
 
 ## Type scale
 
@@ -81,10 +92,17 @@ constants that place the labels, by
 ## Weight
 
 Weight is a hierarchy channel at h1 and h2, and nowhere else in the reading
-face. The stack spans Baskerville, Minion, Garamond, Palatino, Georgia and
-Times, and several of those expose no 600. The browser then synthesises the
-weight or snaps it to bold, so a 600 lands at a different strength on a
-different machine. Two elements per route can absorb that risk.
+face. The reason has changed. The old stack spanned six serif families and
+several exposed no 600, so the browser synthesised the weight and it landed at
+a different strength per machine. A system sans has a real 600 everywhere, so
+the constraint is gone and the limit is now a choice: two weighted levels per
+route is what the hierarchy needs, and adding more would spend a channel the
+size ladder already covers.
+
+The tracking went with the face. `h1` and `h2` kept a reduced negative step,
+-0.01em and -0.005em against -0.02em and -0.015em, and `h3` lost its outright.
+Negative tracking was fitted to Baskerville at display sizes; a system sans is
+already fitted there and the same step closes its counters.
 
 The rule used to be 400 at every level. Commit `1263e30` set `font-weight: 600`
 on 16 selectors, which is what made the risk worth bounding rather than
@@ -113,7 +131,21 @@ Commit `1263e30` removed all of it, on the ground that italic slows reading on
 screen at these sizes. Two instances survive, both SVG and both left behind by
 that sweep: `.annotation.series-label` and `.dotplot-average-label`.
 
-Small caps is now the only label channel. It marks a locator or a unit:
+Prose numerals are lining, not old-style. No system sans ships old-style
+figures, so `--num-prose` is very nearly a no-op and is kept declared rather
+than deleted, so a reader whose fallback face has them still gets them. The
+`.finding` lost this as one of its three channels and took the `--quiet` fill in
+its place.
+
+Small caps is synthesised rather than drawn, and the cost was measured. A
+browser scales capitals when the face has no `smcp`, and the result is wider
+than the real small caps Baskerville and Georgia drew: the navbar wordmark went
+98px to 103px and the bar's headroom at 320px went from 4.9px to zero. The bar
+never overflowed, because the wordmark is shrinkable; what it did was clip the
+wordmark by 3px, which no overflow check reports. The wordmark's tracking
+dropped to 0.05em and the bar's gap to 0.45rem, which together buy back 10px.
+
+Small caps is still the only label channel. It marks a locator or a unit:
 `.kicker`, `.figure-no`, `figcaption .lead`, `.tableview .unit`, `.glossary dt`.
 
 ## Measures
@@ -125,8 +157,12 @@ times. The ladder existed to keep a heading's rule shorter than the rules
 around it, and that only worked while the body was the widest thing on the
 page.
 
-`--measure` is 40rem, being 640px. At 19px the reading face advances about
-8.6px per character, so that sets about 76 characters. Table 3 gives the four
+`--measure` is 45rem, being 720px. At 19px the system sans advances about 9.5px
+per character, measured in the browser, so that sets about 76 characters. It was
+40rem while the face was Baskerville, which advances 8.6px: the same 76
+characters cost 5rem more once the face changed, because a sans is about 11
+percent wider per character at the same size. That is why the face change and
+the widening are one change and not two. Table 3 gives the four
 publications the site was measured against.
 
 **Table 3. Reading measure, this site against four comparable publications, at
@@ -135,7 +171,7 @@ advance. Retrieved 2026-09-04.
 
 | Site | Body face | Size | Line height | Column | Characters |
 |---|---|---|---|---|---|
-| This site | Baskerville | 19px | 30.4px | 640px | 76 |
+| This site | System sans | 19px | 30.4px | 720px | 76 |
 | Institute for Fiscal Studies | Tablet Gothic | 20px | 32px | 747px | 76 |
 | Works in Progress | Editor | 18px | 27px | 728px | 78 |
 | Asterisk | Noe Text | 18px | 29px | 750px | 80 |
@@ -145,7 +181,7 @@ The old 55rem ran 108 characters, which is 35 percent wider than any of them
 and is where a reader loses the line return.
 
 `--measure-wide` is the reading column plus the margin column plus the gap
-between them, about 952px. It is not a separate number any more, and only a
+between them, 996px. It is not a separate number any more, and only a
 `.figure--wide` figure reads it: the law explorer and the two state panels.
 `--measure-lede` is gone, its three consumers folded into `--measure`.
 

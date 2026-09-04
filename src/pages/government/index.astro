@@ -41,8 +41,14 @@ const sourcesHref = join('/sources')
   description="Federal taxation, spending, debt and the votes behind them, FY1962 to FY2025."
   sections={routeSections['/government']}
 >
-  <p class="kicker">Route 3 of 3</p>
-  <h1>Government</h1>
+  {/* The route title is in the DOM and out of the picture. The navbar already
+      names this route and underlines it, so a heading repeating that word was
+      the reader seeing it twice. It cannot simply be deleted: `harness.ts`
+      asserts each route's first h1 text on every browser spec, and
+      `test_heading_levels_do_not_skip` wants exactly one h1 per page and no
+      jump to h2. So it stays as the document's heading and its accessible
+      name, and the standfirst opens the page for a sighted reader. */}
+  <h1 class="vh">Government</h1>
   <p class="standfirst">What the federal government collects, what it spends, what it owes, and who voted for each of it.</p>
   <section id="forty-trillion">
     <p class="kicker"><span class="section-no">Section 1</span></p>

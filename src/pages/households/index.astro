@@ -26,8 +26,14 @@ const cbo = cboEffectiveRatesData()
   description="Household income, inequality, and what people actually pay in tax."
   sections={routeSections['/households']}
 >
-  <p class="kicker">Route 2 of 3</p>
-  <h1>Households</h1>
+  {/* The route title is in the DOM and out of the picture. The navbar already
+      names this route and underlines it, so a heading repeating that word was
+      the reader seeing it twice. It cannot simply be deleted: `harness.ts`
+      asserts each route's first h1 text on every browser spec, and
+      `test_heading_levels_do_not_skip` wants exactly one h1 per page and no
+      jump to h2. So it stays as the document's heading and its accessible
+      name, and the standfirst opens the page for a sighted reader. */}
+  <h1 class="vh">Households</h1>
   <p class="standfirst">What a household earns and how far the spread runs. Then what the tax bill actually looks like once <Term id="payroll-tax">payroll tax</Term> is counted.</p>
 
   <section id="what-a-household-earns">

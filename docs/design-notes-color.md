@@ -81,6 +81,39 @@ contrast against the two proposed surfaces. Role and threshold follow
 `docs/contracts/accessibility.md`, which holds text at 4.5:1 and a graphical
 object at 3:1. The verdict column reports the weaker of the two ratios.
 
+## Chrome accents and the quiet fill
+
+Three tokens were added when the site took red, white and blue as highlight
+colours. The white is the paper itself, so only two of the three are new hues.
+
+| Token | Light | Dark | Role | Where |
+|---|---|---|---|---|
+| `--accent` | `#0f5499` | `#6fa8e8` | text | links, the rail's hover, the term marker's underline, the pull quote's rule |
+| `--accent-warm` | `#990f3d` | `#e8798d` | text | the current route, section numbers, the finding's rule |
+| `--quiet` | `#e7e4de` | `#262421` | surface | the fill under the pull quote, the finding, a figure caption, the limits and apparatus lists |
+
+`--accent` and `--accent-warm` hold the same two hexes as `--dem` and `--gop`,
+and the separation that keeps the meanings apart is spatial rather than
+chromatic. `BRIEF.md:81` reads "do not reuse party colours for non-partisan
+**data**", and its stated reason is that a colour on a series invents a claim
+the data does not make. Chrome carries no series. So the rule becomes a
+boundary: `--accent` and `--accent-warm` are never painted inside an `<svg>`,
+and `--dem`, `--gop` and `--mix` are never painted outside one. The boundary is
+checkable in one line, `grep -rn accent src/components/`, which must return
+nothing.
+
+They are separate names rather than direct reuse so that a future change to a
+link colour cannot silently restyle the party strip.
+
+`--quiet` is grey rather than a warmer tint of the paper, so a filled block
+reads as a different kind of thing rather than as slightly different stock. It
+is a third surface, and it was added to `surfaces()` in `test_accessibility.py`
+rather than only to the table below: `test_no_text_selector_paints_with_a_low_contrast_token`
+scores each text selector against every surface that function returns, so a
+surface left out is a pairing the suite reports green without having measured.
+`.finding` and `figcaption` both paint on `--quiet` and on nothing else. `--ink`
+scores 14.05 against it and `--ink-soft` 6.03, both above the 4.5:1 text floor.
+
 **Table 1. Light palette, against ground `#F6F1E8` and panel `#EAE2D4`.**
 Ratios are WCAG 2.1 contrast, computed from the hex values in this table.
 
