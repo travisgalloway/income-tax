@@ -4,6 +4,21 @@
 
 html { -webkit-text-size-adjust: 100%; }
 
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+}
+
+html, .tableview-scroll, .law-table-scroll, .navbar-panel {
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule) transparent;
+}
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--rule); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
+}
+
 body {
   margin: 0;
   background: var(--ground);
@@ -641,6 +656,7 @@ figcaption .lead,
   font-size: 11px;
   fill: var(--ink-soft);
   font-variant-numeric: var(--num-table);
+  font-feature-settings: 'tnum';
 }
 .axis-title {
   font-family: var(--font-data);
@@ -654,6 +670,7 @@ figcaption .lead,
   font-size: 11.5px;
   fill: var(--ink);
   font-variant-numeric: var(--num-table);
+  font-feature-settings: 'tnum';
 }
 
 /* Direct end-of-line series names (sections 5, 6): a line's colour is never
@@ -813,7 +830,23 @@ figcaption .lead,
  * rather than against the table's own overflowing width. §11's caption is the
  * one such descendant today (#63); the declaration is inert for the tables
  * that do not query it. */
-.tableview-scroll { overflow-x: auto; margin-top: 0.9rem; container-type: inline-size; }
+.tableview-scroll {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 70dvh;
+  margin-top: 0.9rem;
+  container-type: inline-size;
+  background:
+    linear-gradient(to right, var(--ground), var(--ground)),
+    linear-gradient(to right, var(--ground), var(--ground)),
+    linear-gradient(to right, var(--scroll-shadow), transparent),
+    linear-gradient(to left, var(--scroll-shadow), transparent);
+  background-position: left center, right center, left center, right center;
+  background-repeat: no-repeat;
+  background-color: var(--ground);
+  background-size: 24px 100%, 24px 100%, 12px 100%, 12px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
 .tableview table {
   border-collapse: collapse;
   font-family: var(--font-data);
@@ -848,6 +881,10 @@ figcaption .lead,
   border: 0;
 }
 .tableview thead th {
+  position: sticky;
+  top: 0;
+  background: var(--ground);
+  z-index: 2;
   vertical-align: bottom;
   font-weight: 400;
   border-bottom: var(--rule-width) solid var(--ink);
@@ -1083,7 +1120,20 @@ figcaption .lead,
  * rules), but left-aligned throughout: most columns here are names and
  * labels, not a single value column. */
 
-.law-table-scroll { overflow-x: auto; margin-top: 1rem; }
+.law-table-scroll {
+  overflow-x: auto;
+  margin-top: 1rem;
+  background:
+    linear-gradient(to right, var(--ground), var(--ground)),
+    linear-gradient(to right, var(--ground), var(--ground)),
+    linear-gradient(to right, var(--scroll-shadow), transparent),
+    linear-gradient(to left, var(--scroll-shadow), transparent);
+  background-position: left center, right center, left center, right center;
+  background-repeat: no-repeat;
+  background-color: var(--ground);
+  background-size: 24px 100%, 24px 100%, 12px 100%, 12px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
 .law-table {
   border-collapse: collapse;
   font-family: var(--font-data);
@@ -1395,6 +1445,10 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   border: 0;
 }
 .sortable-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--ground);
+  z-index: 2;
   vertical-align: bottom;
   font-weight: 400;
   border-bottom: var(--rule-width) solid var(--ink);
@@ -1416,6 +1470,10 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   left: 0;
   background: var(--ground);
   z-index: 1;
+}
+.sortable-table thead th:first-child {
+  top: 0;
+  z-index: 3;
 }
 
 @media (max-width: 30rem) {

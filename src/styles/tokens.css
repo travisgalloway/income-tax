@@ -32,12 +32,15 @@
  */
 
 :root {
+  color-scheme: light;
+
   /* Surface */
   --ground: #ede5d9;   /* page background, a warm paper */
   --panel: #f2ebe1;    /* chart plot areas */
   --ink: #14181d;
   --ink-soft: #57534b;
   --rule: #857e72;
+  --scroll-shadow: rgba(20, 24, 29, 0.14);
 
   /* Party. ONLY for partisan data. Never for holders, maturity, OECD or macro. */
   --dem: #0f5499;
@@ -235,6 +238,7 @@
     --ink: #ede5d9;
     --ink-soft: #a79e90;
     --rule: #786d5c;
+    --scroll-shadow: rgba(0, 0, 0, 0.45);
 
     --dem: #6fa8e8;
     --gop: #e8798d;
@@ -270,6 +274,7 @@
   --ink: #ede5d9;
   --ink-soft: #a79e90;
   --rule: #786d5c;
+  --scroll-shadow: rgba(0, 0, 0, 0.45);
 
   --dem: #6fa8e8;
   --gop: #e8798d;
