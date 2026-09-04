@@ -49,14 +49,17 @@ import {
   XAxis,
   YAxis,
   ZIndexLayer,
-  useChartHeight,
-  useChartWidth,
   usePlotArea,
 } from 'recharts'
-import { AXIS_TITLE_X, placeAxisTitleY } from './axisFit'
+import { AXIS_TITLE_FONT_PX, AXIS_TITLE_X } from './axisFit'
 import { frame as makeFrame, linear, niceExtent } from './scales'
 import { useChartSize } from './useChartSize'
 import { useRovingMarks } from './roving'
+
+/** Baseline-to-plot-edge gap for the horizontal left-axis title, in viewBox
+ *  units. Two thirds of the title's own size, which sets the label clear of
+ *  the plot rule without detaching it from the plot. */
+const AXIS_TITLE_GAP = 7
 
 /** Below this the chart takes fewer ticks. Matches the `narrow` test the
  *  hand-rolled islands already used, so tick density does not change per form. */
@@ -188,45 +191,38 @@ export function PlotGrid() {
 }
 
 /**
- * The rotated left-axis title, placed by the site's own `placeAxisTitleY`.
+ * The left-axis title, set horizontally above the top-left of the plot.
  *
- * MEASURED. Recharts' `position: 'insideLeft'` centres the title on the AXIS
- * BOX, which is `innerHeight` tall and sits below `margin.top`. The two margins
- * are asymmetric (22 above, 50 below at the 360 preset), so that centre is well
- * above the surface's own centre, and a title longer than the panel runs off
- * the top. `/households` §1 shipped "Constant 2024 dollars, log scale" with
- * 4.8px of its first glyph cut away, recorded in `clipping.test.ts`'s
- * `ROTATED_CLIP_BASELINE` under issue #83. `placeAxisTitleY` is the site's own
- * answer, written for `Axis.tsx` and lost in the conversion: it shifts the
- * title along the axis it actually runs on, and returns the plot centre
- * unchanged whenever the title already fits there.
+ * It used to run vertically up the axis, and the rotation was the whole source
+ * of its trouble. Recharts' `position: 'insideLeft'` centres a rotated title on
+ * the AXIS BOX rather than on the surface, and the two vertical margins are
+ * asymmetric, so a title longer than the panel ran off the top: `/households`
+ * §1 shipped "Constant 2024 dollars, log scale" with 4.8px of its first glyph
+ * cut away, recorded under issue #83. `placeAxisTitleY` answered that by
+ * sliding the title along the axis until its box fitted.
+ *
+ * A horizontal title cannot have the defect at all. It is also what the
+ * publications this site was measured against do: the Financial Times, Our
+ * World in Data and Asterisk all set the unit as a line above the plot rather
+ * than as a rotated label beside it. At 10.5px and rotated at the far left of
+ * a 640-unit surface, the old title was the least legible text on the page.
+ *
+ * `x = 0` puts it at the surface's left edge, so it heads the gutter its tick
+ * labels sit in. The chart margins reserve the room above the plot.
  *
  * The frame is rebuilt from Recharts' own layout rather than passed in, so no
  * island has to hand this layer a second copy of geometry it already declares.
- * `usePlotArea` gives the plot rect and the two chart dimensions give the
- * surface, which is every number `placeAxisTitleY` reads.
  */
-function AxisTitleY(props: { value?: unknown; offset?: number }) {
-  const width = useChartWidth()
-  const height = useChartHeight()
+function AxisTitleY(props: { value?: unknown }) {
   const plot = usePlotArea()
   const value = typeof props.value === 'string' ? props.value : null
-  const offset = props.offset ?? AXIS_TITLE_X
-  if (value == null || plot == null || !width || !height) return null
-  const frame = makeFrame(width, height, {
-    top: plot.y,
-    right: Math.max(0, width - plot.x - plot.width),
-    bottom: Math.max(0, height - plot.y - plot.height),
-    left: plot.x,
-  })
-  const y = plot.y + placeAxisTitleY(value, frame)
+  if (value == null || plot == null) return null
+  /* The baseline sits `AXIS_TITLE_GAP` above the plot's top edge, floored so a
+   * chart with an unusually tight top margin cannot push the glyph box off the
+   * surface. */
+  const y = Math.max(AXIS_TITLE_FONT_PX, plot.y - AXIS_TITLE_GAP)
   return (
-    <text
-      transform={`translate(${offset},${y}) rotate(-90)`}
-      textAnchor="middle"
-      className="axis-title"
-      fill="var(--ink-soft)"
-    >
+    <text x={0} y={y} textAnchor="start" className="axis-title" fill="var(--ink-soft)">
       {value}
     </text>
   )
@@ -234,12 +230,12 @@ function AxisTitleY(props: { value?: unknown; offset?: number }) {
 
 /** An axis title, memoised because rule 1 covers this object too. */
 export function useAxisLabel(value: string, axis: 'x' | 'y', offset = AXIS_TITLE_X) {
+  // `offset` is read only by the x axis now; the y title anchors to the plot.
   return useMemo(
     () =>
       axis === 'y'
         ? {
             value,
-            offset,
             /* Recharts cannot express this placement, so the title is drawn
              * here off the site's own arithmetic. See `AxisTitleY`. */
             content: AxisTitleY,

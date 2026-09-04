@@ -25,6 +25,11 @@ const routes = siteRoutes.map((r) => ({ href: join(r.path), label: r.label }))
  * now `/contents`. */
 const home = join(introRoute.path)
 
+/* The build date, stamped once per build rather than read at request time,
+ * because the site is static and a date that moved without the data moving
+ * would misreport the vintage of every figure on the page. */
+const built = new Date().toISOString().slice(0, 10)
+
 const current = Astro.url.pathname.replace(/\/$/, '')
 const isCurrent = (href: string) => href.replace(/\/$/, '') === current
 /* The disclosure names where the reader is. The front door answers that question like any other
@@ -250,6 +255,17 @@ const sourceIconPath =
           </aside>
         )}
       </div>
+      <footer class="page-footer">
+        <p class="page-footer-cite">
+          Income &amp; Tax, the American economy and government in numbers. Built {built}.
+          Every figure names its source in its own caption, and <a href={join('/sources')}>Sources</a>
+          lists each one with its vintage.
+        </p>
+        <p class="page-footer-meta">
+          The prose and the figures are the author's. The data is public and belongs to the
+          agencies named against it. <a href={sourceUrl}>Source and data pipeline on GitHub</a>.
+        </p>
+      </footer>
     </div>
     <script is:inline>
       /* Progressive enhancement over the native <details> disclosure above: the

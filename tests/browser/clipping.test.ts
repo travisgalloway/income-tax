@@ -143,12 +143,21 @@ const ANNOTATION_FLOOR: Record<string, number> = {
   '/government': 16,
 }
 
-/** Rotated `<text>` nodes per route, at both viewports. Every one is an
- *  `AxisLeft` title, which `RechartsFrame.useAxisLabel` renders at -90 degrees. */
+/** Rotated `<text>` nodes per route, at both viewports.
+ *
+ *  Zero on every route, and deliberately so. Every one of these was an
+ *  `AxisLeft` title running -90 degrees up the axis, and `AxisTitleY` now sets
+ *  the title horizontally above the plot instead. A horizontal title is swept
+ *  by the `axis-title` entry in the horizontal limits above, so nothing stopped
+ *  being checked; the vertical sweep below simply has nothing left to walk.
+ *
+ *  The floor stays in place rather than being deleted with its test, because a
+ *  rotated title reintroduced anywhere still needs the vertical sweep, and a
+ *  non-zero count here is what turns it back on. */
 const ROTATED_FLOOR: Record<string, number> = {
-  '/economy': 7,
-  '/households': 10,
-  '/government': 10,
+  '/economy': 0,
+  '/households': 0,
+  '/government': 0,
 }
 
 /** Left-axis tick labels per route, with the number of gutters they sit in.

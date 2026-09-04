@@ -47,7 +47,7 @@ unit toggle composes its accessible name from the number's span id through
 ## The table view trigger
 
 `.tableview-trigger` is the `<summary>`, so it is block-level by default, and its
-`border-bottom` painted the full 1120px of the content column. Every figure
+`border-bottom` painted the full width of the content column. Every figure
 carried one, 11px under the caption's own rule and the same length as it. Twelve
 of the 157 full-width rules on `/government` were this control, doubling a rule
 that already belonged to the caption.
@@ -61,14 +61,30 @@ at `0 0 0.1rem`, which
 `pipeline/tests/test_accessibility.py::_TARGET_HOST_VERTICAL_PADDING` asserts as
 an equality.
 
-## Width
+## Width and the margin column
 
-Every figure renders at `--measure-wide`, which is `--content-w`, 70rem, or
-1120px at 1440px. Running text renders at `--measure`, 55rem. The two were the
-same number until this change, and making them different is what lets a
-figure's rules read as a different level from a paragraph's.
+A figure spans the reading column and the margin column and adopts both with
+`grid-template-columns: subgrid`. Its head rule runs the whole band, its
+graphic sits in the reading column at 640px, the measure of the prose around
+it, and its caption sits beside the graphic in the margin at 256px.
 
-The plot area itself sits at `--panel`, one hair from `--ground` at 1.06:1.
+This is the arrangement the earlier version of this note proposed and the site
+never adopted. The caption used to run the full 1120px underneath the graphic,
+where its Note and Source lines reached about 130 characters.
+
+`.figure--wide` is the exception. There the graphic takes the whole band, about
+952px, and the caption returns beneath it at the reading measure with its rule
+back. Three figures carry it: the law explorer and the two state panels.
+
+Nothing in a figure is auto-placed. The graphic is an Astro island, which
+renders as `<astro-island>` at `display: contents`, so its children rather than
+it become the grid items of whatever contains it. `Figure.astro` wraps the slot
+in `.figure-graphic` so a figure contributes exactly three items: head, graphic,
+caption.
+
+The plot area itself sits at `--panel`, one step toward the ink from `--ground`
+at 1.14:1 in light and 1.15:1 in dark. It was 1.06:1 and, measured rather than
+assumed, 1.03:1 in dark, where the plot rectangle could not be seen at all.
 Three islands draw no gridline and no axis line, so the `--panel` fill is the
 only thing that states the plot rectangle. `docs/design-notes-color.md` records
 the ratios.
@@ -97,22 +113,25 @@ The following appeared in the earlier version of this note and does not describe
 the site.
 
 The four figure widths (`inline` 33rem, `wide` 46rem, `full` 54rem, `bleed`
-70rem). One width ships, `--measure-wide`, and it is 70rem. The `bleed` width's
-cost, a sticky rail painted over by an opaque figure, never arose.
+70rem). Two ship: the reading measure, and `--measure-wide` for the three
+`.figure--wide` figures. The `bleed` width's cost, a sticky rail painted over by
+an opaque figure, never arose.
 
 The two small-multiples grids, `.dn-figure-grid-2` and `.dn-figure-grid-3`, and
 their measured collapse points at 72rem and 48rem. `HouseholdSpread` and
 `BracketHistory` stack their panels inside one SVG instead, and `.panel-title`
 and `.panel-empty` are what remains of the grid proposal.
 
-The geometry the widths were derived from. The page is not 74rem with a 54rem
-right column and a left rail. It is 70rem of content plus a 3rem gap and a 13rem
-contents rail on the right, and the rail leaves the accessibility tree below
-76rem.
+The geometry the widths were derived from. The page is an 11rem contents rail,
+a 40rem reading column and a 16rem margin column, with a 2.25rem gap between
+each and 2.5rem of page padding, totalling 1224px. The rail is on the LEFT and
+leaves the accessibility tree below 78rem; the margin column follows it below
+64rem, and its contents reflow inline beneath whatever they annotate.
 
 The 700-weight figure title, the per-width title and deck sizes, and the 2px
 head rule on a hero figure. The title is `--ts-0` at weight 400 at every figure,
-and every head rule is 1px.
+and every head rule is 1px. Commit `1263e30` briefly set the title to 600;
+`docs/design-notes-type.md` records why weight stops at h2.
 
 The optional deck between the title and the plot. No figure has one.
 

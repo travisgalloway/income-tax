@@ -4,6 +4,18 @@
 
 html { -webkit-text-size-adjust: 100%; }
 
+/* ---- Motion -------------------------------------------------------------
+ * The site has exactly three moving parts, and this is the whole list: the
+ * cross-document view transition below, and the 0.1s `background-color` fade on
+ * a hovered row in each of the three tables.
+ *
+ * Several component comments further down say the component satisfies
+ * `prefers-reduced-motion` "vacuously", by having no motion at all. That is
+ * still true OF THOSE COMPONENTS and it is no longer true of the site. What
+ * covers the three exceptions is the gate here and the global
+ * `prefers-reduced-motion: reduce` reset near `.skip-link`, which drops every
+ * animation and transition on the page to 0.01ms.
+ */
 @media (prefers-reduced-motion: no-preference) {
   @view-transition { navigation: auto; }
 }
@@ -24,11 +36,13 @@ body {
   background: var(--ground);
   color: var(--ink);
   font-family: var(--font-text);
-  /* 18px against a 55rem measure runs near 100 characters. The size and the
-   * 1.7 leading were raised together when the measure was 70rem, and both are
-   * kept: at 100 characters the return sweep still needs the leading. */
+  /* 19px against a 40rem measure runs about 76 characters. The leading comes
+   * down with the measure, from 1.7 to 1.6: the 1.7 was bought to survive a
+   * 100-character return sweep, and a 76-character line does not need it.
+   * Long lines and open leading compound, because both widen the distance the
+   * eye travels back to the start of the next line. */
   font-size: var(--ts-0);
-  line-height: 1.7;
+  line-height: 1.6;
   font-variant-numeric: var(--num-prose);
   text-rendering: optimizeLegibility;
 }
@@ -46,11 +60,15 @@ body {
  * the text it follows. The top space steps down the spacing scale as the level
  * descends. h1 takes none, because the section boundary supplies it.
  *
- * Each level is bounded tighter than the level above it, and tighter than the
- * 55rem body measure: 46rem, 40rem, 36rem, 36rem. A heading has no second line
- * to establish a rhythm, so it needs the shorter line more than a paragraph
- * does. The bounds are also what keep a heading's own rule, where one is drawn,
- * shorter than the rules around it. */
+ * Every level takes `--measure`, the one reading measure. The levels used to
+ * step 46, 40, 36, 36rem against a 55rem body, so that a heading's rule stayed
+ * shorter than the rules around it. That only worked while the body was the
+ * widest thing on the page. It is not any more, and five flush-left widths in
+ * one column made the right edge of a section step in and out five times.
+ *
+ * Weight stops at h2. See the note in `tokens.css`: the stack spans six serif
+ * families and several expose no 600, so a weight step lands at a different
+ * strength per machine. Two elements per route can carry that risk. */
 h1, h2, h3, h4 {
   font-family: var(--font-text);
   font-weight: 400;
@@ -62,7 +80,7 @@ h1 {
   font-size: var(--ts-5);
   font-weight: 600;
   letter-spacing: -0.02em;
-  max-width: 46rem;
+  max-width: var(--measure);
   margin: 0 0 var(--sp-3);
 }
 
@@ -70,26 +88,24 @@ h2 {
   font-size: var(--ts-3);
   font-weight: 600;
   letter-spacing: -0.015em;
-  max-width: 40rem;
+  max-width: var(--measure);
   margin: var(--sp-6) 0 var(--sp-3);
 }
 
 h3 {
   font-size: var(--ts-2);
-  font-weight: 600;
   font-style: normal;
   letter-spacing: -0.01em;
-  max-width: 36rem;
+  max-width: var(--measure);
   margin: var(--sp-5) 0 var(--sp-2);
 }
 
 h4 {
   font-size: var(--ts-1);
-  font-weight: 600;
   font-style: normal;
   font-variant-caps: all-small-caps;
   letter-spacing: 0.08em;
-  max-width: 36rem;
+  max-width: var(--measure);
   margin: var(--sp-4) 0 var(--sp-1);
 }
 
@@ -101,9 +117,9 @@ h4 {
 .kicker + h4 { margin-top: 0; }
 
 /* ---- Typography and hierarchy -------------------------------------------
- * Italic is retired from headings, standfirsts, and captions to improve
- * reading speed and legibility on screens. Hierarchy is carried by size,
- * weight, small caps, and tone.
+ * Italic is retired from headings, standfirsts and captions. Hierarchy is
+ * carried by size, small caps and tone, and by weight at h1 and h2 only.
+ * `tokens.css` states why weight goes no further down the ladder.
  */
 
 /* ---- Running text -------------------------------------------------------- */
@@ -128,13 +144,12 @@ p { margin: 0 0 var(--sp-4); max-width: var(--measure); text-wrap: pretty; }
   font-variant-numeric: var(--num-table);
   letter-spacing: 0.1em;
   font-size: var(--ts-meta);
-  font-weight: 600;
   color: var(--ink-soft);
   margin: 0 0 0.35rem;
 }
 /* A section number is a locator, not a label. The contents list already names
    the section, so repeating the name here would say it twice. */
-.section-no { font-variant-numeric: var(--num-table); font-weight: 600; }
+.section-no { font-variant-numeric: var(--num-table); }
 
 .standfirst {
   font-size: var(--ts-lede);
@@ -142,29 +157,30 @@ p { margin: 0 0 var(--sp-4); max-width: var(--measure); text-wrap: pretty; }
   font-style: normal;
   font-weight: 400;
   color: var(--ink);
-  max-width: var(--measure-lede);
+  max-width: var(--measure);
   margin-bottom: var(--sp-5);
 }
 .standfirst + .finding { margin-top: 1.4rem; }
 
 /* The finding: the section's claim, stated once, with its number in it.
  *
- * It used to be 16px roman at the body's own measure, boxed by two full-length
- * rules in `--ink`. The two rules carried the whole distinction, and they were
- * the heaviest pair on a page that draws a rule every few hundred pixels. The
- * bottom rule is gone and the top one is a hairline. Four other channels now
- * separate a finding from the prose around it, and none of them draws a line:
- * the size matches the body rather than sitting under it, the leading is
- * tighter at 1.45 against 1.7, the measure is 40rem against 55rem, and the
- * figures are lining and tabular inside a sentence set in old-style. */
+ * It used to be boxed by two full-length rules in `--ink`, the heaviest pair on
+ * a page that draws a rule every few hundred pixels. One rule is gone. Three
+ * channels separate a finding from the prose around it and only one is a line:
+ * the top rule, the tighter leading at 1.5 against 1.6, and lining tabular
+ * figures inside a sentence otherwise set in old-style.
+ *
+ * The measure was a fourth channel while prose ran at 55rem and the finding at
+ * 40rem. Prose is 40rem now, so that channel is spent, and the weight step to
+ * 500 that 1263e30 added is not a replacement: `tokens.css` records why an
+ * intermediate weight is unreliable across this stack. */
 .finding {
   font-size: var(--ts-0);
   line-height: 1.5;
-  font-weight: 500;
   border-top: var(--rule-width) solid var(--ink);
   padding: 0.75rem 0 0;
   margin: 0 0 1.7rem;
-  max-width: var(--measure-lede);
+  max-width: var(--measure);
   font-variant-numeric: var(--num-table);
 }
 
@@ -189,47 +205,133 @@ a { color: inherit; text-underline-offset: 0.16em; text-decoration-thickness: 0.
   white-space: nowrap;
 }
 
-/* The page is a centred band holding a 70rem content column and a 13rem
- * contents rail to its right. Both numbers are tokens, because the figure
- * widths derive from the content column and a literal repeated in two files is
- * how those two drift apart.
+/* The page is a centred band of three columns: the contents rail, the reading
+ * column, and a margin column for apparatus. Every width is a token, because
+ * the figure widths derive from them and a literal repeated in two files is how
+ * those two drift apart.
  *
- * 70rem, and not the old 54rem, because the left rail is gone: its 13rem plus
- * the 3rem gap returned to the content, and the review asked for the rest.
+ * The rail moved from the right of the text to its left. Navigation left, notes
+ * right is the arrangement a scholarly page uses, and it is the only one that
+ * seats a margin column without stacking two columns of small type down the
+ * same edge. DOM order is unchanged: `<main>` still precedes the rail, so the
+ * reading order still reaches the content first and the tab-stop counts
+ * `keyboard.test.ts` asserts are untouched. Only `grid-column` moved.
+ *
+ * The band totals 1224px at the default padding. The old one totalled exactly
+ * 1376px, which is what a 1440px viewport leaves after two 2rem pads, so
+ * `justify-content: center` never engaged and the page sat flush against the
+ * left edge of the window at its own design width.
  */
 :root {
-  --content-w: 70rem;
-  --rail-w: 13rem;
-  --shell-gap: 3rem;
-  --page-pad: 2rem;
+  --rail-w: 11rem;
+  --shell-gap: 2.25rem;
+  --page-pad: 2.5rem;
 }
 
 .page {
-  max-width: calc(var(--content-w) + var(--shell-gap) + var(--rail-w) + var(--page-pad) * 2);
+  max-width: calc(
+    var(--rail-w) + var(--measure) + var(--margin-w) + var(--shell-gap) * 2 + var(--page-pad) * 2
+  );
   margin: 0 auto;
   padding: 0 var(--page-pad) 7rem;
 }
 
-/* `minmax(0, ...)` on the content track so a wide table or a long unbroken
+/* `minmax(0, ...)` on the reading track so a wide table or a long unbroken
  * identifier cannot push the grid past the page, which is the failure /sources
- * already had once. The rail track is fixed, so the content takes every
- * remaining pixel up to its cap. */
+ * already had once. */
 .shell {
   display: grid;
-  grid-template-columns: minmax(0, var(--content-w)) var(--rail-w);
+  grid-template-columns: var(--rail-w) minmax(0, var(--measure)) var(--margin-w);
   gap: var(--shell-gap);
   justify-content: center;
   align-items: start;
 }
 
-/* Below the width where both columns fit, the rail leaves the accessibility
- * tree and the content takes the whole band. The disclosure in the site bar
- * carries the same list from here down, so nothing is lost. */
-@media (max-width: 76rem) {
-  .shell { grid-template-columns: minmax(0, 1fr); }
+.shell > .rail { grid-column: 1; grid-row: 1; }
+
+/* ---- The margin column --------------------------------------------------
+ * `<main>` spans the reading and margin tracks and adopts them with `subgrid`,
+ * and every level below it does the same, so a `figcaption` nested three deep
+ * still lands on the page's own margin track. Without subgrid each nesting
+ * level would start a fresh grid and the tracks would not line up.
+ *
+ * Everything defaults to the reading track. Only apparatus opts out.
+ */
+.shell > main {
+  grid-column: 2 / -1;
+  grid-row: 1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-content: start;
+}
+.shell > main > * { grid-column: 1; }
+
+.shell > main > section,
+.shell > main > .reference-doc {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-content: start;
+}
+.shell > main > section > *,
+.shell > main > .reference-doc > * { grid-column: 1; }
+/* Restated at the section rule's own specificity, which is higher than the
+ * bare `.figure` selector below and would otherwise pin a figure to the
+ * reading track. */
+.shell > main > section > .figure,
+.shell > main > .reference-doc > .figure,
+.shell > main > .reference-doc > table,
+.shell > main > .reference-doc > .table-scroll { grid-column: 1 / -1; }
+
+/* Two steps down, not one. First the rail leaves, because the site bar's
+ * disclosure carries the same list from there down and nothing is lost. Then
+ * the margin column leaves, and its contents reflow inline beneath whatever
+ * they annotate, which is where they sat before the column existed. */
+@media (max-width: 78rem) {
+  .shell { grid-template-columns: minmax(0, var(--measure)) var(--margin-w); }
+  .shell > main { grid-column: 1 / -1; }
   .rail { display: none; }
 }
 
+@media (max-width: 64rem) {
+  /* One track, capped at the reading measure and centred, rather than the full
+   * band. Left at `1fr` the track filled the window, so a figure drew at 944px
+   * above a 640px paragraph and the ragged right edge this layout was built to
+   * remove came back between 1012px and 1024px. `minmax(0, ...)` still collapses
+   * the track to the viewport on a phone. */
+  .shell { grid-template-columns: minmax(0, var(--measure)); }
+  .shell > main,
+  .shell > main > section,
+  .shell > main > .reference-doc {
+    display: block;
+  }
+}
+/* The matching figure reset is NOT here. `.figure` is defined further down, at
+ * this same specificity, so a `display: block` written here loses to it on
+ * source order. It sits with the figure rules instead. */
+
+/* ---- Footer -------------------------------------------------------------
+ * The site had none. A statistical publication closes by saying when it was
+ * built, what its citation is, and where the data came from, and none of those
+ * three had a place on the page.
+ *
+ * It sits inside `.page` and outside `.shell`, so it spans the whole band and
+ * starts on the rail's left edge rather than the text's. The rule above it is
+ * the heaviest on the page after a figure head, because it ends the document.
+ */
+.page-footer {
+  margin-top: 4rem;
+  padding-top: 0.9rem;
+  border-top: var(--rule-width) solid var(--ink);
+  font-family: var(--font-data);
+  font-size: var(--ts-data);
+  line-height: 1.5;
+  color: var(--ink-soft);
+  display: grid;
+  gap: 0.4rem;
+}
+.page-footer p { margin: 0; max-width: var(--measure); }
+.page-footer-cite { color: var(--ink); }
 
 /* No rule on a section boundary. `--sp-section` states it, at 37px to 55px, and
  * a rule in the same hairline and the same `--rule` as a figure's caption rule
@@ -290,8 +392,9 @@ section[id]:first-of-type { padding-top: var(--sp-5); }
  * Below 62rem the rail is replaced by a bar fixed to the top of the viewport:
  * site title, current route name, and a native <details> disclosure holding
  * all five route links and the page's full contents list. Deliberately without
- * a transition or an animation anywhere, that is how prefers-reduced-motion is
- * satisfied here, vacuously and greppably.
+ * a transition or an animation anywhere, so prefers-reduced-motion is
+ * satisfied for this component vacuously. See the Motion note at the top of
+ * this file for the three places the site does move.
  */
 
 /* The bar is now the site's navigation at every width, so it is laid out here
@@ -301,8 +404,9 @@ section[id]:first-of-type { padding-top: var(--sp-5); }
  * the bar in flow, so the content starts beneath it without a padding rule and
  * an anchor lands where it should.
  *
- * Deliberately without a transition or an animation anywhere. That is how
- * prefers-reduced-motion is satisfied here, vacuously and greppably.
+ * Deliberately without a transition or an animation anywhere, so
+ * prefers-reduced-motion is satisfied for this component vacuously. See the
+ * Motion note at the top of this file.
  */
 .navbar {
   display: flex;
@@ -321,7 +425,6 @@ section[id]:first-of-type { padding-top: var(--sp-5); }
   font-variant-caps: all-small-caps;
   letter-spacing: 0.09em;
   font-size: var(--ts-chrome);
-  font-weight: 600;
   color: var(--ink);
   text-decoration: none;
   white-space: nowrap;
@@ -359,7 +462,6 @@ section[id]:first-of-type { padding-top: var(--sp-5); }
 .navbar-routes-wide a:focus-visible { color: var(--ink); text-decoration: underline; }
 .navbar-routes-wide a[aria-current='page'] {
   color: var(--ink);
-  font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 0.3em;
 }
@@ -573,10 +675,31 @@ section[id],
  * part of the figure, not an afterthought under it.
  */
 
+/* A figure spans the reading and margin tracks and adopts them, so its head
+ * rule runs the whole band, its graphic sits in the reading column at the
+ * measure of the prose around it, and its caption sits beside the graphic in
+ * the margin. The caption used to run the full 70rem underneath, where its
+ * Note and Source lines reached about 130 characters.
+ *
+ * `.figure--wide` is the exception, for a figure whose geometry needs the whole
+ * band: the two state panels and the law explorer. There the graphic spans both
+ * tracks and the caption returns beneath it at the reading measure. */
 .figure {
   margin: 0 0 2.8rem;
-  max-width: var(--measure-wide);
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-content: start;
 }
+/* Every item placed by hand. Auto-placement cannot be trusted here: the graphic
+ * is an Astro island at `display: contents`, so the number of items a figure
+ * contributes depends on what the island renders. */
+.figure > .figure-head { grid-column: 1 / -1; grid-row: 1; }
+.figure > .figure-graphic { grid-column: 1; grid-row: 2; min-width: 0; }
+.figure > figcaption { grid-column: 2; grid-row: 2; align-self: start; }
+
+.figure--wide > .figure-graphic { grid-column: 1 / -1; grid-row: 2; }
+.figure--wide > figcaption { grid-column: 1; grid-row: 3; max-width: var(--measure); }
 
 .figure-head {
   border-top: var(--rule-width) solid var(--ink);
@@ -606,23 +729,50 @@ section[id],
 }
 .figure-title {
   font-style: normal;
-  font-weight: 600;
   font-size: var(--ts-0);
   color: var(--ink);
 }
 
 .chart { width: 100%; height: auto; display: block; }
 
+/* Set as a margin note, so the rule that used to separate it from the graphic
+ * above is gone: the column gap separates them now, and a hairline drawn across
+ * a 16rem margin beside a chart reads as a second, competing frame. The rule
+ * comes back with the caption below the graphic under `.figure--wide` and below
+ * the `64rem` breakpoint, where the caption is a footer again. */
 figcaption {
   font-family: var(--font-data);
   font-size: var(--ts-data);
   line-height: 1.45;
   color: var(--ink-soft);
+  display: grid;
+  gap: 0.3rem;
+  align-content: start;
+}
+.figure--wide > figcaption {
   margin-top: 0.7rem;
   padding-top: 0.45rem;
   border-top: var(--rule-hair) solid var(--rule);
-  display: grid;
   gap: 0.22rem;
+}
+/* Below the margin column, a figure is a stack again: head, graphic, caption,
+ * each at the reading measure, with the caption's rule back to separate it from
+ * the graphic above. */
+@media (max-width: 64rem) {
+  .figure { display: block; }
+  .figure > .figure-head,
+  .figure > .figure-graphic,
+  .figure > figcaption {
+    grid-column: auto;
+    grid-row: auto;
+  }
+  figcaption {
+    margin-top: 0.7rem;
+    padding-top: 0.45rem;
+    border-top: var(--rule-hair) solid var(--rule);
+    gap: 0.22rem;
+    max-width: var(--measure);
+  }
 }
 /* One definition, wherever a citation-style lead appears: the figure caption
    itself, and the front door's `.apparatus` list, which shows the caption's
@@ -768,7 +918,6 @@ figcaption .lead,
 .unit-toggle-item:hover { color: var(--ink); }
 .unit-toggle-item[data-state='on'] {
   color: var(--ink);
-  font-weight: 600;
   border-bottom-color: var(--ink);
 }
 
@@ -871,7 +1020,6 @@ figcaption .lead,
   text-align: left;
   font-family: var(--font-text);
   font-style: normal;
-  font-weight: 600;
   color: var(--ink);
   font-size: var(--ts-caption);
   padding-bottom: 0.5rem;
@@ -897,8 +1045,15 @@ figcaption .lead,
   border-bottom: var(--rule-hair) solid var(--rule);
   transition: background-color 0.1s ease;
 }
-.tableview tbody tr:hover { background: rgba(20, 24, 29, 0.03); }
-:root[data-theme='dark'] .tableview tbody tr:hover { background: rgba(237, 229, 217, 0.04); }
+/* Row hover, through `--row-hover` and not a literal.
+ *
+ * The dark half of this used to be a `:root[data-theme='dark']` DESCENDANT
+ * selector, which matches only when the toggle has been set to dark
+ * explicitly. System dark with the toggle on `system` is the ABSENCE of
+ * `data-theme`, and that is the state most readers on a dark machine are in:
+ * they got the light-mode wash over a near-black row. The token is set in both
+ * dark blocks in `tokens.css`, so both entry points carry it. */
+.tableview tbody tr:hover { background: var(--row-hover); }
 .tableview tbody tr:last-child { border-bottom: var(--rule-width) solid var(--ink); }
 .tableview th[scope='row'] { text-align: left; font-weight: 400; }
 .tableview .unit {
@@ -1162,7 +1317,12 @@ figcaption .lead,
   padding-bottom: 0.3rem;
   white-space: nowrap;
 }
-.law-table tbody tr { border-bottom: var(--rule-hair) solid var(--rule); }
+/* The third table had no hover at all, so the three behaved differently. */
+.law-table tbody tr {
+  border-bottom: var(--rule-hair) solid var(--rule);
+  transition: background-color 0.1s ease;
+}
+.law-table tbody tr:hover { background: var(--row-hover); }
 .law-table tbody tr:last-child { border-bottom: var(--rule-width) solid var(--ink); }
 .law-table .unit {
   display: block;
@@ -1426,7 +1586,6 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 .basis-toggle-item:hover { color: var(--ink); }
 .basis-toggle-item[data-state='on'] {
   color: var(--ink);
-  font-weight: 600;
   border-bottom-color: var(--ink);
 }
 
@@ -1468,8 +1627,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   border-bottom: var(--rule-hair) solid var(--rule);
   transition: background-color 0.1s ease;
 }
-.sortable-table tbody tr:hover { background: rgba(20, 24, 29, 0.03); }
-:root[data-theme='dark'] .sortable-table tbody tr:hover { background: rgba(237, 229, 217, 0.04); }
+.sortable-table tbody tr:hover { background: var(--row-hover); }
 .sortable-table tbody tr:last-child { border-bottom: var(--rule-width) solid var(--ink); }
 .sortable-table th[scope='row'] { text-align: left; font-weight: 400; }
 
@@ -1635,7 +1793,6 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 .attrib-tab:hover { color: var(--ink); }
 .attrib-tab[data-state='active'] {
   color: var(--ink);
-  font-weight: 600;
   border-bottom-color: var(--ink);
 }
 .attrib-panel[hidden] { display: none; }
@@ -1821,7 +1978,7 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
   color: var(--ink);
   white-space: nowrap;
 }
-.index-figure-title { font-style: normal; font-weight: 600; }
+.index-figure-title { font-style: normal; }
 .index-source {
   font-family: var(--font-data);
   font-size: var(--ts-data);
@@ -1964,8 +2121,8 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
  *    marker in any of them, a marker landing in a container missing from
  *    this rule would position against a higher, unpositioned ancestor.
  *
- * Deliberately without a transition or an animation anywhere: that is how
- * prefers-reduced-motion is satisfied here, vacuously and greppably, the same
+ * Deliberately without a transition or an animation anywhere, so
+ * prefers-reduced-motion is satisfied for this component vacuously, the same
  * way the nav bar satisfies it.
  */
 

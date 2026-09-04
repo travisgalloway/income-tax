@@ -17,16 +17,24 @@
  * floor of 6, so mixed control and Democratic control were indistinguishable to
  * those readers; the deep aubergine lifts the worst party pair to 11.3.
  *
- * SURFACES. `--panel` sits one hair from `--ground`, at 1.06:1 in both themes.
- * It used to sit at 1.20:1 in light and 1.08:1 in dark, and the light value
- * `#FDFAF5` was near white, so every plot area read as a bright card laid on
- * warm paper. A statistical publication prints the plot area at the paper
- * colour or a shade off it, and lets the axis rules and the frame say where
- * the plot is. The two surfaces are not made identical, because three islands
- * (`DebtMaturity`, `DebtHolders`, `WhoPays`) draw no gridline and no axis line
- * at all, so the `--panel` fill is the only thing that states the plot
- * rectangle. At 1.06:1 that rectangle still reads, and it no longer competes
- * with the marks inside it.
+ * SURFACES. `--panel` sits one step from `--ground`, at 1.14:1 in light and
+ * 1.14:1 in dark, and it steps TOWARD the ink in both. It used to sit at
+ * 1.06:1 in both, which is close enough to the paper that the plot rectangle
+ * was very hard to find in light and barely there in dark.
+ *
+ * The panel is a tint of the paper, not a card laid on it. The light value was
+ * once `#FDFAF5`, near white, and every plot area read as a bright card; the
+ * correction then went too far the other way. A statistical publication tints
+ * the plot field a shade toward the ink and lets the axis rules say the rest.
+ * The separation matters because three islands (`DebtMaturity`, `DebtHolders`,
+ * `WhoPays`) draw no gridline and no axis line at all, so the `--panel` fill is
+ * the only thing stating the plot rectangle.
+ *
+ * GROUND. `#ede5d9` was a saturated tan, darker than any comparable
+ * publication: the Financial Times grounds at `#fff1e5`, Asterisk at `#faf8f0`,
+ * Works in Progress at `#fff7f4`, Our World in Data at white. `#f6f1e8` keeps
+ * the warm cast and returns the contrast headroom the charts were spending.
+ * Ink rises from 14.5:1 to 16.3:1 and `--ink-soft` from 6.1:1 to 6.8:1.
  *
  * Every ratio is tabulated in `docs/design-notes-color.md`.
  */
@@ -35,12 +43,17 @@
   color-scheme: light;
 
   /* Surface */
-  --ground: #ede5d9;   /* page background, a warm paper */
-  --panel: #f2ebe1;    /* chart plot areas */
+  --ground: #f6f1e8;   /* page background, a warm paper */
+  --panel: #eae2d4;    /* chart plot areas, one step toward the ink */
   --ink: #14181d;
   --ink-soft: #57534b;
   --rule: #857e72;
   --scroll-shadow: rgba(20, 24, 29, 0.14);
+  /* Table row hover. A token, not two hardcoded rgba pairs in `global.css`:
+     those were written as `:root[data-theme='dark']` descendant selectors, so
+     they never fired for a reader on system dark who had not touched the
+     toggle, that state being the ABSENCE of the attribute. */
+  --row-hover: rgba(20, 24, 29, 0.045);
 
   /* Party. ONLY for partisan data. Never for holders, maturity, OECD or macro. */
   --dem: #0f5499;
@@ -100,28 +113,33 @@
   --num-table: lining-nums tabular-nums;
 
   /* ---- Measure -----------------------------------------------------------
-   * A descending ladder, and the reason it descends is the rules. Every rule on
+   * Two widths, and the reason there are only two is the rules. Every rule on
    * this site is drawn by a `border-top` or a `border-bottom` on a block, so a
-   * rule is exactly as long as the block's measure. When prose, findings,
-   * headings and figures all shared one 70rem bound, every rule on the page was
-   * the same length, and two rules at different levels read as siblings.
+   * rule is exactly as long as the block's measure. The ladder used to descend
+   * through five values (70, 55, 46, 40, 36rem), every one of them flush left,
+   * so the right edge of a page stepped in and out five times per section and
+   * no two rules at different levels shared an end point.
    *
-   * Widths, widest first:
-   *   70rem  --measure-wide  figures, tables, the year-range slider
-   *   55rem  --measure       running text, findings' parent lists, popovers
-   *   46rem  h1
-   *   40rem  h2, --measure-lede
-   *   36rem  h3, h4
+   * Widths now:
+   *   --measure       40rem  running text, every heading, findings, decks
+   *   --measure-wide         the text column plus the margin column, for a
+   *                          figure that needs the whole band
    *
-   * This reverses, for running text only, the earlier decision to widen
-   * everything to the content column. Figures did not narrow: a chart drawn at
-   * 880px loses resolution a paragraph does not lose.
+   * 40rem is the reading measure and it is the only one. At 19px the reading
+   * face advances about 8.6px per character, so 40rem sets about 76 characters.
+   * The four publications this site was measured against run 76 to 80: the
+   * Institute for Fiscal Studies at 76, Works in Progress at 78, Asterisk and
+   * Our World in Data at 80. The old 55rem ran 108, which is where a reader
+   * loses the line return.
+   *
+   * Headings no longer bound themselves tighter than the body. They did that to
+   * keep a heading's rule shorter than the rules around it, but that only
+   * mattered while the body was wider than the heading. At one measure a
+   * heading and a paragraph end on the same line, which is the stronger signal.
    */
-  --measure: 55rem;                          /* running text */
-  --measure-wide: var(--content-w, 70rem);   /* figures and tables */
-  /* The deck belongs to the heading above it, so it takes that heading's bound.
-   * 11 of the 12 decks on a report route follow an h2. */
-  --measure-lede: 40rem;
+  --measure: 40rem;
+  --margin-w: 16rem;                     /* the margin column: captions, notes */
+  --measure-wide: calc(var(--measure) + var(--shell-gap, 2.25rem) + var(--margin-w));
   --gap: 1.5rem;
 
   /* ---- Type scale --------------------------------------------------------
@@ -131,16 +149,22 @@
    * axis label fits between two ticks.
    *
    * Every clamp reaches its minimum at a 360px viewport and its maximum at
-   * 1184px. Weight stays 400 at every level: the serif stack spans Baskerville,
-   * Minion, Garamond and Georgia, and those families expose different
-   * intermediate weights, so a weight step would land differently per machine.
-   * Size, small caps and italic carry the hierarchy instead.
+   * 1184px.
+   *
+   * Weight is a hierarchy channel at two levels only, h1 and h2, and nowhere
+   * else. The reason for the limit is the stack: it spans Baskerville, Minion,
+   * Garamond, Palatino, Georgia and Times, and several of those expose no 600.
+   * The browser then synthesises the weight or snaps it to bold, so a 600 lands
+   * at a different strength on a different machine. Two elements per route can
+   * absorb that; sixteen selectors could not, which is what shipped in 1263e30
+   * and is now reverted. Size, small caps and tone carry every other level.
    */
   --ts-5: clamp(2.15rem, 1.55rem + 2.67vw, 3.24rem);   /* h1 */
   --ts-3: clamp(1.50rem, 1.18rem + 1.42vw, 2.08rem);   /* h2 */
-  --ts-2: clamp(1.33rem, 1.15rem + 0.81vw, 1.66rem);   /* h3, italic */
+  --ts-2: clamp(1.33rem, 1.15rem + 0.81vw, 1.66rem);   /* h3 */
   --ts-1: clamp(1.22rem, 1.16rem + 0.27vw, 1.33rem);   /* h4, small caps */
-  --ts-0: 1.125rem;        /* running text, raised from 1.0625 for the measure */
+  --ts-0: 1.1875rem;       /* 19px running text. Raised with the measure: at
+                              40rem a shorter line carries a larger glyph. */
   --ts-lede: 1.3125rem;    /* standfirst */
 
   /* The ladder skips a step between h1 and h2, a ratio of 1.5625 rather than
@@ -234,11 +258,12 @@
     color-scheme: dark;
 
     --ground: #16130f;
-    --panel: #1c1914;
+    --panel: #232019;
     --ink: #ede5d9;
     --ink-soft: #a79e90;
     --rule: #786d5c;
     --scroll-shadow: rgba(0, 0, 0, 0.45);
+    --row-hover: rgba(237, 229, 217, 0.055);
 
     --dem: #6fa8e8;
     --gop: #e8798d;
@@ -270,11 +295,12 @@
   color-scheme: dark;
 
   --ground: #16130f;
-  --panel: #1c1914;
+  --panel: #232019;
   --ink: #ede5d9;
   --ink-soft: #a79e90;
   --rule: #786d5c;
   --scroll-shadow: rgba(0, 0, 0, 0.45);
+  --row-hover: rgba(237, 229, 217, 0.055);
 
   --dem: #6fa8e8;
   --gop: #e8798d;

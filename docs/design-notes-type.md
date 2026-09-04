@@ -33,10 +33,10 @@ its minimum at a 360px viewport and its maximum at 1184px.
 |---|---|---|---|
 | `--ts-5` | 2.15 | 3.24 | h1 |
 | `--ts-3` | 1.50 | 2.08 | h2 |
-| `--ts-2` | 1.33 | 1.66 | h3, italic |
+| `--ts-2` | 1.33 | 1.66 | h3 |
 | `--ts-1` | 1.22 | 1.33 | h4, small caps |
 | `--ts-lede` | 1.3125 | 1.3125 | standfirst |
-| `--ts-0` | 1.125 | 1.125 | running text |
+| `--ts-0` | 1.1875 | 1.1875 | running text |
 
 The ladder skips a step between h1 and h2. The realised ratio there is 1.5625,
 which is 1.25 squared. An h1 appears once per route and names the whole
@@ -44,9 +44,12 @@ document, so the wider gap is what separates a document title from a section
 head. A `--ts-4` token held that step open as a reserve and no rule ever read
 it. It has been removed.
 
-`--ts-0` is 1.125rem, raised from 1.0625rem when the measure widened. It stayed
-at 1.125rem when the measure came back to 55rem, because a 110-character line
-still reads better at 18px than at 17px.
+`--ts-0` is 1.1875rem, being 19px. It went 1.0625 to 1.125 when the measure
+widened to 70rem, and to 1.1875 when the measure came back to 40rem. A shorter
+line carries a larger glyph, and the body leading came down with it, from 1.7
+to 1.6. The 1.7 was bought to survive a 108-character return sweep. A
+76-character line does not need it, and long lines with open leading compound,
+because both widen the distance the eye travels back.
 
 **Table 2. Type scale below the body size, in rem.** Each value is a size the
 site already sets. None of these is a step on the 1.118 ladder the earlier
@@ -77,67 +80,74 @@ constants that place the labels, by
 
 ## Weight
 
-Weight stays at 400 at every level of the reading face. The serif stack spans
-Baskerville, Minion, Garamond and Georgia, and those families expose different
-intermediate weights, so a weight step would land differently per machine.
+Weight is a hierarchy channel at h1 and h2, and nowhere else in the reading
+face. The stack spans Baskerville, Minion, Garamond, Palatino, Georgia and
+Times, and several of those expose no 600. The browser then synthesises the
+weight or snaps it to bold, so a 600 lands at a different strength on a
+different machine. Two elements per route can absorb that risk.
 
-Two rules broke that and both are fixed. `.glossary dt` was 600 and is now
-small caps at the body size. `.index-term-name` was 600 and now matches it,
-because it is the same term in the other place it appears.
+The rule used to be 400 at every level. Commit `1263e30` set `font-weight: 600`
+on 16 selectors, which is what made the risk worth bounding rather than
+restating. Twelve of those are reverted: h3, h4, `.kicker`, `.section-no`,
+`.figure-title`, `.navbar-title`, the current-route nav link, the three table
+captions, `.index-figure-title`, and the three control on-states, each of which
+already marks itself with `--ink` plus a `border-bottom` in `--ink`.
 
-Weight above 400 survives in three places, all in `--font-data` and all marking
-a state rather than a level: `.law-name-button[aria-pressed='true']`,
+Two more are kept beyond h1 and h2, both `thead th`, in `--font-data`. Georgia
+leads that stack and has a real bold, and a column head has to separate itself
+from 40 rows of numbers set in the same face.
+
+Weight above 400 also survives in three older places, all in `--font-data` and
+all marking a state rather than a level: `.law-name-button[aria-pressed='true']`,
 `.dotplot-label-us` and `.control-strip-glyph`.
 
-## What italic means
+## Italic is retired
 
 Italic used to appear at 26.6px, 21px, 15px, 14px, 12px and 10.5px, on a
-heading, a deck, a label, a caption and two running sentences. Two clauses now
-govern it, and nothing else on the site is italic.
+heading, a deck, a label, a caption and two running sentences. Two clauses
+governed it: above the body size it marked h3 and `.standfirst`, and at or
+below it named a figure's title, a table's caption, a panel's title, a series
+name, a reference label and an index entry.
 
-Above the body size, italic is the third heading level (h3) and the deck that
-follows a heading (`.standfirst`). Size already says "heading", and the italic
-says which of the two it is.
+Commit `1263e30` removed all of it, on the ground that italic slows reading on
+screen at these sizes. Two instances survive, both SVG and both left behind by
+that sweep: `.annotation.series-label` and `.dotplot-average-label`.
 
-At or below the body size, italic names something else on the page. That covers
-a figure's title, a table's caption, a panel's title, a series name on a line,
-a reference line's label, and an index entry's figure title.
-
-Italic is never running text and it is never a value. That is what moved
-`.empty-state` and `.panel-empty` out of it. Both report that a control the
-reader set returned nothing, so both are set in `--font-data` in `--ink-soft`.
-
-Small caps is the other label channel and the two do not overlap. Small caps
-marks a locator or a unit: `.kicker`, `.figure-no`, `figcaption .lead`,
-`.tableview .unit`, `.glossary dt`.
+Small caps is now the only label channel. It marks a locator or a unit:
+`.kicker`, `.figure-no`, `figcaption .lead`, `.tableview .unit`, `.glossary dt`.
 
 ## Measures
 
-The measures form a descending ladder, and the reason it descends is the rules.
-Every rule on the site is a `border-top` or a `border-bottom` on a block, so a
-rule is exactly as long as its block's measure. When prose, findings, headings
-and figures all shared a 70rem bound, every rule on `/government` was 1120px
-and two rules at different levels read as siblings.
+There is one reading measure and everything in the reading face takes it. The
+measures used to form a descending ladder of five values, 70, 55, 46, 40 and
+36rem, all flush left, so the right edge of a section stepped in and out five
+times. The ladder existed to keep a heading's rule shorter than the rules
+around it, and that only worked while the body was the widest thing on the
+page.
 
-**Table 3. Measure tokens and heading caps, in rem, against the 70rem content
-column.** Character counts are measured at 1440px in Baskerville, from the
-rendered box and the face's own mean advance width.
+`--measure` is 40rem, being 640px. At 19px the reading face advances about
+8.6px per character, so that sets about 76 characters. Table 3 gives the four
+publications the site was measured against.
 
-| Where | Value | Box at 1440px | Characters |
-|---|---|---|---|
-| `--measure-wide` | 70 | 1120px | figures and tables |
-| `--measure` | 55 | 880px | 110 at 18px |
-| h1 | 46 | 736px | 32 at 51.8px |
-| h2 | 40 | 640px | 43 at 33.3px |
-| `--measure-lede` | 40 | 640px | 83 at 21px |
-| h3, h4 | 36 | 576px | 59 at 26.6px |
+**Table 3. Reading measure, this site against four comparable publications, at
+a 1440px viewport.** Characters per line derived from the rendered glyph
+advance. Retrieved 2026-09-04.
 
-This reverses, for running text only, an earlier decision to widen everything
-to the content column. Figures did not narrow. A chart drawn at 880px loses
-resolution that a paragraph does not lose.
+| Site | Body face | Size | Line height | Column | Characters |
+|---|---|---|---|---|---|
+| This site | Baskerville | 19px | 30.4px | 640px | 76 |
+| Institute for Fiscal Studies | Tablet Gothic | 20px | 32px | 747px | 76 |
+| Works in Progress | Editor | 18px | 27px | 728px | 78 |
+| Asterisk | Noe Text | 18px | 29px | 750px | 80 |
+| Our World in Data | Lato | 16px | 24px | 628px | 80 |
 
-`--measure-lede` is 40rem rather than a value of its own, because a deck belongs
-to the heading above it and 11 of the 12 decks on a report route follow an h2.
+The old 55rem ran 108 characters, which is 35 percent wider than any of them
+and is where a reader loses the line return.
+
+`--measure-wide` is the reading column plus the margin column plus the gap
+between them, about 952px. It is not a separate number any more, and only a
+`.figure--wide` figure reads it: the law explorer and the two state panels.
+`--measure-lede` is gone, its three consumers folded into `--measure`.
 
 ## Spacing scale
 
