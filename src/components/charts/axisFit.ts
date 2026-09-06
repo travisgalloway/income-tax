@@ -41,7 +41,7 @@ import { estimateTextWidth, placeAnnotation, visibleSpan, type Anchor, type Plac
 
 /** global.css `.axis-label`. */
 export const AXIS_LABEL_FONT_PX = 11
-/** global.css `.axis-title` and `.panel-title`. */
+/** global.css `.axis-title`. */
 export const AXIS_TITLE_FONT_PX = 10.5
 
 /** The offset `Axis.tsx` places left-axis ticks at, end-anchored. */

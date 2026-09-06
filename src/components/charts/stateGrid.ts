@@ -33,24 +33,43 @@ export const TILES: Record<string, { row: number; col: number }> = {
   HI: { row: 7, col: 0 }, TX: { row: 7, col: 3 }, FL: { row: 7, col: 9 },
 }
 
-// Mirrors src/styles/tokens.css `--int` (amber, gives more), `--panel`
-// (stone, the zero midpoint) and `--disc` (teal, gets more). A pure data
-// module cannot read a CSS custom property's computed value without a DOM,
-// so these three stops are kept in sync with tokens.css by hand.
-const NEG = { r: 0xc7, g: 0x7d, b: 0x28 } // --int
-const MID = { r: 0xf3, g: 0xf4, b: 0xf0 } // --panel
-const POS = { r: 0x3e, g: 0x7c, b: 0x86 } // --disc
-
-function lerp(a: number, b: number, t: number): number {
-  return Math.round(a + (b - a) * t)
-}
+/* The ramp's three stops, NAMED rather than copied. `--int` is the amber a
+ * state that gives more takes, `--panel` is the zero midpoint, and `--disc` is
+ * the teal a state that gets more takes.
+ *
+ * They were three hardcoded RGB triples until the site shipped a working dark
+ * palette. Two defects came with the copy, and one of them is the reason the
+ * copy is now gone rather than merely refreshed:
+ *
+ *  1. IT WAS THEME-BLIND. A hex triple cannot know which palette is in force,
+ *     so the cartogram painted the light ramp in dark mode. `--panel` at
+ *     `#f3f4f0` is near-white and every mid-range tile glared against the dark
+ *     ground at `#16130f`.
+ *  2. IT WAS STALE IN LIGHT MODE TOO. The triples were the pre-Financial-Times
+ *     values. `tokens.css` had moved to `--int: #a85c11`, `--panel: #eae2d4`
+ *     and `--disc: #0d7680`, and no test compared the two files.
+ *
+ * `color-mix()` removes the copy instead of maintaining it. The browser
+ * resolves `var(--int)` and `var(--panel)` at paint time, in whichever palette
+ * the cascade has settled on, so a theme switch repaints the tiles with no
+ * JavaScript, no `getComputedStyle`, and no observer watching `data-theme`. It
+ * also keeps this module PURE, which is what let the server render the
+ * cartogram with correct fills in `dist/` rather than a fallback ramp the
+ * island would have to correct on hydration.
+ *
+ * `in srgb` is the same interpolation space the hand-written lerp used, so the
+ * ramp's geometry is unchanged; only the endpoints move with the theme. */
 
 /** Diverging fill for a balance value against a symmetric [-bound, bound]
- *  domain. Non-partisan by construction: this module reads no party colour
- *  token, only the budget-category ramp declared above. */
+ *  domain. Non-partisan by construction: this module names no party colour
+ *  token, only the budget-category ramp described above. */
 export function divergingFill(v: number | null, bound: number): string {
   if (v == null || bound <= 0) return 'var(--rule)'
   const t = Math.max(-1, Math.min(1, v / bound))
-  const [from, to, u] = t < 0 ? [NEG, MID, t + 1] : [MID, POS, t]
-  return `rgb(${lerp(from.r, to.r, u)}, ${lerp(from.g, to.g, u)}, ${lerp(from.b, to.b, u)})`
+  /* The weight is the DISTANCE from the midpoint, so both halves read the same
+   * way: 0 is pure `--panel` and 1 is the pure endpoint. Rounded to two places
+   * because an unrounded ratio prints 17 digits into every one of 51 tiles. */
+  const weight = (Math.abs(t) * 100).toFixed(2)
+  const stop = t < 0 ? 'var(--int)' : 'var(--disc)'
+  return `color-mix(in srgb, ${stop} ${weight}%, var(--panel))`
 }

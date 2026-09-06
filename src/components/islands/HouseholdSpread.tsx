@@ -36,7 +36,6 @@ import { seriesSpan, clampToRange } from '../charts/series'
 import { giniBasis } from '../../data'
 import { YearRange } from './YearRange'
 import { TableView } from './TableView'
-import { AXIS_TITLE_FONT_PX, firstThatFits } from '../charts/axisFit'
 import type { IncomeYear, Top1IncomeSharePoint } from '../../data/types'
 
 type Focus = { series: 'gini'; year: number } | { series: 'top1'; point: Top1IncomeSharePoint } | null
@@ -99,13 +98,12 @@ export function HouseholdSpread({ rows, top1 }: { rows: IncomeYear[]; top1: Top1
     [size.width, top1Height],
   )
 
-  // A panel title is start-anchored at the plot's left edge, so its room is
-  // `W - margin.left - pad`: 644 units at the 720 preset but 306 at 360, where
-  // the Top 1% title needs 312 and is CUT (#66). Chosen by fit against the
-  // frame's own numbers, so it stays right if either preset moves.
-  const titleRoom = size.width - size.margin.left - 2
-  const panelTitle = (variants: string[]) =>
-    firstThatFits(variants, titleRoom, AXIS_TITLE_FONT_PX) ?? variants[variants.length - 1]
+  /* Each panel names itself through its own y-axis title, as a ladder of
+   * variants longest first (`RechartsFrame.useAxisLabel`). The two used to be
+   * separate texts on one line, a `.panel-title` from the plot's left edge and
+   * the axis title from the surface's, and they printed through each other:
+   * "Families Gini index, ratio 0 to 1" over "Families Gini index" overlapped
+   * by 107.5px at 1440px. One text says both things and cannot collide. */
 
   // Read from _meta.gini_basis ("families"), never hardcoded, but capitalised
   // for use as the subject of a label, so a chart title reads "Families Gini
@@ -254,7 +252,10 @@ export function HouseholdSpread({ rows, top1 }: { rows: IncomeYear[]; top1: Top1
             domain={gini.yDomain}
             ticks={gini.yTicks}
             gutter={size.margin.left}
-            unit={`${giniLabelWord} Gini index, ratio 0 to 1`}
+            unit={[
+              `${giniLabelWord} Gini index, ratio 0 to 1`,
+              `${giniLabelWord} Gini index, ratio`,
+            ]}
             format={giniYFormat}
           />
           <Line
@@ -267,11 +268,6 @@ export function HouseholdSpread({ rows, top1 }: { rows: IncomeYear[]; top1: Top1
             connectNulls={false}
             isAnimationActive={false}
           />
-          <PlotOverlay margin={fGini.margin}>
-            <text x={0} y={-6} className="panel-title">
-              {panelTitle([`${giniLabelWord} Gini index`])}
-            </text>
-          </PlotOverlay>
         </LineChart>
       </div>
 
@@ -301,7 +297,11 @@ export function HouseholdSpread({ rows, top1 }: { rows: IncomeYear[]; top1: Top1
             domain={spread.yDomain}
             ticks={spread.yTicks}
             gutter={size.margin.left}
-            unit="Percent of income"
+            unit={[
+              'Top 1% share of income before transfers and taxes, percent',
+              'Top 1% share of pre-tax, pre-transfer income, percent',
+              'Top 1% income share, percent',
+            ]}
             format={top1YFormat}
           />
           {/* `stroke="none"` because the two published points are not a series.
@@ -316,13 +316,6 @@ export function HouseholdSpread({ rows, top1 }: { rows: IncomeYear[]; top1: Top1
             isAnimationActive={false}
           />
           <PlotOverlay margin={fTop1.margin}>
-            <text x={0} y={-6} className="panel-title">
-              {panelTitle([
-                'Top 1% share of income before transfers and taxes',
-                'Top 1% share of pre-tax, pre-transfer income',
-                'Top 1% income share',
-              ])}
-            </text>
             {shownTop1.length === 0 ? (
               <text
                 x={fTop1.innerWidth / 2}

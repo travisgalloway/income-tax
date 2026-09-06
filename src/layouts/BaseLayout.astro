@@ -235,7 +235,17 @@ const sourceIconPath =
       </details>
     </header>
     <div class="page">
-      <div class="shell" data-reference={reference ? '' : undefined}>
+      {/* `data-rail` says whether the rail below rendered, from the same test
+       * that decides it. `/sources` sections nothing, so it has no contents
+       * list and no rail, and the shell was still declaring a 160px rail track
+       * beside 36px of gap for it. The flag is an attribute rather than a
+       * `:has(.rail)` test for the reason `data-reference` is: this is a fact
+       * about the layout, settled here at build time. */}
+      <div
+        class="shell"
+        data-reference={reference ? '' : undefined}
+        data-rail={sections.length > 0 ? '' : undefined}
+      >
         {/* `<main>` precedes the rail in the DOM now, where the old left rail
          * preceded it. Reading order therefore reaches the content first, and
          * the contents list reads as the aside it is. */}

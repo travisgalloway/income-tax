@@ -280,19 +280,55 @@ therefore carry the identity for the pairs above.
 ## Dark-mode mechanism
 
 The dark palette follows `satnaing/astro-paper`. A `data-theme` attribute selects
-the palette, and a media query supplies the operating-system default. Both live in
-`src/styles/design-next-color.css`.
+the palette, and a media query supplies the operating-system default. Both blocks
+live in `src/styles/tokens.css`.
 
-The media block is written as
-`:where(:root:not([data-theme='light'])) .dn:not([data-theme='light'])`. The
-`:where()` wrapper holds the root part at zero specificity. The two
-`:not([data-theme='light'])` guards let an explicit light choice win on an
-operating system set to dark. The attribute block
-`.dn[data-theme='dark'], :root[data-theme='dark'] .dn` follows the media block. An
-explicit dark choice therefore wins on an operating system set to light.
+The site has three theme states and `system` is the default, written as the
+absence of `data-theme` on `:root`. The theme control removes the attribute for
+`system` rather than setting a third value, so the media query needs no third
+branch.
+
+Both dark blocks must out-specify the base `:root` block. The base block scores
+(0,1,0). The media block is written as `:root:not([data-theme='light'])`, which
+scores (0,2,0), because `:not()` takes the specificity of its argument and
+`[data-theme='light']` is (0,1,0). The attribute block
+`:root[data-theme='dark']` also scores (0,2,0) and is written second, so source
+order settles the tie in favour of an explicit choice. Both blocks exclude an
+explicit light stamp, so a reader who chooses light keeps light on an operating
+system set to dark.
 
 Each block also sets `color-scheme`, so form controls, scrollbars and the
 browser's own surfaces follow the palette.
+
+### The dark palette never rendered for a reader on system dark
+
+The media block was once written as `:where(:root:not([data-theme='light']))`.
+`:where()` forces a selector to specificity (0,0,0), so the base `:root` block at
+(0,1,0) beat every declaration the media query made. A reader on a dark-set
+operating system who had not touched the toggle, which is the state the site
+ships in, was served the full light palette. Only the explicit Dark button worked.
+
+The defect was measured on all seven routes with `prefers-color-scheme: dark` and
+no `data-theme` attribute. Before the fix, `--ground` resolved to `#F6F1E8` and
+`color-scheme` to `light`. After it, `--ground` resolves to `#16130F` and
+`color-scheme` to `dark`, and all 29 tokens the block declares resolve to the
+values in Table 2. System dark and explicit dark now resolve identically: all 66
+custom properties on `:root` match, on every route.
+
+Two consequences follow. The first is that the outage covered every dark
+declaration, not the ground alone, so the dark palette's first real exposure to
+readers dates from this fix rather than from the commit that introduced it. The
+second concerns `--row-hover`. Commit `0956b3f` moved the table row hover from a
+pair of `:root[data-theme='dark']` descendant selectors in `global.css` to a
+token declared in both dark blocks. The token was correct in both. The reader it
+was written for still received the light wash, because the block declaring the
+dark value lost the cascade.
+
+`tests/browser/theme.test.ts` asserts the cascade at runtime, in a browser
+context with `colorScheme: 'dark'` and no attribute. The Python lane cannot make
+that assertion: `test_the_two_dark_theme_blocks_declare_the_same_hexes` reads the
+two blocks as text and checks that they declare the same values, which stayed
+true throughout the outage.
 
 ## Deviations from the `dataviz` skill
 

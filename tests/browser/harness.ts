@@ -268,11 +268,16 @@ export async function openRoute(
   site: Site,
   route: Route,
   viewport: ViewportSize,
-  opts: { javaScriptEnabled?: boolean; hasTouch?: boolean } = {},
+  opts: { javaScriptEnabled?: boolean; hasTouch?: boolean; colorScheme?: 'light' | 'dark' } = {},
 ): Promise<{ context: BrowserContext; page: Page }> {
   const context = await site.browser.newContext({
     viewport: { width: viewport.width, height: viewport.height },
     javaScriptEnabled: opts.javaScriptEnabled ?? true,
+    // What the operating system asks for, which is what `prefers-color-scheme`
+    // reads. Default 'light' and not Playwright's own default, so every spec
+    // that does not name a scheme keeps measuring the light palette it was
+    // baselined against; `theme.test.ts` is the one caller that asks for dark.
+    colorScheme: opts.colorScheme ?? 'light',
     // `hasTouch` alone yields `(pointer: coarse)`, `(hover: none)`,
     // `(any-pointer: coarse)` and `maxTouchPoints = 1`, measured, and the
     // reason `isMobile` is deliberately NOT set: it forces a mobile UA and a

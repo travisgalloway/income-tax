@@ -51,15 +51,27 @@ import {
   ZIndexLayer,
   usePlotArea,
 } from 'recharts'
-import { AXIS_TITLE_FONT_PX, AXIS_TITLE_X } from './axisFit'
+import { AXIS_TITLE_FONT_PX, AXIS_TITLE_X, firstThatFits } from './axisFit'
 import { frame as makeFrame, linear, niceExtent } from './scales'
 import { useChartSize } from './useChartSize'
 import { useRovingMarks } from './roving'
 
 /** Baseline-to-plot-edge gap for the horizontal left-axis title, in viewBox
- *  units. Two thirds of the title's own size, which sets the label clear of
- *  the plot rule without detaching it from the plot. */
-const AXIS_TITLE_GAP = 7
+ *  units. It is one em plus a half-leading rather than the two thirds of an em
+ *  it started at, because the topmost y tick is CENTRED on the plot's top edge
+ *  and reaches 5.5 units above it. At 7 the title's descender crossed that tick
+ *  by 2.1px on `/households` §3 ("Percent" over "100%", "Brackets, count" over
+ *  "60") and by 0.8px on `/economy` §2 ("Percent per year" over "18%"). MEASURED
+ *  in Chromium at 1440px and 390px; 11 leaves about 2 units of daylight at both.
+ *
+ *  It cannot grow much further: the baseline is `plot.y - AXIS_TITLE_GAP` and
+ *  the smallest top margin on the site is 28, so the glyph box's own 9.3 units
+ *  of ascent leave 7.7 units of headroom at 11. */
+const AXIS_TITLE_GAP = 11
+
+/** Padding between the axis title's right end and the plot's right edge, in
+ *  viewBox units, used when picking which variant of the title fits. */
+const AXIS_TITLE_PAD = 2
 
 /** Below this the chart takes fewer ticks. Matches the `narrow` test the
  *  hand-rolled islands already used, so tick density does not change per form. */
@@ -227,50 +239,81 @@ export function PlotGrid() {
  * `x = 0` puts it at the surface's left edge, so it heads the gutter its tick
  * labels sit in. The chart margins reserve the room above the plot.
  *
+ * IT IS THE ONLY TEXT ON THAT LINE. A stacked figure used to draw a second
+ * label there, `.panel-title`, from the plot's left edge, and any title wider
+ * than the left gutter printed straight through it: `/households` §2 shipped
+ * "Families Gini index, ratio 0 to 1" over "Families Gini index" with 107.5px
+ * of the two boxes on top of each other. The panel's name now arrives as a
+ * VARIANT LADDER in this title, longest first, so one line carries the panel
+ * and its unit together. See `useAxisLabel`.
+ *
  * The frame is rebuilt from Recharts' own layout rather than passed in, so no
  * island has to hand this layer a second copy of geometry it already declares.
  */
-function AxisTitleY(props: { value?: unknown }) {
-  const plot = usePlotArea()
-  const value = typeof props.value === 'string' ? props.value : null
-  if (value == null || plot == null) return null
-  /* The baseline sits `AXIS_TITLE_GAP` above the plot's top edge, floored so a
-   * chart with an unusually tight top margin cannot push the glyph box off the
-   * surface. */
-  const y = Math.max(AXIS_TITLE_FONT_PX, plot.y - AXIS_TITLE_GAP)
-  return (
-    <text x={0} y={y} textAnchor="start" className="axis-title" fill="var(--ink-soft)">
-      {value}
-    </text>
-  )
+function makeAxisTitleY(variants: readonly string[]) {
+  return function AxisTitleY() {
+    const plot = usePlotArea()
+    if (plot == null || variants.length === 0) return null
+    /* The title starts at the surface's left edge and the plot's right edge is
+     * where the room ends, so the ladder is measured against the whole of it.
+     * The shortest rung is drawn when even that does not fit: an axis with no
+     * unit breaks BRIEF.md rule 2, which is worse than a tight line. */
+    const room = Math.max(0, plot.x + plot.width - AXIS_TITLE_PAD)
+    const value =
+      firstThatFits(variants, room, AXIS_TITLE_FONT_PX) ?? variants[variants.length - 1]
+    /* The baseline sits `AXIS_TITLE_GAP` above the plot's top edge, floored so a
+     * chart with an unusually tight top margin cannot push the glyph box off the
+     * surface. */
+    const y = Math.max(AXIS_TITLE_FONT_PX, plot.y - AXIS_TITLE_GAP)
+    return (
+      <text x={0} y={y} textAnchor="start" className="axis-title" fill="var(--ink-soft)">
+        {value}
+      </text>
+    )
+  }
 }
 
-/** An axis title, memoised because rule 1 covers this object too. */
-export function useAxisLabel(value: string, axis: 'x' | 'y', offset = AXIS_TITLE_X) {
+/**
+ * An axis title, memoised because rule 1 covers this object too.
+ *
+ * `value` is one string, or a ladder of them longest first. A ladder is how a
+ * stacked panel names itself AND its unit on the one line above the plot: the
+ * y title picks the longest rung that fits the plot's width, so 1440px reads
+ * "Top-bracket threshold, constant 2024 dollars (log scale)" and 390px reads
+ * "Top bracket, 2024 $ (log)". The x title takes the longest rung as written.
+ */
+export function useAxisLabel(
+  value: string | readonly string[],
+  axis: 'x' | 'y',
+  offset = AXIS_TITLE_X,
+) {
+  /* Rule 1 again: `variants` is a fresh array whenever the caller writes the
+   * ladder inline, so the memo is keyed on the TEXT rather than on the array. */
+  const key = typeof value === 'string' ? value : value.join('')
   // `offset` is read only by the x axis now; the y title anchors to the plot.
-  return useMemo(
-    () =>
-      axis === 'y'
-        ? {
-            value,
-            /* Recharts cannot express this placement, so the title is drawn
-             * here off the site's own arithmetic. See `AxisTitleY`. */
-            content: AxisTitleY,
-          }
-        : {
-            value,
-            position: 'insideBottom' as const,
-            /* Not zero. `insideBottom` puts the text ANCHOR on the axis box's
-             * bottom edge, and the glyph box then hangs 2px below the surface,
-             * which `smoke.test.ts`'s vertical-containment check reported on
-             * every x axis on the site. The offset lifts the whole title back
-             * inside. Measured at 390px and 1440px. */
-            offset: 4,
-            className: 'axis-title',
-            fill: 'var(--ink-soft)',
-          },
-    [value, axis, offset],
-  )
+  return useMemo(() => {
+    const variants = typeof value === 'string' ? [value] : [...value]
+    return axis === 'y'
+      ? {
+          value: variants[0],
+          /* Recharts cannot express this placement, so the title is drawn
+           * here off the site's own arithmetic. See `makeAxisTitleY`. */
+          content: makeAxisTitleY(variants),
+        }
+      : {
+          value: variants[0],
+          position: 'insideBottom' as const,
+          /* Not zero. `insideBottom` puts the text ANCHOR on the axis box's
+           * bottom edge, and the glyph box then hangs 2px below the surface,
+           * which `smoke.test.ts`'s vertical-containment check reported on
+           * every x axis on the site. The offset lifts the whole title back
+           * inside. Measured at 390px and 1440px. */
+          offset: 4,
+          className: 'axis-title',
+          fill: 'var(--ink-soft)',
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, axis, offset])
 }
 
 /** A tick formatter with a stable identity. Rule 1 names `tickFormatter`
@@ -287,9 +330,13 @@ export interface AxisProps {
   scale?: 'linear' | 'log'
   /** Gutter, from `size.margin`. Declared here because the chart margin is zeroed. */
   gutter: number
-  /** The unit. Required: `Figure.astro` already throws on a missing axis unit,
-   *  and a bare number axis is the defect that throw exists to prevent. */
-  unit: string
+  /** The axis title. Required: `Figure.astro` already throws on a missing axis
+   *  unit, and a bare number axis is the defect that throw exists to prevent.
+   *
+   *  One string, or a ladder of them longest first. A panel inside a stacked
+   *  figure passes a ladder that names the panel AND its unit, because this
+   *  title is the only text on the line above the plot. See `useAxisLabel`. */
+  unit: string | readonly string[]
   format: (v: number) => string
   dataKey?: string
 }

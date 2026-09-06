@@ -241,6 +241,58 @@ The space above steps down the spacing scale as the level descends, from
 boundary supplies it. An eyebrow belongs to the heading beneath it, so a heading
 after a `.kicker` gives up its own top space.
 
+## One left edge
+
+Every block of text on a route starts on the same vertical. The page had four
+of them on the front door alone, at 320, 334.4, 336 and 339px, and each of the
+three strays came from a filled block insetting its own text.
+
+The rule is now stated once. A filled block insets its text by `--fill-pad` and
+cancels that inset with a negative margin of the same size, so the tint runs
+`--fill-pad` past the column on each side and the first character lands on the
+column's own edge. Five blocks obey it: `.finding`, `.limits > li`,
+`.apparatus`, `.brief-quote` and a `figcaption` on the reading spine.
+`--fill-pad` is 1rem, and it widens to 1.25rem below 62rem, which is the page's
+own gutter there, so the tint reaches the window edge rather than stopping 4px
+short of it.
+
+A caption in the margin column is the one exception and keeps its inset. In the
+margin the fill is the column: every caption on a route insets by the same
+13.6px, nothing else is set against that edge, and bleeding it would cut the
+36px between a chart and its note to 20px. A caption under a wide figure, and
+every caption below 67.25rem, sits on the reading column's own edge and bleeds
+with the rest.
+
+Three edges outside the reading column survive, and each is a column of its own:
+the `.apparatus` definition track at 384.5px, a margin-column caption at
+1089.6px, and the `.holders-foreign-list` row inside Figure 2.
+
+The bar and the footer take the same vertical. `--page-max` is declared on
+`:root` and `header.navbar` indents by whatever `.page` is centred by, where the
+bar used to pin its content at `--page-pad` from the window edge: the wordmark
+sat 84px left of the rail at 1440px, 47px at 1366px and 4px at 1280px.
+
+`/sources` renders no rail, so its shell declares no rail track and its document
+starts on that same vertical rather than centring the remainder, which put it at
+222px, level with nothing.
+
+## Breakpoints are sums
+
+Each layout step is the width its own layout stops fitting at, written as a
+range query so the boundary keeps the layout that fits there. Three tracks plus
+two gaps plus two page pads is 79.5rem; two tracks plus one gap plus two pads is
+67.25rem. They were 78rem and 64rem, which held each layout past its own width:
+the reading column rendered at 697 to 719px from 1249 to 1271, and at 669 to
+719px from 1025 to 1075, against the 720px the measure is specified at. A track
+declared `minmax(0, var(--measure))` shrinks silently, so no overflow check
+reported it.
+
+The 62rem disclosure breakpoint did not move, and the wide bar was made to fit
+above it instead. The bar measured 934.6px against the 913px a 993px window
+leaves, so a route link wrapped and the bar stood 89px tall from 993 to 1014px.
+The row gap went 1.25rem to 1rem and the route list's gap 1.4rem to 1.1rem,
+which gives back 36px and fits the wide bar down to 979px.
+
 ## Superseded
 
 The following appeared in the earlier version of this note and does not

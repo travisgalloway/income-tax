@@ -455,6 +455,30 @@ stays the more legible of the two and neither vanishes. `--band` itself was not 
 24 tokens at the same values, because a value edited in one copy alone would ship a palette that
 depends on how the reader arrived at dark.
 
+**Declaring a value and resolving it are different claims, and the second one needs a browser.** The
+media block was written as `:where(:root:not([data-theme='light']))` until this revision.
+`:where()` forces a selector to specificity (0,0,0), and the base `:root` block scores (0,1,0), so
+the media query lost every declaration it made. The dark palette therefore never rendered for a
+reader on a dark-set operating system with the theme control on `system`, which is the state the
+site ships in; only the explicit Dark button worked. The Python test above stayed green throughout,
+because both blocks declared the right hexes the whole time. The selector is now
+`:root:not([data-theme='light'])`, which scores (0,2,0), and `:root[data-theme='dark']` ties at
+(0,2,0) and is written second so an explicit choice still wins.
+
+`tests/browser/theme.test.ts` closes the gap. It parses the three palette blocks out of
+`tokens.css` rather than copying hexes, so it tests the cascade and never the palette's contents,
+and it asserts three things in a real browser. T1 opens each of the seven routes in a context with
+`colorScheme: 'dark'` and no `data-theme` attribute, then asserts that `color-scheme` computes to
+`dark`, that all 29 tokens in the dark block resolve to their dark values, and that `body` paints
+the dark `--ground`. T2 asserts the light palette under `colorScheme: 'light'` on the same seven
+routes. T3 drives the site bar's own theme control and asserts that an explicit choice beats the
+operating system in both directions. Colours are compared through a probe element's computed
+`color`, so a hex and an `rgba()` spelling of one colour compare equal. The spec also fails on the
+literal text `:where(:root`, which names the cause rather than reporting a wrong ground.
+
+The two dark blocks now resolve identically at runtime: all 66 custom properties on `:root` match
+between system dark and explicit dark, on every route.
+
 The ratios below are computed against this palette's own surfaces, the ground `#16130F` and the
 panel `#1C1914`. The steps are a selection rather than an inversion, so `--mand` and `--rev-cu`
 become the lightest marks in their groups.
@@ -597,7 +621,9 @@ holds it, and the browser lane deliberately does not duplicate it.
 | 38 | #74: that the label survives a longer, data-driven number | **ASSERTED (driven)**. L3 replaces the legend's two currency strings in the DOM at each of the three widths, with `$1,113,122,999` and again with a 45-character unbreakable token, and re-runs both the line-sharing and the overflow halves |
 | 39 | #75: that every author focus ring on the site is the same width, that the width clears WCAG 2.2 SC 2.4.13, and that widening it clips nothing | **ASSERTED**, `tests/browser/focus.test.ts`, four guards. F1: seven ring-painting classes on `/government` and `/households` at both viewports, the count of classes measured asserted as **7 before any width is compared**, each held to `isAuthorRing` (so Chromium's UA `outline-style: auto` ring cannot satisfy it) and to the runtime-read token, plus the skip link's `--panel` colour override. F2: every laid-out mark-bearing `<svg>` on the three chart routes (**5 / 8 / 13 of 5 / 8 / 14**, the one omission being `AttribChart`'s `display: none` second panel), driven by **ArrowRight** so #69's fallback is the rule under measurement, asserting `vector-effect: non-scaling-stroke` and `stroke-width === token`, and **refusing to run unless at least one chart's screen-CTM scale is not 1**. F3: no ring clipped on a container's **non-scrollable** axis, the scrollable axes computed per container rather than named; and `documentElement.scrollWidth - clientWidth === 0` while focusing every control on all seven routes, against per-route floors that **exclude #71's scroll containers** (focusable exactly when they overflow, hence font-metric dependent, two on `/government` at 1440px on macOS, one on Linux) and assert their presence separately as `>= 1`. F4: zero neighbouring marks fully enclosed by a focused ring at 390px, with a two-group carried exception pinned by **group identity** |
 
-**Of the 39, 26 are asserted, 3 are covered elsewhere, and 10 remain human-judged.** Each of the 10
+| 40 | That each of the four combinations of operating-system preference and theme choice resolves the palette it should, on every route | **ASSERTED**, `tests/browser/theme.test.ts` T1/T2/T3. The three palette blocks are parsed out of `tokens.css` rather than copied, so the spec tests the cascade and never the palette's contents, and the block sizes (**61** base declarations, **30** in each dark block) are asserted before a browser opens. T1 sweeps all seven routes with `colorScheme: 'dark'` and no `data-theme`: `color-scheme` computes `dark`, all 29 dark tokens resolve to their dark values, `body` paints the dark `--ground`. T2 sweeps the same seven under `colorScheme: 'light'`. T3 drives the site bar's own control and asserts light-on-dark, dark-on-light and dark-on-dark. Colours are compared through a probe element's computed `color`, so a hex and an `rgba()` spelling compare equal. Added with the fix for the `:where()` specificity defect described under "The dark theme's tokens" |
+
+**Of the 40, 27 are asserted, 3 are covered elsewhere, and 10 remain human-judged.** Each of the 10
 carries a stated reason, and none of them is a shortage of time. The reasons are assistive technology
 that does not exist in CI, a pixel judgement, a copy judgement, a viewport outside this contract, and
 a probe whose assertion would pin the suite to a third-party internal.

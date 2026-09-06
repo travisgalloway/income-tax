@@ -193,14 +193,27 @@ p { margin: 0 0 var(--sp-4); max-width: var(--measure); text-wrap: pretty; }
  * kind of thing rather than as slightly different stock. `--quiet` is measured
  * as a surface in `test_accessibility.py`, so the text on it is checked rather
  * than assumed.
+ *
+ * THE FILL BLEEDS AND THE TEXT DOES NOT. Every filled block insets its text by
+ * `--fill-pad`, and every one of them cancels that inset with a negative margin
+ * of the same size, so the tint runs `--fill-pad` past the column on each side
+ * and the first character still lands on the column's own left edge. Without
+ * the bleed the front door alone showed four left edges in the content area,
+ * 320, 334.4, 336 and 339px, one per kind of fill, against the single 320 every
+ * unfilled block on the site starts at. The fill is a surface; a surface may
+ * hang into the gutter, and the spine may not bend.
+ *
+ * `--fill-pad` widens to the page's own gutter below 62rem, where the reading
+ * column is the page: the tint reaches the window edge there rather than
+ * stopping 4px short of it.
  */
 .finding {
   font-size: var(--ts-0);
   line-height: 1.5;
   background: var(--quiet);
   border-top: var(--rule-width) solid var(--accent-warm);
-  padding: 0.8rem 1rem 0.85rem;
-  margin: 0 0 1.7rem;
+  padding: 0.8rem var(--fill-pad) 0.85rem;
+  margin: 0 calc(-1 * var(--fill-pad)) 1.7rem;
   font-variant-numeric: var(--num-table);
 }
 
@@ -270,12 +283,22 @@ a:hover, a:focus-visible { color: var(--accent-warm); }
    * `.rail` carried a private `padding: 2.6rem 0`. The two columns started 58px
    * apart and neither offset had been chosen. */
   --page-top: 2.25rem;
+  /* The whole page, band plus gutters: 79.5rem, being 1272px. Declared here
+   * rather than inside `.page` because the site bar reads it too. The bar is
+   * full-bleed and used to pin its own content at `--page-pad` from the window
+   * edge, so its wordmark sat 84px left of the rail at 1440px, 47px at 1366px
+   * and 4px at 1280px. A 4px near-miss reads as a bug. The bar now indents by
+   * whatever `.page` is centred by, so one edge runs down the whole document. */
+  --page-max: calc(
+    var(--rail-w) + var(--measure) + var(--margin-w) + var(--shell-gap) * 2 + var(--page-pad) * 2
+  );
+  /* The inset inside a filled block, and the bleed that cancels it. See the
+   * quiet-fill note above `.finding`. */
+  --fill-pad: 1rem;
 }
 
 .page {
-  max-width: calc(
-    var(--rail-w) + var(--measure) + var(--margin-w) + var(--shell-gap) * 2 + var(--page-pad) * 2
-  );
+  max-width: var(--page-max);
   margin: 0 auto;
   padding: var(--page-top) var(--page-pad) 7rem;
 }
@@ -285,10 +308,28 @@ a:hover, a:focus-visible { color: var(--accent-warm); }
  * already had once. */
 .shell {
   display: grid;
-  grid-template-columns: var(--rail-w) minmax(0, var(--measure)) var(--margin-w);
+  /* The rail track exists only where a rail does. `/sources` renders none: its
+   * headings come from `SOURCES.md` and `sectionSpy()` has nothing to track, so
+   * the route ships no `aside.rail` at all, and the track it was still
+   * declaring ran 196px of dead space down 8855px of page. `--rail-track` is
+   * empty on a shell without a rail, which drops the track and its gap
+   * together. The flag is `data-rail`, written by `BaseLayout.astro` from the
+   * same `sections.length` test that decides whether to render the rail, for
+   * the reason `data-reference` is an attribute rather than a `:has()` test:
+   * the answer is a fact about the layout, known at build time. */
+  --rail-track: var(--rail-w);
+  grid-template-columns: var(--rail-track) minmax(0, var(--measure)) var(--margin-w);
   gap: var(--shell-gap);
   justify-content: center;
   align-items: start;
+}
+.shell:not([data-rail]) {
+  --rail-track: ;
+  /* Flush left, not centred. With the rail track gone the tracks no longer fill
+   * the band, and centring the remainder left `/sources` starting at 222px,
+   * level with nothing. The page's own content edge is where the footer starts
+   * and where every other route's rail starts, so the document takes it. */
+  justify-content: start;
 }
 
 .shell > .rail { grid-column: 1; grid-row: 1; }
@@ -299,9 +340,9 @@ a:hover, a:focus-visible { color: var(--accent-warm); }
  * band. The flag comes from the layout rather than from a `:has(.figure)` test,
  * because the answer must not depend on whether an island has hydrated. */
 .shell[data-reference] {
-  grid-template-columns: var(--rail-w) minmax(0, calc(var(--measure) + var(--shell-gap) + var(--margin-w)));
+  grid-template-columns: var(--rail-track) minmax(0, calc(var(--measure) + var(--shell-gap) + var(--margin-w)));
 }
-.shell[data-reference] > main { grid-column: 2; grid-template-columns: minmax(0, 1fr); }
+.shell[data-reference] > main { grid-column: -2 / -1; grid-template-columns: minmax(0, 1fr); }
 .shell[data-reference] > main > section,
 .shell[data-reference] > main > .reference-doc { grid-template-columns: minmax(0, 1fr); }
 
@@ -314,7 +355,10 @@ a:hover, a:focus-visible { color: var(--accent-warm); }
  * Everything defaults to the reading track. Only apparatus opts out.
  */
 .shell > main {
-  grid-column: 2 / -1;
+  /* Counted from the end, so the same rule places `<main>` whether or not a
+   * rail track precedes it: the last two tracks are always the reading column
+   * and the margin column. */
+  grid-column: -3 / -1;
   grid-row: 1;
   display: grid;
   grid-template-columns: subgrid;
@@ -378,8 +422,22 @@ a:hover, a:focus-visible { color: var(--accent-warm); }
 /* Two steps down, not one. First the rail leaves, because the site bar's
  * disclosure carries the same list from there down and nothing is lost. Then
  * the margin column leaves, and its contents reflow inline beneath whatever
- * they annotate, which is where they sat before the column existed. */
-@media (max-width: 78rem) {
+ * they annotate, which is where they sat before the column existed.
+ *
+ * Each step is the width its own layout stops fitting at, and both are sums of
+ * the tokens above rather than round numbers. Three tracks plus two gaps plus
+ * two page pads is 79.5rem; two tracks plus one gap plus two pads is 67.25rem.
+ * They were 78rem and 64rem, which held each layout past the width it fits in:
+ * the reading column rendered at 697 to 719px from 1249 to 1271, and at 669 to
+ * 719px from 1025 to 1075, against the 720px it is specified at. A track
+ * declared `minmax(0, var(--measure))` shrinks silently, so the page reported
+ * no overflow while the measure it is built on was wrong by up to 51px.
+ *
+ * Written as a range, `width <`, rather than as `max-width:`, which is
+ * inclusive and would drop the rail at exactly the width the rail fits. The
+ * 62rem block below stays a `max-width` query: it is the disclosure's own
+ * breakpoint and `test_accessibility.py` reads that block by its literal. */
+@media (width < 79.5rem) {
   /* `[data-reference]` is named here, and in the block below, because that rule
    * is more specific than a bare `.shell` and would otherwise keep its
    * two-track desktop grid all the way down. It did: at 390px the reference
@@ -392,7 +450,7 @@ a:hover, a:focus-visible { color: var(--accent-warm); }
   .rail { display: none; }
 }
 
-@media (max-width: 64rem) {
+@media (width < 67.25rem) {
   /* One track, capped at the reading measure and centred, rather than the full
    * band. Left at `1fr` the track filled the window, so a figure drew at 944px
    * above a 640px paragraph and the ragged right edge this layout was built to
@@ -451,6 +509,20 @@ a:hover, a:focus-visible { color: var(--accent-warm); }
  * boundary; a rule is apparatus. */
 section[id] { padding: var(--sp-section) 0; }
 section[id]:first-of-type { padding-top: var(--sp-5); }
+/* The padding is the whole boundary, so neither the first nor the last block
+ * inside a section adds to it. Both did: the gap between sections ran 110px on
+ * `/`, 147px on `/glossary` and 173px on `/contents`, all from the same 55.2px
+ * of padding on each side. The routes that opened a section with an `<h2>`
+ * brought its `--sp-6` down with it, and a section closing on a list added that
+ * list's own 1.6rem. */
+section[id] > :first-child { margin-top: 0; }
+section[id] > :last-child { margin-bottom: 0; }
+/* One level deeper, because a section that closes on a list closes on the gap
+ * between two of its items: the last `.cards` entry carried 1.5rem, the last
+ * `.index-section` 0.9rem, the last `.glossary` entry 0.2rem. It is also what
+ * makes the two layouts agree. A grid item is its own formatting context, so
+ * above 67.25rem that margin stayed inside the list and below it escaped. */
+section[id] > :last-child > :last-child { margin-bottom: 0; }
 
 /* ---- Contents rail ------------------------------------------------------
  * A table of contents, set as one. Numerals are tabular so the section numbers
@@ -524,12 +596,23 @@ section[id]:first-of-type { padding-top: var(--sp-5); }
 .navbar {
   display: flex;
   align-items: center;
-  gap: 1.25rem;
+  /* 1rem, where the row used to take 1.25rem across three gaps and the route
+   * list 1.4rem across five. The wide bar measured 934.6px against the 913px a
+   * 993px window leaves it, so "SOURCES" dropped to a second line and the bar
+   * stood 89px tall from 993px to 1014px, 22px above the 992px the disclosure
+   * takes over at. The two gaps give back 36px, which fits the wide bar down to
+   * 979px. The breakpoint itself did not move: it is 62rem in one place, and
+   * `test_accessibility.py` reads that block by its own literal. */
+  gap: 1rem;
   position: sticky;
   top: 0;
   z-index: 20;
   min-height: var(--navbar-h);
-  padding: 0 var(--page-pad);
+  /* Full-bleed bar, page-aligned content. `.page` is centred at
+   * `--page-max`, so the bar takes the same indent and its wordmark starts on
+   * the same vertical as the rail, the footer and the first line of text. Below
+   * `--page-max` the max() falls through to the page's own gutter. */
+  padding-inline: max(var(--page-pad), calc((100% - var(--page-max)) / 2 + var(--page-pad)));
   background: var(--ground);
   border-bottom: var(--rule-hair) solid var(--rule);
 }
@@ -556,7 +639,11 @@ section[id]:first-of-type { padding-top: var(--sp-5); }
 .navbar-routes-wide ol {
   display: flex;
   flex-wrap: wrap;
-  gap: 0 1.4rem;
+  /* 1.1rem across five gaps. See the note on `.navbar`'s own gap: the six route
+   * links measure 524.5px and the row has to close 21.6px to stop wrapping at
+   * 993px. `wrap` stays, because a wrapped bar is the correct failure for a
+   * face whose small caps run wider than the ones measured here. */
+  gap: 0 1.1rem;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -652,6 +739,11 @@ section[id]:first-of-type { padding-top: var(--sp-5); }
   .navbar-routes-wide { display: none; }
   .navbar-disclosure { display: block; margin-left: auto; min-width: 0; flex: 0 0 auto; }
   .page { padding: var(--page-top) 1.25rem 4rem; }
+  /* The page's gutter, so a filled block's bleed reaches the window edge here
+   * rather than stopping 4px short of it. Below this width the reading column
+   * IS the page, and a tint that stops just before the edge reads as a
+   * mistake. */
+  :root { --fill-pad: 1.25rem; }
 
   /* The bar takes the page's own gutter here, not `--page-pad`. At 2rem a side
    * the four items below measured 416px against a 390px viewport and the page
@@ -806,12 +898,22 @@ section[id],
  * band: the two state panels and the law explorer. There the graphic spans both
  * tracks and the caption returns beneath it at the reading measure. */
 .figure {
-  margin: 0 0 2.8rem;
+  margin: var(--sp-6) 0 2.8rem;
   grid-column: 1 / -1;
   display: grid;
   grid-template-columns: subgrid;
   align-content: start;
 }
+/* One space above a figure, whatever precedes it. A grid item's margins do not
+ * collapse, so the gap used to be the predecessor's bottom margin and nothing
+ * else: 27px after a finding, 16px after a paragraph, 45px after another
+ * figure. The 16px case put the head rule, the heaviest mark on the page, one
+ * line-gap under the sentence that introduces the figure. The predecessor gives
+ * up its bottom margin and the figure states the space itself, at `--sp-6`,
+ * which is less than the 2.8rem below it: a figure belongs to the prose that
+ * introduces it, so it binds upward. */
+p:has(+ .figure),
+.figure:has(+ .figure) { margin-bottom: 0; }
 /* Every item placed by hand. Auto-placement cannot be trusted here: the graphic
  * is an Astro island at `display: contents`, so the number of items a figure
  * contributes depends on what the island renders. */
@@ -828,9 +930,16 @@ section[id],
  * `<astro-island><div><svg>`, so the chart sits two levels below
  * `.figure-graphic` and a `>` combinator reaches none of them.
  *
- * The two hand-written SVGs are not scaled to the height, they are centred in
- * it. The cartogram is bounded by HEIGHT so the browser derives its width from
- * the 440:320 aspect, and the tax-mix strip keeps its natural 136px. */
+ * The cartogram is not scaled to the height either, it is bounded BY it, so the
+ * browser derives its width from the 440:320 aspect and the box is full.
+ *
+ * The tax-mix strip is out of the common height, and it is the one graphic that
+ * has to be. It is a single stacked row: it cannot be scaled to 400px without a
+ * 6.7x distortion, and it cannot fill 400px by any other means, so holding the
+ * box open left Figure 13 as a 252px strip with 74px of blank paper above it
+ * and 74px below, the only figure on the site with any. A shared height buys a
+ * shared rhythm from figures whose height is a choice; on a figure whose height
+ * is the data it buys a hole. Its own height is the honest one. */
 .figure-graphic .state-grid {
   max-height: var(--graphic-h);
   width: auto;
@@ -838,8 +947,7 @@ section[id],
   margin-inline: auto;
   display: block;
 }
-.figure-graphic:has(.state-grid),
-.figure-graphic:has(.tax-mix-bar) {
+.figure-graphic:has(.state-grid) {
   min-height: var(--graphic-h);
   display: flex;
   flex-direction: column;
@@ -888,7 +996,7 @@ section[id],
  * above is gone: the column gap separates them now, and a hairline drawn across
  * a 16rem margin beside a chart reads as a second, competing frame. The rule
  * comes back with the caption below the graphic under `.figure--wide` and below
- * the `64rem` breakpoint, where the caption is a footer again. */
+ * the `67.25rem` breakpoint, where the caption is a footer again. */
 figcaption {
   font-family: var(--font-data);
   font-size: var(--ts-data);
@@ -900,16 +1008,26 @@ figcaption {
   gap: 0.3rem;
   align-content: start;
 }
+/* A caption on the reading spine bleeds like every other quiet fill. A caption
+ * in the margin column does not, and the asymmetry is the point: in the margin
+ * the fill is the column, every caption on a route insets by the same 13.6px,
+ * and nothing else is set against that edge. Bleeding it there would cut the
+ * 36px between the chart and its note to 20px and hang the tint 16px past the
+ * band on every figure. Under a wide figure, and under every figure below
+ * 67.25rem, the caption sits on the reading column's own left edge, where the
+ * inset put the Source line 13.6px right of the prose above it. */
 .figure--wide > figcaption {
   margin-top: 0.7rem;
+  margin-inline: calc(-1 * var(--fill-pad));
   padding-top: 0.45rem;
+  padding-inline: var(--fill-pad);
   border-top: var(--rule-hair) solid var(--rule);
   gap: 0.22rem;
 }
 /* Below the margin column, a figure is a stack again: head, graphic, caption,
  * each at the reading measure, with the caption's rule back to separate it from
  * the graphic above. */
-@media (max-width: 64rem) {
+@media (width < 67.25rem) {
   .figure { display: block; }
   .figure > .figure-head,
   .figure > .figure-graphic,
@@ -919,7 +1037,11 @@ figcaption {
   }
   figcaption {
     margin-top: 0.7rem;
+    /* On the reading spine here, so it bleeds. See the note at
+     * `.figure--wide > figcaption`. */
+    margin-inline: calc(-1 * var(--fill-pad));
     padding-top: 0.45rem;
+    padding-inline: var(--fill-pad);
     border-top: var(--rule-hair) solid var(--rule);
     gap: 0.22rem;
   }
@@ -1984,9 +2106,13 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 .limits { list-style: none; counter-reset: limit; margin: 0 0 1.6rem; padding: 0; }
 .limits > li {
   counter-increment: limit;
-  margin: 0 0 0.6rem;
+  /* Bled, for the reason stated at `.finding`. The inset used to put a limit's
+   * paragraph at 336px and its own `<h3>` at 964px wide, so `/government`'s
+   * section 12 alternated between two left edges and three widths inside one
+   * section. */
+  margin: 0 calc(-1 * var(--fill-pad)) 0.6rem;
   background: var(--quiet);
-  padding: 0.7rem 1rem;
+  padding: 0.7rem var(--fill-pad);
 }
 /* The run-in head, and its number.
  *
@@ -2010,6 +2136,28 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
  * served `...borne.</strong>Federal tax is...` with nothing between them. No
  * CSS rule here compensates for that, because a margin added on this side would
  * double the space on `/economy` and `/households`, which write it correctly. */
+/* ---- The rule a markdown document draws itself --------------------------
+ * `SOURCES.md` separates its five parts with `---`, and no `hr` rule existed
+ * anywhere in `src/styles/`. The UA default draws a 1px border on four sides
+ * and centres the element with `margin-inline: auto`, which beats grid stretch:
+ * inside `.reference-doc`, a grid with `grid-template-columns: subgrid`, all
+ * five separators collapsed to 2x2px dots in the middle of the page.
+ *
+ * A hairline in `--rule`, the weight a caption's rule takes. The structural
+ * `--rule-width` in `--ink` belongs to a figure head and to the footer, and a
+ * part boundary in a reference document outranks neither. Space carries the
+ * boundary, as it does at a section, and the line says where it falls: the
+ * neighbours give up their own margins so the rule sits centred in one
+ * `--sp-6`, rather than 53px below the paragraph and 74px above the heading. */
+hr {
+  height: 0;
+  border: 0;
+  border-top: var(--rule-hair) solid var(--rule);
+  margin: var(--sp-6) 0;
+}
+:has(+ hr) { margin-bottom: 0; }
+hr + * { margin-top: 0; }
+
 .reference-doc { max-width: var(--measure-wide); }
 .reference-doc table { border-collapse: collapse; font-variant-numeric: var(--num-table); }
 /* #79. `/sources` overflowed a 390px viewport by 130px: three `<code>` spans
@@ -2109,8 +2257,14 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 .index-section > a {
   font-variant-numeric: var(--num-table);
 }
+/* The counter takes a track of its own, 1.6rem, which is the width the rail's
+ * own numbers take. It used to be set inline, so its width was the width of the
+ * number: an entry's text started at 341.2px and the figure line beneath it was
+ * indented by a flat 1.1rem to 337.6px, which aligned with nothing. */
 .index-section > a::before {
   content: counter(index-section) '. ';
+  display: inline-block;
+  width: 1.6rem;
   color: var(--ink-soft);
 }
 .index-empty {
@@ -2123,7 +2277,12 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 .index-figure {
   display: grid;
   gap: 0.15rem;
-  margin: 0.5rem 0 0 1.1rem;
+  /* 1.6rem, matching the counter track above, so a figure's line starts under
+   * the first letter of the section it belongs to. `max-width` gives that
+   * indent back, so the entry ends where every other paragraph on the route
+   * ends rather than 17.6px past it. */
+  margin: 0.5rem 0 0 1.6rem;
+  max-width: calc(var(--measure) - 1.6rem);
   font-size: var(--ts-meta);
   color: var(--ink-soft);
 }
@@ -2167,10 +2326,17 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 .index-term-first { font-size: var(--ts-meta); color: var(--ink-soft); }
 
 /* ---- Households route: brushable year range and multi-panel figures -----
- * The shared timeline (`YearRange.tsx`) and the sub-heads/empty-state used by
- * a figure that stacks more than one panel in one SVG (`HouseholdSpread.tsx`,
- * `BracketHistory`'s three stacked panels). `.panel-title` is quieter than
- * `.figure-title`: it labels a part, not the whole figure.
+ * The shared timeline (`YearRange.tsx`) and the empty-state used by a figure
+ * that stacks more than one panel in one SVG (`HouseholdSpread.tsx`,
+ * `BracketHistory`'s three stacked panels).
+ *
+ * `.panel-title` used to live here, a quieter sibling of `.figure-title` that
+ * labelled a part rather than the whole figure. It is gone. It was drawn on the
+ * same baseline as the horizontal left-axis title and the two overprinted each
+ * other, and in three of the four cases they said the same thing twice
+ * ("Families Gini index" under "Families Gini index, ratio 0 to 1"). The panel's
+ * name is now carried by the axis title itself, as a variant ladder that picks
+ * the longest rung fitting the plot.
  */
 
 .year-range { margin: 0.4rem 0 1.15rem; max-width: var(--measure-wide); }
@@ -2239,13 +2405,6 @@ th[aria-sort='descending'] .unit::after { content: ' ▼'; }
 }
 .year-range-readout { margin-top: 0.3rem; }
 
-.panel-title {
-  font-family: var(--font-data);
-  font-variant-caps: all-small-caps;
-  letter-spacing: 0.07em;
-  font-size: 10.5px;
-  fill: var(--ink-soft);
-}
 /* The SVG twin of `.empty-state`, and it says the same thing. 11.5px is the
  * size every other in-plot label takes (`.annotation`, `.attrib-row-label`),
  * because this sentence sits inside the plot rectangle and reads against the
@@ -2359,9 +2518,9 @@ p:has(.term), li:has(.term), h2:has(.term), .standfirst:has(.term) { position: r
    be a figure with no chart in it. Set in the caption's own face and size so
    the example looks like the thing it is describing. */
 .apparatus {
-  margin: 0 0 1.4rem;
+  margin: 0 calc(-1 * var(--fill-pad)) 1.4rem;
   background: var(--quiet);
-  padding: 0.8rem 1rem;
+  padding: 0.8rem var(--fill-pad);
   display: grid;
   grid-template-columns: max-content 1fr;
   column-gap: 0.55rem;
@@ -2374,20 +2533,27 @@ p:has(.term), li:has(.term), h2:has(.term), .standfirst:has(.term) { position: r
 .apparatus dt { margin: 0; }
 .apparatus dd { margin: 0; }
 
-/* The one quotation on the site. Indented by a rule rather than by whitespace,
+/* The one quotation on the site. Marked by a rule rather than by whitespace,
    because the UA default indent is the only thing on the page that would be
-   set in pixels nobody chose. */
+   set in pixels nobody chose.
+
+   The rule bleeds with the fill and the quotation does not, so the 3px accent
+   sits in the gutter and the quoted line starts level with the prose above it.
+   `max-width` is the measure plus what the block hangs by, so the quotation
+   still sets to 720px of text. */
 .brief-quote {
-  margin: 1.4rem 0 0.4rem;
+  margin: 1.4rem calc(-1 * var(--fill-pad)) 0.4rem calc(-1 * var(--fill-pad) - 3px);
   background: var(--quiet);
-  padding: 0.85rem 1rem;
+  padding: 0.85rem var(--fill-pad);
   border-left: 3px solid var(--accent);
-  max-width: var(--measure);
+  max-width: calc(var(--measure) + var(--fill-pad) * 2 + 3px);
 }
 .brief-quote p { margin: 0; line-height: 1.5; }
+/* No indent of its own. It used to carry 0.9rem, which aligned it with neither
+   the quotation above it (339px) nor the prose (320px), and put a fourth left
+   edge at 334.4px on the front door. */
 .brief-attrib {
   margin: 0 0 1.6rem;
-  padding-left: 0.9rem;
   font-size: var(--ts-meta);
   color: var(--ink-soft);
 }

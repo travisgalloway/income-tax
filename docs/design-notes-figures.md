@@ -93,6 +93,54 @@ Whole-figure heights still vary and always will. The controls row wraps, the
 the law explorer and the cartogram each render an always-visible table below the
 graphic. The graphic box is the lever worth pulling; the figure block is not.
 
+## One label above the plot
+
+The left-axis title is the only text on the line above a plot, and it carries
+the panel's name and its unit together. Commit `0956b3f` set that title
+horizontally at the surface's left edge, on the baseline `AXIS_TITLE_GAP` above
+the plot. A stacked figure already drew a second label on that same baseline,
+`.panel-title`, starting at the plot's left edge. Any axis title wider than the
+left gutter printed straight through it.
+
+Table 1 lists the four collisions measured in Chromium on `/households/` at
+1440x1000, before the change.
+
+Table 1. Axis title over panel title, `/households/` at 1440x1000, in painted
+pixels. Source: a pairwise bounding-box sweep of every `<text>` in every `<svg>`
+on the three report routes, run in Chromium against `dist/`.
+
+| Section | Axis title | Panel title | Overlap |
+|---|---|---|---|
+| `#the-spread` | Families Gini index, ratio 0 to 1 | Families Gini index | 107.5 x 11 px |
+| `#the-spread` | Percent of income | Top 1% share of income before transfers and taxes | 39.1 x 11 px |
+| `#a-century-of-brackets` | Constant 2024 dollars, log scale | Top-bracket threshold, constant 2024 dollars (log scale) | 133.7 x 7 px |
+| `#a-century-of-brackets` | Brackets, count | Bracket count, single filer | 27.6 x 7 px |
+
+The two labels were suppressed into one rather than moved apart. Three of the
+four pairs above say the same thing twice, so separating them would have kept
+the duplication and spent plot height or gutter width on it. `useAxisLabel` now
+accepts a ladder of title variants, longest first, and `AxisTitleY` draws the
+longest rung that fits between the surface's left edge and the plot's right
+edge. A stacked panel passes the panel's name and its unit as that ladder, and
+`.panel-title` is drawn nowhere on the site.
+
+The ladder is what keeps the long form at 1440px and a readable form at 390px.
+`/households/` §3 panel C reads "Top-bracket threshold, constant 2024 dollars
+(log scale)" at 1440px and "Top-bracket threshold, 2024 dollars (log)" at 390px.
+The choice is recomputed from Recharts' own plot rectangle on every render, so
+it follows a preset that moves.
+
+`AXIS_TITLE_GAP` rose from 7 to 11 in the same change. The topmost y tick is
+centred on the plot's top edge and reaches 5.5 units above it, and at 7 the
+title's descender crossed that tick by 2.1px on `/households/` §3 and by 0.8px
+on `/economy/` §2. The gap cannot grow much further, because the smallest top
+margin on the site is 28 and the glyph box carries 9.3 units of ascent.
+
+After the change the sweep reports zero overlaps between an axis title and a
+panel title, zero between an axis title and a tick label, and zero clipped axis
+titles, at 1440px and 390px on all three report routes. Every `.figure-graphic`
+reports the height it did before, because nothing about the geometry moved.
+
 ## Width and the margin column
 
 A figure spans the reading column and the margin column and adopts both with
@@ -126,7 +174,7 @@ the ratios.
 
 Colour never carries meaning alone. A single-series chart is named by its title,
 a line is named at its end by `.series-label`, a stacked band is labelled
-directly on the plot, and a small-multiple panel is named by `.panel-title`.
+directly on the plot, and a stacked panel is named by its own left-axis title.
 Both axes name their units, enforced by a throw rather than by review.
 
 Nothing in the figure layer transitions, animates or moves, so
@@ -152,8 +200,9 @@ an opaque figure, never arose.
 
 The two small-multiples grids, `.dn-figure-grid-2` and `.dn-figure-grid-3`, and
 their measured collapse points at 72rem and 48rem. `HouseholdSpread` and
-`BracketHistory` stack their panels inside one SVG instead, and `.panel-title`
-and `.panel-empty` are what remains of the grid proposal.
+`BracketHistory` stack their panels inside one SVG instead, and `.panel-empty`
+is what remains of the grid proposal. `.panel-title` was the other survivor
+until it collided with the axis title; see "One label above the plot".
 
 The geometry the widths were derived from. The page is an 11rem contents rail,
 a 45rem reading column and a 15rem margin column, with a 2.25rem gap between

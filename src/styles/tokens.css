@@ -55,7 +55,11 @@
   /* Table row hover. A token, not two hardcoded rgba pairs in `global.css`:
      those were written as `:root[data-theme='dark']` descendant selectors, so
      they never fired for a reader on system dark who had not touched the
-     toggle, that state being the ABSENCE of the attribute. */
+     toggle, that state being the ABSENCE of the attribute.
+
+     Moving the value to a token did not by itself repair that reader, because
+     the media-query block declaring the dark value lost the cascade until the
+     `:where()` wrapper came off. See the specificity note above the block. */
   --row-hover: rgba(20, 24, 29, 0.045);
 
   /* Party. ONLY for partisan data. Never for holders, maturity, OECD or macro. */
@@ -311,9 +315,24 @@
  * value, which is why the media query needs no third branch and why the toggle
  * removes the attribute rather than setting it to a string.
  *
- * `:where()` holds the media query's `:root` compound at zero specificity, and
- * both blocks exclude an explicit light stamp, so a reader who chooses light
- * keeps light on a dark-set operating system.
+ * BOTH BLOCKS MUST OUT-SPECIFY THE BASE `:root`. The media query's selector was
+ * once wrapped in `:where()`, which forces a selector to (0,0,0). The base
+ * `:root` block above scores (0,1,0), so it beat the media query and the dark
+ * palette NEVER rendered for a reader on system dark who had not touched the
+ * toggle. Only the explicit Dark button worked, and that state is the site's
+ * default. The wrapper is gone: `:root:not([data-theme='light'])` scores
+ * (0,2,0), because `:not()` takes the specificity of its argument and
+ * `[data-theme='light']` is (0,1,0).
+ *
+ * The two dark blocks then tie at (0,2,0), and `[data-theme='dark']` is written
+ * SECOND so source order settles the tie in favour of an explicit choice. Do
+ * not reorder them. Both blocks exclude an explicit light stamp, so a reader
+ * who chooses light keeps light on a dark-set operating system.
+ *
+ * `tests/browser/theme.test.ts` asserts the cascade at runtime, in a context
+ * with `colorScheme: 'dark'` and no attribute. `test_accessibility.py` only
+ * checks that the two blocks DECLARE the same hexes, which stayed green
+ * throughout the outage.
  *
  * The steps are a selection, not an inversion. `--mand` and `--rev-cu` become
  * the lightest marks in their groups, because a near-black band is invisible on
@@ -321,7 +340,7 @@
  */
 
 @media (prefers-color-scheme: dark) {
-  :where(:root:not([data-theme='light'])) {
+  :root:not([data-theme='light']) {
     color-scheme: dark;
 
     --ground: #16130f;

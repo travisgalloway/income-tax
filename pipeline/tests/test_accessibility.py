@@ -1466,7 +1466,13 @@ _TOKEN_HEX_RE = re.compile(r"--([\w-]+):\s*(#[0-9A-Fa-f]{6})")
 _THEME_SELECTORS = {
     "light": ":root {",
     "dark": ":root[data-theme='dark']",
-    "dark-media": ":where(:root:not([data-theme='light']))",
+    # No `:where()`. The wrapper forced this block's specificity to (0,0,0), so
+    # the base `:root` block at (0,1,0) beat it and the OS-preference palette
+    # never won the cascade: with the toggle on `system` and the operating
+    # system in dark, the site rendered fully light. `:root:not(...)` scores
+    # (0,2,0) and wins, while the attribute block below it, also (0,2,0) but
+    # later in the file, still carries an explicit choice.
+    "dark-media": ":root:not([data-theme='light'])",
 }
 
 #: Every theme a token is scored in. `dark-media` is deliberately absent: it is asserted equal to
@@ -3268,7 +3274,6 @@ NON_ANNOTATION_TEXT_CLASSES = {
     "holders-label",
     "legend-label",
     "maturity-label",
-    "panel-title",
     "state-tile-code",
     "state-tile-mark",
 }
@@ -3817,7 +3822,6 @@ TEXT_FONT_PX = {
     "legend-label": 11.0,
     "maturity-label": 11.0,
     "maturity-marker-label": 10.5,
-    "panel-title": 10.5,
     "state-tile-code": 10.0,
     "state-tile-mark": 10.0,
 }
@@ -4231,7 +4235,7 @@ def test_the_text_clipping_guards_bite_each_way_the_fix_can_regress():
         '<svg viewBox="0 0 720 396">'
         '<text x="66" text-anchor="end" class="axis-label">$30M</text>'
         '<text x="360" text-anchor="middle" class="holders-label">Domestic $22.50T</text>'
-        '<text x="100" class="panel-title">Bracket count, single filer</text>'
+        '<text x="100" class="legend-label">Bracket count, single filer</text>'
         "</svg>"
     )
     assert not chart_text_clipping_failures(clean), "a within-bounds corpus was flagged"
