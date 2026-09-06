@@ -61,6 +61,38 @@ at `0 0 0.1rem`, which
 `pipeline/tests/test_accessibility.py::_TARGET_HOST_VERTICAL_PADDING` asserts as
 an equality.
 
+## One graphic height
+
+Every figure's graphic box is `--graphic-h`, 400px. Before this the rendered
+heights ran 136px to 724px, a factor of 5.3, because rendered height is always
+`container width x (H / W)` and each island set its own H.
+
+| Was | Now | How |
+|---|---|---|
+| 17 standard islands at 400 | 400 | the `WIDE` preset, whose height is the token |
+| `DebtHolders` 229, `DebtMaturity` 196 | 400 | one factor scales the bars, bands and gutters together, so their proportions are untouched |
+| `OecdChart` 394 | 400 | the row pitch is derived from the budget rather than fixed, which also makes the figure proof against its own row count |
+| `HouseholdSpread` 460, `BracketHistory` 624, `WhoWorks` and `PricesAndRates` 664 | 400 | `heightShare` on `useFrame` divides the budget among stacked panels at the ratios they already had |
+| `StateGiveGet` 724, `StateTaxMix` 136 | centred in 400 | not scaled |
+
+`heightShare` is applied inside `useFrame` rather than at the render site,
+because the frame, the y scale, `chartStyle` and every tick derive from
+`size.height`. Overriding the height downstream leaves the scales built against
+the old one and draws the marks off the plot.
+
+The two hand-written SVGs are the deliberate exception. A 50-state cartogram is
+an 8-row grid of 36-unit tiles and the tax-mix bar is a single stacked row;
+their shapes come from the data, and stretching a 60-unit strip to 400px is a
+6.7x distortion. The cartogram is bounded by height so the browser derives its
+width from the 440:320 aspect, and the strip keeps its natural 136px. Both are
+centred in a 400px box, so they occupy the same vertical band without being
+misdrawn.
+
+Whole-figure heights still vary and always will. The controls row wraps, the
+`aria-live` readout grows to two or three lines when a reader hovers a mark, and
+the law explorer and the cartogram each render an always-visible table below the
+graphic. The graphic box is the lever worth pulling; the figure block is not.
+
 ## Width and the margin column
 
 A figure spans the reading column and the margin column and adopts both with

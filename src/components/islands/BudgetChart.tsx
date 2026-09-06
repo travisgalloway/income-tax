@@ -171,8 +171,13 @@ export function BudgetChart({ rows: source }: { rows: BudgetYear[] }) {
    * 8.4 units of ascent, so its first line was cut by 2.2px at 390px and 2.0px
    * at 1440px. The band is now the font's own line box and the baseline is its
    * ascent, both derived rather than tuned, so the glyphs start inside the
-   * surface at every preset. */
-  const capH = Math.ceil(AXIS_TITLE_FONT_PX * 1.2)
+   * surface at every preset.
+   *
+   * The factor went 1.2 to 1.35 when the chart face became the system sans,
+   * which carries more ascent above the baseline at the same size than Georgia
+   * did: the caption was cut by 1.3px at 390px. The number is still the font's
+   * line box rather than a tuned offset, only a larger one. */
+  const capH = Math.ceil(AXIS_TITLE_FONT_PX * 1.35)
   const rowH = narrow ? 10 : 12
   const rowGap = 1
   const bandLabelH = narrow ? 10 : 11
@@ -235,7 +240,10 @@ export function BudgetChart({ rows: source }: { rows: BudgetYear[] }) {
   // y-coordinates above the plot (negative), from the top of the allocated
   // block down to the plot origin at 0.
   const stripAreaTop = -topExtra
-  const captionY = stripAreaTop + Math.ceil(AXIS_TITLE_FONT_PX * 0.85)
+  /* The baseline is the font's ascent below the surface's top edge. 0.85 of the
+   * size was Georgia's; the system sans puts more above the baseline at the
+   * same size and cut the caption by 1.3px at 390px, so the factor is 1.0. */
+  const captionY = stripAreaTop + Math.ceil(AXIS_TITLE_FONT_PX * 1.0)
   const rowsTop = stripAreaTop + capH
   const rowRectY = (i: number) => rowsTop + i * (rowH + rowGap)
   const rowCenterY = (i: number) => rowRectY(i) + rowH / 2

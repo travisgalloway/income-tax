@@ -96,11 +96,20 @@ export function DebtMaturity({ d }: { d: DebtMaturityData }) {
   })
 
   const W = size.width
-  const bandMaxH = narrow ? 56 : 84
+  /* Scaled to the common graphic height rather than set in constants. This
+   * figure drew 196 units against a 400-unit norm, because it sizes itself from
+   * its tallest band and the preset had no say. One factor scales the band, the
+   * label headroom and the bottom gutter together, so the proportions the
+   * drawing depends on are untouched. */
+  const bandBase = narrow ? 56 : 84
+  const headroomBase = narrow ? 26 : 34
+  const gutterBase = narrow ? 40 : 50
+  const fill = (size.height - size.margin.top) / (headroomBase + bandBase + gutterBase)
+  const bandMaxH = bandBase * fill
   // The headroom the two marker labels used to take inside the plot now sits in
   // the top margin, so the plot rect is exactly the tallest band.
-  const marginTop = size.margin.top + (narrow ? 26 : 34)
-  const gutterBottom = narrow ? 40 : 50
+  const marginTop = size.margin.top + headroomBase * fill
+  const gutterBottom = gutterBase * fill
   const H = marginTop + bandMaxH + gutterBottom
 
   const f = useMemo(

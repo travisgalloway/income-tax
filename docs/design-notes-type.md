@@ -14,22 +14,40 @@ Three roles, and no webfont loads.
 so the page uses whatever the reader's own system uses, with named faces behind
 it for the engines that resolve `system-ui` poorly. `--font-data` is the same
 stack, because a serif table under sans prose read as a second document.
-`--font-chart` is the exception and keeps the old Georgia-led serif.
+One face throughout: prose, tables, controls and chart furniture alike.
 
 This reverses the serif-only decision recorded here previously, and it returns
 the site to `BRIEF.md:73`, which specified IBM Plex Sans for body text. The
 serif was the departure, not the sans.
 
-Chart furniture stays serif on a measurement rather than a preference.
-`ADVANCE_EM = 0.62` in `axisFit.ts` is a Georgia metric, every tick-fit and
-annotation placement is computed from it, and `smoke.test.ts` asserts that no
-label exceeds it against a live browser measurement. Measured over the site's
-real label strings at 11px with tabular figures on, Georgia peaks at 0.599 and
-the system sans at 0.637. The worst case is a bare year: "1950" runs 0.636 in
-the sans against 0.534 in Georgia, because a sans has no narrow-digit advantage
-to give at that size. Switching the charts means raising the constant, which the
-test's own failure message permits but which then re-derives every tick-drop and
-gutter fit on the site.
+Chart furniture was held on the serif for one commit, and the hold-back rested
+on a measurement taken over the wrong corpus. `ADVANCE_EM` estimates the width
+of the five annotation classes `smoke.test.ts` sweeps, and that test says in
+terms that axis ticks are not among them: a two-glyph tick reports a
+per-character advance that says nothing about a label's fit. The 0.637 that
+justified holding back was a tick, "1950".
+
+Measured over the classes the constant does govern, on all three report routes
+at 390px and 1440px with every island hydrated:
+
+| Route | Worst ratio | Carried by |
+|---|---|---|
+| `/economy` | 0.597 | "Unemployment" |
+| `/government` | 0.602 | "Longest instrument, 30-year bond" |
+| `/households` | **0.6255** | "20.6%" |
+
+So the sans does exceed 0.62, and the earlier reading of 0.579 was `/government`
+alone. One route is not the corpus. `ADVANCE_EM` rose to **0.65**, which the
+constant's own contract permits in that direction and only that direction.
+
+Three things followed from the wider estimate, each a margin rather than a
+retreat. `NARROW.margin.left` went 52 to 54, because "$1000k" is a real
+formatter output needing 42.9 units and the old gutter held 42.
+`NARROW.margin.right` went 12 to 16, because a last x-axis tick is centred on
+its gridline and half of it hangs past the plot: `/households` Figure 6 overran
+its surface by 1.9px. And `BudgetChart`'s caption line box went from 1.2 to 1.35
+times the font size, because the sans carries more ascent and the caption was
+cut by 1.3px at 390px.
 
 ## Type scale
 

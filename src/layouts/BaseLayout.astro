@@ -8,9 +8,12 @@ interface Props {
   description: string
   /** Section anchors for the nav rail. */
   sections?: NavItem[]
+  /** A route that renders no figures, so the margin column has nothing to hold
+   * and the text takes the whole band. The three reference routes set it. */
+  reference?: boolean
 }
 
-const { title, description, sections = [] } = Astro.props
+const { title, description, sections = [], reference = false } = Astro.props
 
 const base = import.meta.env.BASE_URL
 
@@ -232,7 +235,7 @@ const sourceIconPath =
       </details>
     </header>
     <div class="page">
-      <div class="shell">
+      <div class="shell" data-reference={reference ? '' : undefined}>
         {/* `<main>` precedes the rail in the DOM now, where the old left rail
          * preceded it. Reading order therefore reaches the content first, and
          * the contents list reads as the aside it is. */}

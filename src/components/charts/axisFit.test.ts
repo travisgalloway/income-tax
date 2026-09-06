@@ -36,7 +36,6 @@ import {
   leftGutterRoom,
   placeAxisTitleY,
   placeTickLabel,
-  rotatedTitleFits,
   spanRoomAt,
   tickLabelOverlaps,
 } from './axisFit.ts'
@@ -55,9 +54,14 @@ import {
 } from './format.ts'
 
 /** The three presets in useChartSize.ts, verbatim. */
-const WIDE: Frame = frame(720, 396, { top: 20, right: 24, bottom: 52, left: 74 })
-const NARROW: Frame = frame(360, 316, { top: 22, right: 12, bottom: 50, left: 52 })
-const WIDER: Frame = frame(1120, 520, { top: 24, right: 32, bottom: 56, left: 88 })
+/* These mirror `useChartSize.ts`'s presets and drifted from them once already,
+ * sitting at 720x396 and 1120x520 while the module shipped 720x400 and
+ * 1000x402. They are re-stated rather than imported because `useChartSize` is a
+ * React hook module and this is a pure-unit file; the guard against drift is
+ * `the frame presets are the ones useChartSize ships` in `annotate.test.ts`. */
+const WIDE: Frame = frame(720, 400, { top: 28, right: 24, bottom: 52, left: 72 })
+const NARROW: Frame = frame(360, 316, { top: 30, right: 16, bottom: 50, left: 54 })
+const WIDER: Frame = frame(1000, 402, { top: 32, right: 32, bottom: 56, left: 86 })
 
 /** Every preset, for the properties that must hold at all three.
  *  One list, so a fourth preset is added in one place. */
@@ -76,16 +80,22 @@ function paintedBox(x: number, w: number, anchor: string): [number, number] {
 // The left gutter, the geometry that shipped `$30,000,000` as `0,000,000`.
 // ---------------------------------------------------------------------------
 
-test('the left gutter is 64 units wide at 720, 42 at 360 and 78 at 1120', () => {
-  assert.equal(leftGutterRoom(WIDE), 64)
-  assert.equal(leftGutterRoom(NARROW), 42)
-  assert.equal(leftGutterRoom(WIDER), 78)
+test('the left gutter is 62 units wide at 720, 44 at 360 and 76 at 1000', () => {
+  // These moved when the presets were corrected: this file's copies had drifted
+  // to 720x396 and 1120x520 while `useChartSize` shipped 720x400 and 1000x402,
+  // so the gutters asserted here were a preset the site had stopped drawing.
+  assert.equal(leftGutterRoom(WIDE), 62)
+  assert.equal(leftGutterRoom(NARROW), 44)
+  assert.equal(leftGutterRoom(WIDER), 76)
   assert.equal(leftGutterRoom(BRACKETS_NARROW), 50)
   // Six characters at 11px, which is the whole constraint on axis formatters.
-  assert.equal(Math.floor(leftGutterRoom(NARROW) / (AXIS_LABEL_FONT_PX * 0.62)), 6)
-  // The 1120 preset grows its gutter with the plot, to 11 characters. NARROW
+  // The sans raised ADVANCE_EM from 0.62 to 0.65, which would have cost a
+  // character, so `NARROW.margin.left` went 52 to 54 to buy it back: "$1000k"
+  // is a real formatter output and needs 42.9 of the 44 units.
+  assert.equal(Math.floor(leftGutterRoom(NARROW) / (AXIS_LABEL_FONT_PX * 0.65)), 6)
+  // The widest preset grows its gutter with the plot, to 10 characters. NARROW
   // stays the binding case, so no formatter is retuned against this number.
-  assert.equal(Math.floor(leftGutterRoom(WIDER) / (AXIS_LABEL_FONT_PX * 0.62)), 11)
+  assert.equal(Math.floor(leftGutterRoom(WIDER) / (AXIS_LABEL_FONT_PX * 0.65)), 10)
   assert.ok(leftGutterRoom(NARROW) < leftGutterRoom(WIDE))
   assert.ok(leftGutterRoom(WIDE) < leftGutterRoom(WIDER))
 })
@@ -141,15 +151,16 @@ test('every formatter in format.ts fits the narrow left gutter at its real magni
     assert.ok(leftGutterFits(label, WIDER), tooWide(label))
   }
 
-  // And the negative: `dollars()` is exactly what an axis may NOT use, at the
-  // two presets that bind. If this ever passes, the guard has stopped meaning
-  // anything. WIDER is excluded on a measurement, not an oversight:
-  // `$30,000,000` needs 75.0 units and its gutter holds 78, so the 1120 preset
-  // would draw the label whole. The formatter still may not use it, because
-  // the same axis renders at 360 as well.
+  // And the negative: `dollars()` is exactly what an axis may NOT use, now at
+  // all three presets. If this ever passes, the guard has stopped meaning
+  // anything. WIDER used to be the exception on a measurement: `$30,000,000`
+  // needed 75.0 units against its 78, so the widest preset would have drawn the
+  // label whole even though the formatter was still barred, because the same
+  // axis renders at 360 as well. The sans closed that gap from both ends. The
+  // label now needs 78.7 units and the gutter holds 76.
   assert.equal(leftGutterFits(dollars(30_000_000), NARROW), false)
   assert.equal(leftGutterFits(dollars(30_000_000), WIDE), false)
-  assert.equal(leftGutterFits(dollars(30_000_000), WIDER), true)
+  assert.equal(leftGutterFits(dollars(30_000_000), WIDER), false)
 })
 
 test('everyLeftGutterLabelFits is all-or-none over a category axis', () => {
@@ -306,7 +317,7 @@ test("BracketHistory's panel titles pick a variant that fits the narrow panel", 
 
 test("HouseholdSpread's panel titles pick a variant that fits the narrow panel", () => {
   const room = 360 - NARROW.margin.left - 2
-  assert.equal(room, 306)
+  assert.equal(room, 304)
   const ladder = [
     'Top 1% share of income before transfers and taxes',
     'Top 1% share of pre-tax, pre-transfer income',
@@ -349,74 +360,24 @@ test("DebtHolders' variant ladders survive three different segment splits (E6)",
 })
 
 // ---------------------------------------------------------------------------
-// The rotated axis title, length on the vertical axis (E7).
+// The rotated axis title is retired (E7).
+//
+// `RechartsFrame.AxisTitleY` has set the left-axis title HORIZONTALLY above the
+// plot since 0956b3f, so `rotatedTitleFits` governs nothing the site draws. Two
+// tests lived here and are gone: one asserted that a long title fits down each
+// preset's height, and one carried a hardcoded per-panel height table and
+// checked every shipped title against it.
+//
+// They were removed rather than repaired because the geometry they guard does
+// not exist, and because they were the only thing that went red when the panel
+// heights were divided to reach the site's common graphic height. A test that
+// fails for a change it was never written to see is worse than no test.
+//
+// What still covers the horizontal title: `clipping.test.ts` sweeps every
+// painted `<text>` for horizontal overrun, and `.axis-title` is in its limits
+// table. `placeAxisTitleY` keeps its own test below, because `AxisTitleY` still
+// calls it to place the label above the plot.
 // ---------------------------------------------------------------------------
-
-test('the rotated axis title is measured against the SVG height, not its width', () => {
-  assert.equal(rotatedTitleFits('Percent of GDP', NARROW), true)
-  // 48 characters at 10.5px is 312 units: fine across a 720-wide chart, and
-  // impossible down a 316-unit one. A horizontal-only walk cannot see this.
-  const long = 'Top 1% share of income before transfers and taxes'
-  assert.equal(estimateTextWidth(long, AXIS_TITLE_FONT_PX) > NARROW.height, true)
-  assert.equal(rotatedTitleFits(long, NARROW), false)
-  assert.equal(rotatedTitleFits(long, WIDE), true)
-  // 520 units of height give the 1120 preset the most room of the three, so a
-  // title that fits WIDE fits WIDER as well.
-  assert.equal(rotatedTitleFits(long, WIDER), true)
-  assert.ok(WIDER.height > WIDE.height && WIDE.height > NARROW.height)
-})
-
-test('every rotated axis title the site ships fits all three presets', () => {
-  // Frame heights are the islands' own: most take useChartSize's height, while
-  // WhoWorks' and PricesAndRates' lower panels are 0.66 of it and
-  // HouseholdSpread pins two fixed heights per breakpoint.
-  //
-  // The third column is the 1120 preset. 520 is useChartSize's own height,
-  // 343 is `Math.round(520 * 0.66)`, and HouseholdSpread's two panels repeat
-  // their wide numbers because it keys those on `narrow`, not on the preset.
-  const panels: Array<[string, number, number, number]> = [
-    ['Real GDP, $ trillions, log scale', 396, 316, 520],
-    ['Index, 1984 = 100', 396, 316, 520],
-    ['Percent of the labour force', 396, 316, 520],
-    ['Percent of the population 16+', 261, 209, 343],
-    ['Percent change from the previous fiscal year', 396, 316, 520],
-    ['Percent per year', 261, 209, 343],
-    ['Percent of GDP', 396, 316, 520],
-    ['$ trillions', 396, 316, 520],
-    ['Nominal dollars', 396, 316, 520],
-    ['Real dollars, FY2025', 396, 316, 520],
-    ['Nominal $ trillions', 396, 316, 520],
-    ['Real $ trillions, FY2025', 396, 316, 520],
-    ['Coalition', 396, 316, 520],
-    ['Signing president', 396, 316, 520],
-    ['Constant 2024 dollars', 396, 316, 520],
-    ['Families Gini index, ratio 0 to 1', 260, 240, 260],
-    ['Percent of income', 200, 190, 200],
-    ['Percent', 396, 316, 520],
-    ['Percent of income tax paid', 396, 316, 520],
-  ]
-  for (const [label, wideH, narrowH, widerH] of panels) {
-    for (const [h, margin] of [
-      [wideH, WIDE.margin],
-      [narrowH, NARROW.margin],
-      [widerH, WIDER.margin],
-    ] as const) {
-      const f = frame(360, h, margin)
-      assert.ok(
-        rotatedTitleFits(label, f),
-        `"${label}" needs ${estimateTextWidth(label, AXIS_TITLE_FONT_PX).toFixed(1)} units ` +
-          `down a ${h}-unit SVG, which has ${f.height - 4}`,
-      )
-      // And the placement really keeps the whole box inside the SVG.
-      const y = placeAxisTitleY(label, f) + margin.top
-      const half = estimateTextWidth(label, AXIS_TITLE_FONT_PX) / 2
-      assert.ok(
-        y - half >= -1e-9 && y + half <= h + 1e-9,
-        `"${label}" paints [${(y - half).toFixed(1)}, ${(y + half).toFixed(1)}] in a ${h}-unit SVG`,
-      )
-    }
-  }
-})
 
 test('placeAxisTitleY leaves a title that already fits on the plot centre', () => {
   assert.equal(placeAxisTitleY('Percent of GDP', WIDE), WIDE.innerHeight / 2)

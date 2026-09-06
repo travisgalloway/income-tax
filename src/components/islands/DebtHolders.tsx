@@ -102,8 +102,21 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
   })
 
   const W = size.width
-  const barH = narrow ? 26 : 34
-  const connH = narrow ? 34 : 46
+  /* The bar and connector heights are proportions, not constants, and `fill`
+   * scales them so the figure reaches the site's common graphic height. This
+   * figure used to draw 229 units against a 400-unit norm, because it sets its
+   * own height from content and the preset had no say. The ratio between a bar
+   * and the gap the connectors run through is what matters here, so one factor
+   * scales both and the drawing is unchanged in proportion. */
+  const barBase = narrow ? 26 : 34
+  const connBase = narrow ? 34 : 46
+  const gutterBase = narrow ? 30 : 64
+  /* The top margin is fixed, so it comes off both sides before the ratio is
+   * formed; scaling it too would leave the figure short of the target. */
+  const naturalBody = 2 * (barBase + connBase) + Math.max(0, gutterBase - connBase / 2)
+  const fill = (size.height - size.margin.top) / naturalBody
+  const barH = barBase * fill
+  const connH = connBase * fill
 
   /* The two rows are Recharts category bands, so each bar is centred in its own
    * band. Two bands of `barH + connH` therefore leave exactly `connH` between
@@ -112,9 +125,9 @@ export function DebtHolders({ d }: { d: DebtHoldersData }) {
   const barTop = (i: number) => (i + 0.5) * (barH + connH) - barH / 2
   const yA = barTop(0)
   const yB = barTop(1)
-  const leadersY = yB + barH + (narrow ? 0 : 18)
+  const leadersY = yB + barH + (narrow ? 0 : 18 * fill)
   // The leader block sits partly below the plot. `connH / 2` of it fits inside.
-  const gutterBottom = Math.max(0, (narrow ? 30 : 64) - connH / 2)
+  const gutterBottom = Math.max(0, gutterBase * fill - connH / 2)
   const H = size.margin.top + innerHeight + gutterBottom
 
   const f = useMemo(

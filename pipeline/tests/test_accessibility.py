@@ -3237,7 +3237,7 @@ ANNOTATION_FONT_PX = {
 }
 
 # Must equal ADVANCE_EM in src/components/charts/annotate.ts, asserted below.
-ADVANCE_EM = 0.62
+ADVANCE_EM = 0.65
 
 # Every other `<text>` class that ships today. This is an `==` audit, not an
 # ignore list: a class that appears in neither set fails the audit, so a new

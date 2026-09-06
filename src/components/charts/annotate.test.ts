@@ -81,7 +81,7 @@ test('estimateTextWidth is monotone in length and linear in font size', () => {
 test('ADVANCE_EM is the over-estimate the pytest guard also uses', () => {
   // Raise-never-lower. If this trips, the Python constant in
   // pipeline/tests/test_accessibility.py must move with it, not against it.
-  assert.equal(ADVANCE_EM, 0.62)
+  assert.equal(ADVANCE_EM, 0.65)
   assert.ok(ADVANCE_EM >= 0.6, 'ADVANCE_EM must over-estimate a proportional font')
 })
 
@@ -135,7 +135,7 @@ test('a label wider than the whole span is absent, not truncated', () => {
 
   // And the boundary is the span, not the plot: a label wider than the 296-unit
   // NARROW plot but inside its 356-unit span still places.
-  const tween = 'y'.repeat(45) // 45 * 11.5 * 0.62 = 320.85
+  const tween = 'y'.repeat(43) // 43 * 11.5 * 0.65 = 321.4
   const w = estimateTextWidth(tween)
   assert.ok(w > NARROW.innerWidth && w < visibleSpan(NARROW)[1] - visibleSpan(NARROW)[0])
   assert.notEqual(placeAnnotation({ x: 0, label: tween, frame: NARROW }), null)

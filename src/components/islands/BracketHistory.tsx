@@ -149,8 +149,12 @@ export function BracketHistory({ rows }: { rows: BracketYear[] }) {
   // Every panel is the same short height, which is shorter than the size
   // preset's own, so each chart builds one shared frame and each panel's y
   // scale is built against that frame rather than against `useFrame`'s.
-  const panelH = narrow ? 108 : 128
-  const H = size.margin.top + panelH + size.margin.bottom
+  /* Three panels of one shared height, and together they take the site's common
+   * graphic height rather than three times a constant: at 208 units each the
+   * figure drew 624 against a 400-unit norm. The panel is what is left of a
+   * third once its own margins are paid. */
+  const H = Math.round(size.height / 3)
+  const panelH = Math.max(40, H - size.margin.top - size.margin.bottom)
   const f = makeFrame(size.width, H, size.margin)
   const yRate = linear(rate.yDomain, [f.innerHeight, 0])
   const yNb = linear(count.yDomain, [f.innerHeight, 0])

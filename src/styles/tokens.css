@@ -6,20 +6,7 @@
  * either way, so the page still paints with the reader's own faces on the first
  * byte, and the stack now resolves to the face the reader's own operating
  * system uses for everything else.
- *
- * Chart furniture is the exception and keeps a serif, on `--font-chart`. Not
- * for looks: `ADVANCE_EM = 0.62` in `axisFit.ts` is a Georgia metric, it is what
- * every tick-fit and annotation-placement decision is computed from, and
- * `smoke.test.ts` asserts no label exceeds it against a live measurement.
- *
- * Measured rather than assumed, over the site's real label strings at 11px with
- * tabular figures on. Georgia peaks at 0.599, inside the constant. The system
- * sans peaks at 0.637, outside it, and the worst case is a bare year: "1950"
- * runs 0.636 in the sans against 0.534 in Georgia, because a sans has no
- * narrow-digit advantage to give at that size. Switching the charts therefore
- * means raising the constant, which the test's own message permits but which
- * then re-derives every tick-drop and gutter fit on the site. That is a change
- * of its own and is not made here.
+
  *
  * COLOUR was reviewed and replaced. The ground moves from a cool stone to a
  * warm paper one step deeper than Financial Times paper #FFF1E5, and the party
@@ -133,10 +120,17 @@
   --quiet: #e7e4de;
 
   /* ---- Type ---------------------------------------------------------------
-   * Three roles now. A reading face for running text, the same face for tables
-   * and controls so the interface does not read as a second publication, and a
-   * serif held back for chart furniture, which must hold up at 10-11px and
-   * align in columns.
+   * One face, everywhere. Running text, tables, controls and chart furniture
+   * all take the system sans, so nothing on the page reads as a second
+   * publication set in a different voice.
+   *
+   * Chart furniture was briefly held back on a serif, on the strength of a
+   * measurement taken over the wrong corpus. `ADVANCE_EM` estimates the width of
+   * the five ANNOTATION classes `smoke.test.ts` sweeps, and axis ticks are
+   * explicitly not among them, so the 0.637 that justified holding back was a
+   * tick label the constant never estimates. Measured over the classes that do
+   * count, on all three routes at both viewports, the sans peaks at 0.6255 and
+   * the constant was raised from 0.62 to 0.65 to hold it.
    */
 
   /* Reading face. `system-ui` first, so the page uses whatever the reader's own
@@ -147,19 +141,12 @@
     system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, "Noto Sans", sans-serif;
 
-  /* Data face, for HTML tables, captions, controls and the footer. The same
-   * stack as the reading face: a serif table under sans prose read as a second
-   * document, and the tabular-figure alignment these need is a font-feature
-   * setting rather than a property of the face. */
+  /* Data face, for tables, captions, controls, the footer and chart furniture.
+   * The same stack as the reading face. The tabular-figure alignment these need
+   * is a font-feature setting rather than a property of the face, so one stack
+   * serves both roles. The name is kept because 41 rules read it and the two
+   * roles may diverge again. */
   --font-data: var(--font-text);
-
-  /* Chart furniture, inside SVG only. Georgia leads deliberately: it was drawn
-   * for screens, its numerals are unusually sturdy at small sizes, and it holds
-   * a column. It stays serif because `ADVANCE_EM` is calibrated to it. See the
-   * note at the head of this file. */
-  --font-chart:
-    Georgia, "Minion Pro", "Adobe Garamond Pro", "Baskerville",
-    "Palatino Linotype", Palatino, "Times New Roman", Times, serif;
 
   /* Numerals. The textbook distinction: old-style figures sit inside a
    * sentence at x-height; lining tabular figures line up in a column.
@@ -207,6 +194,20 @@
   --margin-w: 15rem;                     /* the margin column: captions, notes */
   --measure-wide: calc(var(--measure) + var(--shell-gap, 2.25rem) + var(--margin-w));
   --gap: 1.5rem;
+
+  /* The common graphic height. Every figure's SVG box is this tall, so a reader
+   * scrolling a route meets one rhythm rather than a range that ran 136px to
+   * 724px, a factor of 5.3.
+   *
+   * Two figures are not scaled to it and are centred in it instead. The state
+   * cartogram is an 8-row grid of 36-unit tiles and the tax-mix bar is a single
+   * stacked row; their shapes are dictated by the data, and stretching a
+   * 60-unit strip to 400px is a 6.7x distortion. They occupy the same vertical
+   * band without being misdrawn.
+   *
+   * `useChartSize` reads this value, so the presets and the CSS box cannot
+   * drift apart. */
+  --graphic-h: 400px;
 
   /* ---- Type scale --------------------------------------------------------
    * Two ratios. Above the body size the ratio is 1.25, the major third, which

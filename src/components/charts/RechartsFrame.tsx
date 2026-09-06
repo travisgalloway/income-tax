@@ -88,6 +88,10 @@ export interface FrameOptions<T> {
   yTickCount?: [narrow: number, wide: number]
   /** Keep only whole-number x ticks. True for a year axis, which is most of them. */
   xTicksInteger?: boolean
+  /** This panel's share of the figure's common graphic height. Defaults to 1,
+   *  the whole of it. A figure that stacks panels passes a fraction per panel,
+   *  and the fractions sum to 1. */
+  heightShare?: number
 }
 
 /**
@@ -106,8 +110,21 @@ export function useFrame<T>({
   xTickCount = [4, 8],
   yTickCount = [4, 6],
   xTicksInteger = true,
+  heightShare = 1,
 }: FrameOptions<T>) {
-  const [boxRef, size] = useChartSize()
+  const [boxRef, rawSize] = useChartSize()
+  /* `heightShare` is how a figure that stacks panels divides the site's common
+   * graphic height instead of multiplying it. A two-panel figure whose lower
+   * panel is two thirds of the upper one passes 1 / 1.66 and 0.66 / 1.66; the
+   * ratio between the panels is unchanged and the pair now sums to one preset
+   * height. Before this, each panel took the full preset and the figure drew
+   * 664 units against a 400-unit norm.
+   *
+   * It is applied HERE rather than at the render site because `f`, `y`,
+   * `chartStyle` and every tick derive from `size.height`. Overriding the
+   * height downstream would leave the scales built against the old one and the
+   * marks would be drawn off the plot. */
+  const size = { ...rawSize, height: Math.round(rawSize.height * heightShare) }
   const f = makeFrame(size.width, size.height, size.margin)
   const narrow = size.width < NARROW_PX
 

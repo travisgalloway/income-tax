@@ -53,7 +53,7 @@ export const TICK_OFFSET = 8
  * `AxisLeft` draws each tick at `x = -offset`, `end`-anchored, so the label
  * grows leftward and the SVG's own left edge is at `-margin.left`. What is left
  * over is `margin.left - offset - pad`: 64 units at the 720 preset, 42 at 360.
- * At 11px and `ADVANCE_EM = 0.62` that is 9.3 and 6.1 characters respectively,
+ * At 11px and `ADVANCE_EM = 0.65` that is 8.7 and 5.9 characters respectively,
  * which is the whole reason `dollars()` cannot be an axis formatter.
  */
 export function leftGutterRoom(frame: Frame, offset: number = TICK_OFFSET, pad = 2): number {

@@ -81,8 +81,11 @@ export function HouseholdSpread({ rows, top1 }: { rows: IncomeYear[]; top1: Top1
 
   // Each panel is shorter than the size preset's own height, and they differ
   // from each other, so each builds its own frame and its own y scale.
-  const giniHeight = narrow ? 240 : 260
-  const top1Height = narrow ? 190 : 200
+  /* The two panels divide the common graphic height in the 260 : 200 ratio they
+   * always had, rather than each taking a fixed constant. Together they used to
+   * draw 460 units against a 400-unit norm. */
+  const giniHeight = Math.round(size.height * (260 / 460))
+  const top1Height = Math.round(size.height * (200 / 460))
   const fGini = makeFrame(size.width, giniHeight, size.margin)
   const fTop1 = makeFrame(size.width, top1Height, size.margin)
   const yGini = linear(gini.yDomain, [fGini.innerHeight, 0])
