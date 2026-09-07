@@ -47,7 +47,7 @@ unit toggle composes its accessible name from the number's span id through
 ## The table view trigger
 
 `.tableview-trigger` is the `<summary>`, so it is block-level by default, and its
-`border-bottom` painted the full 1120px of the content column. Every figure
+`border-bottom` painted the full width of the content column. Every figure
 carried one, 11px under the caption's own rule and the same length as it. Twelve
 of the 157 full-width rules on `/government` were this control, doubling a rule
 that already belonged to the caption.
@@ -61,14 +61,111 @@ at `0 0 0.1rem`, which
 `pipeline/tests/test_accessibility.py::_TARGET_HOST_VERTICAL_PADDING` asserts as
 an equality.
 
-## Width
+## One graphic height
 
-Every figure renders at `--measure-wide`, which is `--content-w`, 70rem, or
-1120px at 1440px. Running text renders at `--measure`, 55rem. The two were the
-same number until this change, and making them different is what lets a
-figure's rules read as a different level from a paragraph's.
+Every figure's graphic box is `--graphic-h`, 400px. Before this the rendered
+heights ran 136px to 724px, a factor of 5.3, because rendered height is always
+`container width x (H / W)` and each island set its own H.
 
-The plot area itself sits at `--panel`, one hair from `--ground` at 1.06:1.
+| Was | Now | How |
+|---|---|---|
+| 17 standard islands at 400 | 400 | the `WIDE` preset, whose height is the token |
+| `DebtHolders` 229, `DebtMaturity` 196 | 400 | one factor scales the bars, bands and gutters together, so their proportions are untouched |
+| `OecdChart` 394 | 400 | the row pitch is derived from the budget rather than fixed, which also makes the figure proof against its own row count |
+| `HouseholdSpread` 460, `BracketHistory` 624, `WhoWorks` and `PricesAndRates` 664 | 400 | `heightShare` on `useFrame` divides the budget among stacked panels at the ratios they already had |
+| `StateGiveGet` 724, `StateTaxMix` 136 | centred in 400 | not scaled |
+
+`heightShare` is applied inside `useFrame` rather than at the render site,
+because the frame, the y scale, `chartStyle` and every tick derive from
+`size.height`. Overriding the height downstream leaves the scales built against
+the old one and draws the marks off the plot.
+
+The two hand-written SVGs are the deliberate exception. A 50-state cartogram is
+an 8-row grid of 36-unit tiles and the tax-mix bar is a single stacked row;
+their shapes come from the data, and stretching a 60-unit strip to 400px is a
+6.7x distortion. The cartogram is bounded by height so the browser derives its
+width from the 440:320 aspect, and the strip keeps its natural 136px. Both are
+centred in a 400px box, so they occupy the same vertical band without being
+misdrawn.
+
+Whole-figure heights still vary and always will. The controls row wraps, the
+`aria-live` readout grows to two or three lines when a reader hovers a mark, and
+the law explorer and the cartogram each render an always-visible table below the
+graphic. The graphic box is the lever worth pulling; the figure block is not.
+
+## One label above the plot
+
+The left-axis title is the only text on the line above a plot, and it carries
+the panel's name and its unit together. Commit `0956b3f` set that title
+horizontally at the surface's left edge, on the baseline `AXIS_TITLE_GAP` above
+the plot. A stacked figure already drew a second label on that same baseline,
+`.panel-title`, starting at the plot's left edge. Any axis title wider than the
+left gutter printed straight through it.
+
+Table 1 lists the four collisions measured in Chromium on `/households/` at
+1440x1000, before the change.
+
+Table 1. Axis title over panel title, `/households/` at 1440x1000, in painted
+pixels. Source: a pairwise bounding-box sweep of every `<text>` in every `<svg>`
+on the three report routes, run in Chromium against `dist/`.
+
+| Section | Axis title | Panel title | Overlap |
+|---|---|---|---|
+| `#the-spread` | Families Gini index, ratio 0 to 1 | Families Gini index | 107.5 x 11 px |
+| `#the-spread` | Percent of income | Top 1% share of income before transfers and taxes | 39.1 x 11 px |
+| `#a-century-of-brackets` | Constant 2024 dollars, log scale | Top-bracket threshold, constant 2024 dollars (log scale) | 133.7 x 7 px |
+| `#a-century-of-brackets` | Brackets, count | Bracket count, single filer | 27.6 x 7 px |
+
+The two labels were suppressed into one rather than moved apart. Three of the
+four pairs above say the same thing twice, so separating them would have kept
+the duplication and spent plot height or gutter width on it. `useAxisLabel` now
+accepts a ladder of title variants, longest first, and `AxisTitleY` draws the
+longest rung that fits between the surface's left edge and the plot's right
+edge. A stacked panel passes the panel's name and its unit as that ladder, and
+`.panel-title` is drawn nowhere on the site.
+
+The ladder is what keeps the long form at 1440px and a readable form at 390px.
+`/households/` §3 panel C reads "Top-bracket threshold, constant 2024 dollars
+(log scale)" at 1440px and "Top-bracket threshold, 2024 dollars (log)" at 390px.
+The choice is recomputed from Recharts' own plot rectangle on every render, so
+it follows a preset that moves.
+
+`AXIS_TITLE_GAP` rose from 7 to 11 in the same change. The topmost y tick is
+centred on the plot's top edge and reaches 5.5 units above it, and at 7 the
+title's descender crossed that tick by 2.1px on `/households/` §3 and by 0.8px
+on `/economy/` §2. The gap cannot grow much further, because the smallest top
+margin on the site is 28 and the glyph box carries 9.3 units of ascent.
+
+After the change the sweep reports zero overlaps between an axis title and a
+panel title, zero between an axis title and a tick label, and zero clipped axis
+titles, at 1440px and 390px on all three report routes. Every `.figure-graphic`
+reports the height it did before, because nothing about the geometry moved.
+
+## Width and the margin column
+
+A figure spans the reading column and the margin column and adopts both with
+`grid-template-columns: subgrid`. Its head rule runs the whole band, its
+graphic sits in the reading column at 720px, the measure of the prose around
+it, and its caption sits beside the graphic in the margin at 240px. The caption
+also takes the `--quiet` fill, so it reads as apparatus rather than as prose set
+small.
+
+This is the arrangement the earlier version of this note proposed and the site
+never adopted. The caption used to run the full 1120px underneath the graphic,
+where its Note and Source lines reached about 130 characters.
+
+`.figure--wide` is the exception. There the graphic takes the whole band, 996px, and the caption returns beneath it at the reading measure with its rule
+back. Three figures carry it: the law explorer and the two state panels.
+
+Nothing in a figure is auto-placed. The graphic is an Astro island, which
+renders as `<astro-island>` at `display: contents`, so its children rather than
+it become the grid items of whatever contains it. `Figure.astro` wraps the slot
+in `.figure-graphic` so a figure contributes exactly three items: head, graphic,
+caption.
+
+The plot area itself sits at `--panel`, one step toward the ink from `--ground`
+at 1.14:1 in light and 1.15:1 in dark. It was 1.06:1 and, measured rather than
+assumed, 1.03:1 in dark, where the plot rectangle could not be seen at all.
 Three islands draw no gridline and no axis line, so the `--panel` fill is the
 only thing that states the plot rectangle. `docs/design-notes-color.md` records
 the ratios.
@@ -77,7 +174,7 @@ the ratios.
 
 Colour never carries meaning alone. A single-series chart is named by its title,
 a line is named at its end by `.series-label`, a stacked band is labelled
-directly on the plot, and a small-multiple panel is named by `.panel-title`.
+directly on the plot, and a stacked panel is named by its own left-axis title.
 Both axes name their units, enforced by a throw rather than by review.
 
 Nothing in the figure layer transitions, animates or moves, so
@@ -97,22 +194,28 @@ The following appeared in the earlier version of this note and does not describe
 the site.
 
 The four figure widths (`inline` 33rem, `wide` 46rem, `full` 54rem, `bleed`
-70rem). One width ships, `--measure-wide`, and it is 70rem. The `bleed` width's
-cost, a sticky rail painted over by an opaque figure, never arose.
+70rem). Two ship: the reading measure, and `--measure-wide` for the three
+`.figure--wide` figures. The `bleed` width's cost, a sticky rail painted over by
+an opaque figure, never arose.
 
 The two small-multiples grids, `.dn-figure-grid-2` and `.dn-figure-grid-3`, and
 their measured collapse points at 72rem and 48rem. `HouseholdSpread` and
-`BracketHistory` stack their panels inside one SVG instead, and `.panel-title`
-and `.panel-empty` are what remains of the grid proposal.
+`BracketHistory` stack their panels inside one SVG instead, and `.panel-empty`
+is what remains of the grid proposal. `.panel-title` was the other survivor
+until it collided with the axis title; see "One label above the plot".
 
-The geometry the widths were derived from. The page is not 74rem with a 54rem
-right column and a left rail. It is 70rem of content plus a 3rem gap and a 13rem
-contents rail on the right, and the rail leaves the accessibility tree below
-76rem.
+The geometry the widths were derived from. The page is an 11rem contents rail,
+a 45rem reading column and a 15rem margin column, with a 2.25rem gap between
+each and 2.5rem of page padding, totalling 1272px. The reading column widened
+with the face: a system sans needs 45rem to set the 76 characters Baskerville
+set in 40rem. The rail is on the LEFT and
+leaves the accessibility tree below 78rem; the margin column follows it below
+64rem, and its contents reflow inline beneath whatever they annotate.
 
 The 700-weight figure title, the per-width title and deck sizes, and the 2px
 head rule on a hero figure. The title is `--ts-0` at weight 400 at every figure,
-and every head rule is 1px.
+and every head rule is 1px. Commit `1263e30` briefly set the title to 600;
+`docs/design-notes-type.md` records why weight stops at h2.
 
 The optional deck between the title and the plot. No figure has one.
 

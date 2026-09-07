@@ -1466,7 +1466,13 @@ _TOKEN_HEX_RE = re.compile(r"--([\w-]+):\s*(#[0-9A-Fa-f]{6})")
 _THEME_SELECTORS = {
     "light": ":root {",
     "dark": ":root[data-theme='dark']",
-    "dark-media": ":where(:root:not([data-theme='light']))",
+    # No `:where()`. The wrapper forced this block's specificity to (0,0,0), so
+    # the base `:root` block at (0,1,0) beat it and the OS-preference palette
+    # never won the cascade: with the toggle on `system` and the operating
+    # system in dark, the site rendered fully light. `:root:not(...)` scores
+    # (0,2,0) and wins, while the attribute block below it, also (0,2,0) but
+    # later in the file, still carries an explicit choice.
+    "dark-media": ":root:not([data-theme='light'])",
 }
 
 #: Every theme a token is scored in. `dark-media` is deliberately absent: it is asserted equal to
@@ -1514,13 +1520,21 @@ def tokens_css_colors(theme: str = "light") -> dict[str, str]:
     return dict(_TOKEN_HEX_RE.findall(_css_block(TOKENS_CSS.read_text(), _THEME_SELECTORS[theme])))
 
 
-def surfaces(theme: str) -> tuple[str, str]:
-    """`(ground, panel)` for one theme, read from `tokens.css` rather than restated here."""
+def surfaces(theme: str) -> tuple[str, ...]:
+    """Every surface text can be painted on, for one theme, read from `tokens.css`.
+
+    `--quiet` joined `--ground` and `--panel` when the pull quote, the finding, the figure
+    caption and the limits list took a grey fill. It has to be here rather than only in the
+    token table: `test_no_text_selector_paints_with_a_low_contrast_token` scores each text
+    selector against every surface this returns, so a surface left out is a pairing the
+    suite reports green without ever having measured it. `.finding` and `figcaption` both
+    paint on `--quiet` and on nothing else.
+    """
     palette = tokens_css_colors(theme)
-    return palette["ground"], palette["panel"]
+    return palette["ground"], palette["panel"], palette["quiet"]
 
 
-_GROUND, _PANEL = surfaces("light")
+_GROUND, _PANEL, _QUIET = surfaces("light")
 
 
 #: `## Token contrast` holds the light table and `### The dark theme's tokens` holds the dark one.
@@ -1583,7 +1597,7 @@ def test_token_contrast_table_matches_tokens_css(theme):
     `tokens.css` against one pair of surfaces, which the second palette made wrong twice over: the
     hexes it collected were the dark ones, and it scored them against the light ground.
     """
-    ground, panel = surfaces(theme)
+    ground, panel = surfaces(theme)[:2]
     css_tokens = tokens_css_colors(theme)
     doc_rows = {r.token: r for r in doc_contrast_rows(theme)}
     for name, hexval in css_tokens.items():
@@ -1629,23 +1643,20 @@ def test_the_two_dark_theme_blocks_declare_the_same_hexes():
 
 @pytest.mark.parametrize("theme", THEMES)
 def test_text_role_tokens_meet_4_5_to_1(theme):
-    ground, panel = surfaces(theme)
     css_tokens = tokens_css_colors(theme)
     for row in doc_contrast_rows(theme):
         if row.role != "text":
             continue
         hexval = css_tokens.get(row.token, row.hexval)
-        assert contrast_ratio(hexval, ground) >= 4.5, (
-            f"--{row.token} scores below 4.5:1 against --ground in the {theme} palette"
-        )
-        assert contrast_ratio(hexval, panel) >= 4.5, (
-            f"--{row.token} scores below 4.5:1 against --panel in the {theme} palette"
-        )
+        for surface in surfaces(theme):
+            assert contrast_ratio(hexval, surface) >= 4.5, (
+                f"--{row.token} scores below 4.5:1 against {surface} in the {theme} palette"
+            )
 
 
 @pytest.mark.parametrize("theme", THEMES)
 def test_series_tokens_below_3_to_1_are_documented_as_needing_redundant_encoding(theme):
-    ground, panel = surfaces(theme)
+    ground, panel = surfaces(theme)[:2]
     css_tokens = tokens_css_colors(theme)
     for row in doc_contrast_rows(theme):
         if row.role != "series":
@@ -1697,7 +1708,6 @@ def test_no_text_selector_paints_with_a_low_contrast_token(theme):
     same `--ink-soft` resolves to `#57534B` on paper and `#A79E90` on the dark ground, so the
     ratio has to be recomputed per theme rather than once.
     """
-    ground, panel = surfaces(theme)
     css_tokens = tokens_css_colors(theme)
     rules = list(iter_css_rules(GLOBAL_CSS.read_text()))
     for selector in _TEXT_SELECTORS:
@@ -1712,13 +1722,13 @@ def test_no_text_selector_paints_with_a_low_contrast_token(theme):
             assert hexval is not None, (
                 f"{selector} references --{token}, which the {theme} palette does not declare"
             )
-            vg = contrast_ratio(hexval, ground)
-            vp = contrast_ratio(hexval, panel)
-            assert vg >= 4.5 and vp >= 4.5, (
-                f"{selector} paints text with --{token} ({hexval}) in the {theme} palette, "
-                f"which scores {vg:.2f}:1 vs --ground and {vp:.2f}:1 vs --panel, "
-                "below the 4.5:1 text threshold"
-            )
+            for surface in surfaces(theme):
+                ratio = contrast_ratio(hexval, surface)
+                assert ratio >= 4.5, (
+                    f"{selector} paints text with --{token} ({hexval}) in the {theme} "
+                    f"palette, which scores {ratio:.2f}:1 against the surface {surface}, "
+                    "below the 4.5:1 text threshold"
+                )
 
 
 # ---------------------------------------------------------------------------
@@ -3233,7 +3243,7 @@ ANNOTATION_FONT_PX = {
 }
 
 # Must equal ADVANCE_EM in src/components/charts/annotate.ts, asserted below.
-ADVANCE_EM = 0.62
+ADVANCE_EM = 0.65
 
 # Every other `<text>` class that ships today. This is an `==` audit, not an
 # ignore list: a class that appears in neither set fails the audit, so a new
@@ -3264,7 +3274,6 @@ NON_ANNOTATION_TEXT_CLASSES = {
     "holders-label",
     "legend-label",
     "maturity-label",
-    "panel-title",
     "state-tile-code",
     "state-tile-mark",
 }
@@ -3813,7 +3822,6 @@ TEXT_FONT_PX = {
     "legend-label": 11.0,
     "maturity-label": 11.0,
     "maturity-marker-label": 10.5,
-    "panel-title": 10.5,
     "state-tile-code": 10.0,
     "state-tile-mark": 10.0,
 }
@@ -4227,7 +4235,7 @@ def test_the_text_clipping_guards_bite_each_way_the_fix_can_regress():
         '<svg viewBox="0 0 720 396">'
         '<text x="66" text-anchor="end" class="axis-label">$30M</text>'
         '<text x="360" text-anchor="middle" class="holders-label">Domestic $22.50T</text>'
-        '<text x="100" class="panel-title">Bracket count, single filer</text>'
+        '<text x="100" class="legend-label">Bracket count, single filer</text>'
         "</svg>"
     )
     assert not chart_text_clipping_failures(clean), "a within-bounds corpus was flagged"

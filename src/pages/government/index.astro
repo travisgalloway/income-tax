@@ -41,8 +41,14 @@ const sourcesHref = join('/sources')
   description="Federal taxation, spending, debt and the votes behind them, FY1962 to FY2025."
   sections={routeSections['/government']}
 >
-  <p class="kicker">Route 3 of 3</p>
-  <h1>Government</h1>
+  {/* The route title is in the DOM and out of the picture. The navbar already
+      names this route and underlines it, so a heading repeating that word was
+      the reader seeing it twice. It cannot simply be deleted: `harness.ts`
+      asserts each route's first h1 text on every browser spec, and
+      `test_heading_levels_do_not_skip` wants exactly one h1 per page and no
+      jump to h2. So it stays as the document's heading and its accessible
+      name, and the standfirst opens the page for a sighted reader. */}
+  <h1 class="vh">Government</h1>
   <p class="standfirst">What the federal government collects, what it spends, what it owes, and who voted for each of it.</p>
   <section id="forty-trillion">
     <p class="kicker"><span class="section-no">Section 1</span></p>
@@ -188,6 +194,7 @@ const sourcesHref = join('/sources')
     <Figure
       ariaLabel="Sixteen of the twenty-three major deficit-moving laws since 1995 passed with cross-party majorities, totalling $9.24 trillion against $7.51 trillion for the seven party-line laws."
       fig={fig('law-explorer')}
+      wide
       xUnit="Fiscal year"
       yUnit="deficit or surplus as percent of GDP; ten-year score in $ trillions at enactment"
       note={`The chart window is FY1995 to FY2025; the underlying deficit series runs from FY1962. Each law's marker sits at its date's position within its enactment fiscal year, not on the year's tick. The two 1997 laws predate the ten-year scoring convention and carry no score. They are the Balanced Budget Act and the Taxpayer Relief Act, and both are excluded from the cost totals. The CARES Act's House vote was a voice vote with no roll call. Three Senate votes tied 50-50 and passed on the Vice President's tiebreak, which does not appear in a roll call. They are JGTRRA, the Inflation Reduction Act and the One Big Beautiful Bill Act. Vote splits: ${partySplits._meta.source}`}
@@ -269,6 +276,7 @@ const sourcesHref = join('/sources')
     <Figure
       ariaLabel={`Federal gross tax collections against federal award spending by state, FY${statesBalance.data.fy_give}. ${statesBalance.data.summary.n_get_more} states and DC receive more than they pay; ${statesBalance.data.summary.n_give_more} pay more than they receive.`}
       fig={fig('state-give-get')}
+      wide
       xUnit="State or territory"
       yUnit="federal gross tax collections against federal award spending, per person or in total"
       note="Give is gross IRS collections by filer address; get is USASpending award spending by place of performance. This is narrower than a balance of payments on both sides. The paragraphs below bound a comparison between states."
@@ -283,6 +291,7 @@ const sourcesHref = join('/sources')
     <Figure
       ariaLabel={`Each state's own tax collections by category as a share of its total, FY${statesTaxMix.data.fy}.`}
       fig={fig('state-tax-mix')}
+      wide
       xUnit="Tax category"
       yUnit="percent of that state's own total tax collections"
       note="A category can be genuinely not levied by a state rather than merely unreported. Alaska has no general sales tax. The two are shown differently, and never both as a dash."
@@ -312,8 +321,7 @@ const sourcesHref = join('/sources')
         <p class="prose"><strong>The votes are counted, and four things still limit them.</strong> All 23 laws carry per-party yea and nay counts taken from Voteview roll-call records. None carries a party-line or cross-party label read off the published character of the vote. Four limits remain. The final-passage roll call for each law was chosen by hand. A bill carries many roll calls, and picking one by date returns the wrong vote. The House never took a roll call on the CARES Act, which passed by voice on 27 March 2020. One chamber of one law therefore has no split at all, which is an absence of data rather than agreement. A vote is cross-party when a chamber gives at least 10% of its yes votes from the minority party. That threshold is a judgement and can be argued with. Party and caucus membership also differ by two Senate seats through most of this period. A tally on one basis will not match a tally on the other.</p>
       </li>
       <li>
-        <h3>Units change the story.</h3>
-        <p class="prose">Nominal dollars make everything recent look unprecedented, because prices roughly doubled over this span. Share of GDP scales to the economy carrying the burden. Every dollar chart on this site can be flipped between them. <a href="#forty-trillion">The debt series in section 1</a> is the plainest case. Flipped, the same decade reads as a doubling in nominal dollars and as 105% of GDP to 124%.</p>
+        <p class="prose"><strong>Units change the story.</strong> Nominal dollars make everything recent look unprecedented, because prices roughly doubled over this span. Share of GDP scales to the economy carrying the burden. Every dollar chart on this site can be flipped between them. <a href="#forty-trillion">The debt series in section 1</a> is the plainest case. Flipped, the same decade reads as a doubling in nominal dollars and as 105% of GDP to 124%.</p>
       </li>
       <li>
         <p class="prose"><strong>Where a dollar is recorded is not where it is borne.</strong> Federal tax is recorded against the address on the filer's return. Federal award spending is recorded against the place of performance, meaning the location where the work is done. Neither base is a statement about who ultimately paid or who ultimately benefited. A company's tax follows its headquarters rather than the people whose work produced it. A contract's spending follows the site rather than the taxpayers who funded it. <a href="#by-state">Section 11</a> sets one against the other. What it draws is a comparison of two accounting locations rather than a balance of payments.</p>

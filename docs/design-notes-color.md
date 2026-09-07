@@ -41,23 +41,33 @@ is 6. Its normal-vision floor for the same pair is 15.
 ## The proposed ground
 
 The page ground moves from a cool stone `#DDE0DB` to a warm paper `#EDE5D9`. The
-new ground sits one step deeper than FT paper `#FFF1E5`, so it reads as stock
-rather than as white. The plot panel moves from `#F3F4F0` to `#F2EBE1`.
+new ground sits a shade off FT paper `#FFF1E5`, so it reads as stock rather
+than as white. The plot panel moves from `#F3F4F0` to `#EAE2D4`.
 
 The warm ground is also lighter, and the extra lightness pays for the
 accessibility work.
 
-The panel-to-ground separation narrows to 1.06:1, from 1.21:1 today. The panel
-first went to `#FDFAF5`, which held the old separation at 1.20:1 and sat within
-1.05:1 of white. Against warm paper that value read as a bright card rather
-than as a plot area, so a second pass moved it to `#F2EBE1`. A statistical
-publication prints the plot area at the paper colour or a shade off it. The
-dark panel moved the same way, from `#1F1B16` to `#1C1914`, and its separation
-narrows to 1.06:1 from 1.08:1.
+The panel-to-ground separation is 1.14:1 in both themes, and the panel steps
+TOWARD the ink rather than away from it. It has been three values. `#FDFAF5`
+held a 1.20:1 separation but sat within 1.05:1 of white, so against warm paper
+it read as a bright card rather than as a plot area. `#F2EBE1` corrected the
+brightness and went too far the other way, to 1.06:1, where the plot rectangle
+was very hard to find. `#EAE2D4` is a tint of the paper at 1.14:1. The dark
+panel moved the same way, `#1F1B16` to `#1C1914` at 1.06:1 and now `#232019` at
+1.14:1.
 
 The two surfaces are not made identical, because three islands draw no gridline
 and no axis line. `DebtMaturity`, `DebtHolders` and `WhoPays` state the plot
-rectangle with the `--panel` fill alone. At 1.06:1 that rectangle still reads.
+rectangle with the `--panel` fill alone, and at 1.06:1 that rectangle was the
+weakest edge on the page.
+
+The ground moved with them. `#EDE5D9` was a saturated tan, darker than any
+comparable publication: the Financial Times grounds at `#FFF1E5`, Asterisk at
+`#FAF8F0`, Works in Progress at `#FFF7F4`, Our World in Data at white.
+`#F6F1E8` keeps the warm cast and returns the contrast headroom the charts were
+spending. Ink rises from 14.27:1 to 15.84:1 and `--ink-soft` from 6.13:1 to
+6.80:1. Every series token gains against the ground, because every one of them
+is darker than the paper.
 
 Six series tokens score under 3:1 against the current panel. Every series token in
 the proposal clears 3:1 against both proposed surfaces, in both modes. The gain
@@ -71,35 +81,68 @@ contrast against the two proposed surfaces. Role and threshold follow
 `docs/contracts/accessibility.md`, which holds text at 4.5:1 and a graphical
 object at 3:1. The verdict column reports the weaker of the two ratios.
 
-**Table 1. Proposed light palette, against ground `#EDE5D9` and panel `#F2EBE1`.**
+## Chrome accents and the quiet fill
+
+Three tokens were added when the site took red, white and blue as highlight
+colours. The white is the paper itself, so only two of the three are new hues.
+
+| Token | Light | Dark | Role | Where |
+|---|---|---|---|---|
+| `--accent` | `#0f5499` | `#6fa8e8` | text | links, the rail's hover, the term marker's underline, the pull quote's rule |
+| `--accent-warm` | `#990f3d` | `#e8798d` | text | the current route, section numbers, the finding's rule |
+| `--quiet` | `#e7e4de` | `#262421` | surface | the fill under the pull quote, the finding, a figure caption, the limits and apparatus lists |
+
+`--accent` and `--accent-warm` hold the same two hexes as `--dem` and `--gop`,
+and the separation that keeps the meanings apart is spatial rather than
+chromatic. `BRIEF.md:81` reads "do not reuse party colours for non-partisan
+**data**", and its stated reason is that a colour on a series invents a claim
+the data does not make. Chrome carries no series. So the rule becomes a
+boundary: `--accent` and `--accent-warm` are never painted inside an `<svg>`,
+and `--dem`, `--gop` and `--mix` are never painted outside one. The boundary is
+checkable in one line, `grep -rn accent src/components/`, which must return
+nothing.
+
+They are separate names rather than direct reuse so that a future change to a
+link colour cannot silently restyle the party strip.
+
+`--quiet` is grey rather than a warmer tint of the paper, so a filled block
+reads as a different kind of thing rather than as slightly different stock. It
+is a third surface, and it was added to `surfaces()` in `test_accessibility.py`
+rather than only to the table below: `test_no_text_selector_paints_with_a_low_contrast_token`
+scores each text selector against every surface that function returns, so a
+surface left out is a pairing the suite reports green without having measured.
+`.finding` and `figcaption` both paint on `--quiet` and on nothing else. `--ink`
+scores 14.05 against it and `--ink-soft` 6.03, both above the 4.5:1 text floor.
+
+**Table 1. Light palette, against ground `#F6F1E8` and panel `#EAE2D4`.**
 Ratios are WCAG 2.1 contrast, computed from the hex values in this table.
 
 | Token | Current | Proposed | vs ground | vs panel | Role | Verdict |
 |---|---|---|---|---|---|---|
-| `--ground` | `#DDE0DB` | `#EDE5D9` | 1.00 | 1.06 | surface | no threshold |
-| `--panel` | `#F3F4F0` | `#F2EBE1` | 1.06 | 1.00 | surface | no threshold |
-| `--ink` | `#11161B` | `#14181D` | 14.27 | 15.06 | text | passes 4.5:1 |
-| `--ink-soft` | `#5A6268` | `#57534B` | 6.13 | 6.47 | text | passes 4.5:1 |
-| `--rule` | `#B4BAB3` | `#857E72` | 3.22 | 3.40 | rule | passes 3:1 |
-| `--dem` | `#1D4E89` | `#0F5499` | 6.12 | 6.46 | series | passes 3:1 |
-| `--gop` | `#A8322D` | `#990F3D` | 6.75 | 7.13 | series | passes 3:1 |
-| `--mix` | `#6E3FA3` | `#421A5C` | 10.96 | 11.57 | series | passes 3:1 |
-| `--mand` | `#55606B` | `#37434F` | 8.09 | 8.54 | series | passes 3:1 |
-| `--disc` | `#3E7C86` | `#0D7680` | 4.29 | 4.53 | series | passes 3:1 |
-| `--int` | `#C77D28` | `#A85C11` | 4.00 | 4.22 | series | passes 3:1 |
-| `--domestic` | `#55606B` | `#37434F` | 8.09 | 8.54 | series | passes 3:1 |
-| `--foreign` | `#93A8B3` | `#647E9C` | 3.36 | 3.54 | series | passes 3:1 |
-| `--public` | `#3E7C86` | `#0D7680` | 4.29 | 4.53 | series | passes 3:1 |
-| `--intragov` | `#C77D28` | `#A85C11` | 4.00 | 4.22 | series | passes 3:1 |
-| `--positive` | `#2E7D5B` | `#1E7A4B` | 4.27 | 4.50 | series | passes 3:1 |
-| `--band` | `#C9CCC3` | `#DCD3C6` | 1.19 | 1.25 | rule | below 3:1 |
-| `--rev-ii` | `#3E7C86` | `#0D7680` | 4.29 | 4.53 | series | passes 3:1 |
-| `--rev-pr` | `#C77D28` | `#A85C11` | 4.00 | 4.22 | series | passes 3:1 |
-| `--rev-ci` | `#55606B` | `#37434F` | 8.09 | 8.54 | series | passes 3:1 |
-| `--rev-ex` | `#93A8B3` | `#647E9C` | 3.36 | 3.54 | series | passes 3:1 |
-| `--rev-cu` | `#263038` | `#1B2026` | 13.12 | 13.85 | series | passes 3:1 |
-| `--rev-eg` | `#A8895A` | `#6E4D22` | 6.12 | 6.46 | series | passes 3:1 |
-| `--rev-mi` | `#B7BDB0` | `#807F78` | 3.22 | 3.40 | series | passes 3:1 |
+| `--ground` | `#DDE0DB` | `#F6F1E8` | 1.00 | 1.14 | surface | no threshold |
+| `--panel` | `#F3F4F0` | `#EAE2D4` | 1.14 | 1.00 | surface | no threshold |
+| `--ink` | `#11161B` | `#14181D` | 15.84 | 13.86 | text | passes 4.5:1 |
+| `--ink-soft` | `#5A6268` | `#57534B` | 6.80 | 5.95 | text | passes 4.5:1 |
+| `--rule` | `#B4BAB3` | `#857E72` | 3.57 | 3.13 | rule | passes 3:1 |
+| `--dem` | `#1D4E89` | `#0F5499` | 6.79 | 5.94 | series | passes 3:1 |
+| `--gop` | `#A8322D` | `#990F3D` | 7.50 | 6.56 | series | passes 3:1 |
+| `--mix` | `#6E3FA3` | `#421A5C` | 12.17 | 10.64 | series | passes 3:1 |
+| `--mand` | `#55606B` | `#37434F` | 8.98 | 7.86 | series | passes 3:1 |
+| `--disc` | `#3E7C86` | `#0D7680` | 4.76 | 4.17 | series | passes 3:1 |
+| `--int` | `#C77D28` | `#A85C11` | 4.44 | 3.88 | series | passes 3:1 |
+| `--domestic` | `#55606B` | `#37434F` | 8.98 | 7.86 | series | passes 3:1 |
+| `--foreign` | `#93A8B3` | `#647E9C` | 3.73 | 3.26 | series | passes 3:1 |
+| `--public` | `#3E7C86` | `#0D7680` | 4.76 | 4.17 | series | passes 3:1 |
+| `--intragov` | `#C77D28` | `#A85C11` | 4.44 | 3.88 | series | passes 3:1 |
+| `--positive` | `#2E7D5B` | `#1E7A4B` | 4.74 | 4.14 | series | passes 3:1 |
+| `--band` | `#C9CCC3` | `#DCD3C6` | 1.32 | 1.15 | rule | below 3:1 |
+| `--rev-ii` | `#3E7C86` | `#0D7680` | 4.76 | 4.17 | series | passes 3:1 |
+| `--rev-pr` | `#C77D28` | `#A85C11` | 4.44 | 3.88 | series | passes 3:1 |
+| `--rev-ci` | `#55606B` | `#37434F` | 8.98 | 7.86 | series | passes 3:1 |
+| `--rev-ex` | `#93A8B3` | `#647E9C` | 3.73 | 3.26 | series | passes 3:1 |
+| `--rev-cu` | `#263038` | `#1B2026` | 14.57 | 12.74 | series | passes 3:1 |
+| `--rev-eg` | `#A8895A` | `#6E4D22` | 6.79 | 5.94 | series | passes 3:1 |
+| `--rev-mi` | `#B7BDB0` | `#807F78` | 3.57 | 3.13 | series | passes 3:1 |
 
 ## Proposed dark palette
 
@@ -112,35 +155,35 @@ partners `--domestic` and `--rev-ci` become the lightest marks in their groups.
 `--rev-cu` becomes a light warm cream. A near-black band would be invisible on a
 near-black ground.
 
-**Table 2. Proposed dark palette, against ground `#16130F` and panel `#1C1914`.**
+**Table 2. Dark palette, against ground `#16130F` and panel `#232019`.**
 Ratios are WCAG 2.1 contrast, computed from the hex values in this table.
 
 | Token | Proposed | vs ground | vs panel | Role | Verdict |
 |---|---|---|---|---|---|
-| `--ground` | `#16130F` | 1.00 | 1.06 | surface | no threshold |
-| `--panel` | `#1C1914` | 1.06 | 1.00 | surface | no threshold |
-| `--ink` | `#EDE5D9` | 14.82 | 14.03 | text | passes 4.5:1 |
-| `--ink-soft` | `#A79E90` | 7.00 | 6.62 | text | passes 4.5:1 |
-| `--rule` | `#786D5C` | 3.65 | 3.45 | rule | passes 3:1 |
-| `--dem` | `#6FA8E8` | 7.44 | 7.04 | series | passes 3:1 |
-| `--gop` | `#E8798D` | 6.66 | 6.30 | series | passes 3:1 |
-| `--mix` | `#8E6BC8` | 4.49 | 4.24 | series | passes 3:1 |
-| `--mand` | `#C4CBD2` | 11.30 | 10.70 | series | passes 3:1 |
-| `--disc` | `#3FA9B4` | 6.65 | 6.30 | series | passes 3:1 |
-| `--int` | `#DB9440` | 7.34 | 6.94 | series | passes 3:1 |
-| `--domestic` | `#C4CBD2` | 11.30 | 10.70 | series | passes 3:1 |
-| `--foreign` | `#5F7A8A` | 4.09 | 3.87 | series | passes 3:1 |
-| `--public` | `#3FA9B4` | 6.65 | 6.30 | series | passes 3:1 |
-| `--intragov` | `#DB9440` | 7.34 | 6.94 | series | passes 3:1 |
-| `--positive` | `#4FB27F` | 7.06 | 6.68 | series | passes 3:1 |
-| `--band` | `#2B251D` | 1.22 | 1.16 | rule | below 3:1 |
-| `--rev-ii` | `#3FA9B4` | 6.65 | 6.30 | series | passes 3:1 |
-| `--rev-pr` | `#DB9440` | 7.34 | 6.94 | series | passes 3:1 |
-| `--rev-ci` | `#C4CBD2` | 11.30 | 10.70 | series | passes 3:1 |
-| `--rev-ex` | `#5F7A8A` | 4.09 | 3.87 | series | passes 3:1 |
-| `--rev-cu` | `#E8D2A8` | 12.53 | 11.86 | series | passes 3:1 |
-| `--rev-eg` | `#BE9660` | 6.81 | 6.44 | series | passes 3:1 |
-| `--rev-mi` | `#726F66` | 3.69 | 3.49 | series | passes 3:1 |
+| `--ground` | `#16130F` | 1.00 | 1.14 | surface | no threshold |
+| `--panel` | `#232019` | 1.14 | 1.00 | surface | no threshold |
+| `--ink` | `#EDE5D9` | 14.82 | 13.01 | text | passes 4.5:1 |
+| `--ink-soft` | `#A79E90` | 7.00 | 6.14 | text | passes 4.5:1 |
+| `--rule` | `#786D5C` | 3.65 | 3.20 | rule | passes 3:1 |
+| `--dem` | `#6FA8E8` | 7.44 | 6.53 | series | passes 3:1 |
+| `--gop` | `#E8798D` | 6.66 | 5.84 | series | passes 3:1 |
+| `--mix` | `#8E6BC8` | 4.49 | 3.94 | series | passes 3:1 |
+| `--mand` | `#C4CBD2` | 11.30 | 9.92 | series | passes 3:1 |
+| `--disc` | `#3FA9B4` | 6.65 | 5.84 | series | passes 3:1 |
+| `--int` | `#DB9440` | 7.34 | 6.44 | series | passes 3:1 |
+| `--domestic` | `#C4CBD2` | 11.30 | 9.92 | series | passes 3:1 |
+| `--foreign` | `#5F7A8A` | 4.09 | 3.59 | series | passes 3:1 |
+| `--public` | `#3FA9B4` | 6.65 | 5.84 | series | passes 3:1 |
+| `--intragov` | `#DB9440` | 7.34 | 6.44 | series | passes 3:1 |
+| `--positive` | `#4FB27F` | 7.06 | 6.20 | series | passes 3:1 |
+| `--band` | `#2B251D` | 1.22 | 1.07 | rule | below 3:1 |
+| `--rev-ii` | `#3FA9B4` | 6.65 | 5.84 | series | passes 3:1 |
+| `--rev-pr` | `#DB9440` | 7.34 | 6.44 | series | passes 3:1 |
+| `--rev-ci` | `#C4CBD2` | 11.30 | 9.92 | series | passes 3:1 |
+| `--rev-ex` | `#5F7A8A` | 4.09 | 3.59 | series | passes 3:1 |
+| `--rev-cu` | `#E8D2A8` | 12.53 | 11.00 | series | passes 3:1 |
+| `--rev-eg` | `#BE9660` | 6.81 | 5.98 | series | passes 3:1 |
+| `--rev-mi` | `#726F66` | 3.69 | 3.24 | series | passes 3:1 |
 
 ## Tokens that fail a contrast threshold
 
@@ -237,19 +280,55 @@ therefore carry the identity for the pairs above.
 ## Dark-mode mechanism
 
 The dark palette follows `satnaing/astro-paper`. A `data-theme` attribute selects
-the palette, and a media query supplies the operating-system default. Both live in
-`src/styles/design-next-color.css`.
+the palette, and a media query supplies the operating-system default. Both blocks
+live in `src/styles/tokens.css`.
 
-The media block is written as
-`:where(:root:not([data-theme='light'])) .dn:not([data-theme='light'])`. The
-`:where()` wrapper holds the root part at zero specificity. The two
-`:not([data-theme='light'])` guards let an explicit light choice win on an
-operating system set to dark. The attribute block
-`.dn[data-theme='dark'], :root[data-theme='dark'] .dn` follows the media block. An
-explicit dark choice therefore wins on an operating system set to light.
+The site has three theme states and `system` is the default, written as the
+absence of `data-theme` on `:root`. The theme control removes the attribute for
+`system` rather than setting a third value, so the media query needs no third
+branch.
+
+Both dark blocks must out-specify the base `:root` block. The base block scores
+(0,1,0). The media block is written as `:root:not([data-theme='light'])`, which
+scores (0,2,0), because `:not()` takes the specificity of its argument and
+`[data-theme='light']` is (0,1,0). The attribute block
+`:root[data-theme='dark']` also scores (0,2,0) and is written second, so source
+order settles the tie in favour of an explicit choice. Both blocks exclude an
+explicit light stamp, so a reader who chooses light keeps light on an operating
+system set to dark.
 
 Each block also sets `color-scheme`, so form controls, scrollbars and the
 browser's own surfaces follow the palette.
+
+### The dark palette never rendered for a reader on system dark
+
+The media block was once written as `:where(:root:not([data-theme='light']))`.
+`:where()` forces a selector to specificity (0,0,0), so the base `:root` block at
+(0,1,0) beat every declaration the media query made. A reader on a dark-set
+operating system who had not touched the toggle, which is the state the site
+ships in, was served the full light palette. Only the explicit Dark button worked.
+
+The defect was measured on all seven routes with `prefers-color-scheme: dark` and
+no `data-theme` attribute. Before the fix, `--ground` resolved to `#F6F1E8` and
+`color-scheme` to `light`. After it, `--ground` resolves to `#16130F` and
+`color-scheme` to `dark`, and all 29 tokens the block declares resolve to the
+values in Table 2. System dark and explicit dark now resolve identically: all 66
+custom properties on `:root` match, on every route.
+
+Two consequences follow. The first is that the outage covered every dark
+declaration, not the ground alone, so the dark palette's first real exposure to
+readers dates from this fix rather than from the commit that introduced it. The
+second concerns `--row-hover`. Commit `0956b3f` moved the table row hover from a
+pair of `:root[data-theme='dark']` descendant selectors in `global.css` to a
+token declared in both dark blocks. The token was correct in both. The reader it
+was written for still received the light wash, because the block declaring the
+dark value lost the cascade.
+
+`tests/browser/theme.test.ts` asserts the cascade at runtime, in a browser
+context with `colorScheme: 'dark'` and no attribute. The Python lane cannot make
+that assertion: `test_the_two_dark_theme_blocks_declare_the_same_hexes` reads the
+two blocks as text and checks that they declare the same values, which stayed
+true throughout the outage.
 
 ## Deviations from the `dataviz` skill
 

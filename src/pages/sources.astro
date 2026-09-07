@@ -5,10 +5,23 @@ import { getEntry, render } from 'astro:content'
 const entry = await getEntry('reference', 'sources')
 if (!entry) throw new Error('SOURCES.md did not load. /sources renders it in full; refusing to build a stub.')
 const { Content } = await render(entry)
+
+/* No rail on this route, and the reason is structural rather than an omission.
+ * `sectionSpy()` tracks `section[id]`, and `/sources` renders exactly one, the
+ * `reference` wrapper below, because its headings come from `SOURCES.md` and a
+ * markdown document does not section itself. A rail built from the markdown's
+ * own `h2` slugs was tried and reverted: it listed five ids that no section
+ * carries, so the reading mark could never track the page, which is what
+ * `test_every_contents_anchor_is_addressable_by_the_spy` reports. Giving this
+ * route a real rail means sectioning `SOURCES.md`, which is a larger change
+ * than a rail is worth here. */
 ---
 
-<BaseLayout title="Sources | US federal finance" description="Every source, with vintage and known discrepancies.">
-  <p class="kicker">Reference</p>
+<BaseLayout
+  title="Sources | US federal finance"
+  description="Every source, with vintage and known discrepancies."
+  reference
+>
   <section id="reference" class="reference-doc">
     <Content />
   </section>

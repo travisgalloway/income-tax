@@ -38,9 +38,14 @@ interface Props {
   /** Scope or method warning. Belongs here in the apparatus, never in a tooltip. */
   note?: string
   id?: string
+  /** Give the graphic the whole band and put the caption beneath it. For a
+   * figure whose geometry needs the width: the two state panels, the law
+   * explorer. Every other figure sits at the reading measure with its caption
+   * in the margin. */
+  wide?: boolean
 }
 
-const { ariaLabel, fig, xUnit, yUnit, note, id } = Astro.props
+const { ariaLabel, fig, xUnit, yUnit, note, id, wide = false } = Astro.props
 
 if (!ariaLabel?.trim()) throw new Error('Figure: ariaLabel is required and must state the finding')
 if (!fig || typeof fig.n !== 'number' || fig.n < 1) {
@@ -54,13 +59,20 @@ if (!fig.sourceLine?.trim())
 if (!xUnit?.trim() || !yUnit?.trim()) throw new Error('Figure: both axes must name their units')
 ---
 
-<figure class="figure" aria-label={ariaLabel} id={id}>
+<figure class:list={['figure', wide && 'figure--wide']} aria-label={ariaLabel} id={id}>
   <div class="figure-head">
     <span class="figure-no" id={figureNoId(fig.key)}>Figure {fig.n}</span>
     <span class="figure-title">{fig.title}</span>
   </div>
 
-  <slot />
+  {/* The graphic gets its own element rather than sitting as a bare slot. An
+      Astro island renders as `<astro-island>` at `display: contents`, so its
+      children, and not it, become the grid items of whatever contains it. Under
+      a bare slot those children auto-placed into the margin track. This wrapper
+      keeps the figure at exactly three grid items: head, graphic, caption. */}
+  <div class="figure-graphic">
+    <slot />
+  </div>
 
   <figcaption>
     <span><span class="lead">Units.</span> {xUnit} against {yUnit}.</span>

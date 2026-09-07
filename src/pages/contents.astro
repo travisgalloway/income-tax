@@ -85,9 +85,16 @@ const sectionCount = blocks.reduce((n, b) => n + b.sections.length, 0)
   title="Contents | US federal finance"
   description="Every route, section, numbered figure and defined term on this site, with a link to each."
   sections={sections}
+  reference
 >
-  <p class="kicker">Reference</p>
-  <h1>Contents</h1>
+  {/* The route title is in the DOM and out of the picture. The navbar already
+      names this route and underlines it, so a heading repeating that word was
+      the reader seeing it twice. It cannot simply be deleted: `harness.ts`
+      asserts each route's first h1 text on every browser spec, and
+      `test_heading_levels_do_not_skip` wants exactly one h1 per page and no
+      jump to h2. So it stays as the document's heading and its accessible
+      name, and the standfirst opens the page for a sighted reader. */}
+  <h1 class="vh">Contents</h1>
   <p class="standfirst">The whole of the site on one page. It holds {sectionCount} sections across {blocks.length} destinations, {figureCount} numbered figures with their sources, and {terms.length} defined terms. Nothing here is a list somebody keeps up to date. Every line is read from the same declaration the page it points at renders from.</p>
 
   {blocks.map((block) => (

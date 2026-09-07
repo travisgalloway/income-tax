@@ -14,7 +14,10 @@
 import { useMemo, useState } from 'react'
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
 // stateGrid.ts supplies TILES (each jurisdiction's grid position) and
-// divergingFill (the non-partisan amber/stone/teal colour ramp).
+// divergingFill (the non-partisan amber/panel/teal colour ramp). The ramp
+// names `--int`, `--panel` and `--disc` through `color-mix()` rather than
+// carrying their values, so it follows the theme with no work from this
+// island.
 import { TILES, divergingFill } from '../charts/stateGrid'
 import { useRovingMarks } from '../charts/roving'
 import { useScrollableRegion } from './scrollRegion'

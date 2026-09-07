@@ -101,6 +101,7 @@ export function PricesAndRates({ rows, lastActualFy }: { rows: EconomyYear[]; la
   // negative, so niceExtent leaves the padded low end negative and a ZeroLine
   // makes that legible by position.
   const top = useFrame({
+    heightShare: 1 / 1.66,
     rows,
     xOf: (r) => r.y,
     yValues: inflationRows
@@ -112,6 +113,7 @@ export function PricesAndRates({ rows, lastActualFy }: { rows: EconomyYear[]; la
   // Bottom panel: none of the three rate series ever goes negative, so
   // niceExtent anchors this axis at exactly 0 and pads only the high end (#34).
   const bottom = useFrame({
+    heightShare: 0.66 / 1.66,
     rows,
     xOf: (r) => r.y,
     yValues: rows
@@ -120,16 +122,10 @@ export function PricesAndRates({ rows, lastActualFy }: { rows: EconomyYear[]; la
     xDomain: X_DOMAIN,
   })
 
-  // The bottom panel is two thirds the height of the top one, as it was before
-  // the conversion. `useChartSize` inside `useFrame` reports one height, so the
-  // shorter panel builds its own frame and its own y scale from that height.
-  const H2 = Math.round(bottom.size.height * 0.66)
-  const f2 = makeFrame(bottom.size.width, H2, bottom.size.margin)
-  const yBottom = linear(bottom.yDomain, [f2.innerHeight, 0])
-  const bottomStyle = useMemo(
-    () => ({ width: '100%', height: 'auto', aspectRatio: `${bottom.size.width} / ${H2}` }),
-    [bottom.size.width, H2],
-  )
+  /* The bottom panel is two thirds the height of the top one, as it always was.
+   * The pair now DIVIDES the common graphic height through `heightShare` rather
+   * than each panel taking the whole of it, which is what made this figure draw
+   * 664 units against a 400-unit norm. The 1 : 0.66 ratio is untouched. */
 
   /** One row per year, with the actual and the projected branch of every series
    *  in separate keys. Recharts takes one data array per surface, so the split
@@ -178,9 +174,9 @@ export function PricesAndRates({ rows, lastActualFy }: { rows: EconomyYear[]; la
     ]
       .filter((r) => Number.isFinite(r.v))
       .sort((a, b) => b.v - a.v)
-    const ys = stackDown(series.map((r) => yBottom(r.v) - 8))
+    const ys = stackDown(series.map((r) => bottom.y(r.v) - 8))
     return series.map((r, i) => ({ label: r.label, y: ys[i] as number }))
-  }, [lastActualRow, yBottom])
+  }, [lastActualRow, bottom.y])
 
   const active = focus != null ? rows.find((r) => r.y === focus) : null
   const activeInf = focus != null ? infByYear.get(focus) : null
@@ -355,9 +351,9 @@ export function PricesAndRates({ rows, lastActualFy }: { rows: EconomyYear[]; la
           ref={bottom.surfaceRef}
           data={data}
           width={bottom.size.width}
-          height={H2}
+          height={bottom.size.height}
           margin={bottom.chartMargin}
-          style={bottomStyle}
+          style={bottom.chartStyle}
           {...SURFACE_DEFAULTS}
           role="img"
           aria-label={BOTTOM_LABEL}
@@ -444,7 +440,7 @@ export function PricesAndRates({ rows, lastActualFy }: { rows: EconomyYear[]; la
             isAnimationActive={false}
           />
 
-          <PlotOverlay margin={f2.margin}>
+          <PlotOverlay margin={bottom.f.margin}>
             {/* The three rates converge. In FY2025 they sit within 0.2
                 percentage points of each other, so three labels each placed
                 against its own line landed on top of one another: `Fed funds`
@@ -457,7 +453,7 @@ export function PricesAndRates({ rows, lastActualFy }: { rows: EconomyYear[]; la
                 {stackedRates.map((r) => (
                   <Annotation
                     key={r.label}
-                    frame={f2}
+                    frame={bottom.f}
                     x={bottom.x(lastActualRow.y) - 4}
                     y={r.y}
                     anchor="end"
@@ -468,7 +464,7 @@ export function PricesAndRates({ rows, lastActualFy }: { rows: EconomyYear[]; la
               </>
             )}
             <BoundaryRule
-              frame={f2}
+              frame={bottom.f}
               x={bottom.x(lastActualFy)}
               label={`Last actual, FY${lastActualFy}`}
             />

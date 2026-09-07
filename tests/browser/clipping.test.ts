@@ -71,7 +71,13 @@ const TEXT_FLOOR: Record<string, number> = {
   // 160 before `Top1TaxShare` began thinning by fit. Its five published tax
   // years sit 13 units apart at the 360 preset, so two x ticks and two value
   // labels are dropped there rather than painted across each other.
-  '/households': 156,
+  //
+  // 156 before `.panel-title` was retired. Its five nodes on this route, two in
+  // `HouseholdSpread` and three in `BracketHistory`, are gone: the panel's name
+  // is carried by the left-axis title now, because the two were drawn on one
+  // baseline and overprinted each other. The corpus shrank by exactly those
+  // five, which is why this floor moves rather than the guard being loosened.
+  '/households': 151,
   '/government': 257,
 }
 
@@ -109,7 +115,7 @@ const CLASS_FLOOR: Record<string, Record<string, number>> = {
     'recharts-cartesian-axis-tick-value': 85,
     'axis-label': 109,
     'axis-title': 20,
-    'panel-title': 5,
+    // `panel-title` was 5 here and is retired; see the note on TEXT_FLOOR.
     annotation: 22,
   },
   '/government': {
@@ -143,12 +149,21 @@ const ANNOTATION_FLOOR: Record<string, number> = {
   '/government': 16,
 }
 
-/** Rotated `<text>` nodes per route, at both viewports. Every one is an
- *  `AxisLeft` title, which `RechartsFrame.useAxisLabel` renders at -90 degrees. */
+/** Rotated `<text>` nodes per route, at both viewports.
+ *
+ *  Zero on every route, and deliberately so. Every one of these was an
+ *  `AxisLeft` title running -90 degrees up the axis, and `AxisTitleY` now sets
+ *  the title horizontally above the plot instead. A horizontal title is swept
+ *  by the `axis-title` entry in the horizontal limits above, so nothing stopped
+ *  being checked; the vertical sweep below simply has nothing left to walk.
+ *
+ *  The floor stays in place rather than being deleted with its test, because a
+ *  rotated title reintroduced anywhere still needs the vertical sweep, and a
+ *  non-zero count here is what turns it back on. */
 const ROTATED_FLOOR: Record<string, number> = {
-  '/economy': 7,
-  '/households': 10,
-  '/government': 10,
+  '/economy': 0,
+  '/households': 0,
+  '/government': 0,
 }
 
 /** Left-axis tick labels per route, with the number of gutters they sit in.

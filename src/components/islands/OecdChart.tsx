@@ -69,12 +69,25 @@ export function OecdChart({ data }: { data: OecdComparison }) {
   })
   const W = size.width
 
-  const rowHeight = narrow ? ROW_HEIGHT_NARROW : ROW_HEIGHT_WIDE
+  /* The row pitch is derived from the height budget rather than fixed, which
+   * does two things. It puts this figure at the site's common graphic height
+   * instead of the 394 units ten rows at a fixed 32 happened to produce. And it
+   * makes the figure proof against its own data: at a fixed pitch, the full 38
+   * OECD members would have drawn 1290 units tall. `ROW_HEIGHT_*` survive as the
+   * floor, so a short list still draws at a legible pitch rather than a sparse
+   * one. */
+  const gutterTop = 34
+  const gutterBottomAxis = 40
+  const budget = size.height - gutterTop - gutterBottomAxis
+  const rowHeight = Math.max(
+    narrow ? ROW_HEIGHT_NARROW : ROW_HEIGHT_WIDE,
+    budget / Math.max(1, countries.length),
+  )
   const innerHeight = countries.length * rowHeight
   const gutterLeft = narrow ? 96 : 118
-  const H = innerHeight + 34 + 40
+  const H = innerHeight + gutterTop + gutterBottomAxis
   const f = useMemo(
-    () => makeFrame(W, H, { top: 34, right: 24, bottom: 40, left: gutterLeft }),
+    () => makeFrame(W, H, { top: gutterTop, right: 24, bottom: gutterBottomAxis, left: gutterLeft }),
     [W, H, gutterLeft],
   )
   const iw = f.innerWidth

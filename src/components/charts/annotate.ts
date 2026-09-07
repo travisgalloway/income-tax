@@ -28,8 +28,17 @@ import type { Frame } from './scales'
  *  docs/contracts/accessibility.md exceeds it, raise it.
  *
  *  Must stay equal to ADVANCE_EM in pipeline/tests/test_accessibility.py, which
- *  reproduces this arithmetic against the served bytes. */
-export const ADVANCE_EM = 0.62
+ *  reproduces this arithmetic against the served bytes.
+ *
+ *  0.65 since the chart face became the system sans. It was 0.62, a Georgia
+ *  number. Measured over the five classes `smoke.test.ts` sweeps, on all three
+ *  report routes at 390px and 1440px with every island hydrated, the worst case
+ *  is 0.6255, carried by "20.6%" on `/households`. 0.65 clears it with room.
+ *
+ *  Note what an earlier pass got wrong here: it sampled `/government` alone,
+ *  read 0.579, and concluded the sans fitted inside 0.62. One route is not the
+ *  corpus. */
+export const ADVANCE_EM = 0.65
 
 /** global.css `.annotation` / `.series-label`. */
 export const ANNOTATION_FONT_PX = 11.5

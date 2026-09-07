@@ -53,7 +53,6 @@ import {
 import { frame as makeFrame, linear } from '../charts/scales'
 import { TableView } from './TableView'
 import { dollars, dollarsCompact, calendarYear, percentRate } from '../charts/format'
-import { AXIS_TITLE_FONT_PX, firstThatFits, spanRoomAt } from '../charts/axisFit'
 import { labelHeight } from '../charts/annotate'
 import type { BracketYear } from '../../data/types'
 
@@ -149,8 +148,12 @@ export function BracketHistory({ rows }: { rows: BracketYear[] }) {
   // Every panel is the same short height, which is shorter than the size
   // preset's own, so each chart builds one shared frame and each panel's y
   // scale is built against that frame rather than against `useFrame`'s.
-  const panelH = narrow ? 108 : 128
-  const H = size.margin.top + panelH + size.margin.bottom
+  /* Three panels of one shared height, and together they take the site's common
+   * graphic height rather than three times a constant: at 208 units each the
+   * figure drew 624 against a 400-unit norm. The panel is what is left of a
+   * third once its own margins are paid. */
+  const H = Math.round(size.height / 3)
+  const panelH = Math.max(40, H - size.margin.top - size.margin.bottom)
   const f = makeFrame(size.width, H, size.margin)
   const yRate = linear(rate.yDomain, [f.innerHeight, 0])
   const yNb = linear(count.yDomain, [f.innerHeight, 0])
@@ -159,15 +162,13 @@ export function BracketHistory({ rows }: { rows: BracketYear[] }) {
     [size.width, H],
   )
 
-  // Panel titles are start-anchored at the plot's left edge, so their room is
-  // whatever is left between that edge and the surface's right edge: 658 units
-  // at the 720 preset but only 298 at 360, where the two long titles below run
-  // off the edge and are CUT (#66). The variant is chosen by fit against the
-  // frame's own numbers rather than by the `narrow` boolean, so it stays right
-  // if either preset ever moves.
-  const titleRoom = spanRoomAt(0, f, 'start')
-  const panelTitle = (variants: string[]) =>
-    firstThatFits(variants, titleRoom, AXIS_TITLE_FONT_PX) ?? variants[variants.length - 1]
+  /* Each panel names itself through its own y-axis title, as a ladder of
+   * variants longest first (`RechartsFrame.useAxisLabel`), which is also where
+   * the fit is decided. The name and the unit used to be two texts on one line,
+   * a `.panel-title` from the plot's left edge and the axis title from the
+   * surface's, and they printed through each other: "Constant 2024 dollars, log
+   * scale" over "Top-bracket threshold, constant 2024 dollars (log scale)"
+   * overlapped by 133.7px at 1440px. */
 
   /** One row per tax year, carrying all three panels' series. */
   const data = useMemo(
@@ -278,7 +279,11 @@ export function BracketHistory({ rows }: { rows: BracketYear[] }) {
             domain={rate.yDomain}
             ticks={RATE_TICKS}
             gutter={size.margin.left}
-            unit="Percent"
+            unit={[
+              'Top statutory rate vs. schedule ladder top, percent',
+              'Top rate vs. schedule ladder, percent',
+              'Top rate, percent',
+            ]}
             format={rateFormat}
           />
           <Line
@@ -301,13 +306,6 @@ export function BracketHistory({ rows }: { rows: BracketYear[] }) {
             isAnimationActive={false}
           />
           <PlotOverlay margin={f.margin}>
-            <text className="panel-title" x={0} y={-2}>
-              {panelTitle([
-                'Top statutory rate vs. schedule ladder top, percent',
-                'Top rate vs. schedule ladder, percent',
-                'Top rate, percent',
-              ])}
-            </text>
             {divergent.map((r) => (
               <circle
                 key={r.y}
@@ -360,7 +358,7 @@ export function BracketHistory({ rows }: { rows: BracketYear[] }) {
             domain={count.yDomain}
             ticks={NB_TICKS}
             gutter={size.margin.left}
-            unit="Brackets, count"
+            unit={['Bracket count, single filer', 'Brackets, count']}
             format={countFormat}
           />
           <Line
@@ -373,7 +371,6 @@ export function BracketHistory({ rows }: { rows: BracketYear[] }) {
             isAnimationActive={false}
           />
           <PlotOverlay margin={f.margin}>
-            <text className="panel-title" x={0} y={-2}>Bracket count, single filer</text>
             <circle cx={count.x(minNb.y)} cy={yNb(minNb.nb)} r={3} fill="var(--disc)" />
             <Annotation
               frame={f}
@@ -421,7 +418,11 @@ export function BracketHistory({ rows }: { rows: BracketYear[] }) {
             ticks={threshTicks}
             scale="log"
             gutter={size.margin.left}
-            unit="Constant 2024 dollars, log scale"
+            unit={[
+              'Top-bracket threshold, constant 2024 dollars (log scale)',
+              'Top-bracket threshold, 2024 dollars (log)',
+              'Top bracket, 2024 $ (log)',
+            ]}
             format={threshFormat}
           />
           <Line
@@ -433,15 +434,6 @@ export function BracketHistory({ rows }: { rows: BracketYear[] }) {
             activeDot={false}
             isAnimationActive={false}
           />
-          <PlotOverlay margin={f.margin}>
-            <text className="panel-title" x={0} y={-2}>
-              {panelTitle([
-                'Top-bracket threshold, constant 2024 dollars (log scale)',
-                'Top-bracket threshold, 2024 dollars (log)',
-                'Top bracket, 2024 $ (log)',
-              ])}
-            </text>
-          </PlotOverlay>
         </LineChart>
       </div>
 

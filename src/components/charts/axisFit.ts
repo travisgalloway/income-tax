@@ -41,7 +41,7 @@ import { estimateTextWidth, placeAnnotation, visibleSpan, type Anchor, type Plac
 
 /** global.css `.axis-label`. */
 export const AXIS_LABEL_FONT_PX = 11
-/** global.css `.axis-title` and `.panel-title`. */
+/** global.css `.axis-title`. */
 export const AXIS_TITLE_FONT_PX = 10.5
 
 /** The offset `Axis.tsx` places left-axis ticks at, end-anchored. */
@@ -53,7 +53,7 @@ export const TICK_OFFSET = 8
  * `AxisLeft` draws each tick at `x = -offset`, `end`-anchored, so the label
  * grows leftward and the SVG's own left edge is at `-margin.left`. What is left
  * over is `margin.left - offset - pad`: 64 units at the 720 preset, 42 at 360.
- * At 11px and `ADVANCE_EM = 0.62` that is 9.3 and 6.1 characters respectively,
+ * At 11px and `ADVANCE_EM = 0.65` that is 8.7 and 5.9 characters respectively,
  * which is the whole reason `dollars()` cannot be an axis formatter.
  */
 export function leftGutterRoom(frame: Frame, offset: number = TICK_OFFSET, pad = 2): number {

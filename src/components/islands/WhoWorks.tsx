@@ -74,6 +74,7 @@ export function WhoWorks({ rows, lastActualFy }: { rows: EconomyYear[]; lastActu
   // base, so they share a zero-based axis. `useFrame` derives it through
   // niceExtent, which forces the low end to zero and clips nothing.
   const top = useFrame({
+    heightShare: 1 / 1.66,
     rows,
     xOf: (r) => r.y,
     yValues: rows.flatMap((r) => [r.unemp, r.nairu]).filter((v): v is number => v != null),
@@ -87,6 +88,7 @@ export function WhoWorks({ rows, lastActualFy }: { rows: EconomyYear[]; lastActu
   const [lfprLo, lfprHi] = extent(lfprValues)
   const lfprPad = (lfprHi - lfprLo) * 0.1
   const bottom = useFrame({
+    heightShare: 0.66 / 1.66,
     rows,
     xOf: (r) => r.y,
     yValues: lfprValues,
@@ -95,16 +97,10 @@ export function WhoWorks({ rows, lastActualFy }: { rows: EconomyYear[]; lastActu
     yTickCount: [3, 5],
   })
 
-  // The bottom panel is two thirds the height of the top one, as it was before
-  // the conversion. `useChartSize` inside `useFrame` reports one height, so the
-  // shorter panel builds its own frame and its own y scale from that height.
-  const H2 = Math.round(bottom.size.height * 0.66)
-  const f2 = makeFrame(bottom.size.width, H2, bottom.size.margin)
-  const yBottom = linear(bottom.yDomain, [f2.innerHeight, 0])
-  const bottomStyle = useMemo(
-    () => ({ width: '100%', height: 'auto', aspectRatio: `${bottom.size.width} / ${H2}` }),
-    [bottom.size.width, H2],
-  )
+  /* The bottom panel is two thirds the height of the top one, as it always was.
+   * The pair now DIVIDES the common graphic height through `heightShare` rather
+   * than each panel taking the whole of it, which is what made this figure draw
+   * 664 units against a 400-unit norm. The 1 : 0.66 ratio is untouched. */
 
   /** One row per year, with the actual and the projected branch in separate
    *  keys. Recharts takes one data array per surface, so the split
@@ -319,9 +315,9 @@ export function WhoWorks({ rows, lastActualFy }: { rows: EconomyYear[]; lastActu
           ref={bottom.surfaceRef}
           data={data}
           width={bottom.size.width}
-          height={H2}
+          height={bottom.size.height}
           margin={bottom.chartMargin}
-          style={bottomStyle}
+          style={bottom.chartStyle}
           {...SURFACE_DEFAULTS}
           role="img"
           aria-label={BOTTOM_LABEL}
@@ -364,19 +360,19 @@ export function WhoWorks({ rows, lastActualFy }: { rows: EconomyYear[]; lastActu
             isAnimationActive={false}
           />
 
-          <PlotOverlay margin={f2.margin}>
+          <PlotOverlay margin={bottom.f.margin}>
             {lastActualRow && (
               <Annotation
-                frame={f2}
+                frame={bottom.f}
                 x={bottom.x(lastActualRow.y) - 4}
-                y={yBottom(lastActualRow.lfpr as number) - 8}
+                y={bottom.y(lastActualRow.lfpr as number) - 8}
                 anchor="end"
                 halo
                 label="Labour force participation"
               />
             )}
             <BoundaryRule
-              frame={f2}
+              frame={bottom.f}
               x={bottom.x(lastActualFy)}
               label={`Last actual, FY${lastActualFy}`}
             />

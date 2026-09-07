@@ -8,9 +8,12 @@ interface Props {
   description: string
   /** Section anchors for the nav rail. */
   sections?: NavItem[]
+  /** A route that renders no figures, so the margin column has nothing to hold
+   * and the text takes the whole band. The three reference routes set it. */
+  reference?: boolean
 }
 
-const { title, description, sections = [] } = Astro.props
+const { title, description, sections = [], reference = false } = Astro.props
 
 const base = import.meta.env.BASE_URL
 
@@ -24,6 +27,11 @@ const routes = siteRoutes.map((r) => ({ href: join(r.path), label: r.label }))
  * Read from `introRoute` rather than from `routes[0]`, which used to be the introduction and is
  * now `/contents`. */
 const home = join(introRoute.path)
+
+/* The build date, stamped once per build rather than read at request time,
+ * because the site is static and a date that moved without the data moving
+ * would misreport the vintage of every figure on the page. */
+const built = new Date().toISOString().slice(0, 10)
 
 const current = Astro.url.pathname.replace(/\/$/, '')
 const isCurrent = (href: string) => href.replace(/\/$/, '') === current
@@ -105,9 +113,9 @@ const sourceIconPath =
          * mitigates legibility; it does not fix the underlying geometry, see
          * docs/contracts/accessibility.md, "Known limitation". */
         @media (max-width: 34.9rem) {
-          .axis-label { font-size: 20px; }
-          .axis-title { font-size: 19px; }
-          .annotation { font-size: 21px; }
+          .axis-label { font-size: 20px !important; }
+          .axis-title { font-size: 19px !important; }
+          .annotation { font-size: 21px !important; }
         }
 
         /* #73: with scripting off there is no tap-to-read and no hover
@@ -227,7 +235,17 @@ const sourceIconPath =
       </details>
     </header>
     <div class="page">
-      <div class="shell">
+      {/* `data-rail` says whether the rail below rendered, from the same test
+       * that decides it. `/sources` sections nothing, so it has no contents
+       * list and no rail, and the shell was still declaring a 160px rail track
+       * beside 36px of gap for it. The flag is an attribute rather than a
+       * `:has(.rail)` test for the reason `data-reference` is: this is a fact
+       * about the layout, settled here at build time. */}
+      <div
+        class="shell"
+        data-reference={reference ? '' : undefined}
+        data-rail={sections.length > 0 ? '' : undefined}
+      >
         {/* `<main>` precedes the rail in the DOM now, where the old left rail
          * preceded it. Reading order therefore reaches the content first, and
          * the contents list reads as the aside it is. */}
@@ -250,6 +268,17 @@ const sourceIconPath =
           </aside>
         )}
       </div>
+      <footer class="page-footer">
+        <p class="page-footer-cite">
+          Income &amp; Tax, the American economy and government in numbers. Built {built}.
+          Every figure names its source in its own caption, and{' '}
+          <a href={join('/sources')}>Sources</a> lists each one with its vintage.
+        </p>
+        <p class="page-footer-meta">
+          The prose and the figures are the author's. The data is public and belongs to the
+          agencies named against it. <a href={sourceUrl}>Source and data pipeline on GitHub</a>.
+        </p>
+      </footer>
     </div>
     <script is:inline>
       /* Progressive enhancement over the native <details> disclosure above: the

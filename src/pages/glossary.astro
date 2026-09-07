@@ -97,9 +97,16 @@ const sections = groups.map((g) => ({ id: g.id, label: g.letter }))
   title="Glossary | US federal finance"
   description="Every technical term this site uses, defined once, at a durable anchor."
   sections={sections}
+  reference
 >
-  <p class="kicker">Reference</p>
-  <h1>Glossary</h1>
+  {/* The route title is in the DOM and out of the picture. The navbar already
+      names this route and underlines it, so a heading repeating that word was
+      the reader seeing it twice. It cannot simply be deleted: `harness.ts`
+      asserts each route's first h1 text on every browser spec, and
+      `test_heading_levels_do_not_skip` wants exactly one h1 per page and no
+      jump to h2. So it stays as the document's heading and its accessible
+      name, and the standfirst opens the page for a sighted reader. */}
+  <h1 class="vh">Glossary</h1>
   <p class="standfirst">The vocabulary the three routes use, defined here. An unfamiliar term is then a look-up rather than a reason to leave. Each entry sits at its own anchor.</p>
   {groups.map((group) => (
     <section id={group.id}>
